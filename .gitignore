@@ -44,6 +44,7 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+!apps/mobile/package-lock.json
 
 # semantic-release
 .nyc_output
@@ -68,6 +69,8 @@ repomix-output.xml
 .serena/cache
 plans/**/*
 !plans/templates/*
+!plans/260913-issue-34-frontend-foundation/
+!plans/260913-issue-34-frontend-foundation/**
 screenshots/*
 docs/screenshots/*
 logs.txt
@@ -95,6 +98,9 @@ claude/skills/ai-multimodal/assets/demo-*.claude/session-state/*.tmp
 .gemini/settings.json
 # Showoff/marketing assets (images, showcases)
 assets/
+# Expo runtime assets are part of the mobile application artifact.
+!apps/mobile/assets/
+!apps/mobile/assets/**
 # Exception: use-mcp ships a persistent tool catalog at assets/tools.json
 !claude/skills/use-mcp/assets/
 !claude/skills/use-mcp/assets/**

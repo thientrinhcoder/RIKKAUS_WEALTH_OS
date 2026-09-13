@@ -1,10 +1,11 @@
 # Rikkaus Wealth OS
 
-Rikkaus Wealth OS is a mobile-first personal wealth application. This repository currently
-contains the MVP 0 backend foundation: a Spring Boot modular monolith and local PostgreSQL.
+Rikkaus Wealth OS is a mobile-first personal wealth application. The MVP 0 repository includes
+an Expo frontend foundation, a Spring Boot modular monolith, and local PostgreSQL.
 
 ## Prerequisites
 
+- Node.js 22.13 or newer with npm 10 or newer
 - Java 25 when running the API directly on the host
 - Docker with Docker Compose
 
@@ -19,8 +20,8 @@ Maven does not need to be installed globally; use the committed Maven Wrapper.
 
 ## Local configuration
 
-The checked-in `.env.example` contains disposable local-development values. Copy it when you
-need machine-specific overrides; real `.env` files are ignored by Git.
+The checked-in root `.env.example` contains disposable backend local-development values. Copy it
+when you need machine-specific overrides; real `.env` files are ignored by Git.
 
 ```bash
 cp .env.example .env
@@ -86,6 +87,59 @@ docker compose --env-file .env.example exec -T postgres \
 The Flyway history must show version `1` as successful, the namespace query must return `wealth`,
 and the table query must return no domain tables.
 
+## Frontend foundation
+
+The Expo application lives in `apps/mobile` and supports browser, iOS, and Android development
+from one strict TypeScript codebase.
+
+Install its locked dependencies:
+
+```bash
+npm --prefix apps/mobile ci
+```
+
+Copy the frontend environment example and point it at the local API:
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env.local
+```
+
+`EXPO_PUBLIC_API_BASE_URL` is public client configuration and must never contain credentials or
+secrets. The frontend requests `GET /actuator/health`; a healthy response must contain at least
+`{"status":"UP"}`. Additional Actuator response fields are allowed.
+
+Run the application:
+
+```bash
+npm --prefix apps/mobile run web
+npm --prefix apps/mobile run ios
+npm --prefix apps/mobile run android
+```
+
+The browser command is the primary MVP preview path. iOS and Android commands require their
+respective simulator, emulator, or device tooling.
+
+Verify the frontend:
+
+```bash
+npm --prefix apps/mobile run lint
+npm --prefix apps/mobile run typecheck
+npm --prefix apps/mobile test
+npm --prefix apps/mobile run expo:check
+npm --prefix apps/mobile run build:web
+```
+
+Frontend health-state troubleshooting:
+
+- **API endpoint is not configured:** set `EXPO_PUBLIC_API_BASE_URL` in
+  `apps/mobile/.env.local`, then restart Expo.
+- **API health check failed:** confirm the backend is running, the configured URL is reachable
+  from the selected platform, and backend CORS permits the browser origin.
+- **Expo dependency mismatch:** run `npx --prefix apps/mobile expo install --check` and install
+  Expo-coupled packages through `npx expo install` from `apps/mobile`.
+
+The frontend does not substitute a mock or fallback response when the backend is unavailable.
+
 ## Stop local services
 
 Stop PostgreSQL while preserving its named data volume:
@@ -100,9 +154,10 @@ local database and should only be done intentionally.
 ## Current scope limits
 
 This foundation deliberately contains no domain endpoints or tables, authentication, ownership
-logic, full OpenAPI/RFC 9457 conventions, CI/CD pipeline, frontend, or Phase 2 behavior. Those are
-owned by their dedicated delivery tasks.
+logic, full OpenAPI/RFC 9457 conventions, CI/CD pipeline, domain UI, or Phase 2 behavior. Those
+are owned by their dedicated delivery tasks.
 
-To favor time-to-market, this slice also contains no unit, integration, Testcontainers, ArchUnit,
-or UI tests. Therefore, issue #35's original automated-test acceptance criterion remains
-intentionally unsatisfied; validation for this slice is limited to build and live-runtime checks.
+To favor time-to-market, the backend slice contains no unit, integration, Testcontainers, or
+ArchUnit tests. Therefore, issue #35's original automated-test acceptance criterion remains
+intentionally unsatisfied; backend validation for that slice is limited to build and live-runtime
+checks. The frontend foundation has its own unit and component test harness.
