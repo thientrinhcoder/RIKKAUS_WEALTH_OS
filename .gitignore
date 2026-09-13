@@ -13,6 +13,14 @@
 # testing
 /coverage
 
+# java / maven
+**/target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
 # next.js
 /.next/
 /out/
