@@ -1,0 +1,66 @@
+<svg class="ak-diagram-svg" viewBox="0 0 1330 498" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Issue 36 design approval and handoff"><title>Issue 36 design approval and handoff</title><desc>A three-lane workflow from contract audit through Product Owner approval to the frontend issue 37 handoff.</desc><defs><style>
+      svg {
+        --ak-bg: #ffffff; --ak-surface: #f8fafc; --ak-surface-border: #e2e8f0;
+        --ak-text-primary: #0f172a; --ak-text-secondary: #475569; --ak-text-muted: #94a3b8;
+        --ak-accent: #2563eb; --ak-node-bg: #ffffff; --ak-node-border: #cbd5e1;
+        --ak-edge-stroke: #64748b; --ak-edge-active: #2563eb;
+        --ak-font-sans: system-ui, -apple-system, sans-serif;
+        font-family: var(--ak-font-sans);
+      }
+      
+      
+      
+      svg { --ak-bg: #faf8f5; --ak-text-primary: #1c1917; --ak-accent: #991b1b; --ak-node-border: #d6cfc4; --ak-edge-stroke: #78716c; }
+    </style><marker id="ak-arrowhead-2f9ea624" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--ak-edge-stroke)" />
+    </marker>
+  </defs><g class="ak-lane" data-lane-id="design">
+        <rect x="40" y="64" width="1290" height="96" rx="8" fill="var(--ak-surface)" stroke="var(--ak-surface-border)" stroke-width="1" />
+        <text x="52" y="96" font-size="12" font-weight="700" fill="var(--ak-text-secondary)" font-family="var(--ak-font-sans)">Design</text>
+      </g><g class="ak-lane" data-lane-id="po">
+        <rect x="40" y="190" width="660" height="96" rx="8" fill="var(--ak-surface)" stroke="var(--ak-surface-border)" stroke-width="1" />
+        <text x="52" y="222" font-size="12" font-weight="700" fill="var(--ak-text-secondary)" font-family="var(--ak-font-sans)">Product Owner</text>
+      </g><g class="ak-lane" data-lane-id="frontend">
+        <rect x="40" y="316" width="600" height="96" rx="8" fill="var(--ak-surface)" stroke="var(--ak-surface-border)" stroke-width="1" />
+        <text x="52" y="348" font-size="12" font-weight="700" fill="var(--ak-text-secondary)" font-family="var(--ak-font-sans)">Frontend 37</text>
+      </g><g class="ak-edge" data-from="audit" data-to="map" data-edge-id="edge-audit-map-0">
+        <path d="M 390 108 C 430 108, 410 108, 450 108" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="420" y="102" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Gaps Known</text></g><g class="ak-edge" data-from="map" data-to="board" data-edge-id="edge-map-board-1">
+        <path d="M 600 108 C 640 108, 620 108, 660 108" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="630" y="102" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Proposals Ready</text></g><g class="ak-edge" data-from="board" data-to="verify" data-edge-id="edge-board-verify-2">
+        <path d="M 810 108 C 850 108, 830 108, 870 108" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="840" y="102" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Reviewable</text></g><g class="ak-edge" data-from="verify" data-to="approve" data-edge-id="edge-verify-approve-3">
+        <path d="M 1020 108 C 1080 148, 180 274, 240 234" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="630" y="165" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Evidence Passes</text></g><g class="ak-edge" data-from="approve" data-to="revise" data-edge-id="edge-approve-revise-4">
+        <path d="M 390 234 C 735 234, 735 108, 1080 108" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="735" y="165" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Changes Requested</text></g><g class="ak-edge" data-from="revise" data-to="verify" data-edge-id="edge-revise-verify-5">
+        <path d="M 1230 108 C 1290 148, 810 148, 870 108" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="1050" y="102" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Recheck</text></g><g class="ak-edge" data-from="approve" data-to="publish" data-edge-id="edge-approve-publish-6">
+        <path d="M 390 234 C 430 234, 410 234, 450 234" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="420" y="228" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Approved</text></g><g class="ak-edge" data-from="publish" data-to="handoff" data-edge-id="edge-publish-handoff-7">
+        <path d="M 600 234 C 660 274, 180 400, 240 360" fill="none" stroke="var(--ak-edge-stroke)" stroke-width="2" marker-end="url(#ak-arrowhead-2f9ea624)" /><text x="420" y="291" font-size="10" font-weight="500" fill="var(--ak-text-secondary)" text-anchor="middle" font-family="var(--ak-font-sans)" style="stroke:none;stroke-width:0;">Safe to Share</text></g><g class="ak-node" data-node-id="audit" data-label="Audit Existing Contract" data-role="start" data-desc="" tabindex="0">
+        <rect x="240" y="80" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="315" y="104" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Audit Existing Contract</text>
+        <text x="315" y="122" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">start</text>
+      </g><g class="ak-node" data-node-id="map" data-label="Map Tokens States Shell" data-role="action" data-desc="" tabindex="0">
+        <rect x="450" y="80" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="525" y="104" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Map Tokens States Shell</text>
+        <text x="525" y="122" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">action</text>
+      </g><g class="ak-node" data-node-id="board" data-label="Build Review Board" data-role="action" data-desc="" tabindex="0">
+        <rect x="660" y="80" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="735" y="104" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Build Review Board</text>
+        <text x="735" y="122" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">action</text>
+      </g><g class="ak-node" data-node-id="verify" data-label="Verify Evidence" data-role="action" data-desc="" tabindex="0">
+        <rect x="870" y="80" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="945" y="104" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Verify Evidence</text>
+        <text x="945" y="122" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">action</text>
+      </g><g class="ak-node" data-node-id="approve" data-label="Approve Decisions" data-role="decision" data-desc="" tabindex="0">
+        <rect x="240" y="206" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="315" y="230" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Approve Decisions</text>
+        <text x="315" y="248" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">decision</text>
+      </g><g class="ak-node" data-node-id="revise" data-label="Reconcile Changes" data-role="action" data-desc="" tabindex="0">
+        <rect x="1080" y="80" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="1155" y="104" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Reconcile Changes</text>
+        <text x="1155" y="122" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">action</text>
+      </g><g class="ak-node" data-node-id="publish" data-label="Approve Redacted Notice" data-role="decision" data-desc="" tabindex="0">
+        <rect x="450" y="206" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="525" y="230" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Approve Redacted Notice</text>
+        <text x="525" y="248" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">decision</text>
+      </g><g class="ak-node" data-node-id="handoff" data-label="Receive Stable Contract" data-role="terminal-success" data-desc="" tabindex="0">
+        <rect x="240" y="332" width="150" height="56" rx="8" fill="var(--ak-node-bg)" stroke="var(--ak-node-border)" stroke-width="1.5" />
+        <text x="315" y="356" font-size="12" font-weight="600" fill="var(--ak-text-primary)" text-anchor="middle" font-family="var(--ak-font-sans)">Receive Stable Contract</text>
+        <text x="315" y="374" font-size="10" fill="var(--ak-text-muted)" text-anchor="middle" font-family="var(--ak-font-sans)">terminal-success</text>
+      </g></svg>

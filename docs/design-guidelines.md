@@ -141,6 +141,29 @@ Light mode is the required MVP baseline. A dark theme is not implied by this doc
 mode enters approved scope, define and contrast-test a complete semantic token set; do not invert
 the light palette mechanically.
 
+#### React Native Paper MD3 handoff
+
+Production components consume the project semantic roles first; the Paper theme is an adapter,
+not the design authority. Use these approved mappings:
+
+| Project role | React Native Paper MD3 role |
+|---|---|
+| `color.canvas` | `colors.background` |
+| `color.surface` | `colors.surface`, `colors.onPrimary`, and `colors.onError` |
+| `color.surfaceSubtle` | `colors.surfaceVariant` |
+| `color.ink` | `colors.onBackground` and `colors.onSurface` |
+| `color.inkSecondary` | `colors.onSurfaceVariant` |
+| `color.primary` | `colors.primary` and `colors.onPrimaryContainer` |
+| `color.primaryContainer` | `colors.primaryContainer` |
+| `color.error` | `colors.error` |
+| `color.border` | `colors.outlineVariant`; decorative separation only |
+| `color.controlBorder` | `colors.outline`; interactive boundaries |
+
+Keep `color.brandNavy`, `color.primaryPressed`, `color.heritageGold`, `color.success`,
+`color.warning`, `color.info`, and `color.focus` as typed project-theme extensions because MD3 has
+no single faithful role for their approved meaning. Frontend issue #37 owns the implementation of
+this adapter and must keep the MVP theme light-only.
+
 ### 5.2 Typography
 
 - Primary family: **IBM Plex Sans**, with system sans-serif fallback.
@@ -162,6 +185,11 @@ the light palette mechanically.
 | Supporting | 14 / 20 | 400–500 | Dates, helper text, metadata |
 | Label | 12 / 16 | 500 | Compact labels; never critical body content |
 
+Map these roles to Paper typography as follows: Display to `displaySmall`, Heading 1 to
+`headlineSmall`, Heading 2 to `titleLarge`, Title to `titleMedium`, Body to `bodyLarge`, Body
+strong to `labelLarge`, Supporting to `bodyMedium`, and Label to `labelSmall`. Font loading and
+weight availability must still be verified on every production platform by issue #37.
+
 Support platform text scaling. Prefer wrapping over truncation. At large text sizes, reflow cards
 and rows vertically rather than hiding or clipping amounts and labels.
 
@@ -179,6 +207,14 @@ and rows vertically rather than hiding or clipping amounts and labels.
 - Interactive-control boundaries use `color.controlBorder`; the quieter `color.border` must not
   be the only visual boundary for an input or control.
 - Long forms and explanatory text use a maximum content width of 640–720px on large screens.
+
+The approved elevation recipes are:
+
+- Flat: level 0, no shadow, with the ordinary `color.border` separation where grouping is needed.
+- Raised card: Paper elevation level 1 or the platform equivalent of
+  `0 2px 8px rgba(24, 43, 69, 0.12)`; use only when interaction or hierarchy needs separation.
+- Modal: Paper elevation level 3 or the platform equivalent of
+  `0 12px 32px rgba(24, 43, 69, 0.22)` over an `rgba(23, 33, 43, 0.56)` scrim.
 
 ### 5.4 Icons and imagery
 
@@ -230,9 +266,10 @@ back behavior, drafts, keyboard avoidance, validation, and deep links remain pre
 ### 6.3 Responsive behavior
 
 - Design and review at 360px and 375px first, then 768px, 1024px, and 1440px.
-- Phones use bottom navigation and a single main content column.
-- Tablets may use a navigation rail and one or two content columns when this improves comparison.
-- Desktop uses a stable left sidebar and a centered, bounded content area.
+- Widths below 768px use bottom navigation and a single main content column.
+- Widths from 768px through 1023px use a navigation rail and may use one or two content columns
+  when this improves comparison.
+- Widths of 1024px and above use a stable left sidebar and a centered, bounded content area.
 - Names, order, selected state, and information hierarchy remain consistent across breakpoints.
 - Avoid nested scroll areas and horizontal page scrolling.
 - Fixed bars reserve space for safe-area insets and never cover content or primary actions.
@@ -350,6 +387,30 @@ Every reusable data or interactive component defines, where applicable:
 Do not hide a destination solely because it has no data. Show the destination, explain the empty
 state, and offer the correct next action.
 
+### 11.1 Shared state anatomy and ownership
+
+- Empty identifies what is absent and provides the relevant next action.
+- Loading reserves stable space and does not delay reading with animated financial values.
+- Partial identifies available information, missing inputs, affected interpretation, and a
+  completion path.
+- Stale combines text with an icon or shape, includes an absolute date, identifies the affected
+  value, and provides an update path.
+- Validation errors identify the cause and correction inline; multi-error submissions include a
+  summary and focus the first invalid field.
+- Request and offline errors state what failed, what was preserved, and the retry or safe-return
+  path.
+- Success states identify what changed and the logical next action.
+- Disabled controls use native semantics and show the reason nearby when it is not self-evident.
+- Destructive and unsaved-change states name the consequence, keep a safe cancel route, and use
+  undo when feasible.
+- An unavailable target uses the non-enumerating message “Không thể mở mục này” and a safe return
+  path; it does not confirm record existence, account identity, or permissions.
+
+Issue #36 owns this shared visual anatomy. Issue #37 owns its production component and shell
+implementation. Identity issue #40 owns session, account, ownership, and access behavior. Later
+domain work owns record-specific validation, transport errors, destructive consequences, and undo
+policy.
+
 ## 12. Accessibility baseline
 
 - Meet WCAG 2.2 AA contrast: 4.5:1 for normal text and 3:1 for large text and meaningful UI
@@ -431,6 +492,10 @@ applicable items:
 - Accessibility and responsive behavior are part of design acceptance, not a final polish phase.
 - Pilot feedback may change these guidelines. Record approved changes here with the affected
   principle or token; do not preserve obsolete alternatives in production guidance.
+- The approved issue #36 evidence is the
+  [`design-system-responsive-shell-review.html`](design-system-responsive-shell-review.html)
+  design-contract review board. It illustrates this contract but is not a second source of truth
+  and does not approve the complete MVP clickable prototype described in section 16.
 
 ## 16. Product Owner clickable mockup contract
 

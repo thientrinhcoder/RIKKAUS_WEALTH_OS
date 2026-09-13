@@ -71,6 +71,8 @@ plans/**/*
 !plans/templates/*
 !plans/260913-issue-34-frontend-foundation/
 !plans/260913-issue-34-frontend-foundation/**
+!plans/260913-0421-issue-36-design-system-responsive-shell/
+!plans/260913-0421-issue-36-design-system-responsive-shell/**
 screenshots/*
 docs/screenshots/*
 logs.txt
@@ -98,6 +100,9 @@ claude/skills/ai-multimodal/assets/demo-*.claude/session-state/*.tmp
 .gemini/settings.json
 # Showoff/marketing assets (images, showcases)
 assets/
+# Plan #36 embeds these sources into its self-contained HTML artifact.
+!plans/260913-0421-issue-36-design-system-responsive-shell/assets/
+!plans/260913-0421-issue-36-design-system-responsive-shell/assets/**
 # Expo runtime assets are part of the mobile application artifact.
 !apps/mobile/assets/
 !apps/mobile/assets/**

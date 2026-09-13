@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rikkaus Wealth OS | Design contract review board</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #F7F5EF;
+      --surface: #FFFFFF;
+      --surface-subtle: #EFEBE2;
+      --ink: #17212B;
+      --ink-secondary: #52606D;
+      --border: #D7D2C7;
+      --control-border: #8B877E;
+      --brand-navy: #182B45;
+      --primary: #0F5C5A;
+      --primary-pressed: #0B4746;
+      --primary-container: #D9EFEC;
+      --heritage-gold: #A87428;
+      --success: #1E6A45;
+      --warning: #8A5A00;
+      --error: #B42318;
+      --info: #2458A6;
+      --focus: #147D79;
+      --scrim: rgba(23, 33, 43, .56);
+      --font-functional: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-editorial: "Noto Serif Display", Georgia, serif;
+      --text-label: .75rem;
+      --text-supporting: .875rem;
+      --text-body: 1rem;
+      --text-title: 1.125rem;
+      --text-h2: 1.25rem;
+      --text-h1: 1.5rem;
+      --text-display: 2rem;
+      --space-1: .25rem;
+      --space-2: .5rem;
+      --space-3: .75rem;
+      --space-4: 1rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --radius-input: .625rem;
+      --radius-card: .75rem;
+      --radius-sheet: 1.25rem;
+      --line: 1px solid var(--border);
+      --line-control: 1px solid var(--control-border);
+      --shadow-raised: 0 2px 8px rgba(24, 43, 69, .12);
+      --shadow-modal: 0 12px 32px rgba(24, 43, 69, .22);
+      --motion-fast: 100ms;
+      --motion-state: 200ms;
+      --ease-out: cubic-bezier(.25, 1, .5, 1);
+      --content-max: 72rem;
+      --reading-max: 45rem;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-functional);
+      font-size: var(--text-body);
+      line-height: 1.5;
+    }
+    body:has(dialog[open]) { overflow: hidden; }
+    a { color: var(--primary); text-underline-offset: .2em; }
+    button, input, select, textarea { font: inherit; }
+    button, a { touch-action: manipulation; }
+    button {
+      min-height: 44px;
+      border: var(--line-control);
+      border-radius: var(--radius-input);
+      padding: var(--space-2) var(--space-4);
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform var(--motion-fast) var(--ease-out), color var(--motion-state) var(--ease-out), background-color var(--motion-state) var(--ease-out), box-shadow var(--motion-state) var(--ease-out);
+    }
+    button:hover { transform: translateY(-2px); }
+    button:active { transform: translateY(1px); }
+    button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+    button:disabled { cursor: not-allowed; color: var(--ink-secondary); background: var(--surface-subtle); opacity: .62; transform: none; }
+    .primary { background: var(--primary); border-color: var(--primary); color: var(--surface); font-weight: 600; }
+    .primary:hover { background: var(--primary-pressed); }
+    .tonal { background: var(--primary-container); border-color: var(--primary-container); color: var(--primary); font-weight: 600; }
+    .danger { color: var(--error); border-color: var(--error); }
+    .skip-link { position: absolute; left: var(--space-4); top: -5rem; z-index: 20; background: var(--surface); padding: var(--space-3); }
+    .skip-link:focus { top: var(--space-4); }
+    .page { width: min(100%, var(--content-max)); margin-inline: auto; padding: var(--space-4); }
+    .hero { padding-block: var(--space-12) var(--space-8); display: grid; gap: var(--space-6); border-bottom: 2px solid var(--heritage-gold); }
+    .hero-copy { max-width: 58rem; }
+    .meta { color: var(--ink-secondary); font-size: var(--text-supporting); }
+    .notice { max-width: var(--reading-max); padding: var(--space-4); background: var(--primary-container); border-radius: var(--radius-card); }
+    h1, h2, h3 { margin: 0; text-wrap: balance; }
+    h1 { font-family: var(--font-editorial); color: var(--brand-navy); font-size: clamp(2.75rem, 7vw, 4.5rem); line-height: 1.08; font-weight: 600; letter-spacing: -.02em; }
+    h2 { font-size: var(--text-h1); line-height: 1.333; }
+    h3 { font-size: var(--text-title); line-height: 1.333; }
+    p { margin: 0; text-wrap: pretty; }
+    section { padding-block: var(--space-12); border-bottom: var(--line); }
+    .section-head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); gap: var(--space-8); align-items: end; margin-bottom: var(--space-8); }
+    .section-head p { color: var(--ink-secondary); max-width: 42rem; }
+    .section-number { color: var(--heritage-gold); font-variant-numeric: tabular-nums; font-weight: 600; }
+    .source { color: var(--ink-secondary); font-size: var(--text-supporting); }
+    .grid { display: grid; gap: var(--space-4); }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: 2fr 1fr 1fr; }
+    .card { background: var(--surface); border: var(--line); border-radius: var(--radius-card); padding: var(--space-4); display: grid; gap: var(--space-3); }
+    .card.raised { box-shadow: var(--shadow-raised); border-color: transparent; }
+    .callout { background: var(--surface-subtle); border-radius: var(--radius-card); padding: var(--space-4); }
+    .status { display: inline-flex; align-items: center; gap: var(--space-2); width: fit-content; font-size: var(--text-supporting); font-weight: 600; }
+    .status::before { content: ""; width: .75rem; height: .75rem; border-radius: 50%; background: currentColor; }
+    .status.approved { color: var(--success); }
+    .status.proposed { color: var(--warning); }
+    .status.info { color: var(--info); }
+    .status.error { color: var(--error); }
+    .tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-3); }
+    .token { display: grid; grid-template-columns: 3rem 1fr; gap: var(--space-3); align-items: start; background: var(--surface); border-bottom: var(--line); padding: var(--space-3); }
+    .swatch { width: 3rem; height: 3rem; border: var(--line-control); border-radius: var(--radius-input); background: var(--swatch); }
+    code { overflow-wrap: anywhere; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: .9em; }
+    .data-table { width: 100%; border-collapse: collapse; background: var(--surface); }
+    .data-table caption { text-align: left; font-weight: 600; padding: 0 0 var(--space-3); }
+    .data-table th, .data-table td { text-align: left; vertical-align: top; border-bottom: var(--line); padding: var(--space-3); }
+    .data-table th { background: var(--surface-subtle); font-size: var(--text-supporting); }
+    .data-table td { overflow-wrap: anywhere; }
+    .ratio { font-variant-numeric: tabular-nums; font-weight: 600; }
+    .type-specimen { display: grid; gap: var(--space-2); padding-block: var(--space-4); border-bottom: var(--line); }
+    .type-display { font: 600 var(--text-display)/1.25 var(--font-editorial); color: var(--brand-navy); }
+    .type-h1 { font: 600 var(--text-h1)/1.333 var(--font-functional); }
+    .type-h2 { font: 600 var(--text-h2)/1.4 var(--font-functional); }
+    .type-title { font: 600 var(--text-title)/1.333 var(--font-functional); }
+    .type-body { font: 400 var(--text-body)/1.5 var(--font-functional); }
+    .type-support { font: 400 var(--text-supporting)/1.43 var(--font-functional); color: var(--ink-secondary); }
+    .figures { font-variant-numeric: tabular-nums; }
+    .controls { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-6); }
+    .controls button[aria-pressed="true"] { background: var(--primary); color: var(--surface); border-color: var(--primary); }
+    .shell-stage { background: var(--surface-subtle); border-radius: var(--radius-card); padding: var(--space-4); overflow: hidden; }
+    .shell-frame { position: relative; width: min(100%, 360px); min-height: 40rem; margin-inline: auto; background: var(--canvas); border: 2px solid var(--brand-navy); border-radius: var(--radius-card); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; transition: width var(--motion-state) var(--ease-out); }
+    .shell-top { min-height: 4rem; padding: var(--space-2) var(--space-4); background: var(--surface); border-bottom: var(--line); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+    .wordmark { color: var(--brand-navy); font-family: var(--font-editorial); font-weight: 600; }
+    .avatar { width: 44px; min-width: 44px; padding: 0; border-radius: 50%; font-weight: 600; }
+    .shell-body { display: grid; min-width: 0; }
+    .shell-nav { background: var(--surface); z-index: 2; }
+    .nav-list { list-style: none; margin: 0; padding: 0; display: grid; }
+    .nav-item { min-width: 0; }
+    .nav-link { min-height: 48px; color: var(--ink-secondary); text-decoration: none; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); font-size: var(--text-label); font-weight: 500; }
+    .nav-link[aria-current="page"] { background: var(--primary-container); color: var(--primary); font-weight: 600; }
+    .nav-icon { width: 1.25rem; height: 1.25rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; }
+    .shell-content { min-width: 0; padding: var(--space-4); padding-bottom: 6.5rem; display: grid; align-content: start; gap: var(--space-4); }
+    .shell-content h3:focus { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .net-worth { font-size: 1.5rem; line-height: 1.333; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .shell-kpis { display: grid; gap: var(--space-3); }
+    .shell-kpi { background: var(--surface); border: var(--line); border-radius: var(--radius-card); padding: var(--space-3); }
+    .create-button { position: absolute; right: var(--space-4); bottom: 5rem; min-height: 52px; box-shadow: var(--shadow-raised); }
+    .shell-frame-wrap { position: relative; }
+    .phone .shell-body { grid-template-rows: 1fr auto; }
+    .phone .shell-nav { grid-row: 2; position: sticky; bottom: 0; border-top: var(--line); padding-bottom: max(var(--space-2), env(safe-area-inset-bottom)); }
+    .phone .nav-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .phone .nav-link { flex-direction: column; justify-content: center; gap: var(--space-1); text-align: center; }
+    .phone .shell-content { grid-row: 1; }
+    .tablet .shell-frame { width: min(100%, 768px); }
+    .tablet .shell-body { grid-template-columns: 6rem minmax(0, 1fr); }
+    .tablet .shell-nav { border-right: var(--line); }
+    .tablet .nav-list { gap: var(--space-2); padding: var(--space-2); }
+    .tablet .nav-link { flex-direction: column; text-align: center; justify-content: center; }
+    .tablet .shell-content { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: var(--space-6); }
+    .tablet .shell-content > :first-child, .tablet .shell-content > :nth-child(2) { grid-column: 1 / -1; }
+    .tablet .create-button { left: var(--space-4); right: auto; bottom: var(--space-4); }
+    .desktop .shell-frame { width: min(100%, 1024px); }
+    .desktop[data-width="1440"] .shell-frame { width: min(100%, 1180px); }
+    .desktop .shell-body { grid-template-columns: 15rem minmax(0, 1fr); }
+    .desktop .shell-nav { border-right: var(--line); }
+    .desktop .nav-list { gap: var(--space-1); padding: var(--space-4); }
+    .desktop .nav-link { font-size: var(--text-body); padding-inline: var(--space-4); }
+    .desktop .shell-content { width: min(100%, 720px); justify-self: center; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: var(--space-8); }
+    .desktop .shell-content > :first-child, .desktop .shell-content > :nth-child(2) { grid-column: 1 / -1; }
+    .desktop .create-button { left: var(--space-8); right: auto; bottom: var(--space-6); }
+    .annotation { color: var(--ink-secondary); font-size: var(--text-supporting); margin-top: var(--space-3); }
+    .sample-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .state-sample { min-height: 12rem; align-content: start; }
+    .state-panel { display: grid; gap: var(--space-3); }
+    .skeleton { height: 1rem; border-radius: var(--radius-input); background: var(--surface-subtle); border: var(--line); }
+    .skeleton.short { width: 56%; }
+    .hidden { display: none !important; }
+    dialog { width: min(calc(100% - 2rem), 32rem); border: 0; padding: var(--space-6); border-radius: var(--radius-sheet); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-modal); }
+    dialog::backdrop { background: var(--scrim); }
+    dialog.sheet { width: min(100%, 38rem); margin: auto auto 0; border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; }
+    dialog h2 { margin-bottom: var(--space-2); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-6); }
+    .sheet-options { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+    .sheet-options button { text-align: left; }
+    .anatomy { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-4); }
+    .anatomy dt { font-weight: 600; }
+    .anatomy dd { margin: 0; color: var(--ink-secondary); }
+    .checklist { display: grid; gap: var(--space-3); }
+    .check { display: grid; grid-template-columns: 1.5rem 1fr; gap: var(--space-3); align-items: start; }
+    .check input { width: 1.25rem; height: 1.25rem; margin-top: .125rem; accent-color: var(--primary); }
+    footer { padding-block: var(--space-8); color: var(--ink-secondary); font-size: var(--text-supporting); }
+    noscript { display: block; margin: var(--space-4) 0; padding: var(--space-4); background: var(--surface-subtle); border-radius: var(--radius-card); }
+
+    @media (max-width: 720px) {
+      .page { padding: var(--space-4); }
+      .hero { padding-top: var(--space-8); }
+      .section-head, .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .section-head { gap: var(--space-3); }
+      section { padding-block: var(--space-8); }
+      .data-table, .data-table tbody, .data-table tr, .data-table th, .data-table td { display: block; width: 100%; }
+      .data-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      .data-table tr { border-bottom: 2px solid var(--border); padding: var(--space-3); }
+      .data-table td { border: 0; display: grid; grid-template-columns: minmax(7rem, 40%) 1fr; gap: var(--space-2); padding: var(--space-2) 0; }
+      .data-table td::before { content: attr(data-label); font-weight: 600; color: var(--ink-secondary); font-size: var(--text-supporting); }
+      .anatomy { grid-template-columns: 1fr; gap: var(--space-2); }
+      .shell-stage { padding-inline: 0; }
+    }
+    @media (max-width: 390px) {
+      .page { padding-inline: var(--space-3); }
+      h1 { font-size: 2.75rem; }
+      .shell-top, .shell-content { padding-inline: var(--space-3); }
+      .nav-link { font-size: .6875rem; }
+      .nav-icon { width: 1.125rem; height: 1.125rem; }
+      .data-table td { grid-template-columns: 1fr; gap: var(--space-1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+    }
+    @media print {
+      .controls, .sample-controls, .skip-link { display: none; }
+      body { background: var(--surface); }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Bỏ qua đến nội dung chính</a>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="meta">Issue #36 · Design review evidence · Guideline updated 2026-09-13</p>
+        <h1>Responsive shell contract</h1>
+      </div>
+      <p class="notice"><strong>Simulated, non-normative review board.</strong> This offline artifact visualizes the current design contract and the handoff mappings approved on 2026-09-13. It is not production frontend and it is not the full section 16 MVP clickable prototype. No interaction represents an API, persistence, authentication, authorization, or financial calculation.</p>
+    </header>
+
+    <noscript>JavaScript is unavailable. All contract facts, mappings, shell compositions, and review criteria remain visible below. Interactive switching and dialog demonstrations are optional enhancements.</noscript>
+
+    <main id="main">
+      <section aria-labelledby="trace-title">
+        <div class="section-head">
+          <div><span class="section-number">01</span><h2 id="trace-title">Contract traceability</h2></div>
+          <p>The guideline remains the only evergreen authority. This board records evidence and proposals for Product Owner review.</p>
+        </div>
+        <table class="data-table">
+          <caption>Issue #36 requirement to source mapping</caption>
+          <thead><tr><th>Requirement</th><th>Evidence on this board</th><th>Authority</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Requirement">Semantic tokens and contrast</td><td data-label="Evidence">Color roles, intended pairs, numeric ratios, AA results</td><td data-label="Authority">Guideline §§5.1, 12</td><td data-label="Status"><span class="status approved">Approved baseline</span></td></tr>
+            <tr><td data-label="Requirement">MD3 and typography handoff</td><td data-label="Evidence">Direct mappings, project extensions, Paper type-role mapping</td><td data-label="Authority">Guideline §§5.1–5.2, 15</td><td data-label="Status"><span class="status approved">Approved 2026-09-13</span></td></tr>
+            <tr><td data-label="Requirement">Responsive shell at five widths</td><td data-label="Evidence">360, 375, 768, 1024, 1440 compositions and decision table</td><td data-label="Authority">Guideline §§6.1–6.3</td><td data-label="Status"><span class="status approved">Thresholds approved 2026-09-13</span></td></tr>
+            <tr><td data-label="Requirement">Component and state coverage</td><td data-label="Evidence">Applicability matrix, state anatomy, deterministic specimens</td><td data-label="Authority">Guideline §§8, 11, 12, 16.2.3</td><td data-label="Status"><span class="status approved">Baseline visualized</span></td></tr>
+            <tr><td data-label="Requirement">Keyboard, focus, touch, scaling, motion, safe area, overflow, back</td><td data-label="Evidence">Shell annotations, dialog behavior, accessibility checklist</td><td data-label="Authority">Guideline §§5.3, 5.5, 6.3, 12, 14</td><td data-label="Status"><span class="status approved">Approved baseline</span></td></tr>
+            <tr><td data-label="Requirement">No production behavior</td><td data-label="Evidence">Local deterministic UI only, persistent simulation notice, scope tables</td><td data-label="Authority">Guideline §§15, 16.1</td><td data-label="Status"><span class="status approved">Boundary retained</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section aria-labelledby="tokens-title">
+        <div class="section-head">
+          <div><span class="section-number">02</span><h2 id="tokens-title">Semantic color contract</h2></div>
+          <p>Approved light roles use a restrained palette. Gold remains decorative and is not a body-text, focus, selection, or state color.</p>
+        </div>
+        <div class="tokens" aria-label="Approved semantic token swatches">
+          <div class="token"><span class="swatch" style="--swatch:var(--canvas)"></span><div><strong>color.canvas</strong><br><code>#F7F5EF</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--surface)"></span><div><strong>color.surface</strong><br><code>#FFFFFF</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--surface-subtle)"></span><div><strong>color.surfaceSubtle</strong><br><code>#EFEBE2</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--ink)"></span><div><strong>color.ink</strong><br><code>#17212B</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--ink-secondary)"></span><div><strong>color.inkSecondary</strong><br><code>#52606D</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--border)"></span><div><strong>color.border</strong><br><code>#D7D2C7</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--control-border)"></span><div><strong>color.controlBorder</strong><br><code>#8B877E</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--brand-navy)"></span><div><strong>color.brandNavy</strong><br><code>#182B45</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--primary)"></span><div><strong>color.primary</strong><br><code>#0F5C5A</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--primary-pressed)"></span><div><strong>color.primaryPressed</strong><br><code>#0B4746</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--primary-container)"></span><div><strong>color.primaryContainer</strong><br><code>#D9EFEC</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--heritage-gold)"></span><div><strong>color.heritageGold</strong><br><code>#A87428</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--success)"></span><div><strong>color.success</strong><br><code>#1E6A45</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--warning)"></span><div><strong>color.warning</strong><br><code>#8A5A00</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--error)"></span><div><strong>color.error</strong><br><code>#B42318</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--info)"></span><div><strong>color.info</strong><br><code>#2458A6</code><br><span class="source">Guideline §5.1</span></div></div>
+          <div class="token"><span class="swatch" style="--swatch:var(--focus)"></span><div><strong>color.focus</strong><br><code>#147D79</code><br><span class="source">Guideline §5.1</span></div></div>
+        </div>
+        <div style="height:var(--space-6)"></div>
+        <table class="data-table">
+          <caption>Calculated WCAG 2.2 contrast evidence</caption>
+          <thead><tr><th>Foreground on background</th><th>Ratio</th><th>Intended use</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Pair">ink on canvas</td><td data-label="Ratio" class="ratio">14.95:1</td><td data-label="Use">Primary text</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">ink on surface</td><td data-label="Ratio" class="ratio">16.29:1</td><td data-label="Use">Primary text and figures</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">inkSecondary on canvas</td><td data-label="Ratio" class="ratio">5.92:1</td><td data-label="Use">Metadata</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">inkSecondary on surface</td><td data-label="Ratio" class="ratio">6.46:1</td><td data-label="Use">Supporting text</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">primary on surface</td><td data-label="Ratio" class="ratio">7.78:1</td><td data-label="Use">Links and active labels</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">primary on primaryContainer</td><td data-label="Ratio" class="ratio">6.49:1</td><td data-label="Use">Selected navigation</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">primaryPressed on surface</td><td data-label="Ratio" class="ratio">10.48:1</td><td data-label="Use">Pressed control</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">brandNavy on surface</td><td data-label="Ratio" class="ratio">14.28:1</td><td data-label="Use">Brand anchors</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">success on surface</td><td data-label="Ratio" class="ratio">6.56:1</td><td data-label="Use">Positive status with text/icon</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">warning on surface</td><td data-label="Ratio" class="ratio">5.93:1</td><td data-label="Use">Stale/attention with text/icon</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">error on surface</td><td data-label="Ratio" class="ratio">6.57:1</td><td data-label="Use">Error/destructive</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">info on surface</td><td data-label="Ratio" class="ratio">6.95:1</td><td data-label="Use">Information</td><td data-label="Result">AA normal: pass</td></tr>
+            <tr><td data-label="Pair">focus on surface</td><td data-label="Ratio" class="ratio">4.95:1</td><td data-label="Use">Focus indicator</td><td data-label="Result">AA UI: pass</td></tr>
+            <tr><td data-label="Pair">controlBorder on surface</td><td data-label="Ratio" class="ratio">3.58:1</td><td data-label="Use">Interactive boundary</td><td data-label="Result">AA UI: pass</td></tr>
+            <tr><td data-label="Pair">border on surface</td><td data-label="Ratio" class="ratio">1.51:1</td><td data-label="Use">Decorative grouping only</td><td data-label="Result">Not valid as sole control boundary</td></tr>
+            <tr><td data-label="Pair">heritageGold on surface</td><td data-label="Ratio" class="ratio">4.04:1</td><td data-label="Use">Large decorative accents only</td><td data-label="Result">Not valid for normal body text</td></tr>
+          </tbody>
+        </table>
+        <p class="source">Values: guideline §5.1. Thresholds and control-boundary distinction: §§5.3 and 12. Ratios calculated from the published sRGB values.</p>
+      </section>
+
+      <section aria-labelledby="mapping-title">
+        <div class="section-head">
+          <div><span class="section-number">03</span><h2 id="mapping-title">MD3 handoff mapping</h2></div>
+          <p>These names are an implementation proposal for issue #37. The guideline values remain authoritative until Product Owner approval.</p>
+        </div>
+        <table class="data-table">
+          <caption>Semantic role to React Native Paper MD3 role</caption>
+          <thead><tr><th>Project role</th><th>MD3 handoff</th><th>Mapping kind</th><th>Review note</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Project role">canvas</td><td data-label="MD3 role"><code>colors.background</code></td><td data-label="Kind">Direct</td><td data-label="Note">Guideline §5.1</td></tr>
+            <tr><td data-label="Project role">surface</td><td data-label="MD3 role"><code>colors.surface</code></td><td data-label="Kind">Direct</td><td data-label="Note">Guideline §5.1</td></tr>
+            <tr><td data-label="Project role">surfaceSubtle</td><td data-label="MD3 role"><code>colors.surfaceVariant</code></td><td data-label="Kind">Direct intent</td><td data-label="Note">Approved 2026-09-13</td></tr>
+            <tr><td data-label="Project role">ink</td><td data-label="MD3 role"><code>colors.onBackground</code> and <code>onSurface</code></td><td data-label="Kind">Direct</td><td data-label="Note">Guideline §5.1</td></tr>
+            <tr><td data-label="Project role">inkSecondary</td><td data-label="MD3 role"><code>colors.onSurfaceVariant</code></td><td data-label="Kind">Direct intent</td><td data-label="Note">Approved 2026-09-13</td></tr>
+            <tr><td data-label="Project role">primary</td><td data-label="MD3 role"><code>colors.primary</code></td><td data-label="Kind">Direct</td><td data-label="Note">Guideline §5.1</td></tr>
+            <tr><td data-label="Project role">primaryContainer</td><td data-label="MD3 role"><code>colors.primaryContainer</code></td><td data-label="Kind">Direct</td><td data-label="Note">Guideline §5.1</td></tr>
+            <tr><td data-label="Project role">primary on container</td><td data-label="MD3 role"><code>colors.onPrimaryContainer</code></td><td data-label="Kind">Direct intent</td><td data-label="Note">Approved, 6.49:1</td></tr>
+            <tr><td data-label="Project role">surface as on-primary</td><td data-label="MD3 role"><code>colors.onPrimary</code></td><td data-label="Kind">Direct intent</td><td data-label="Note">Approved, 7.78:1</td></tr>
+            <tr><td data-label="Project role">error</td><td data-label="MD3 role"><code>colors.error</code></td><td data-label="Kind">Direct</td><td data-label="Note">Guideline §5.1</td></tr>
+            <tr><td data-label="Project role">surface as on-error</td><td data-label="MD3 role"><code>colors.onError</code></td><td data-label="Kind">Direct intent</td><td data-label="Note">Approved, 6.57:1</td></tr>
+            <tr><td data-label="Project role">border</td><td data-label="MD3 role"><code>colors.outlineVariant</code></td><td data-label="Kind">Direct intent</td><td data-label="Note">Approved for decorative use only</td></tr>
+            <tr><td data-label="Project role">controlBorder</td><td data-label="MD3 role"><code>colors.outline</code></td><td data-label="Kind">Direct intent</td><td data-label="Note">Approved, 3.58:1</td></tr>
+            <tr><td data-label="Project role">brandNavy, primaryPressed, heritageGold, success, warning, info, focus</td><td data-label="MD3 role"><code>appTheme.custom.*</code></td><td data-label="Kind">Project extensions</td><td data-label="Note">No faithful single MD3 role. Approved as project extensions.</td></tr>
+          </tbody>
+        </table>
+        <div class="grid two" style="margin-top:var(--space-6)">
+          <div class="card"><h3>Portability rule</h3><p>Components consume project semantics first. The Paper theme maps those semantics for React Native and React Native Web, while native focus, safe-area, and platform-back behavior stay platform-aware.</p><p class="source">Architecture §4; guideline §§5, 6, 12. Mapping approved 2026-09-13.</p></div>
+          <div class="card"><h3>Current handoff discrepancy</h3><p><code>appTheme</code> still spreads the default MD3 light theme. <code>app.json</code> requests automatic appearance. The approved MVP baseline is light only, so issue #37 must reconcile configuration after approval.</p><p class="source">Repository scout; guideline §5.1. No runtime file changed here.</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="type-title">
+        <div class="section-head">
+          <div><span class="section-number">04</span><h2 id="type-title">Typography and elevation</h2></div>
+          <p>Font names are stack and fallback specimens only. Production loading, platform rendering, and Vietnamese diacritic verification belong to issue #37.</p>
+        </div>
+        <div class="grid two">
+          <div>
+            <div class="type-specimen"><span class="source">Display · 32/40 · 600 · Noto Serif Display restricted</span><span class="type-display">Tài sản vững, quyết định rõ</span></div>
+            <div class="type-specimen"><span class="source">Heading 1 · 24/32 · 600 · IBM Plex Sans</span><span class="type-h1">Tổng quan tài chính</span></div>
+            <div class="type-specimen"><span class="source">Heading 2 · 20/28 · 600</span><span class="type-h2">Thanh khoản và nghĩa vụ</span></div>
+            <div class="type-specimen"><span class="source">Title · 18/24 · 600</span><span class="type-title">Giá trị tài sản</span></div>
+            <div class="type-specimen"><span class="source">Body · 16/24 · 400</span><span class="type-body">Giá trị được ghi nhận theo dữ liệu nhập thủ công.</span></div>
+            <div class="type-specimen"><span class="source">Supporting · 14/20 · 400–500</span><span class="type-support figures">Cập nhật 12/09/2026 · 10.470.000.000 VND</span></div>
+            <p class="source">Approved values: guideline §5.2. Serif remains restricted; figures use tabular numerals.</p>
+          </div>
+          <div class="grid">
+            <div class="card"><h3>Paper type mapping</h3><p><code>displaySmall</code> → Display; <code>headlineSmall</code> → Heading 1; <code>titleLarge</code> → Heading 2; <code>titleMedium</code> → Title; <code>bodyLarge</code> → Body; <code>labelLarge</code> → Body strong; <code>bodyMedium</code> → Supporting; <code>labelSmall</code> → Label.</p><p class="source">Approved 2026-09-13; guideline §5.2.</p></div>
+            <div class="card"><h3>Flat</h3><p><code>#FFFFFF</code> surface, <code>1px #D7D2C7</code> border, no shadow. Interactive boundaries use <code>#8B877E</code>.</p><p class="source">Approved values: guideline §§5.1, 5.3.</p></div>
+            <div class="card raised"><h3>Raised card</h3><p><code>#FFFFFF</code> surface, no border, <code>0 2px 8px rgba(24,43,69,.12)</code> shadow. Use only when interaction or hierarchy needs separation.</p><p class="source">Guideline §5.3; approved observable shadow recipe.</p></div>
+            <div class="card" style="box-shadow:var(--shadow-modal)"><h3>Modal</h3><p><code>#FFFFFF</code> surface, <code>rgba(23,33,43,.56)</code> scrim, <code>0 12px 32px rgba(24,43,69,.22)</code> shadow, clear close route, contained focus, and focus return.</p><p class="source">Guideline §§5.3, 12; approved observable scrim/shadow recipe.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="responsive-title">
+        <div class="section-head">
+          <div><span class="section-number">05</span><h2 id="responsive-title">Responsive shell spine</h2></div>
+          <p>The five destinations keep exact labels, order, selected state, and hierarchy. Only their spatial container transforms.</p>
+        </div>
+        <div class="controls" role="group" aria-label="Choose simulated shell width">
+          <button type="button" data-shell-width="360" aria-pressed="true">360 phone</button>
+          <button type="button" data-shell-width="375" aria-pressed="false">375 phone</button>
+          <button type="button" data-shell-width="768" aria-pressed="false">768 tablet</button>
+          <button type="button" data-shell-width="1024" aria-pressed="false">1024 desktop</button>
+          <button type="button" data-shell-width="1440" aria-pressed="false">1440 desktop</button>
+        </div>
+        <div class="shell-stage">
+          <div id="shell-demo" class="phone" data-width="360">
+            <div class="shell-frame-wrap">
+              <div class="shell-frame">
+                <header class="shell-top"><span class="wordmark">Rikkaus</span><button class="avatar" type="button" id="avatar-trigger" aria-label="Mở hồ sơ và cài đặt">RT</button></header>
+                <div class="shell-body">
+                  <nav class="shell-nav" aria-label="Điều hướng chính mô phỏng">
+                    <ul class="nav-list">
+                      <li class="nav-item"><a class="nav-link" href="#shell-main" aria-current="page"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg><span>Tổng quan</span></a></li>
+                      <li class="nav-item"><a class="nav-link" href="#shell-main"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 8h18M5 8V5h14v3M5 8v11h14V8M9 12h6"/></svg><span>Tài sản &amp; Nợ</span></a></li>
+                      <li class="nav-item"><a class="nav-link" href="#shell-main"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h13M14 4l3 3-3 3M20 17H7M10 14l-3 3 3 3"/></svg><span>Dòng tiền</span></a></li>
+                      <li class="nav-item"><a class="nav-link" href="#shell-main"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4V2M20 12h2"/></svg><span>Mục tiêu</span></a></li>
+                      <li class="nav-item"><a class="nav-link" href="#shell-main"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 2 5-7M18 6v4"/></svg><span>Nhận định</span></a></li>
+                    </ul>
+                  </nav>
+                  <div class="shell-content" id="shell-main" role="region" aria-labelledby="shell-view-title">
+                    <h3 id="shell-view-title" tabindex="-1">Tổng quan</h3>
+                    <div><span class="source">Giá trị ròng · Dữ liệu mô phỏng</span><div class="net-worth">10.470.000.000 VND</div><span class="source">Cập nhật 12/09/2026</span></div>
+                    <div class="shell-kpi"><div class="shell-kpi"><span class="source">Tài sản</span><br><strong class="figures">12.002.000.000 VND</strong></div><div class="shell-kpi"><span class="source">Công nợ</span><br><strong class="figures">1.532.000.000 VND</strong></div></div>
+                    <div class="callout"><span class="status proposed">Cần chú ý</span><p>Một định giá cần được xem lại. Mở dữ liệu liên quan để kiểm tra ngày cập nhật.</p></div>
+                    <p class="source">Fictional review fixture: guideline §16.3. No calculation runs in this file.</p>
+                  </div>
+                </div>
+                <button class="primary create-button" type="button" id="create-trigger">Thêm</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p id="shell-caption" class="annotation" aria-live="polite">360px phone simulation. Bottom navigation, one content column, 16px inset, lower-thumb Thêm, and reserved bottom safe area.</p>
+        <div style="height:var(--space-6)"></div>
+        <table class="data-table">
+          <caption>Responsive decision table</caption>
+          <thead><tr><th>Review width</th><th>Composition</th><th>Insets and content</th><th>Decision status</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Width">360px</td><td data-label="Composition">Bottom navigation, one column, Thêm above safe area</td><td data-label="Insets">16pt phone inset; content reserves fixed-bar space</td><td data-label="Status">Guideline §§5.3, 6.3</td></tr>
+            <tr><td data-label="Width">375px</td><td data-label="Composition">Bottom navigation, one column, labels wrap without clipping</td><td data-label="Insets">16pt phone inset</td><td data-label="Status">Guideline §§5.3, 6.3</td></tr>
+            <tr><td data-label="Width">768px</td><td data-label="Composition">Navigation rail, one or two columns when comparison improves</td><td data-label="Insets">24pt tablet inset</td><td data-label="Status">Approved threshold</td></tr>
+            <tr><td data-label="Width">1024px</td><td data-label="Composition">Stable left sidebar, centered bounded content</td><td data-label="Insets">32pt desktop inset; explanation width ≤720px</td><td data-label="Status">Approved threshold</td></tr>
+            <tr><td data-label="Width">1440px</td><td data-label="Composition">Stable sidebar and bounded content, no stretched reading measure</td><td data-label="Insets">32pt desktop inset; content ≤720px</td><td data-label="Status">Approved desktop behavior</td></tr>
+            <tr><td data-label="Width">Landscape</td><td data-label="Composition">Use available columns without changing navigation hierarchy</td><td data-label="Insets">Honor all safe areas and system gestures</td><td data-label="Status">Guideline §6.3; mode follows available width</td></tr>
+          </tbody>
+        </table>
+        <div class="grid two" style="margin-top:var(--space-6)">
+          <div class="card"><h3>Approved breakpoints</h3><p>Bottom navigation below 768px, rail from 768px through 1023px, and sidebar at 1024px and above. Product Owner approved this mapping on 2026-09-13.</p><p class="source">Guideline §6.3.</p></div>
+          <div class="card"><h3>System behavior</h3><p>Keyboard appearance must keep the form action reachable. System back, iOS swipe-back, and Android predictive back stay unblocked. Current Android predictive back is disabled and must be reconciled by #37. The shell never invents a competing gesture.</p><p class="source">Guideline §§3.1, 6.3, 12; repository scout.</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="ux-title">
+        <div class="section-head">
+          <div><span class="section-number">06</span><h2 id="ux-title">Shell UX specification</h2></div>
+          <p>Every entry point has a named boundary and a safe return. Shell behavior never implies identity, ownership, or domain authorization results.</p>
+        </div>
+        <table class="data-table">
+          <caption>Entry points, boundaries, and return paths</caption>
+          <thead><tr><th>Entry</th><th>Destination or boundary</th><th>Return and focus</th><th>Authority</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Entry">Initial shell</td><td data-label="Boundary">Tổng quan selected; route heading receives focus on web route change</td><td data-label="Return">System back follows route history</td><td data-label="Authority">Guideline §§6.1, 12</td></tr>
+            <tr><td data-label="Entry">Five primary destinations</td><td data-label="Boundary">Top-level routes in exact published order</td><td data-label="Return">Selection and scroll state preserved where appropriate</td><td data-label="Authority">Guideline §§6.1, 14</td></tr>
+            <tr><td data-label="Entry">Avatar</td><td data-label="Boundary">Profile and settings secondary destination</td><td data-label="Return">Close or back returns focus to avatar</td><td data-label="Authority">Guideline §§6.1, 12</td></tr>
+            <tr><td data-label="Entry">Thêm</td><td data-label="Boundary">Short sheet selects Tài sản, Công nợ, Thu nhập, Chi phí, or Mục tiêu</td><td data-label="Return">Cancel, backdrop, or Escape returns focus to Thêm</td><td data-label="Authority">Guideline §§6.2, 12</td></tr>
+            <tr><td data-label="Entry">Sheet choice</td><td data-label="Boundary">Closes sheet and would open a navigable form screen in production</td><td data-label="Return">Back preserves draft and returns to invoking shell context</td><td data-label="Authority">Guideline §§3.1, 6.2, 8</td></tr>
+            <tr><td data-label="Entry">Dialog</td><td data-label="Boundary">Confirmation, unsaved change, or blocking error only</td><td data-label="Return">Cancel or Escape returns focus to invoker; confirm follows named safe route</td><td data-label="Authority">Guideline §§11, 12, 16.2.3</td></tr>
+            <tr><td data-label="Entry">Unavailable target</td><td data-label="Boundary">Generic non-enumerating message: Không thể mở mục này</td><td data-label="Return">Quay lại Tổng quan or return to previous safe screen</td><td data-label="Authority">Guideline §11.1; ownership semantics remain #40</td></tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top:var(--space-6)"><strong>Screen hierarchy assumption.</strong> This board shows only the Tổng quan shell priority and generic component specimens. Domain screens retain the hierarchy in guideline §7. No route, deep link, data fetch, calculation, or account state is implemented here.</div>
+      </section>
+
+      <section aria-labelledby="states-title">
+        <div class="section-head">
+          <div><span class="section-number">07</span><h2 id="states-title">Component states and anatomy</h2></div>
+          <p>Use the controls to inspect deterministic review states. The factual matrix remains visible without JavaScript.</p>
+        </div>
+        <div class="sample-controls" role="group" aria-label="Choose representative state">
+          <button type="button" data-state="loading" aria-pressed="false">Loading</button>
+          <button type="button" data-state="empty" aria-pressed="false">Empty</button>
+          <button type="button" data-state="stale" aria-pressed="false">Stale</button>
+          <button type="button" data-state="request" aria-pressed="true">Request error</button>
+          <button type="button" data-state="success" aria-pressed="false">Success</button>
+          <button type="button" id="dialog-trigger">Unsaved changes dialog</button>
+        </div>
+        <div class="card state-sample" aria-live="polite" aria-atomic="true" style="margin-top:var(--space-4)">
+          <div class="state-panel hidden" data-state-panel="loading"><span class="status info">Đang tải</span><div class="skeleton"></div><div class="skeleton short"></div><p>Không có giá trị tài chính chuyển động. Không gian được giữ ổn định.</p></div>
+          <div class="state-panel hidden" data-state-panel="empty"><span class="status info">Chưa có dữ liệu</span><p>Chưa có tài sản để hiển thị. Dùng Thêm để chọn loại bản ghi.</p><button class="tonal" type="button">Mở hướng dẫn Thêm</button></div>
+          <div class="state-panel hidden" data-state-panel="stale"><span class="status proposed">Dữ liệu cũ</span><p>Định giá gần nhất ngày 02/08/2026. Kiểm tra nguồn trước khi dùng giá trị này.</p><button class="tonal" type="button">Xem dữ liệu liên quan</button></div>
+          <div class="state-panel" data-state-panel="request"><span class="status error">Không thể tải dữ liệu</span><p id="request-copy">Dữ liệu đã nhập được giữ nguyên. Kiểm tra kết nối và thử lại.</p><button class="primary" type="button" id="retry-button">Thử lại</button></div>
+          <div class="state-panel hidden" data-state-panel="success"><span class="status approved">Đã lưu</span><p>Thay đổi mô phỏng đã được xác nhận. Không có dữ liệu được lưu trong trình duyệt.</p><button class="tonal" type="button">Quay lại Tổng quan</button></div>
+        </div>
+        <p class="source">State categories and recovery: guideline §§8, 11, 12. All samples are deterministic review simulations.</p>
+        <div style="height:var(--space-6)"></div>
+        <table class="data-table">
+          <caption>Component family by applicable state</caption>
+          <thead><tr><th>Family</th><th>Core interaction</th><th>Data and feedback</th><th>Required anatomy</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Family">Buttons</td><td data-label="Interaction">Default, pressed, focused, disabled, loading</td><td data-label="Feedback">Success/error belongs to resulting surface</td><td data-label="Anatomy">Label, optional vector icon, 44/48pt target, progress</td></tr>
+            <tr><td data-label="Family">Inputs</td><td data-label="Interaction">Default, focused, disabled, read-only</td><td data-label="Feedback">Validation error, request error, success</td><td data-label="Anatomy">Persistent label, value/unit, helper, inline error</td></tr>
+            <tr><td data-label="Family">Cards</td><td data-label="Interaction">Default, focused/pressed when tappable, disabled when applicable</td><td data-label="Feedback">Loading, empty, partial, stale, error</td><td data-label="Anatomy">Title, primary answer, date/source, status, next action</td></tr>
+            <tr><td data-label="Family">Lists</td><td data-label="Interaction">Default, focused, pressed, selected when applicable</td><td data-label="Feedback">Loading, empty, partial, stale, request error</td><td data-label="Anatomy">Row label, category, value, original currency, update date</td></tr>
+            <tr><td data-label="Family">Tabs / segments</td><td data-label="Interaction">Selected, unselected, focused, disabled</td><td data-label="Feedback">Empty content stays visible with next action</td><td data-label="Anatomy">Text label, selected indicator, panel relationship</td></tr>
+            <tr><td data-label="Family">Bottom navigation / rail / sidebar</td><td data-label="Interaction">Default, selected, focused, pressed</td><td data-label="Feedback">Destination is never hidden for empty data</td><td data-label="Anatomy">Vector icon, exact label, current state, safe-area reserve</td></tr>
+            <tr><td data-label="Family">Dialogs</td><td data-label="Interaction">Open, cancel, confirm, Escape</td><td data-label="Feedback">Destructive, unsaved, blocking error</td><td data-label="Anatomy">Title, consequence, safe action, separated destructive action</td></tr>
+            <tr><td data-label="Family">Bottom sheets</td><td data-label="Interaction">Open, select, cancel, backdrop/Escape</td><td data-label="Feedback">Selection only, then navigable screen</td><td data-label="Anatomy">Title, short options, close route, focus return</td></tr>
+            <tr><td data-label="Family">Status indicators</td><td data-label="Interaction">Not interactive unless linked</td><td data-label="Feedback">Success, warning, error, info, stale, plan status</td><td data-label="Anatomy">Text plus icon/shape plus semantic color</td></tr>
+            <tr><td data-label="Family">Feedback</td><td data-label="Interaction">Retry, dismiss, next action</td><td data-label="Feedback">Skeleton, progress, banner, inline error, polite toast</td><td data-label="Anatomy">State label, preserved-data note, cause, recovery</td></tr>
+          </tbody>
+        </table>
+        <div class="grid two" style="margin-top:var(--space-6)">
+          <div class="card"><h3>State anatomy</h3><dl class="anatomy"><dt>Empty</dt><dd>What is absent, why it matters, relevant next action.</dd><dt>Loading</dt><dd>Stable reserved region, state label, no delayed financial-value animation.</dd><dt>Partial</dt><dd>Available answer, missing inputs, affected interpretation, completion path.</dd><dt>Stale</dt><dd>Text and icon/shape, absolute date, affected value, update path.</dd><dt>Validation error</dt><dd>Summary when multiple, first invalid focus, inline cause and correction.</dd><dt>Request error</dt><dd>What failed, what was preserved, retry or safe return.</dd></dl></div>
+          <div class="card"><h3>Continuation anatomy</h3><dl class="anatomy"><dt>Offline</dt><dd>Connection state, retained local draft if supported, reconnect/retry route.</dd><dt>Success</dt><dd>What changed, reporting-currency result when relevant, logical next action.</dd><dt>Disabled</dt><dd>Native disabled semantics and visible reason nearby.</dd><dt>Destructive</dt><dd>Named consequence, separated action, cancel route, undo when feasible.</dd><dt>Unsaved</dt><dd>Preserved draft statement, continue editing, discard confirmation.</dd><dt>Unavailable</dt><dd>Non-enumerating copy and safe return, with no account or permission inference.</dd></dl></div>
+        </div>
+        <p class="source">Guideline §§3.1, 8, 11, 12. Unavailable copy approved 2026-09-13.</p>
+      </section>
+
+      <section aria-labelledby="ownership-title">
+        <div class="section-head">
+          <div><span class="section-number">08</span><h2 id="ownership-title">State ownership boundaries</h2></div>
+          <p>Global anatomy is defined here. Domain meaning and identity behavior stay with their owning tasks.</p>
+        </div>
+        <table class="data-table">
+          <caption>Responsibility allocation</caption>
+          <thead><tr><th>Owner</th><th>Owns</th><th>Explicitly not owned here</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Owner">Issue #36 Design</td><td data-label="Owns">Semantic mapping proposal, shell behavior, global component/state anatomy, generic safe recovery specimens</td><td data-label="Not owned">Production code, route behavior, domain data semantics</td></tr>
+            <tr><td data-label="Owner">Issue #37 Frontend</td><td data-label="Owns">Approved Paper theme, primitives, responsive helpers, Expo Router shell, configuration, automated tests</td><td data-label="Not owned">Changing design intent without approval</td></tr>
+            <tr><td data-label="Owner">Issue #40 Identity</td><td data-label="Owns">Identity, session, ownership, access and account-specific behavior</td><td data-label="Not owned">Global visual anatomy</td></tr>
+            <tr><td data-label="Owner">Later validation/error hardening</td><td data-label="Owns">Cross-domain error semantics, transport/problem mapping, recovery policy</td><td data-label="Not owned">Token and shell contract</td></tr>
+            <tr><td data-label="Owner">Later safe edit/delete work</td><td data-label="Owns">Domain destructive consequences, undo feasibility, record-specific confirmations</td><td data-label="Not owned">Generic dialog anatomy</td></tr>
+          </tbody>
+        </table>
+        <p class="source">Guideline §11.1. Ownership allocation approved 2026-09-13.</p>
+      </section>
+
+      <section aria-labelledby="coverage-title">
+        <div class="section-head">
+          <div><span class="section-number">09</span><h2 id="coverage-title">Section 16 coverage boundary</h2></div>
+          <p>This inventory prevents shell review from being mistaken for approval of the complete MVP clickable prototype.</p>
+        </div>
+        <table class="data-table">
+          <caption>Master section 16 coverage and exclusion table</caption>
+          <thead><tr><th>Layer</th><th>Covered by this board</th><th>Intentionally out of #36 scope</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Layer">UX structure</td><td data-label="Covered">Primary shell, responsive navigation, avatar/settings path, Thêm boundary, modal and safe return rules</td><td data-label="Excluded">Complete screen map and domain drill-down navigation</td></tr>
+            <tr><td data-label="Layer">Design system</td><td data-label="Covered">Colors, contrast, type, spacing, elevation, motion, accessibility handoff</td><td data-label="Excluded">Approved production theme implementation and platform font bundling</td></tr>
+            <tr><td data-label="Layer">Reusable components</td><td data-label="Covered">Global anatomy and applicable-state matrix for required families</td><td data-label="Excluded">Production component APIs and exhaustive domain variants</td></tr>
+            <tr><td data-label="Layer">Entry and onboarding screens</td><td data-label="Covered">None</td><td data-label="Excluded">All listed section 16.2.4 screens</td></tr>
+            <tr><td data-label="Layer">Tổng quan screens</td><td data-label="Covered">Shell-level priority specimen only</td><td data-label="Excluded">Dashboard flows, explanations, freshness overview, obligations and full state screens</td></tr>
+            <tr><td data-label="Layer">Tài sản &amp; Nợ screens</td><td data-label="Covered">Thêm selection boundary only</td><td data-label="Excluded">Catalogs, forms, detail, valuation, edit and safe-delete flows</td></tr>
+            <tr><td data-label="Layer">Dòng tiền screens</td><td data-label="Covered">Navigation destination only</td><td data-label="Excluded">All monthly, entry, forecast and drill-down screens</td></tr>
+            <tr><td data-label="Layer">Mục tiêu screens</td><td data-label="Covered">Navigation destination only</td><td data-label="Excluded">All goal list, template, form, detail, projection and state screens</td></tr>
+            <tr><td data-label="Layer">Nhận định screens</td><td data-label="Covered">Navigation destination only</td><td data-label="Excluded">Grouped report, detail, linked records and resolved states</td></tr>
+            <tr><td data-label="Layer">Hồ sơ &amp; cài đặt screens</td><td data-label="Covered">Avatar entry point and return behavior only</td><td data-label="Excluded">Profile, exchange rate, preferences, feedback and sign-out simulation</td></tr>
+            <tr><td data-label="Layer">Eight user flows</td><td data-label="Covered">None</td><td data-label="Excluded">All eight happy and recovery flows in §16.2.5</td></tr>
+            <tr><td data-label="Layer">Mock interactions</td><td data-label="Covered">Deterministic shell switch, state switch, sheet, dialog, Escape and focus return</td><td data-label="Excluded">Forms, charts, filters, production routes, auth, persistence and calculations</td></tr>
+          </tbody>
+        </table>
+        <p class="source">Coverage taxonomy: guideline §§16.1–16.4. “Covered” means reviewed as a shell/component specimen only.</p>
+      </section>
+
+      <section aria-labelledby="approval-title">
+        <div class="section-head">
+          <div><span class="section-number">10</span><h2 id="approval-title">Accessibility and approval gate</h2></div>
+          <p>These local checkboxes are review aids only. They are not persisted and do not record Product Owner approval.</p>
+        </div>
+        <div class="grid two">
+          <div class="card">
+            <h3>Accessibility review</h3>
+            <div class="checklist">
+              <label class="check"><input type="checkbox"><span>WCAG 2.2 AA pairs have numeric evidence; decorative border and gold limits are explicit.</span></label>
+              <label class="check"><input type="checkbox"><span>Every control is keyboard reachable, has a visible focus ring, and uses a minimum 44px target.</span></label>
+              <label class="check"><input type="checkbox"><span>Dialog and sheet close with Escape and return focus to their invoking controls.</span></label>
+              <label class="check"><input type="checkbox"><span>States use text plus shape or icon and never depend on color alone.</span></label>
+              <label class="check"><input type="checkbox"><span>At 360px, tables become stacked records and do not require horizontal scrolling.</span></label>
+              <label class="check"><input type="checkbox"><span>Text can wrap, browser zoom remains enabled, and motion respects reduced-motion settings.</span></label>
+            </div>
+            <p class="source">Guideline §§5.3, 5.5, 12, 14.</p>
+          </div>
+          <div class="card">
+            <h3>Product Owner decisions</h3>
+            <div class="checklist">
+              <label class="check"><input type="checkbox"><span>Approve the MD3 direct and project-extension mappings.</span></label>
+              <label class="check"><input type="checkbox"><span>Approve the Paper typography-role mapping and offline specimen limitation.</span></label>
+              <label class="check"><input type="checkbox"><span>Approve bottom navigation below 768px, rail at 768–1023px, and sidebar at 1024px and above.</span></label>
+              <label class="check"><input type="checkbox"><span>Approve the observable flat, raised-card, and modal elevation recipes.</span></label>
+              <label class="check"><input type="checkbox"><span>Approve state anatomy, ownership boundaries, and non-enumerating unavailable copy.</span></label>
+              <label class="check"><input type="checkbox"><span>Confirm that this board approves only issue #36 design direction, not full section 16 coverage or production readiness.</span></label>
+            </div>
+            <p class="source">Approval must be recorded separately in the stateful Phase 3 report.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p><strong>Authority:</strong> <code>docs/design-guidelines.md</code>, approved baseline, last updated 2026-09-13. This file is issue-scoped review evidence and must not become an alternate source of truth.</p>
+    </footer>
+  </div>
+
+  <dialog id="create-sheet" class="sheet" aria-labelledby="create-title">
+    <h2 id="create-title">Thêm bản ghi</h2>
+    <p>Chọn loại bản ghi. Trong sản phẩm, lựa chọn sẽ mở một màn hình biểu mẫu có thể điều hướng.</p>
+    <div class="sheet-options">
+      <button type="button" data-sheet-choice>Tài sản</button>
+      <button type="button" data-sheet-choice>Công nợ</button>
+      <button type="button" data-sheet-choice>Thu nhập</button>
+      <button type="button" data-sheet-choice>Chi phí</button>
+      <button type="button" data-sheet-choice>Mục tiêu</button>
+    </div>
+    <div class="dialog-actions"><button type="button" data-dialog-close>Hủy</button></div>
+  </dialog>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <h2 id="settings-title">Hồ sơ và cài đặt</h2>
+    <p>Điểm vào mô phỏng. Nội dung hồ sơ, phiên và quyền sở hữu thuộc issue #40.</p>
+    <div class="dialog-actions"><button type="button" data-dialog-close>Đóng</button></div>
+  </dialog>
+
+  <dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
+    <h2 id="unsaved-title">Giữ thay đổi chưa lưu?</h2>
+    <p>Dữ liệu mô phỏng chưa được gửi. Tiếp tục chỉnh sửa để giữ nội dung hoặc xác nhận bỏ thay đổi.</p>
+    <div class="dialog-actions"><button type="button" data-dialog-close>Tiếp tục chỉnh sửa</button><button class="danger" type="button" data-dialog-close>Bỏ thay đổi</button></div>
+  </dialog>
+
+  <script>
+    (() => {
+      const shell = document.querySelector('#shell-demo');
+      const caption = document.querySelector('#shell-caption');
+      const shellButtons = [...document.querySelectorAll('[data-shell-width]')];
+      const descriptions = {
+        360: '360px phone simulation. Bottom navigation, one content column, 16px inset, lower-thumb Thêm, and reserved bottom safe area.',
+        375: '375px phone simulation. Bottom navigation keeps the same labels, order, hierarchy, and safe-area reservation.',
+        768: '768px tablet simulation. Approved navigation rail with a 24px inset and optional comparison column.',
+        1024: '1024px desktop simulation. Approved stable sidebar, 32px inset, and bounded 720px main content.',
+        1440: '1440px desktop simulation. Stable sidebar and bounded reading width prevent content from stretching.'
+      };
+
+      shellButtons.forEach((button) => button.addEventListener('click', () => {
+        const width = button.dataset.shellWidth;
+        const mode = Number(width) < 768 ? 'phone' : Number(width) < 1024 ? 'tablet' : 'desktop';
+        shell.className = mode;
+        shell.dataset.width = width;
+        shellButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        caption.textContent = descriptions[width];
+      }));
+
+      const dialogs = [
+        { trigger: document.querySelector('#create-trigger'), dialog: document.querySelector('#create-sheet') },
+        { trigger: document.querySelector('#avatar-trigger'), dialog: document.querySelector('#settings-dialog') },
+        { trigger: document.querySelector('#dialog-trigger'), dialog: document.querySelector('#unsaved-dialog') }
+      ];
+
+      dialogs.forEach(({ trigger, dialog }) => {
+        trigger.addEventListener('click', () => dialog.showModal());
+        dialog.querySelectorAll('[data-dialog-close]').forEach((button) => button.addEventListener('click', () => dialog.close()));
+        dialog.addEventListener('click', (event) => {
+          if (event.target === dialog) dialog.close();
+        });
+        dialog.addEventListener('close', () => trigger.focus());
+      });
+
+      document.querySelectorAll('[data-sheet-choice]').forEach((button) => button.addEventListener('click', () => {
+        document.querySelector('#create-sheet').close();
+      }));
+
+      const stateButtons = [...document.querySelectorAll('[data-state]')];
+      const statePanels = [...document.querySelectorAll('[data-state-panel]')];
+      stateButtons.forEach((button) => button.addEventListener('click', () => {
+        const state = button.dataset.state;
+        stateButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        statePanels.forEach((panel) => panel.classList.toggle('hidden', panel.dataset.statePanel !== state));
+      }));
+
+      document.querySelector('#retry-button').addEventListener('click', (event) => {
+        event.currentTarget.disabled = true;
+        event.currentTarget.textContent = 'Đang thử lại';
+        requestAnimationFrame(() => {
+          stateButtons.find((button) => button.dataset.state === 'success').click();
+          event.currentTarget.disabled = false;
+          event.currentTarget.textContent = 'Thử lại';
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Issue 36 design approval and handoff",
+    "subtitle": "The design contract stays authoritative while review evidence moves through approval",
+    "description": "A three-lane workflow from contract audit through Product Owner approval to the frontend issue 37 handoff.",
+    "locale": "en",
+    "visual_preset": "editorial",
+    "theme": "light",
+    "animation": "none"
+  },
+  "lanes": [
+    { "id": "design", "label": "Design", "role": "worker" },
+    { "id": "po", "label": "Product Owner", "role": "approver" },
+    { "id": "frontend", "label": "Frontend 37", "role": "worker" }
+  ],
+  "steps": [
+    { "id": "audit", "label": "Audit Existing Contract", "lane": "design", "kind": "start" },
+    { "id": "map", "label": "Map Tokens States Shell", "lane": "design", "kind": "action" },
+    { "id": "board", "label": "Build Review Board", "lane": "design", "kind": "action" },
+    { "id": "verify", "label": "Verify Evidence", "lane": "design", "kind": "action" },
+    { "id": "approve", "label": "Approve Decisions", "lane": "po", "kind": "decision" },
+    { "id": "revise", "label": "Reconcile Changes", "lane": "design", "kind": "action" },
+    { "id": "publish", "label": "Approve Redacted Notice", "lane": "po", "kind": "decision" },
+    { "id": "handoff", "label": "Receive Stable Contract", "lane": "frontend", "kind": "terminal-success" }
+  ],
+  "transitions": [
+    { "from": "audit", "to": "map", "label": "Gaps Known", "kind": "normal" },
+    { "from": "map", "to": "board", "label": "Proposals Ready", "kind": "normal" },
+    { "from": "board", "to": "verify", "label": "Reviewable", "kind": "normal" },
+    { "from": "verify", "to": "approve", "label": "Evidence Passes", "kind": "normal" },
+    { "from": "approve", "to": "revise", "label": "Changes Requested", "kind": "branch-false" },
+    { "from": "revise", "to": "verify", "label": "Recheck", "kind": "retry" },
+    { "from": "approve", "to": "publish", "label": "Approved", "kind": "branch-true" },
+    { "from": "publish", "to": "handoff", "label": "Safe to Share", "kind": "branch-true" }
+  ]
+}
