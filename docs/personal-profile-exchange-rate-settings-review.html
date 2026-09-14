@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Issue #48 — Hồ sơ cá nhân &amp; tỷ giá USD/VND</title>
+  <style>
+    :root {
+      --canvas: #f7f5ef;
+      --surface: #ffffff;
+      --surface-subtle: #efebe2;
+      --ink: #17212b;
+      --ink-secondary: #52606d;
+      --border: #d7d2c7;
+      --control-border: #8b877e;
+      --brand-navy: #182b45;
+      --primary: #0f5c5a;
+      --primary-pressed: #0b4746;
+      --primary-container: #d9efec;
+      --heritage-gold: #a87428;
+      --success: #1e6a45;
+      --warning: #8a5a00;
+      --error: #b42318;
+      --info: #2458a6;
+      --focus: #147d79;
+      --shadow-raised: 0 2px 8px rgba(24, 43, 69, 0.12);
+      --shadow-modal: 0 12px 32px rgba(24, 43, 69, 0.22);
+      --radius-card: 16px;
+      --radius-control: 12px;
+      --font-sans: "IBM Plex Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-serif: "Noto Serif Display", Georgia, serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    a { color: var(--primary); }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    .tabular { font-variant-numeric: tabular-nums; }
+
+    .skip-link {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      z-index: 100;
+      transform: translateY(-160%);
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--brand-navy);
+      color: #fff;
+    }
+    .skip-link:focus { transform: translateY(0); }
+
+    .review-header {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .review-header__inner,
+    .review-main {
+      width: min(1440px, calc(100% - 32px));
+      margin-inline: auto;
+    }
+    .review-header__inner { padding: 24px 0 20px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .review-title {
+      max-width: 980px;
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 600;
+      line-height: 1.12;
+      letter-spacing: -.025em;
+    }
+    .review-lede { max-width: 850px; margin: 12px 0 0; color: var(--ink-secondary); }
+    .gold-rule { width: 72px; height: 3px; margin-top: 18px; background: var(--heritage-gold); }
+
+    .simulation-notice {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-top: 20px;
+      padding: 14px 16px;
+      border: 1px solid #98b8d9;
+      border-radius: 12px;
+      background: #eef5fc;
+      color: #173f70;
+    }
+    .simulation-notice svg { flex: 0 0 auto; margin-top: 2px; }
+    .simulation-notice strong { display: block; }
+
+    .review-main { padding: 24px 0 64px; }
+    .review-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: var(--shadow-raised);
+    }
+    .toolbar-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .toolbar-label { margin-right: 4px; font-size: 14px; font-weight: 700; }
+    .chip {
+      min-height: 44px;
+      padding: 8px 13px;
+      border: 1px solid var(--control-border);
+      border-radius: 999px;
+      background: var(--surface);
+      cursor: pointer;
+    }
+    .chip:hover { background: var(--surface-subtle); }
+    .chip[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-container); color: var(--primary-pressed); font-weight: 700; }
+
+    .review-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+    .prototype-zone { min-width: 0; }
+    .annotation-panel {
+      position: sticky;
+      top: 92px;
+      display: grid;
+      gap: 16px;
+    }
+    .review-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      background: var(--surface);
+    }
+    .review-card h2, .review-card h3 { margin: 0; }
+    .review-card h2 { font-size: 20px; line-height: 28px; }
+    .review-card h3 { font-size: 16px; line-height: 24px; }
+    .review-card p { margin: 8px 0 0; color: var(--ink-secondary); }
+    .review-card ul { margin: 12px 0 0; padding-left: 20px; }
+    .review-card li + li { margin-top: 6px; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-pill--success { background: #e2f1e8; color: #174f36; }
+    .status-pill--warning { background: #fff1d6; color: #6d4500; }
+    .status-pill--info { background: #e8f0fb; color: #1d4b8d; }
+    .status-pill--muted { background: var(--surface-subtle); color: var(--ink-secondary); }
+
+    .device-stage {
+      min-height: 820px;
+      padding: 24px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #e7e2d8;
+    }
+    .app-shell {
+      position: relative;
+      display: grid;
+      grid-template-columns: 244px minmax(0, 1fr);
+      width: 100%;
+      min-height: 760px;
+      margin-inline: auto;
+      overflow: hidden;
+      border: 1px solid #bbb4a8;
+      border-radius: 22px;
+      background: var(--canvas);
+      box-shadow: 0 18px 48px rgba(24, 43, 69, .13);
+      transition: width 220ms ease;
+    }
+    .device-stage[data-viewport="360"] .app-shell { width: 360px; grid-template-columns: 1fr; }
+    .device-stage[data-viewport="375"] .app-shell { width: 375px; grid-template-columns: 1fr; }
+    .device-stage[data-viewport="768"] .app-shell { width: 768px; grid-template-columns: 80px minmax(0, 1fr); }
+    .device-stage[data-viewport="1024"] .app-shell { width: min(1024px, 100%); }
+    .device-stage[data-viewport="1440"] .app-shell { width: 100%; }
+
+    .side-nav {
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      border-right: 1px solid var(--border);
+      background: var(--brand-navy);
+      color: #fff;
+    }
+    .wordmark { display: flex; gap: 10px; align-items: center; margin-bottom: 28px; font-family: var(--font-serif); font-size: 20px; }
+    .wordmark-mark { width: 28px; height: 28px; border: 1px solid #c7a86f; border-radius: 50%; position: relative; }
+    .wordmark-mark::after { content: ""; position: absolute; inset: 7px; border: 1px solid #c7a86f; border-radius: 50%; }
+    .primary-nav { display: grid; gap: 8px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      color: #e7edf4;
+      text-align: left;
+    }
+    .nav-item.is-active { background: rgba(217, 239, 236, .15); color: #fff; font-weight: 700; }
+    .nav-item svg { flex: 0 0 auto; }
+    .nav-foot { margin-top: auto; padding: 14px 10px 0; border-top: 1px solid rgba(255,255,255,.16); font-size: 12px; color: #c7d1dc; }
+
+    .app-column { min-width: 0; }
+    .app-bar {
+      display: flex;
+      min-height: 72px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, .92);
+    }
+    .app-bar__context { min-width: 0; }
+    .app-bar__context span { display: block; color: var(--ink-secondary); font-size: 12px; }
+    .app-bar__context strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .avatar-button {
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      background: var(--primary-container);
+      color: var(--primary-pressed);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .app-main { padding: 32px; padding-bottom: 96px; }
+    .screen { max-width: 760px; margin-inline: auto; }
+    .screen-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 24px; }
+    .screen-header__copy { min-width: 0; }
+    .screen-header h1 { margin: 0; font-size: 24px; line-height: 32px; }
+    .screen-header p { margin: 4px 0 0; color: var(--ink-secondary); }
+    .back-button, .icon-button {
+      display: inline-grid;
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--control-border);
+      border-radius: 12px;
+      background: var(--surface);
+      cursor: pointer;
+    }
+
+    .welcome-hero {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--heritage-gold);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    .welcome-hero h1 { margin: 0; font-family: var(--font-serif); font-size: 30px; line-height: 38px; }
+    .welcome-hero p { color: var(--ink-secondary); }
+    .hero-metric { margin-top: 24px; }
+    .hero-metric small { display: block; color: var(--ink-secondary); }
+    .hero-metric strong { display: block; margin-top: 4px; font-size: 32px; line-height: 40px; font-variant-numeric: tabular-nums; }
+    .avatar-entry-hint { margin-top: 24px; padding: 12px 14px; border-radius: 12px; background: var(--primary-container); color: var(--primary-pressed); }
+
+    .stack { display: grid; gap: 16px; }
+    .section-title { margin: 28px 0 12px; font-size: 18px; line-height: 24px; }
+    .settings-row {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      width: 100%;
+      min-height: 84px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      text-align: left;
+      cursor: pointer;
+    }
+    .settings-row:hover { border-color: var(--primary); box-shadow: var(--shadow-raised); }
+    .settings-row__icon { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 12px; background: var(--primary-container); color: var(--primary); }
+    .settings-row strong { display: block; }
+    .settings-row small { display: block; margin-top: 2px; color: var(--ink-secondary); }
+    .chevron { color: var(--ink-secondary); }
+
+    .summary-card, .form-card, .impact-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    .summary-card__head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+    .summary-card h2 { margin: 0; font-size: 18px; }
+    .summary-card p { margin: 4px 0 0; color: var(--ink-secondary); }
+    .rate-answer { margin-top: 18px; }
+    .rate-answer span { display: block; color: var(--ink-secondary); font-size: 14px; }
+    .rate-answer strong { display: block; margin-top: 2px; font-size: clamp(27px, 5vw, 36px); line-height: 44px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+    .meta-list { display: grid; gap: 10px; margin: 18px 0 0; }
+    .meta-row { display: flex; gap: 16px; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); }
+    .meta-row dt { color: var(--ink-secondary); }
+    .meta-row dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    .banner {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border: 1px solid;
+      border-radius: 12px;
+    }
+    .banner svg { flex: 0 0 auto; margin-top: 2px; }
+    .banner strong { display: block; }
+    .banner p { margin: 2px 0 0; }
+    .banner--warning { border-color: #d4ae68; background: #fff7e8; color: #6d4500; }
+    .banner--error { border-color: #e4a09a; background: #fff0ee; color: #7e1c14; }
+    .banner--success { border-color: #8ac4a4; background: #edf8f1; color: #174f36; }
+    .banner--info { border-color: #98b8d9; background: #eef5fc; color: #173f70; }
+
+    .field { display: grid; gap: 7px; }
+    .field + .field { margin-top: 18px; }
+    .field label, .field-label { font-weight: 700; }
+    .required { color: var(--error); }
+    .control {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 14px;
+      border: 1px solid var(--control-border);
+      border-radius: var(--radius-control);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 16px;
+    }
+    .control[readonly] { border-color: var(--border); background: var(--surface-subtle); color: var(--ink-secondary); }
+    .control[aria-invalid="true"] { border: 2px solid var(--error); }
+    .helper { color: var(--ink-secondary); font-size: 14px; }
+    .field-error { color: var(--error); font-size: 14px; font-weight: 600; }
+    .rate-input-group { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: stretch; }
+    .rate-affix { display: grid; min-height: 52px; place-items: center; padding: 0 12px; border: 1px solid var(--control-border); background: var(--surface-subtle); font-weight: 700; }
+    .rate-affix:first-child { border-right: 0; border-radius: 12px 0 0 12px; }
+    .rate-affix:last-child { border-left: 0; border-radius: 0 12px 12px 0; }
+    .rate-input-group .control { border-radius: 0; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+    .button {
+      display: inline-flex;
+      min-height: 52px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .button:disabled { cursor: not-allowed; opacity: .55; }
+    .button--primary { background: var(--primary); color: #fff; }
+    .button--primary:hover:not(:disabled) { background: var(--primary-pressed); }
+    .button--secondary { border-color: var(--control-border); background: var(--surface); }
+    .button--tonal { background: var(--primary-container); color: var(--primary-pressed); }
+    .button--danger { border-color: var(--error); background: var(--surface); color: var(--error); }
+    .button--text { min-height: 44px; padding-inline: 10px; background: transparent; color: var(--primary); }
+
+    details.explainer { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+    details.explainer summary { min-height: 44px; padding: 9px 0; color: var(--primary); font-weight: 700; cursor: pointer; }
+    details.explainer p { color: var(--ink-secondary); }
+    .impact-card { background: var(--surface-subtle); }
+    .impact-equation { margin-top: 12px; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .scope-note { padding: 14px; border-left: 3px solid var(--heritage-gold); background: #fbfaf7; color: var(--ink-secondary); }
+
+    .bottom-nav { display: none; }
+    .review-section { margin-top: 28px; }
+    .review-section > h2 { margin: 0 0 12px; font-size: 22px; }
+    .review-section > p { margin: -4px 0 16px; color: var(--ink-secondary); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 13px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+    th { background: var(--surface-subtle); font-size: 13px; }
+    td { font-size: 14px; }
+    .decision-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .decision {
+      min-height: 92px;
+      padding: 14px;
+      border: 1px solid var(--control-border);
+      border-radius: 14px;
+      background: var(--surface);
+      text-align: left;
+      cursor: pointer;
+    }
+    .decision[aria-pressed="true"] { border: 2px solid var(--primary); background: var(--primary-container); }
+    .decision strong, .decision span { display: block; }
+    .decision span { margin-top: 4px; color: var(--ink-secondary); font-size: 13px; }
+    .review-result { margin-top: 12px; color: var(--ink-secondary); }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 80;
+      max-width: min(380px, calc(100vw - 32px));
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--brand-navy);
+      color: #fff;
+      box-shadow: var(--shadow-modal);
+    }
+    dialog {
+      width: min(440px, calc(100vw - 32px));
+      padding: 0;
+      border: 0;
+      border-radius: 22px;
+      color: var(--ink);
+      box-shadow: var(--shadow-modal);
+    }
+    dialog::backdrop { background: rgba(23, 33, 43, .56); }
+    .dialog-content { padding: 24px; }
+    .dialog-content h2 { margin: 0; font-size: 20px; }
+    .dialog-content p { color: var(--ink-secondary); }
+
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; animation: spin 700ms linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .device-stage[data-viewport="768"] .side-nav { padding: 20px 10px; }
+    .device-stage[data-viewport="768"] .wordmark { justify-content: center; }
+    .device-stage[data-viewport="768"] .wordmark span:last-child,
+    .device-stage[data-viewport="768"] .nav-item span,
+    .device-stage[data-viewport="768"] .nav-foot { display: none; }
+    .device-stage[data-viewport="768"] .nav-item { justify-content: center; padding-inline: 0; }
+    .device-stage[data-viewport="768"] .app-main { padding: 24px; }
+
+    .device-stage[data-viewport="360"] .side-nav,
+    .device-stage[data-viewport="375"] .side-nav { display: none; }
+    .device-stage[data-viewport="360"] .app-bar,
+    .device-stage[data-viewport="375"] .app-bar { min-height: 64px; padding: 8px 16px; }
+    .device-stage[data-viewport="360"] .app-main,
+    .device-stage[data-viewport="375"] .app-main { padding: 20px 16px 112px; }
+    .device-stage[data-viewport="360"] .bottom-nav,
+    .device-stage[data-viewport="375"] .bottom-nav {
+      position: absolute;
+      inset: auto 0 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      min-height: 84px;
+      padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .bottom-nav button { min-width: 0; min-height: 60px; padding: 4px 2px; border: 0; background: transparent; color: var(--ink-secondary); font-size: 10px; line-height: 13px; }
+    .bottom-nav button svg { display: block; margin: 0 auto 3px; }
+    .bottom-nav button.is-active { color: var(--primary); font-weight: 700; }
+    .device-stage[data-viewport="360"] .device-stage,
+    .device-stage[data-viewport="375"] .device-stage { padding-inline: 0; }
+    .device-stage[data-viewport="360"] .summary-card__head,
+    .device-stage[data-viewport="375"] .summary-card__head { display: grid; }
+    .device-stage[data-viewport="360"] .meta-row,
+    .device-stage[data-viewport="375"] .meta-row { display: grid; gap: 2px; }
+    .device-stage[data-viewport="360"] .meta-row dd,
+    .device-stage[data-viewport="375"] .meta-row dd { text-align: left; }
+    .device-stage[data-viewport="360"] .form-actions,
+    .device-stage[data-viewport="375"] .form-actions { display: grid; }
+    .device-stage[data-viewport="360"] .button,
+    .device-stage[data-viewport="375"] .button { width: 100%; }
+
+    @media (max-width: 1100px) {
+      .review-layout { grid-template-columns: 1fr; }
+      .annotation-panel { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 700px) {
+      .review-header__inner, .review-main { width: min(100% - 24px, 1440px); }
+      .review-toolbar { position: static; }
+      .device-stage { margin-inline: -12px; padding: 12px 0; border-radius: 0; }
+      .annotation-panel, .decision-grid { grid-template-columns: 1fr; }
+      .table-wrap { border: 0; background: transparent; overflow: visible; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+      td { display: grid; grid-template-columns: minmax(96px, 38%) 1fr; gap: 12px; }
+      td::before { content: attr(data-label); font-weight: 700; color: var(--ink-secondary); }
+      .toast { right: 16px; bottom: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#prototype">Bỏ qua phần giới thiệu</a>
+
+  <header class="review-header">
+    <div class="review-header__inner">
+      <p class="eyebrow">Issue #48 · Design review · MVP 1A</p>
+      <h1 class="review-title">Hồ sơ cá nhân &amp; tỷ giá USD/VND</h1>
+      <p class="review-lede">Một bề mặt duyệt thiết kế có thể bấm thử, tập trung vào việc người dùng kiểm soát thông tin cá nhân cơ bản và tỷ giá thủ công dùng cho báo cáo VND.</p>
+      <div class="gold-rule" aria-hidden="true"></div>
+      <div class="simulation-notice" role="note">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 10v6M12 7h.01"></path></svg>
+        <div><strong>Artifact mô phỏng để duyệt UX/UI</strong>Dữ liệu là hư cấu; thao tác không gọi API, không lưu lại sau khi tải lại trang và không đại diện cho auth, quyền sở hữu hoặc business calculation production.</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="review-main" id="prototype">
+    <div class="review-toolbar" aria-label="Điều khiển bản duyệt">
+      <div class="toolbar-group" role="group" aria-label="Kích thước viewport mô phỏng">
+        <span class="toolbar-label">Viewport</span>
+        <button class="chip viewport-chip" type="button" data-width="360" aria-pressed="true">360</button>
+        <button class="chip viewport-chip" type="button" data-width="375" aria-pressed="false">375</button>
+        <button class="chip viewport-chip" type="button" data-width="768" aria-pressed="false">768</button>
+        <button class="chip viewport-chip" type="button" data-width="1024" aria-pressed="false">1024</button>
+        <button class="chip viewport-chip" type="button" data-width="1440" aria-pressed="false">1440</button>
+      </div>
+      <div class="toolbar-group" role="group" aria-label="Trạng thái tỷ giá mô phỏng">
+        <span class="toolbar-label">Trạng thái</span>
+        <button class="chip scenario-chip" type="button" data-scenario="current" aria-pressed="true">Hiện tại</button>
+        <button class="chip scenario-chip" type="button" data-scenario="stale" aria-pressed="false">Cần cập nhật</button>
+        <button class="chip scenario-chip" type="button" data-scenario="missing" aria-pressed="false">Chưa thiết lập</button>
+        <button class="chip scenario-chip" type="button" data-scenario="offline" aria-pressed="false">Mất kết nối</button>
+        <button class="chip scenario-chip" type="button" data-scenario="inaccessible" aria-pressed="false">Không thể mở</button>
+      </div>
+    </div>
+
+    <div class="review-layout">
+      <section class="prototype-zone" aria-labelledby="prototype-title">
+        <h2 id="prototype-title" class="eyebrow">Prototype ứng dụng</h2>
+        <div class="device-stage" id="device-stage" data-viewport="360">
+          <div class="app-shell">
+            <aside class="side-nav" aria-label="Điều hướng chính">
+              <div class="wordmark"><span class="wordmark-mark" aria-hidden="true"></span><span>Rikkaus</span></div>
+              <nav class="primary-nav">
+                <button class="nav-item is-active" type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"></path></svg><span>Tổng quan</span></button>
+                <button class="nav-item" type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16v12H4zM7 7V5h10v2M8 12h8"></path></svg><span>Tài sản &amp; Nợ</span></button>
+                <button class="nav-item" type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 18 9 13l4 3 7-8M17 8h3v3"></path></svg><span>Dòng tiền</span></button>
+                <button class="nav-item" type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg><span>Mục tiêu</span></button>
+                <button class="nav-item" type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 19h14M7 16V9m5 7V5m5 11v-4"></path></svg><span>Nhận định</span></button>
+              </nav>
+              <p class="nav-foot">Mô phỏng điều hướng đã được duyệt tại issue #36</p>
+            </aside>
+
+            <div class="app-column">
+              <header class="app-bar">
+                <div class="app-bar__context"><span>Rikkaus Wealth OS</span><strong id="app-bar-title">Tổng quan tài chính</strong></div>
+                <button class="avatar-button" id="avatar-button" type="button" aria-label="Mở Hồ sơ và cài đặt">TN</button>
+              </header>
+
+              <div class="app-main" id="app-main" tabindex="-1">
+                <section class="screen" data-screen="home">
+                  <div class="welcome-hero">
+                    <p class="eyebrow">Cập nhật 12/09/2026</p>
+                    <h1>Tài sản ròng hiện tại</h1>
+                    <div class="hero-metric"><small>Tổng giá trị sau công nợ</small><strong>10.470.000.000 ₫</strong></div>
+                    <p>Dữ liệu mẫu được đối soát từ 12.002.000.000 ₫ tài sản và 1.532.000.000 ₫ công nợ.</p>
+                    <div class="avatar-entry-hint">Chọn avatar <strong>TN</strong> để mở Hồ sơ &amp; cài đặt.</div>
+                  </div>
+                </section>
+
+                <section class="screen" data-screen="settings" hidden>
+                  <div class="screen-header">
+                    <button class="back-button" type="button" data-action="back-home" aria-label="Quay lại Tổng quan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+                    <div class="screen-header__copy"><h1 tabindex="-1">Hồ sơ &amp; cài đặt</h1><p>Thông tin dùng để cá nhân hóa và quy đổi báo cáo.</p></div>
+                  </div>
+
+                  <div id="settings-state-banner"></div>
+                  <h2 class="section-title">Tài khoản</h2>
+                  <div class="stack">
+                    <button class="settings-row" type="button" data-action="open-profile">
+                      <span class="settings-row__icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.7-4 3-6 7-6s6.3 2 7 6"></path></svg></span>
+                      <span><strong>Hồ sơ cá nhân</strong><small>Trinh Nguyen · Email chỉ đọc</small></span>
+                      <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                  </div>
+
+                  <h2 class="section-title">Tiền tệ báo cáo</h2>
+                  <div class="stack">
+                    <button class="settings-row" type="button" data-action="open-rate">
+                      <span class="settings-row__icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 7h13l-3-3M19 17H6l3 3M18 7l-3 3M6 17l3-3"></path></svg></span>
+                      <span><strong>Tỷ giá USD/VND</strong><small id="rate-row-summary">1 USD = 25.100 VND · 12/09/2026</small></span>
+                      <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                    </button>
+                    <div class="scope-note"><strong>Phạm vi #48:</strong> Tùy chọn hiển thị, phản hồi trong ứng dụng và đăng xuất không được thiết kế trong artifact này.</div>
+                  </div>
+                </section>
+
+                <section class="screen" data-screen="profile" hidden>
+                  <div class="screen-header">
+                    <button class="back-button" type="button" data-action="back-settings" aria-label="Quay lại Hồ sơ và cài đặt"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+                    <div class="screen-header__copy"><h1 tabindex="-1">Hồ sơ cá nhân</h1><p>Chỉ tên hiển thị thuộc phạm vi chỉnh sửa của #48.</p></div>
+                  </div>
+                  <div id="profile-feedback" aria-live="polite"></div>
+                  <form class="form-card" id="profile-form" novalidate>
+                    <div class="field">
+                      <label for="display-name">Tên hiển thị <span class="required" aria-hidden="true">*</span></label>
+                      <input class="control" id="display-name" name="display-name" value="Trinh Nguyen" autocomplete="name" required>
+                      <span class="helper">Tên xuất hiện trong lời chào và khu vực tài khoản.</span>
+                      <span class="field-error" id="display-name-error" hidden>Nhập tên hiển thị để tiếp tục.</span>
+                    </div>
+                    <div class="field">
+                      <label for="account-email">Email tài khoản</label>
+                      <input class="control" id="account-email" value="nguoidung.mau@example.com" readonly aria-readonly="true">
+                      <span class="helper">Email thuộc identity contract và không chỉnh sửa tại đây.</span>
+                    </div>
+                    <div class="form-actions">
+                      <button class="button button--secondary" type="button" data-action="cancel-profile">Hủy</button>
+                      <button class="button button--primary" id="save-profile" type="submit" disabled>Lưu hồ sơ</button>
+                    </div>
+                  </form>
+                </section>
+
+                <section class="screen" data-screen="rate" hidden>
+                  <div class="screen-header">
+                    <button class="back-button" type="button" data-action="back-settings" aria-label="Quay lại Hồ sơ và cài đặt"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+                    <div class="screen-header__copy"><h1 tabindex="-1">Tỷ giá USD/VND</h1><p>Tỷ giá thủ công dùng để trình bày tài sản USD bằng VND.</p></div>
+                  </div>
+                  <div class="stack" id="rate-feedback" aria-live="polite"></div>
+
+                  <article class="summary-card" id="rate-summary-card">
+                    <div class="summary-card__head">
+                      <div><h2>Tỷ giá đang sử dụng</h2><p>Tiền tệ báo cáo: <strong>VND</strong></p></div>
+                      <span class="status-pill status-pill--success" id="rate-status"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m3 8 3 3 7-7"></path></svg>Đang sử dụng</span>
+                    </div>
+                    <div class="rate-answer"><span>Quy đổi hiện tại</span><strong id="rate-display">1 USD = 25.100 VND</strong></div>
+                    <dl class="meta-list">
+                      <div class="meta-row"><dt>Ngày áp dụng do người dùng khai báo</dt><dd id="effective-date-display">12/09/2026</dd></div>
+                      <div class="meta-row"><dt>Hệ thống ghi nhận lần lưu gần nhất</dt><dd>12/09/2026 · 09:42 ICT</dd></div>
+                    </dl>
+                    <details class="explainer"><summary>Cách dùng tỷ giá này</summary><p>Hệ thống dùng tỷ giá do người dùng nhập để trình bày giá trị USD sang đồng tiền báo cáo VND. Quy tắc precision, thời gian và freshness thuộc contract #43; màn hình này chỉ thể hiện settings flow.</p></details>
+                    <div class="form-actions"><button class="button button--primary" id="edit-rate" type="button" data-action="edit-rate">Chỉnh sửa tỷ giá</button></div>
+                  </article>
+
+                  <form class="form-card" id="rate-form" novalidate hidden>
+                    <div class="field">
+                      <span class="field-label" id="rate-label">Tỷ giá quy đổi <span class="required" aria-hidden="true">*</span></span>
+                      <div class="rate-input-group">
+                        <span class="rate-affix">1 USD</span>
+                        <input class="control tabular" id="rate-input" name="rate" value="25100" inputmode="decimal" aria-labelledby="rate-label" aria-describedby="rate-helper rate-error" required>
+                        <span class="rate-affix">VND</span>
+                      </div>
+                      <span class="helper" id="rate-helper">Nhập số lớn hơn 0. Định dạng và precision tuân theo contract #43.</span>
+                      <span class="field-error" id="rate-error" hidden>Nhập tỷ giá hợp lệ lớn hơn 0.</span>
+                    </div>
+                    <div class="field">
+                      <label for="rate-date">Ngày áp dụng <span class="required" aria-hidden="true">*</span></label>
+                      <input class="control tabular" id="rate-date" name="rate-date" type="date" value="2026-09-12" aria-describedby="date-helper date-error" required>
+                      <span class="helper" id="date-helper">Ngày bạn xác nhận tỷ giá này có hiệu lực; không phải thời điểm hệ thống lưu.</span>
+                      <span class="field-error" id="date-error" hidden>Chọn ngày áp dụng để tiếp tục.</span>
+                    </div>
+                    <div class="form-actions">
+                      <button class="button button--secondary" type="button" data-action="cancel-rate">Hủy</button>
+                      <button class="button button--primary" id="save-rate" type="submit" disabled>Lưu tỷ giá</button>
+                    </div>
+                  </form>
+
+                  <article class="impact-card">
+                    <h2>Ví dụ ảnh hưởng đến báo cáo</h2>
+                    <p>Minh họa traceability bằng fixture đã duyệt; không phải calculation production.</p>
+                    <div class="impact-equation" id="impact-equation">20.000 USD × 25.100 = 502.000.000 VND</div>
+                  </article>
+                </section>
+              </div>
+
+              <nav class="bottom-nav" aria-label="Điều hướng chính trên điện thoại">
+                <button class="is-active" type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"></path></svg>Tổng quan</button>
+                <button type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16v12H4zM7 7V5h10v2"></path></svg>Tài sản &amp; Nợ</button>
+                <button type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 18 9 13l4 3 7-8"></path></svg>Dòng tiền</button>
+                <button type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg>Mục tiêu</button>
+                <button type="button"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 19h14M7 16V9m5 7V5m5 11v-4"></path></svg>Nhận định</button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="annotation-panel" aria-label="Ghi chú thiết kế">
+        <section class="review-card">
+          <span class="status-pill status-pill--info">Design boundary</span>
+          <h2 style="margin-top:10px">#48 dùng contract #43</h2>
+          <p>#43 sở hữu cách hiểu và hiển thị money/rate/time. #48 sở hữu entry point, form, feedback và recovery flow.</p>
+        </section>
+        <section class="review-card">
+          <h2>Điểm PO cần kiểm tra</h2>
+          <ul>
+            <li>Avatar là entry point phụ, không tạo destination thứ sáu.</li>
+            <li>Tên hiển thị là profile field duy nhất có thể sửa.</li>
+            <li>VND cố định; chỉ USD/VND xuất hiện.</li>
+            <li>Ngày áp dụng khác thời điểm hệ thống lưu.</li>
+            <li>Save giữ người dùng ở màn hình tỷ giá.</li>
+          </ul>
+        </section>
+        <section class="review-card">
+          <h2>State anatomy</h2>
+          <p><strong id="scenario-name">Hiện tại:</strong> <span id="scenario-description">Rate, ngày áp dụng và trạng thái sử dụng đều hiển thị trực tiếp.</span></p>
+        </section>
+      </aside>
+    </div>
+
+    <section class="review-section" aria-labelledby="inventory-title">
+      <h2 id="inventory-title">Inventory và ranh giới</h2>
+      <p>Master inventory vẫn hiện diện để tránh nhầm một increment với prototype MVP hoàn chỉnh.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nhóm</th><th>Màn hình / flow</th><th>Trạng thái</th><th>Chủ sở hữu</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Nhóm">Shell</td><td data-label="Màn hình / flow">Avatar → Hồ sơ &amp; cài đặt → quay lại</td><td data-label="Trạng thái"><span class="status-pill status-pill--success">Review-ready</span></td><td data-label="Chủ sở hữu">#48 dùng shell #36</td></tr>
+            <tr><td data-label="Nhóm">Hồ sơ</td><td data-label="Màn hình / flow">Xem/sửa tên hiển thị; email chỉ đọc</td><td data-label="Trạng thái"><span class="status-pill status-pill--success">Review-ready</span></td><td data-label="Chủ sở hữu">#48; identity vẫn thuộc #40</td></tr>
+            <tr><td data-label="Nhóm">Tỷ giá</td><td data-label="Màn hình / flow">Xem/sửa USD/VND, ngày áp dụng, saved/error</td><td data-label="Trạng thái"><span class="status-pill status-pill--success">Review-ready</span></td><td data-label="Chủ sở hữu">#48 dùng primitives #43</td></tr>
+            <tr><td data-label="Nhóm">State</td><td data-label="Màn hình / flow">Missing, stale, offline, inaccessible, dirty, validation</td><td data-label="Trạng thái"><span class="status-pill status-pill--success">Review-ready</span></td><td data-label="Chủ sở hữu">#48 presentation</td></tr>
+            <tr><td data-label="Nhóm">Cài đặt khác</td><td data-label="Màn hình / flow">Preferences, feedback, sign-out</td><td data-label="Trạng thái"><span class="status-pill status-pill--muted">Ngoài #48</span></td><td data-label="Chủ sở hữu">Task khác</td></tr>
+            <tr><td data-label="Nhóm">MVP domains</td><td data-label="Màn hình / flow">Tài sản, nợ, dòng tiền, mục tiêu, nhận định</td><td data-label="Trạng thái"><span class="status-pill status-pill--muted">Chưa thuộc increment</span></td><td data-label="Chủ sở hữu">Các design task tương ứng</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="review-section" aria-labelledby="states-title">
+      <h2 id="states-title">Ma trận trạng thái</h2>
+      <p>Mỗi trạng thái mô tả điều đã xảy ra, dữ liệu được giữ và đường phục hồi.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>State</th><th>Biểu hiện</th><th>Recovery</th><th>Không được suy diễn</th></tr></thead>
+          <tbody>
+            <tr><td data-label="State">Validation</td><td data-label="Biểu hiện">Lỗi inline + summary; focus lỗi đầu tiên</td><td data-label="Recovery">Sửa giá trị và lưu lại</td><td data-label="Không được suy diễn">Min/max, precision, future-date rule</td></tr>
+            <tr><td data-label="State">Saving / saved</td><td data-label="Biểu hiện">Nút disabled ổn định; xác nhận rate + ngày</td><td data-label="Recovery">Ở lại màn hình, tiếp tục kiểm tra</td><td data-label="Không được suy diễn">Persistence/API thành công thật</td></tr>
+            <tr><td data-label="State">Request error / offline</td><td data-label="Biểu hiện">Nội dung đã nhập vẫn được giữ</td><td data-label="Recovery">Thử lại hoặc tiếp tục chỉnh sửa</td><td data-label="Không được suy diễn">Transport/error schema production</td></tr>
+            <tr><td data-label="State">Missing</td><td data-label="Biểu hiện">Chưa có rate; USD chưa quy đổi</td><td data-label="Recovery">Thiết lập tỷ giá</td><td data-label="Không được suy diễn">USD trở thành unsupported asset</td></tr>
+            <tr><td data-label="State">Stale</td><td data-label="Biểu hiện">Icon + text + ngày tuyệt đối</td><td data-label="Recovery">Cập nhật tỷ giá</td><td data-label="Không được suy diễn">Một ngưỡng N ngày mới</td></tr>
+            <tr><td data-label="State">Inaccessible</td><td data-label="Biểu hiện">“Không thể mở mục này”</td><td data-label="Recovery">Quay lại vùng an toàn</td><td data-label="Không được suy diễn">Account, record hoặc permission tồn tại</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="review-section" aria-labelledby="fixture-title">
+      <h2 id="fixture-title">Đối soát fixture</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dữ liệu</th><th>Giá trị</th><th>Kết quả kiểm tra</th></tr></thead>
+          <tbody>
+            <tr><td data-label="Dữ liệu">Tỷ giá thủ công</td><td data-label="Giá trị" class="tabular">1 USD = 25.100 VND</td><td data-label="Kết quả">Chỉ VND/USD</td></tr>
+            <tr><td data-label="Dữ liệu">Tiền gửi USD mẫu</td><td data-label="Giá trị" class="tabular">20.000 USD</td><td data-label="Kết quả" class="tabular">502.000.000 VND</td></tr>
+            <tr><td data-label="Dữ liệu">Tài sản − Công nợ</td><td data-label="Giá trị" class="tabular">12.002.000.000 − 1.532.000.000 VND</td><td data-label="Kết quả" class="tabular">10.470.000.000 VND</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="review-section" aria-labelledby="approval-title">
+      <h2 id="approval-title">Quyết định Product Owner</h2>
+      <p>Các nút dưới đây chỉ hỗ trợ buổi review và không lưu lại. Quyết định chính thức được ghi trong report của issue #48.</p>
+      <div class="decision-grid" role="group" aria-label="Quyết định Product Owner cục bộ">
+        <button class="decision" type="button" data-decision="approved" aria-pressed="false"><strong>Duyệt hướng thiết kế</strong><span>Flow, visual direction và state coverage phù hợp.</span></button>
+        <button class="decision" type="button" data-decision="changes" aria-pressed="false"><strong>Yêu cầu chỉnh sửa</strong><span>Cần sửa một hoặc nhiều màn hình/flow trước khi duyệt.</span></button>
+        <button class="decision" type="button" data-decision="rejected" aria-pressed="false"><strong>Không duyệt</strong><span>Hướng thiết kế chưa phù hợp với mục tiêu issue.</span></button>
+      </div>
+      <p class="review-result" id="review-result" aria-live="polite">Chưa chọn quyết định trong phiên review này.</p>
+    </section>
+  </main>
+
+  <dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
+    <div class="dialog-content">
+      <h2 id="unsaved-title">Giữ thay đổi chưa lưu?</h2>
+      <p>Nội dung bạn vừa nhập chưa được lưu. Bạn có thể tiếp tục chỉnh sửa hoặc bỏ thay đổi để quay lại.</p>
+      <div class="form-actions">
+        <button class="button button--danger" id="discard-button" type="button">Bỏ thay đổi</button>
+        <button class="button button--primary" id="continue-button" type="button">Tiếp tục chỉnh sửa</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    (() => {
+      const stage = document.querySelector('#device-stage');
+      const appMain = document.querySelector('#app-main');
+      const appTitle = document.querySelector('#app-bar-title');
+      const avatarButton = document.querySelector('#avatar-button');
+      const screens = [...document.querySelectorAll('[data-screen]')];
+      const profileForm = document.querySelector('#profile-form');
+      const profileInput = document.querySelector('#display-name');
+      const profileError = document.querySelector('#display-name-error');
+      const profileFeedback = document.querySelector('#profile-feedback');
+      const saveProfile = document.querySelector('#save-profile');
+      const rateForm = document.querySelector('#rate-form');
+      const rateSummary = document.querySelector('#rate-summary-card');
+      const rateInput = document.querySelector('#rate-input');
+      const rateDate = document.querySelector('#rate-date');
+      const rateError = document.querySelector('#rate-error');
+      const dateError = document.querySelector('#date-error');
+      const saveRate = document.querySelector('#save-rate');
+      const rateFeedback = document.querySelector('#rate-feedback');
+      const rateDisplay = document.querySelector('#rate-display');
+      const rateDateDisplay = document.querySelector('#effective-date-display');
+      const rateStatus = document.querySelector('#rate-status');
+      const rateRowSummary = document.querySelector('#rate-row-summary');
+      const impactEquation = document.querySelector('#impact-equation');
+      const settingsBanner = document.querySelector('#settings-state-banner');
+      const unsavedDialog = document.querySelector('#unsaved-dialog');
+      const toast = document.querySelector('#toast');
+      let currentScreen = 'home';
+      let dirtyForm = null;
+      let pendingDestination = null;
+      let profileSavedValue = profileInput.value;
+      let rateSavedValue = rateInput.value;
+      let rateSavedDate = rateDate.value;
+      let scenario = 'current';
+
+      const icons = {
+        warning: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 4 3 20h18L12 4Z"></path><path d="M12 9v5m0 3h.01"></path></svg>',
+        error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m9 9 6 6m0-6-6 6"></path></svg>',
+        success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path></svg>',
+        info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 10v6m0-9h.01"></path></svg>'
+      };
+
+      function banner(kind, title, copy, actionLabel = '', action = '') {
+        return `<div class="banner banner--${kind}">${icons[kind]}<div><strong>${title}</strong><p>${copy}</p>${actionLabel ? `<button class="button button--text" type="button" data-action="${action}">${actionLabel}</button>` : ''}</div></div>`;
+      }
+
+      function showScreen(name, focus = true) {
+        currentScreen = name;
+        screens.forEach(screen => { screen.hidden = screen.dataset.screen !== name; });
+        const titles = { home: 'Tổng quan tài chính', settings: 'Hồ sơ & cài đặt', profile: 'Hồ sơ cá nhân', rate: 'Tỷ giá USD/VND' };
+        appTitle.textContent = titles[name];
+        if (focus) {
+          const heading = document.querySelector(`[data-screen="${name}"] h1`);
+          (heading || appMain).focus({ preventScroll: true });
+        }
+      }
+
+      function requestNavigation(destination) {
+        if (dirtyForm) {
+          pendingDestination = destination;
+          unsavedDialog.showModal();
+          document.querySelector('#continue-button').focus();
+          return;
+        }
+        showScreen(destination);
+      }
+
+      function setBusy(button, busy, label) {
+        button.disabled = busy;
+        button.innerHTML = busy ? `<span class="spinner" aria-hidden="true"></span>${label}` : label;
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.hidden = false;
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => { toast.hidden = true; }, 3200);
+      }
+
+      function formatRate(value) {
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 6 }).format(numeric) : value;
+      }
+
+      function formatDate(value) {
+        if (!value) return '—';
+        const [year, month, day] = value.split('-');
+        return `${day}/${month}/${year}`;
+      }
+
+      function updateProfileDirty() {
+        dirtyForm = profileInput.value !== profileSavedValue ? 'profile' : null;
+        saveProfile.disabled = !dirtyForm;
+        profileInput.removeAttribute('aria-invalid');
+        profileError.hidden = true;
+      }
+
+      function updateRateDirty() {
+        dirtyForm = (rateInput.value !== rateSavedValue || rateDate.value !== rateSavedDate) ? 'rate' : null;
+        saveRate.disabled = !dirtyForm;
+        rateInput.removeAttribute('aria-invalid');
+        rateDate.removeAttribute('aria-invalid');
+        rateError.hidden = true;
+        dateError.hidden = true;
+      }
+
+      function validateRate() {
+        const rateValid = rateInput.value.trim() !== '' && Number(rateInput.value) > 0;
+        const dateValid = rateDate.value.trim() !== '';
+        rateInput.setAttribute('aria-invalid', String(!rateValid));
+        rateDate.setAttribute('aria-invalid', String(!dateValid));
+        rateError.hidden = rateValid;
+        dateError.hidden = dateValid;
+        if (!rateValid) rateInput.focus();
+        else if (!dateValid) rateDate.focus();
+        return rateValid && dateValid;
+      }
+
+      function renderScenario(nextScenario) {
+        scenario = nextScenario;
+        document.querySelectorAll('.scenario-chip').forEach(chip => chip.setAttribute('aria-pressed', String(chip.dataset.scenario === scenario)));
+        const name = document.querySelector('#scenario-name');
+        const description = document.querySelector('#scenario-description');
+        settingsBanner.innerHTML = '';
+        rateFeedback.innerHTML = '';
+        rateSummary.hidden = false;
+        rateForm.hidden = true;
+        dirtyForm = null;
+        const scenarios = {
+          current: ['Hiện tại:', 'Rate, ngày áp dụng và trạng thái sử dụng đều hiển thị trực tiếp.'],
+          stale: ['Cần cập nhật:', 'Cảnh báo dùng icon, text, ngày tuyệt đối và đường cập nhật; không đặt ngưỡng N ngày.'],
+          missing: ['Chưa thiết lập:', 'Giải thích tác động đến quy đổi USD và đưa người dùng thẳng tới form.'],
+          offline: ['Mất kết nối:', 'Nêu rõ dữ liệu nhập được giữ và cung cấp đường thử lại an toàn.'],
+          inaccessible: ['Không thể mở:', 'Copy không tiết lộ record, tài khoản hoặc permission có tồn tại hay không.']
+        };
+        [name.textContent, description.textContent] = scenarios[scenario];
+
+        if (scenario === 'current') {
+          rateStatus.className = 'status-pill status-pill--success';
+          rateStatus.innerHTML = `${icons.success}Đang sử dụng`;
+          rateDisplay.textContent = `1 USD = ${formatRate(rateSavedValue)} VND`;
+          rateDateDisplay.textContent = formatDate(rateSavedDate);
+          rateRowSummary.textContent = `1 USD = ${formatRate(rateSavedValue)} VND · ${formatDate(rateSavedDate)}`;
+        }
+        if (scenario === 'stale') {
+          rateStatus.className = 'status-pill status-pill--warning';
+          rateStatus.innerHTML = `${icons.warning}Cần cập nhật`;
+          rateDateDisplay.textContent = '02/08/2026';
+          rateRowSummary.textContent = 'Cần cập nhật · Lần gần nhất 02/08/2026';
+          const html = banner('warning', 'Tỷ giá cần được cập nhật', 'Lần cập nhật gần nhất: 02/08/2026. Giá trị quy đổi từ USD có thể không còn phản ánh tỷ giá bạn muốn dùng.', 'Cập nhật tỷ giá', 'edit-rate');
+          settingsBanner.innerHTML = html;
+          rateFeedback.innerHTML = html;
+        }
+        if (scenario === 'missing') {
+          rateStatus.className = 'status-pill status-pill--muted';
+          rateStatus.textContent = 'Chưa thiết lập';
+          rateDisplay.textContent = 'Chưa có tỷ giá USD/VND';
+          rateDateDisplay.textContent = '—';
+          rateRowSummary.textContent = 'Chưa thiết lập tỷ giá';
+          const html = banner('info', 'Chưa có tỷ giá USD/VND', 'Nhập tỷ giá để xem giá trị USD quy đổi sang VND.', 'Thiết lập tỷ giá', 'edit-rate');
+          settingsBanner.innerHTML = html;
+          rateFeedback.innerHTML = html;
+        }
+        if (scenario === 'offline') {
+          const html = banner('error', 'Không thể lưu khi đang mất kết nối', 'Nội dung bạn đã nhập vẫn được giữ. Kết nối lại rồi thử lưu lần nữa.', 'Thử lại', 'retry-rate');
+          settingsBanner.innerHTML = html;
+          rateFeedback.innerHTML = html;
+        }
+        if (scenario === 'inaccessible') {
+          const html = banner('error', 'Không thể mở mục này', 'Quay lại Hồ sơ & cài đặt và thử lại sau. Thông báo không xác nhận tài khoản, bản ghi hoặc quyền truy cập.', 'Quay lại an toàn', 'safe-return');
+          settingsBanner.innerHTML = html;
+          rateFeedback.innerHTML = html;
+          rateSummary.hidden = true;
+        }
+      }
+
+      document.addEventListener('click', event => {
+        const viewport = event.target.closest('.viewport-chip');
+        if (viewport) {
+          stage.dataset.viewport = viewport.dataset.width;
+          document.querySelectorAll('.viewport-chip').forEach(chip => chip.setAttribute('aria-pressed', String(chip === viewport)));
+          return;
+        }
+        const scenarioButton = event.target.closest('.scenario-chip');
+        if (scenarioButton) {
+          renderScenario(scenarioButton.dataset.scenario);
+          if (currentScreen === 'home') showScreen('settings');
+          return;
+        }
+        const actionButton = event.target.closest('[data-action]');
+        if (!actionButton) return;
+        const action = actionButton.dataset.action;
+        if (action === 'back-home') requestNavigation('home');
+        if (action === 'back-settings') requestNavigation('settings');
+        if (action === 'open-profile') showScreen('profile');
+        if (action === 'open-rate') showScreen('rate');
+        if (action === 'edit-rate') {
+          showScreen('rate', false);
+          rateSummary.hidden = true;
+          rateForm.hidden = false;
+          rateFeedback.innerHTML = '';
+          rateInput.focus();
+        }
+        if (action === 'cancel-profile') requestNavigation('settings');
+        if (action === 'cancel-rate') requestNavigation('settings');
+        if (action === 'retry-rate') {
+          scenario = 'current';
+          rateSummary.hidden = true;
+          rateForm.hidden = false;
+          rateFeedback.innerHTML = banner('info', 'Nội dung đã được giữ', 'Kiểm tra lại tỷ giá và ngày áp dụng trước khi lưu.');
+          rateInput.focus();
+        }
+        if (action === 'safe-return') showScreen('settings');
+      });
+
+      avatarButton.addEventListener('click', () => showScreen('settings'));
+      profileInput.addEventListener('input', updateProfileDirty);
+      rateInput.addEventListener('input', updateRateDirty);
+      rateDate.addEventListener('input', updateRateDirty);
+      rateInput.addEventListener('blur', () => {
+        if (rateInput.value.trim() === '' || Number(rateInput.value) <= 0) {
+          rateInput.setAttribute('aria-invalid', 'true');
+          rateError.hidden = false;
+        }
+      });
+
+      profileForm.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!profileInput.value.trim()) {
+          profileInput.setAttribute('aria-invalid', 'true');
+          profileError.hidden = false;
+          profileInput.focus();
+          return;
+        }
+        setBusy(saveProfile, true, 'Đang lưu');
+        window.setTimeout(() => {
+          profileSavedValue = profileInput.value.trim();
+          dirtyForm = null;
+          setBusy(saveProfile, false, 'Lưu hồ sơ');
+          saveProfile.disabled = true;
+          profileFeedback.innerHTML = banner('success', 'Đã lưu hồ sơ', `Tên hiển thị đã đổi thành “${profileSavedValue}”.`);
+          showToast('Đã lưu hồ sơ. Mô phỏng sẽ đặt lại khi tải lại trang.');
+        }, 650);
+      });
+
+      rateForm.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!validateRate()) return;
+        setBusy(saveRate, true, 'Đang lưu');
+        window.setTimeout(() => {
+          rateSavedValue = rateInput.value;
+          rateSavedDate = rateDate.value;
+          dirtyForm = null;
+          setBusy(saveRate, false, 'Lưu tỷ giá');
+          saveRate.disabled = true;
+          const formattedRate = formatRate(rateSavedValue);
+          rateDisplay.textContent = `1 USD = ${formattedRate} VND`;
+          rateDateDisplay.textContent = formatDate(rateSavedDate);
+          rateRowSummary.textContent = `1 USD = ${formattedRate} VND · ${formatDate(rateSavedDate)}`;
+          impactEquation.textContent = `20.000 USD × ${formattedRate} = ${(Number(rateSavedValue) * 20000).toLocaleString('vi-VN')} VND`;
+          rateForm.hidden = true;
+          rateSummary.hidden = false;
+          rateFeedback.innerHTML = banner('success', 'Đã lưu tỷ giá', `Đang sử dụng 1 USD = ${formattedRate} VND, ngày áp dụng ${formatDate(rateSavedDate)}.`);
+          renderScenario('current');
+          rateFeedback.innerHTML = banner('success', 'Đã lưu tỷ giá', `Đang sử dụng 1 USD = ${formattedRate} VND, ngày áp dụng ${formatDate(rateSavedDate)}.`);
+          showToast('Đã lưu tỷ giá. Bạn vẫn ở màn hình tỷ giá để kiểm tra thay đổi.');
+        }, 750);
+      });
+
+      document.querySelector('#continue-button').addEventListener('click', () => {
+        unsavedDialog.close();
+        const target = dirtyForm === 'profile' ? profileInput : rateInput;
+        target.focus();
+      });
+      document.querySelector('#discard-button').addEventListener('click', () => {
+        if (dirtyForm === 'profile') profileInput.value = profileSavedValue;
+        if (dirtyForm === 'rate') { rateInput.value = rateSavedValue; rateDate.value = rateSavedDate; }
+        dirtyForm = null;
+        saveProfile.disabled = true;
+        saveRate.disabled = true;
+        unsavedDialog.close();
+        showScreen(pendingDestination || 'settings');
+        pendingDestination = null;
+      });
+      unsavedDialog.addEventListener('cancel', event => {
+        event.preventDefault();
+        unsavedDialog.close();
+        const target = dirtyForm === 'profile' ? profileInput : rateInput;
+        target.focus();
+      });
+
+      document.querySelectorAll('.decision').forEach(button => {
+        button.addEventListener('click', () => {
+          document.querySelectorAll('.decision').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+          const messages = {
+            approved: 'Phiên review đang chọn: Duyệt hướng thiết kế. Cần ghi quyết định chính thức trong report #48.',
+            changes: 'Phiên review đang chọn: Yêu cầu chỉnh sửa. Ghi rõ màn hình hoặc flow cần sửa trong report #48.',
+            rejected: 'Phiên review đang chọn: Không duyệt. Ghi rõ lý do và điều kiện xem xét lại trong report #48.'
+          };
+          document.querySelector('#review-result').textContent = messages[button.dataset.decision];
+        });
+      });
+
+      renderScenario('current');
+    })();
+  </script>
+</body>
+</html>

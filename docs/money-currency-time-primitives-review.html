@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Rikkaus Wealth OS — Money, currency & time review</title>
+  <style>
+    :root {
+      --canvas:#f7f5ef; --surface:#fff; --subtle:#efebe2; --ink:#17212b;
+      --muted:#52606d; --border:#d7d2c7; --control:#8b877e; --navy:#182b45;
+      --teal:#0f5c5a; --teal-dark:#0b4746; --teal-soft:#d9efec; --gold:#a87428;
+      --success:#1e6a45; --warning:#8a5a00; --error:#b42318; --info:#2458a6;
+      --focus:#147d79; --shadow:0 2px 8px rgba(24,43,69,.12);
+      --shadow-modal:0 18px 48px rgba(24,43,69,.24); --radius:16px; --radius-sm:11px;
+      --sans:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+      --serif:"Noto Serif Display",Georgia,serif; --tabular:tabular-nums lining-nums;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--sans);line-height:1.5}
+    body:has(dialog[open]){overflow:hidden} button,input{font:inherit} button{cursor:pointer} a{color:var(--teal);text-underline-offset:3px}
+    button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    .skip{position:fixed;left:16px;top:-80px;z-index:100;background:#fff;padding:12px 16px;border-radius:8px}.skip:focus{top:16px}
+    .page{max-width:1440px;margin:auto;padding:24px 32px 64px}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--teal)}
+    .hero{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.8fr);gap:48px;padding:56px 0 40px;border-bottom:2px solid var(--gold)}
+    h1,h2,h3,p{margin-top:0} h1{font:600 clamp(42px,6vw,74px)/1.04 var(--serif);letter-spacing:-.035em;color:var(--navy);margin:12px 0 20px;max-width:930px}
+    h2{font-size:28px;line-height:1.22;letter-spacing:-.015em;margin-bottom:10px} h3{font-size:18px;line-height:1.35;margin-bottom:8px}
+    .lede{font-size:18px;color:var(--muted);max-width:760px}.hero-meta{align-self:end;background:var(--navy);color:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+    .hero-meta .eyebrow{color:#dbe2ea}.hero-meta dl{margin:16px 0 0;display:grid;gap:12px}.hero-meta div{display:flex;justify-content:space-between;gap:16px;border-top:1px solid rgba(255,255,255,.18);padding-top:12px}.hero-meta dt{color:#dbe2ea}.hero-meta dd{margin:0;font-weight:650;text-align:right}
+    .boundary{display:flex;align-items:flex-start;gap:12px;margin:24px 0 0;padding:16px;border:1px solid #b7d7d2;background:var(--teal-soft);border-radius:12px;max-width:820px}.boundary svg{flex:none;color:var(--teal)}
+    .topnav{position:sticky;top:0;z-index:20;margin:0 -32px;padding:12px 32px;background:rgba(247,245,239,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;gap:8px;overflow:auto}
+    .topnav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:14px;font-weight:600;padding:10px 14px;border-radius:999px}.topnav a:hover{background:var(--teal-soft);color:var(--teal)}
+    section{padding:64px 0;border-bottom:1px solid var(--border);scroll-margin-top:76px}.section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.55fr);gap:40px;align-items:end;margin-bottom:28px}.section-no{font-variant-numeric:var(--tabular);color:var(--teal);font-weight:700;font-size:13px;letter-spacing:.1em}.section-head p{color:var(--muted);margin:0}
+    .grid{display:grid;gap:16px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}.card.raised{box-shadow:var(--shadow);border-color:transparent}.soft{background:var(--subtle)}
+    .specimen{position:relative;overflow:hidden}.specimen::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--teal)}.label{font-size:13px;font-weight:650;color:var(--muted)}.money{font-size:clamp(28px,4vw,42px);font-weight:700;line-height:1.18;letter-spacing:-.02em;font-variant-numeric:var(--tabular);margin:10px 0 4px}.money.small{font-size:26px}.secondary-money{color:var(--muted);font-variant-numeric:var(--tabular);font-weight:600}.meta{font-size:14px;color:var(--muted)}
+    .status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;border-radius:999px;padding:5px 9px;background:var(--subtle);width:max-content}.status svg{width:16px;height:16px}.success{color:var(--success)}.warning{color:var(--warning)}.error{color:var(--error)}.info{color:var(--info)}
+    .segmented{display:inline-flex;gap:4px;background:var(--subtle);padding:4px;border-radius:12px;flex-wrap:wrap}.segmented button,.viewport-controls button,.state-controls button{min-height:44px;border:1px solid transparent;background:transparent;color:var(--muted);padding:8px 14px;border-radius:9px;font-weight:650}.segmented button[aria-pressed="true"],.viewport-controls button[aria-pressed="true"],.state-controls button[aria-pressed="true"]{background:var(--surface);color:var(--teal);border-color:var(--border);box-shadow:0 1px 4px rgba(24,43,69,.1)}
+    .btn{min-height:46px;border:1px solid var(--control);border-radius:var(--radius-sm);background:var(--surface);padding:10px 16px;color:var(--ink);font-weight:650}.btn:hover{background:var(--subtle)}.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}.btn.primary:hover{background:var(--teal-dark)}.btn.tonal{background:var(--teal-soft);border-color:var(--teal-soft);color:var(--teal)}.btn.text{border-color:transparent;background:transparent;color:var(--teal);padding-inline:8px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+    .rule{border-top:1px solid var(--border);margin:18px 0}.annotation{margin-top:16px;padding:14px 16px;border-left:3px solid var(--gold);background:#fbfaf6;color:var(--muted);font-size:14px}.annotation strong{color:var(--ink)}
+    .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1.2fr;align-items:stretch;gap:10px}.flow-card{border:1px solid var(--border);background:#fff;border-radius:14px;padding:18px;display:grid;align-content:center}.flow-arrow{align-self:center;color:var(--gold);font-weight:800;font-size:22px}.formula{font-size:20px;font-weight:700;font-variant-numeric:var(--tabular);color:var(--navy);margin:8px 0}.trace-list{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.trace-item{padding-top:12px;border-top:2px solid var(--border)}.trace-item b{display:block;font-variant-numeric:var(--tabular)}
+    .timeline{position:relative;display:grid;gap:16px}.time-row{display:grid;grid-template-columns:150px 20px 1fr;gap:12px;align-items:start}.time-dot{width:12px;height:12px;border-radius:50%;background:var(--teal);margin-top:6px;box-shadow:0 0 0 5px var(--teal-soft)}.time-value{font-variant-numeric:var(--tabular);font-weight:700}.source-panel{margin-top:14px;padding:14px;border-radius:10px;background:var(--subtle);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;overflow-wrap:anywhere}
+    .ratio-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ratio-ok{border-top:4px solid var(--teal)}.ratio-na{border-top:4px solid var(--warning)}.ratio-value{font-size:38px;line-height:1.2;font-weight:700;font-variant-numeric:var(--tabular);margin:10px 0}.reason{display:flex;gap:9px;align-items:flex-start;padding:12px;background:#fff8e8;border-radius:10px;color:#5f430d;font-size:14px}
+    .state-toolbar{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}.state-controls{display:flex;flex-wrap:wrap;gap:4px;background:var(--subtle);border-radius:12px;padding:4px}.state-stage{min-height:390px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:16px}.state-card{display:grid;align-content:start;min-height:390px}.state-card .money{min-height:50px}.state-note{background:var(--navy);color:#fff}.state-note h3{color:#fff}.state-note p,.state-note li{color:#dbe2ea}.state-note code{color:#fff}.skeleton{height:18px;border-radius:7px;background:linear-gradient(90deg,#e6e1d7 25%,#f4f1eb 50%,#e6e1d7 75%);background-size:200% 100%;animation:shimmer 1.6s infinite}.skeleton.lg{height:44px;width:70%;margin:14px 0}.skeleton.sm{width:45%}@keyframes shimmer{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.skeleton{animation:none}}
+    .viewport-controls{display:flex;gap:4px;flex-wrap:wrap;background:var(--subtle);padding:4px;border-radius:12px;width:max-content;max-width:100%;margin-bottom:18px}.device-stage{background:#e9e5dc;border-radius:20px;padding:24px;overflow:auto}.device{--device-width:360px;width:min(100%,var(--device-width));margin:auto;background:var(--canvas);border:2px solid var(--navy);border-radius:18px;overflow:hidden;box-shadow:0 12px 28px rgba(24,43,69,.16);transition:width .25s ease}.device.w375{--device-width:375px}.device.w768{--device-width:768px}.device.w1024{--device-width:1024px}.device.w1440{--device-width:1180px}.device-bar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px}.device-body{display:grid;grid-template-columns:1fr}.device-nav{display:none;background:#fff;border-right:1px solid var(--border);padding:18px}.device-nav b{font-family:var(--serif);color:var(--navy)}.device-nav ul{list-style:none;padding:20px 0 0;margin:0;display:grid;gap:4px}.device-nav li{font-size:13px;padding:9px;border-radius:8px;color:var(--muted)}.device-nav li.active{background:var(--teal-soft);color:var(--teal);font-weight:700}.device-content{padding:20px;display:grid;gap:14px}.device-bottom{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--border);padding:8px 4px}.device-bottom span{text-align:center;font-size:10px;color:var(--muted)}.mini-grid{display:grid;gap:12px}.mini-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px}.device.w768 .device-body{grid-template-columns:88px 1fr}.device.w768 .device-nav,.device.w1024 .device-nav,.device.w1440 .device-nav{display:block}.device.w768 .device-bottom,.device.w1024 .device-bottom,.device.w1440 .device-bottom{display:none}.device.w768 .mini-grid,.device.w1024 .mini-grid,.device.w1440 .mini-grid{grid-template-columns:1.05fr .95fr}.device.w1024 .device-body,.device.w1440 .device-body{grid-template-columns:220px 1fr}.device.w1024 .device-content,.device.w1440 .device-content{padding:28px 32px}.device.w1440 .device-content{max-width:900px;margin:auto;width:100%}
+    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px;background:#fff}table{border-collapse:collapse;width:100%;min-width:820px}caption{text-align:left;padding:18px 18px 10px;font-weight:700}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border);font-size:14px}th{background:var(--subtle);color:var(--navy)}td code{font-size:12px}tbody tr:last-child td{border-bottom:0}.owner{white-space:nowrap;font-weight:650;color:var(--teal)}
+    .checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.check{display:grid;grid-template-columns:24px 1fr;gap:12px;padding:16px;background:#fff;border:1px solid var(--border);border-radius:12px}.check input{width:20px;height:20px;accent-color:var(--teal);margin-top:2px}.check strong{display:block;margin-bottom:3px}.check span{color:var(--muted);font-size:14px}.approval{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:18px}.decision{background:var(--navy);color:#fff}.decision p{color:#dbe2ea}.decision .btn{border-color:#fff}.decision .btn.primary{background:#fff;color:var(--navy)}
+    dialog{border:0;border-radius:22px;padding:0;width:min(92vw,620px);color:var(--ink);box-shadow:var(--shadow-modal)}dialog::backdrop{background:rgba(23,33,43,.58)}.dialog-body{padding:26px}.dialog-head{display:flex;justify-content:space-between;gap:20px;align-items:start}.icon-btn{width:46px;height:46px;border:1px solid var(--control);background:#fff;border-radius:50%;font-size:22px;flex:none}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}.equation{background:var(--navy);color:#fff;border-radius:14px;padding:20px;font-size:20px;font-weight:700;font-variant-numeric:var(--tabular);margin:18px 0}.dialog-list{display:grid;gap:10px}.dialog-list div{display:flex;justify-content:space-between;gap:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}.dialog-list b{font-variant-numeric:var(--tabular);text-align:right}
+    .toast{position:fixed;right:24px;bottom:24px;z-index:50;background:var(--navy);color:#fff;border-radius:12px;padding:14px 18px;box-shadow:var(--shadow-modal);max-width:340px;transform:translateY(150%);opacity:0;transition:.2s ease}.toast.show{transform:none;opacity:1}.footer{padding:32px 0;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:20px}.hidden{display:none!important}
+    @media(max-width:820px){.page{padding:16px 16px 48px}.hero,.section-head,.two,.three,.state-stage,.approval{grid-template-columns:1fr}.hero{gap:24px;padding-top:36px}.topnav{margin:0 -16px;padding-inline:16px}.flow{grid-template-columns:1fr}.flow-arrow{transform:rotate(90deg);justify-self:center}.trace-list{grid-template-columns:1fr 1fr}.ratio-grid{grid-template-columns:1fr}.state-toolbar{display:grid}.device-stage{padding:12px}.checklist{grid-template-columns:1fr}.footer{display:grid}.time-row{grid-template-columns:105px 16px 1fr}section{padding:44px 0}}
+    @media(max-width:440px){h1{font-size:40px}.money{font-size:30px}.card{padding:18px}.trace-list{grid-template-columns:1fr}.dialog-list div{display:grid}.dialog-list b{text-align:left}.segmented{width:100%}.segmented button{flex:1}.device-stage{margin-inline:-16px;border-radius:0}.viewport-controls{width:100%}.viewport-controls button{flex:1}.topnav{top:0}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Bỏ qua đến nội dung chính</a>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Design review · Issue #43</div>
+        <h1>Tiền tệ rõ ràng.<br>Thời gian có dấu vết.</h1>
+        <p class="lede">Bộ quy tắc hiển thị dùng chung cho VND, USD, tỷ giá, ngày giờ và chất lượng dữ liệu — để mỗi con số đều đọc nhanh, kiểm tra được và không tạo cảm giác chính xác giả.</p>
+        <div class="boundary">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+          <div><strong>Ranh giới bàn giao</strong><br><span class="meta">Đây là dữ liệu mô phỏng để duyệt thiết kế. Không gọi API, không lưu dữ liệu, không triển khai phép tính tài chính production và không mở rộng sang Phase 2.</span></div>
+        </div>
+      </div>
+      <aside class="hero-meta" aria-label="Thông tin phiên duyệt">
+        <div class="eyebrow">Review brief</div>
+        <dl>
+          <div><dt>Owner</dt><dd>Product Design</dd></div>
+          <div><dt>Ngôn ngữ</dt><dd>Tiếng Việt</dd></div>
+          <div><dt>Tiền báo cáo</dt><dd>VND</dd></div>
+          <div><dt>Tiền nhập thêm</dt><dd>USD</dd></div>
+          <div><dt>Trạng thái</dt><dd>Chờ PO duyệt</dd></div>
+        </dl>
+      </aside>
+    </header>
+
+    <nav class="topnav" aria-label="Mục lục review board">
+      <a href="#money">Hiển thị tiền</a><a href="#conversion">Chuyển đổi</a><a href="#time">Ngày & giờ</a><a href="#ratio">Tỷ lệ</a><a href="#states">Trạng thái</a><a href="#responsive">Responsive</a><a href="#handoff">Handoff</a><a href="#approval">PO duyệt</a>
+    </nav>
+
+    <main id="main">
+      <section id="money">
+        <div class="section-head"><div><div class="section-no">01 · MONEY DISPLAY</div><h2>Một câu trả lời chính, đủ dữ liệu nguồn</h2></div><p>VND luôn là giá trị báo cáo. USD chỉ xuất hiện như giá trị gốc có thể truy vết. Số tiền dùng chữ số tabular, không thêm phần thập phân không cần thiết.</p></div>
+        <div class="segmented" role="group" aria-label="Chọn loại bản ghi">
+          <button type="button" data-money="vnd" aria-pressed="true">Bản ghi VND</button>
+          <button type="button" data-money="usd" aria-pressed="false">Bản ghi USD</button>
+        </div>
+        <div class="grid two" style="margin-top:16px">
+          <article class="card raised specimen" id="money-card">
+            <span class="status success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>Đã có định giá</span>
+            <div class="label" id="money-label">Tài khoản thanh toán</div>
+            <div class="money" id="money-value">380.000.000 ₫</div>
+            <div class="secondary-money" id="money-original">Nhập trực tiếp bằng VND</div>
+            <div class="rule"></div>
+            <div class="meta" id="money-date">Giá trị tại ngày 12/09/2026</div>
+            <div class="actions"><button class="btn text" type="button" id="money-source">Xem dữ liệu nguồn</button></div>
+          </article>
+          <article class="card soft">
+            <div class="eyebrow">Quy tắc đọc</div><h3>Giá trị quyết định luôn đứng trước</h3>
+            <ul>
+              <li>Nhóm hàng nghìn theo locale Việt Nam: <strong>12.002.000.000 ₫</strong>.</li>
+              <li>Một view chỉ dùng nhất quán ký hiệu <strong>₫</strong> cho giá trị báo cáo.</li>
+              <li>USD viết rõ mã tiền: <strong>20.000 USD</strong>; không dùng ký hiệu “$” mơ hồ.</li>
+              <li>Số âm chỉ được nhận ở nơi contract nghiệp vụ cho phép.</li>
+              <li>Che số tiền là preference có thể đảo ngược, không phải trạng thái mặc định.</li>
+            </ul>
+            <div class="annotation"><strong>Accessibility:</strong> screen reader nhận cả giá trị và đơn vị; màu sắc không mang thông tin riêng lẻ.</div>
+          </article>
+        </div>
+      </section>
+
+      <section id="conversion">
+        <div class="section-head"><div><div class="section-no">02 · CONVERSION TRACE</div><h2>Từ USD đến VND trong một đường dẫn kiểm tra được</h2></div><p>Giá trị mô phỏng đã được tính sẵn để minh họa UI. Artifact không dùng JavaScript để thực hiện phép tính tài chính.</p></div>
+        <div class="flow" aria-label="Luồng chuyển đổi tiền tệ">
+          <div class="flow-card"><span class="label">Giá trị gốc</span><div class="formula">20.000 USD</div><span class="meta">Tài sản do người dùng nhập</span></div>
+          <div class="flow-arrow" aria-hidden="true">×</div>
+          <div class="flow-card"><span class="label">Tỷ giá áp dụng</span><div class="formula">25.100</div><span class="meta">VND/USD · hiệu lực 12/09/2026</span></div>
+          <div class="flow-arrow" aria-hidden="true">=</div>
+          <div class="flow-card" style="border-color:var(--teal)"><span class="label">Giá trị báo cáo</span><div class="formula" style="color:var(--teal)">502.000.000 ₫</div><span class="meta">Hiển thị chính tại điểm ra quyết định</span></div>
+        </div>
+        <div class="trace-list">
+          <div class="trace-item"><span class="label">Nguồn tỷ giá</span><b>Do người dùng nhập</b></div>
+          <div class="trace-item"><span class="label">Ngày hiệu lực</span><b>12/09/2026</b></div>
+          <div class="trace-item"><span class="label">Precision</span><b>Exact decimal</b></div>
+          <div class="trace-item"><span class="label">Khả năng truy vết</span><b>Giữ rate + date</b></div>
+        </div>
+        <div class="actions"><button class="btn primary" type="button" data-open="conversion-dialog">Xem cách tính</button><button class="btn" type="button" data-open="rate-dialog">Xem trạng thái tỷ giá</button></div>
+      </section>
+
+      <section id="time">
+        <div class="section-head"><div><div class="section-no">03 · DATE & TIME</div><h2>Ngày nghiệp vụ và thời điểm hệ thống không phải một</h2></div><p>Ngày định giá/tỷ giá là dữ kiện nghiệp vụ dạng date-only. Timestamp lưu UTC và được hiển thị theo múi giờ đã cấu hình.</p></div>
+        <div class="grid two">
+          <article class="card">
+            <div class="timeline">
+              <div class="time-row"><div class="label">Ngày định giá</div><div class="time-dot"></div><div><div class="time-value">12/09/2026</div><div class="meta">Dữ kiện nghiệp vụ · không dịch chuyển theo múi giờ</div></div></div>
+              <div class="time-row"><div class="label">Cập nhật lúc</div><div class="time-dot"></div><div><div class="time-value">09:30, 13/09/2026 (GMT+7)</div><div class="meta">Hiển thị theo Asia/Ho_Chi_Minh</div></div></div>
+              <div class="time-row"><div class="label">Tương đối</div><div class="time-dot"></div><div><div class="time-value">Khoảng 2 giờ trước</div><div class="meta">Chỉ bổ sung; không thay thế thời gian tuyệt đối</div></div></div>
+            </div>
+            <div class="actions"><button class="btn tonal" type="button" id="toggle-source" aria-expanded="false" aria-controls="time-source">Xem thời gian nguồn</button></div>
+            <div id="time-source" class="source-panel hidden">UTC: 2026-09-13T02:30:00Z<br>Timezone: Asia/Ho_Chi_Minh<br>Local offset: GMT+7</div>
+          </article>
+          <article class="card soft"><div class="eyebrow">Nguyên tắc audit</div><h3>Luôn thấy thời điểm tuyệt đối</h3><p>“Hôm qua” hoặc “2 giờ trước” giúp đọc nhanh, nhưng không đủ để đối chiếu. Mọi dữ kiện ảnh hưởng đến tiền, tỷ giá hoặc freshness đều có ngày tuyệt đối.</p><div class="annotation"><strong>Không nhập nhằng:</strong> `12/09/2026` là ngày hiệu lực; `09:30, 13/09/2026 (GMT+7)` là thời điểm bản ghi được cập nhật.</div></article>
+        </div>
+      </section>
+
+      <section id="ratio">
+        <div class="section-head"><div><div class="section-no">04 · RATIOS & EDGE CASES</div><h2>Thiếu dữ liệu không bao giờ biến thành số 0</h2></div><p>Zero denominator, dữ liệu thiếu và giá trị không hợp lệ phải có trạng thái ngữ nghĩa riêng, lý do rõ và đường phục hồi.</p></div>
+        <div class="ratio-grid">
+          <article class="card ratio-ok"><span class="status success">✓ Có thể tính</span><div class="label">Tỷ lệ nợ trên tài sản</div><div class="ratio-value">18,4%</div><div class="meta">1.245.000.000 ₫ ÷ 6.780.000.000 ₫</div><div class="actions"><button class="btn text" type="button" data-open="ratio-dialog">Cách tính</button></div></article>
+          <article class="card ratio-na"><span class="status warning">◇ Không đủ cơ sở</span><div class="label">Tỷ lệ nợ trên tài sản</div><div class="ratio-value">Không khả dụng</div><div class="reason"><strong aria-hidden="true">!</strong><span>Tổng tài sản bằng 0 nên không thể tính tỷ lệ. Hệ thống không hiển thị 0%, vô cực hoặc ô trống.</span></div><div class="actions"><button class="btn text" type="button" data-open="unavailable-dialog">Vì sao không khả dụng?</button></div></article>
+        </div>
+      </section>
+
+      <section id="states">
+        <div class="section-head"><div><div class="section-no">05 · STATE LAB</div><h2>Một khung ổn định cho mọi chất lượng dữ liệu</h2></div><p>Chọn trạng thái để PO kiểm tra nội dung, biểu tượng, recovery path và sự ổn định layout. Thay đổi được thông báo cho công nghệ hỗ trợ.</p></div>
+        <div class="state-toolbar"><div class="state-controls" role="group" aria-label="Chọn trạng thái dữ liệu">
+          <button type="button" data-state="ready" aria-pressed="true">Sẵn sàng</button><button type="button" data-state="loading" aria-pressed="false">Loading</button><button type="button" data-state="empty" aria-pressed="false">Empty</button><button type="button" data-state="partial" aria-pressed="false">Partial</button><button type="button" data-state="stale" aria-pressed="false">Stale</button><button type="button" data-state="estimated" aria-pressed="false">Estimated</button><button type="button" data-state="error" aria-pressed="false">Error</button><button type="button" data-state="success" aria-pressed="false">Success</button>
+        </div><span class="meta">Design simulation · nội dung thay đổi có chủ đích</span></div>
+        <div class="state-stage">
+          <article class="card raised specimen state-card" id="state-card" aria-live="polite"></article>
+          <aside class="card state-note"><div class="eyebrow" style="color:#dbe2ea">Anatomy</div><h3 id="state-title">Sẵn sàng</h3><ul id="state-rules"></ul><p class="meta" style="color:#dbe2ea">Card giữ cùng footprint giữa các trạng thái để tránh layout shift. Loading không animate giá trị tài chính.</p></aside>
+        </div>
+      </section>
+
+      <section id="responsive">
+        <div class="section-head"><div><div class="section-no">06 · RESPONSIVE EVIDENCE</div><h2>Cùng thứ tự thông tin trên năm điểm duyệt</h2></div><p>Mobile ưu tiên câu trả lời VND, rồi USD gốc và ngày. Tablet/desktop chỉ tăng khả năng so sánh; không đổi tên, nghĩa hoặc hierarchy.</p></div>
+        <div class="viewport-controls" role="group" aria-label="Chọn chiều rộng review">
+          <button type="button" data-width="w360" aria-pressed="true">360</button><button type="button" data-width="w375" aria-pressed="false">375</button><button type="button" data-width="w768" aria-pressed="false">768</button><button type="button" data-width="w1024" aria-pressed="false">1024</button><button type="button" data-width="w1440" aria-pressed="false">1440</button>
+        </div>
+        <div class="device-stage">
+          <div class="device" id="device">
+            <div class="device-bar"><strong style="font-family:var(--serif);color:var(--navy)">Rikkaus</strong><span class="meta" id="viewport-label">Phone · 360px</span></div>
+            <div class="device-body">
+              <nav class="device-nav" aria-label="Navigation specimen"><b>Rikkaus</b><ul><li class="active">Tổng quan</li><li>Tài sản & Nợ</li><li>Dòng tiền</li><li>Mục tiêu</li><li>Nhận định</li></ul></nav>
+              <div class="device-content">
+                <div><span class="label">Tài sản · Bất động sản</span><h3 style="margin-top:4px">Căn hộ Riverside</h3></div>
+                <div class="mini-grid">
+                  <div class="mini-card"><span class="status success">✓ Đã quy đổi</span><div class="money small">502.000.000 ₫</div><div class="secondary-money">20.000 USD</div><div class="rule"></div><div class="meta">Tỷ giá 25.100 VND/USD<br>Hiệu lực 12/09/2026</div><div class="actions"><button class="btn tonal" type="button" data-open="conversion-dialog">Xem cách tính</button></div></div>
+                  <div class="mini-card"><span class="label">Dữ liệu & thời gian</span><h3 style="margin-top:6px">Có thể truy vết</h3><p class="meta">Cập nhật 09:30, 13/09/2026 (GMT+7)</p><div class="annotation"><strong>Nguồn:</strong> định giá và tỷ giá do người dùng nhập.</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="device-bottom"><span>⌂<br>Tổng quan</span><span>◇<br>Tài sản & Nợ</span><span>↕<br>Dòng tiền</span><span>◎<br>Mục tiêu</span><span>○<br>Nhận định</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="handoff">
+        <div class="section-head"><div><div class="section-no">07 · CONTRACT HANDOFF</div><h2>Một ma trận dùng chung cho Design, Frontend và Backend</h2></div><p>Board định nghĩa cách người dùng nhìn và hiểu dữ liệu. Schema, formatter/parser và exact-decimal service vẫn thuộc sibling tasks.</p></div>
+        <div class="table-wrap"><table><caption>State & primitive handoff matrix</caption><thead><tr><th>Primitive/state</th><th>Hiển thị</th><th>Dữ liệu cần có</th><th>Accessibility / recovery</th><th>Owner tiếp theo</th></tr></thead><tbody>
+          <tr><td>VND entered</td><td><strong>380.000.000 ₫</strong></td><td><code>amount</code>, <code>currency=VND</code>, valuation date</td><td>Đọc đầy đủ giá trị + đơn vị</td><td class="owner">#44 / #45</td></tr>
+          <tr><td>USD converted</td><td>VND chính, USD gốc phụ</td><td>Original money, exact rate, effective date, converted value</td><td>“Cách tính” có thứ tự đọc tuyến tính</td><td class="owner">#44 / #45</td></tr>
+          <tr><td>Timestamp</td><td>Local absolute time + GMT offset</td><td>UTC timestamp, configured timezone</td><td>UTC nằm trong disclosure truy vết</td><td class="owner">#44 / #45</td></tr>
+          <tr><td>Unavailable ratio</td><td><strong>Không khả dụng</strong></td><td>Denominator = 0 hoặc input thiếu</td><td>Nêu nguyên nhân và đường bổ sung dữ liệu</td><td class="owner">#44</td></tr>
+          <tr><td>Stale</td><td>Giá trị vẫn đọc được + “Dữ liệu cũ”</td><td>Value date, freshness rule, affected record</td><td>Icon + text + absolute date + update action</td><td class="owner">Domain design</td></tr>
+          <tr><td>Estimated</td><td>Giá trị + nhãn “Ước tính”</td><td>Method, source/assumption, date</td><td>Phân biệt rõ với dữ kiện người dùng nhập</td><td class="owner">Domain design</td></tr>
+          <tr><td>Error</td><td>Không thể tải dữ liệu</td><td>Problem category, preserved input state</td><td>Thử lại và safe return</td><td class="owner">#38 / domain</td></tr>
+        </tbody></table></div>
+        <div class="annotation"><strong>Public contract:</strong> artifact này không thay đổi schema/API. Nếu PO phê duyệt một data field mới, thay đổi phải được cập nhật cùng examples và thông báo cho #44/#45 trước khi merge.</div>
+      </section>
+
+      <section id="approval">
+        <div class="section-head"><div><div class="section-no">08 · PO APPROVAL</div><h2>Checklist quyết định</h2></div><p>Tích các mục trong phiên review. Lựa chọn chỉ tồn tại trong trang hiện tại và không ghi vào hệ thống.</p></div>
+        <div class="checklist">
+          <label class="check"><input type="checkbox"><span><strong>Tiền tệ</strong>VND nổi bật; USD gốc và đơn vị không nhập nhằng.</span></label>
+          <label class="check"><input type="checkbox"><span><strong>Chuyển đổi</strong>Tỷ giá, ngày hiệu lực và phép tính có thể truy vết.</span></label>
+          <label class="check"><input type="checkbox"><span><strong>Ngày & giờ</strong>Date-only, local timestamp và UTC source được phân biệt.</span></label>
+          <label class="check"><input type="checkbox"><span><strong>Chất lượng dữ liệu</strong>Stale, estimated, partial và error không dựa vào màu đơn lẻ.</span></label>
+          <label class="check"><input type="checkbox"><span><strong>Edge cases</strong>Mẫu số 0 hoặc thiếu dữ liệu không hiển thị 0 giả.</span></label>
+          <label class="check"><input type="checkbox"><span><strong>Responsive & accessible</strong>Thứ tự ổn định, focus rõ, target tối thiểu 44px.</span></label>
+        </div>
+        <div class="approval">
+          <article class="card decision"><div class="eyebrow" style="color:#dbe2ea">Decision</div><h3>Sẵn sàng ghi nhận quyết định của PO</h3><p>Issue #43 hoàn thành khi flow/spec, states, responsive và accessibility behavior được duyệt. Frontend và Backend tiếp tục triển khai theo contract đã duyệt.</p><div class="actions"><button class="btn primary" type="button" data-decision="approved">Duyệt thiết kế</button><button class="btn" style="background:transparent;color:#fff" type="button" data-decision="changes">Yêu cầu chỉnh sửa</button></div></article>
+          <article class="card"><div class="eyebrow">Scope sign-off</div><h3>Không vượt ranh giới Issue #43</h3><p class="meta">Không API thật · Không persistence · Không auth · Không business calculation production · Không Phase 2 · Không thêm currency ngoài VND/USD.</p></article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>Rikkaus Wealth OS · Quiet Heritage design review</span><span>Issue #43 · Design simulation · 13/09/2026</span></footer>
+  </div>
+
+  <dialog id="conversion-dialog" aria-labelledby="conversion-title"><div class="dialog-body"><div class="dialog-head"><div><div class="eyebrow">Conversion trace</div><h2 id="conversion-title">Cách tính giá trị báo cáo</h2></div><button class="icon-btn" type="button" data-close aria-label="Đóng">×</button></div><p class="meta">Mẫu minh họa đã được tính sẵn. Production phải dùng exact-decimal arithmetic, không dùng binary floating point.</p><div class="equation">20.000 USD × 25.100 VND/USD<br>= 502.000.000 ₫</div><div class="dialog-list"><div><span>Giá trị gốc</span><b>20.000 USD</b></div><div><span>Tỷ giá</span><b>25.100 VND/USD</b></div><div><span>Ngày hiệu lực</span><b>12/09/2026</b></div><div><span>Nguồn</span><b>Do người dùng nhập</b></div></div><div class="dialog-actions"><button class="btn primary" type="button" data-close>Đã hiểu</button></div></div></dialog>
+  <dialog id="rate-dialog" aria-labelledby="rate-title"><div class="dialog-body"><div class="dialog-head"><div><div class="eyebrow">Freshness</div><h2 id="rate-title">Trạng thái tỷ giá</h2></div><button class="icon-btn" type="button" data-close aria-label="Đóng">×</button></div><span class="status warning">◇ Dữ liệu cũ</span><p style="margin-top:14px">Tỷ giá 25.100 VND/USD có hiệu lực từ 12/09/2026 và đang ảnh hưởng đến giá trị quy đổi của 3 tài sản.</p><div class="annotation"><strong>Đường phục hồi:</strong> cập nhật tỷ giá tạo dữ kiện mới; bản ghi trước vẫn giữ rate và effective date đã dùng.</div><div class="dialog-actions"><button class="btn" type="button" data-close>Để sau</button><button class="btn primary" type="button" data-simulate="updated">Mô phỏng cập nhật</button></div></div></dialog>
+  <dialog id="ratio-dialog" aria-labelledby="ratio-title"><div class="dialog-body"><div class="dialog-head"><h2 id="ratio-title">Cách tính tỷ lệ nợ trên tài sản</h2><button class="icon-btn" type="button" data-close aria-label="Đóng">×</button></div><div class="equation">1.245.000.000 ₫ ÷ 6.780.000.000 ₫ = 18,4%</div><p class="meta">Giá trị minh họa được làm tròn để hiển thị; calculation precision được giữ ở lớp nghiệp vụ.</p><div class="dialog-actions"><button class="btn primary" type="button" data-close>Đóng</button></div></div></dialog>
+  <dialog id="unavailable-dialog" aria-labelledby="unavailable-title"><div class="dialog-body"><div class="dialog-head"><div><div class="eyebrow">Unavailable</div><h2 id="unavailable-title">Chưa đủ cơ sở để tính</h2></div><button class="icon-btn" type="button" data-close aria-label="Đóng">×</button></div><p>Tổng tài sản hiện bằng 0. Phép chia không được thực hiện, vì vậy hệ thống hiển thị <strong>Không khả dụng</strong> thay vì 0%.</p><div class="annotation"><strong>Cách khắc phục:</strong> thêm tài sản hoặc cập nhật giá trị định giá hợp lệ, sau đó tỷ lệ sẽ được tính lại.</div><div class="dialog-actions"><button class="btn" type="button" data-close>Quay lại</button><button class="btn primary" type="button" data-simulate="add-data">Mô phỏng bổ sung dữ liệu</button></div></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const moneyData = {
+      vnd:{label:'Tài khoản thanh toán',value:'380.000.000 ₫',original:'Nhập trực tiếp bằng VND',date:'Giá trị tại ngày 12/09/2026'},
+      usd:{label:'Căn hộ Riverside',value:'502.000.000 ₫',original:'Giá trị gốc: 20.000 USD',date:'Tỷ giá 25.100 VND/USD · hiệu lực 12/09/2026'}
+    };
+    document.querySelectorAll('[data-money]').forEach(button=>button.addEventListener('click',()=>{
+      document.querySelectorAll('[data-money]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+      const data=moneyData[button.dataset.money];
+      document.querySelector('#money-label').textContent=data.label;document.querySelector('#money-value').textContent=data.value;
+      document.querySelector('#money-original').textContent=data.original;document.querySelector('#money-date').textContent=data.date;
+    }));
+
+    const states={
+      ready:{title:'Sẵn sàng',rules:['Giá trị VND là câu trả lời chính','USD gốc và ngày nằm ngay trong context','Có đường xem cách tính'],html:`<span class="status success">✓ Đã quy đổi</span><div class="label">Căn hộ Riverside</div><div class="money">502.000.000 ₫</div><div class="secondary-money">20.000 USD</div><div class="rule"></div><div class="meta">Tỷ giá 25.100 VND/USD · hiệu lực 12/09/2026</div><div class="actions"><button class="btn tonal" type="button" data-open="conversion-dialog">Xem cách tính</button></div>`},
+      loading:{title:'Đang tải',rules:['Giữ nguyên kích thước card','Không animate số tiền','Không tạo layout shift'],html:`<span class="status info">◌ Đang tải dữ liệu</span><div class="skeleton lg" aria-hidden="true"></div><div class="skeleton sm" aria-hidden="true"></div><div class="rule"></div><div class="skeleton" aria-hidden="true"></div>`},
+      empty:{title:'Chưa có dữ liệu',rules:['Không thay bằng giá trị 0','Nêu chính xác dữ liệu còn thiếu','Có next action phù hợp'],html:`<span class="status info">○ Chưa có dữ liệu</span><div class="money">—</div><p>Chưa có định giá cho tài sản này nên chưa thể hiển thị giá trị báo cáo.</p><div class="actions"><button class="btn primary" type="button" data-simulate="add-valuation">Thêm định giá</button></div>`},
+      partial:{title:'Dữ liệu chưa đầy đủ',rules:['Giữ thông tin đã có','Nêu input còn thiếu','Giải thích phần diễn giải bị ảnh hưởng'],html:`<span class="status warning">◇ Dữ liệu chưa đầy đủ</span><div class="label">Căn hộ Riverside</div><div class="money">20.000 USD</div><p class="meta">Chưa có tỷ giá hiệu lực nên chưa thể quy đổi sang VND. Giá trị gốc vẫn được giữ.</p><div class="actions"><button class="btn primary" type="button" data-simulate="add-rate">Bổ sung tỷ giá</button></div>`},
+      stale:{title:'Dữ liệu cũ',rules:['Text + icon + màu','Hiện ngày tuyệt đối','Nêu giá trị bị ảnh hưởng và update path'],html:`<span class="status warning">◇ Dữ liệu cũ</span><div class="label">Căn hộ Riverside</div><div class="money">502.000.000 ₫</div><div class="secondary-money">20.000 USD</div><div class="reason">Tỷ giá hiệu lực 12/09/2026 đang ảnh hưởng giá trị quy đổi.</div><div class="actions"><button class="btn primary" type="button" data-open="rate-dialog">Cập nhật dữ liệu</button></div>`},
+      estimated:{title:'Ước tính',rules:['Nhãn rõ, không dùng màu riêng lẻ','Hiện cơ sở và ngày','Không nhầm với dữ kiện người dùng nhập'],html:`<span class="status info">≈ Ước tính</span><div class="label">Giá trị tham khảo</div><div class="money">498.000.000 ₫</div><p class="meta">Ước tính từ dữ liệu gần nhất ngày 12/09/2026. Không thay thế định giá do người dùng nhập.</p><div class="actions"><button class="btn tonal" type="button" data-simulate="basis">Xem cơ sở</button></div>`},
+      error:{title:'Không thể tải dữ liệu',rules:['Nêu điều gì thất bại','Nêu dữ liệu nào đã được giữ','Có retry và safe return'],html:`<span class="status error">! Không thể tải dữ liệu</span><div class="money">—</div><p>Không tải được giá trị quy đổi. Giá trị gốc 20.000 USD vẫn được giữ an toàn.</p><div class="actions"><button class="btn primary" type="button" id="retry-state">Thử lại</button><button class="btn" type="button" data-simulate="safe-return">Quay lại an toàn</button></div>`},
+      success:{title:'Cập nhật thành công',rules:['Nêu điều đã thay đổi','Hiện kết quả reporting currency','Đưa ra next action hợp lý'],html:`<span class="status success">✓ Đã cập nhật tỷ giá</span><div class="label">Giá trị báo cáo mới</div><div class="money">504.000.000 ₫</div><div class="secondary-money">20.000 USD</div><p class="meta">Tỷ giá 25.200 VND/USD · hiệu lực 13/09/2026</p><div class="actions"><button class="btn primary" type="button" data-simulate="view-record">Xem bản ghi</button></div>`}
+    };
+    function renderState(name){const s=states[name];document.querySelector('#state-card').innerHTML=s.html;document.querySelector('#state-title').textContent=s.title;document.querySelector('#state-rules').innerHTML=s.rules.map(x=>`<li>${x}</li>`).join('');document.querySelectorAll('[data-state]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.state===name)));bindDynamic();}
+    document.querySelectorAll('[data-state]').forEach(button=>button.addEventListener('click',()=>renderState(button.dataset.state)));
+    renderState('ready');
+
+    const widths={w360:'Phone · 360px',w375:'Phone · 375px',w768:'Tablet · 768px',w1024:'Desktop · 1024px',w1440:'Desktop · 1440px'};
+    document.querySelectorAll('[data-width]').forEach(button=>button.addEventListener('click',()=>{const device=document.querySelector('#device');device.className='device '+button.dataset.width;document.querySelector('#viewport-label').textContent=widths[button.dataset.width];document.querySelectorAll('[data-width]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));}));
+
+    const sourceButton=document.querySelector('#toggle-source');sourceButton.addEventListener('click',()=>{const panel=document.querySelector('#time-source');const open=panel.classList.toggle('hidden')===false;sourceButton.setAttribute('aria-expanded',String(open));sourceButton.textContent=open?'Ẩn thời gian nguồn':'Xem thời gian nguồn';});
+    document.querySelector('#money-source').addEventListener('click',()=>showToast('Dữ liệu nguồn: bản ghi người dùng nhập ngày 12/09/2026.'));
+
+    let lastTrigger=null;
+    function openDialog(id,trigger){const dialog=document.getElementById(id);if(!dialog)return;lastTrigger=trigger;dialog.showModal();}
+    function closeDialog(dialog){dialog.close();if(lastTrigger)lastTrigger.focus();}
+    document.querySelectorAll('dialog').forEach(dialog=>{dialog.addEventListener('click',event=>{if(event.target===dialog)closeDialog(dialog)});dialog.addEventListener('cancel',event=>{event.preventDefault();closeDialog(dialog)});dialog.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeDialog(dialog)));});
+    function bindDynamic(){document.querySelectorAll('[data-open]').forEach(button=>{if(button.dataset.bound)return;button.dataset.bound='true';button.addEventListener('click',()=>openDialog(button.dataset.open,button));});document.querySelectorAll('[data-simulate]').forEach(button=>{if(button.dataset.bound)return;button.dataset.bound='true';button.addEventListener('click',()=>{const dialog=button.closest('dialog');if(dialog)closeDialog(dialog);showToast('Đã mở trạng thái mô phỏng — không có dữ liệu thật được thay đổi.');});});const retry=document.querySelector('#retry-state');if(retry)retry.addEventListener('click',()=>{renderState('loading');showToast('Đang thử lại…');setTimeout(()=>renderState('success'),700);});}
+    bindDynamic();
+    document.querySelectorAll('[data-decision]').forEach(button=>button.addEventListener('click',()=>showToast(button.dataset.decision==='approved'?'Đã ghi nhận lựa chọn “Duyệt thiết kế” trong phiên mô phỏng.':'Đã ghi nhận “Yêu cầu chỉnh sửa” trong phiên mô phỏng.')));
+    let toastTimer;function showToast(message){const toast=document.querySelector('#toast');toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),3200);}
+  </script>
+</body>
+</html>

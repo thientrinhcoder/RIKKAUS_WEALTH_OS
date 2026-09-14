@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Rikkaus Wealth OS | Google OIDC identity review</title>
+  <style>
+    :root {
+      --canvas: #F7F5EF;
+      --surface: #FFFFFF;
+      --surface-subtle: #EFEBE2;
+      --ink: #17212B;
+      --ink-secondary: #52606D;
+      --border: #D7D2C7;
+      --control-border: #8B877E;
+      --brand-navy: #182B45;
+      --primary: #0F5C5A;
+      --primary-pressed: #0B4746;
+      --primary-container: #D9EFEC;
+      --heritage-gold: #A87428;
+      --success: #1E6A45;
+      --warning: #8A5A00;
+      --error: #B42318;
+      --info: #2458A6;
+      --focus: #147D79;
+      --overlay: rgba(23, 33, 43, 0.56);
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-display: "Noto Serif Display", Georgia, serif;
+      --text-label: 0.75rem;
+      --text-supporting: 0.875rem;
+      --text-body: 1rem;
+      --text-title: 1.125rem;
+      --text-h2: 1.25rem;
+      --text-h1: 1.5rem;
+      --text-display: clamp(2.75rem, 5vw, 4.5rem);
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --space-24: 6rem;
+      --radius-control: 0.75rem;
+      --radius-card: 1rem;
+      --radius-modal: 1.5rem;
+      --line: 1px solid var(--border);
+      --control-line: 1px solid var(--control-border);
+      --ease-state: cubic-bezier(0.25, 1, 0.5, 1);
+      --duration-press: 120ms;
+      --duration-state: 220ms;
+      --content: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: var(--text-body);
+      line-height: 1.55;
+    }
+    button, input { font: inherit; }
+    button { min-height: 44px; }
+    a { color: var(--primary); text-underline-offset: 0.2em; }
+    h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; }
+    h1 { font-family: var(--font-display); font-size: var(--text-display); font-weight: 600; letter-spacing: -0.025em; }
+    h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); letter-spacing: -0.02em; }
+    h3 { font-size: var(--text-title); }
+    p { margin: 0; text-wrap: pretty; }
+    code { font-size: 0.9em; overflow-wrap: anywhere; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    caption { margin-bottom: var(--space-4); text-align: left; font-weight: 600; }
+    th, td { border-bottom: var(--line); padding: var(--space-3) var(--space-4); text-align: left; vertical-align: top; }
+    th { background: var(--surface-subtle); font-size: var(--text-supporting); }
+
+    .skip-link {
+      position: fixed;
+      left: var(--space-4);
+      top: var(--space-4);
+      z-index: 50;
+      padding: var(--space-3) var(--space-4);
+      background: var(--brand-navy);
+      color: var(--surface);
+      border-radius: var(--radius-control);
+      transform: translateY(-160%);
+    }
+    .skip-link:focus { transform: translateY(0); }
+    .container { width: min(calc(100% - 2rem), var(--content)); margin-inline: auto; }
+    .topbar { border-bottom: var(--line); background: var(--surface); }
+    .topbar-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+    .wordmark { display: flex; align-items: center; gap: var(--space-3); color: var(--brand-navy); }
+    .wordmark-mark { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--heritage-gold); border-radius: 50%; font-family: var(--font-display); }
+    .wordmark strong { font-family: var(--font-display); font-size: var(--text-title); }
+    .topnav { display: flex; align-items: center; gap: var(--space-6); font-size: var(--text-supporting); }
+    .status-chip, .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      min-height: 32px;
+      padding: var(--space-1) var(--space-3);
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      font-size: var(--text-label);
+      font-weight: 600;
+    }
+    .status-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .status-chip.info { color: var(--info); }
+
+    .notice {
+      background: var(--brand-navy);
+      color: var(--surface);
+      padding: var(--space-3) 0;
+      font-size: var(--text-supporting);
+    }
+    .notice p { max-width: 92ch; }
+    .notice strong { color: #F2D39B; }
+
+    .hero { padding: var(--space-16) 0 var(--space-24); }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(280px, 5fr); gap: var(--space-16); align-items: end; }
+    .hero-copy { display: grid; gap: var(--space-6); }
+    .hero-copy p { max-width: 60ch; color: var(--ink-secondary); font-size: var(--text-title); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .tag { color: var(--primary); border-color: var(--border); background: var(--surface); }
+    .identity-spine { position: relative; display: grid; gap: var(--space-4); padding-left: var(--space-8); }
+    .identity-spine::before { content: ""; position: absolute; left: 7px; top: 12px; bottom: 12px; width: 1px; background: var(--heritage-gold); }
+    .spine-step { position: relative; display: grid; gap: var(--space-1); padding-bottom: var(--space-2); }
+    .spine-step::before { content: ""; position: absolute; left: calc(-1 * var(--space-8)); top: 6px; width: 15px; height: 15px; border: 3px solid var(--canvas); border-radius: 50%; background: var(--primary); }
+    .spine-step small { color: var(--ink-secondary); }
+
+    .section { padding: var(--space-16) 0; border-top: var(--line); }
+    .section-head { display: grid; grid-template-columns: minmax(220px, 4fr) minmax(280px, 6fr); gap: var(--space-12); margin-bottom: var(--space-12); }
+    .section-head p { color: var(--ink-secondary); max-width: 64ch; }
+    .section-title { display: grid; gap: var(--space-3); }
+    .section-index { color: var(--heritage-gold); font-variant-numeric: tabular-nums; font-size: var(--text-supporting); font-weight: 600; }
+
+    .flow-map { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: var(--line); border-radius: var(--radius-card); overflow: hidden; background: var(--surface); }
+    .flow-node { min-height: 156px; padding: var(--space-6); border-right: var(--line); display: grid; align-content: space-between; gap: var(--space-4); }
+    .flow-node:last-child { border-right: 0; }
+    .flow-node strong { color: var(--brand-navy); }
+    .flow-node span { color: var(--ink-secondary); font-size: var(--text-supporting); }
+    .flow-node.active { background: var(--primary-container); }
+
+    .lab { display: grid; grid-template-columns: 296px minmax(0, 1fr); min-height: 760px; border: var(--line); border-radius: var(--radius-card); overflow: hidden; background: var(--surface); }
+    .lab-controls { padding: var(--space-6); background: var(--surface-subtle); border-right: var(--line); }
+    .control-group { display: grid; gap: var(--space-3); padding-bottom: var(--space-6); margin-bottom: var(--space-6); border-bottom: var(--line); }
+    .control-group:last-child { border: 0; margin: 0; padding: 0; }
+    .control-label { font-size: var(--text-label); font-weight: 700; color: var(--ink-secondary); letter-spacing: 0.06em; text-transform: uppercase; }
+    .control-list { display: grid; gap: var(--space-2); }
+    .scenario-button, .viewport-button {
+      width: 100%;
+      min-height: 48px;
+      border: var(--control-line);
+      border-radius: var(--radius-control);
+      background: var(--surface);
+      color: var(--ink);
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      cursor: pointer;
+      transition: transform var(--duration-press) var(--ease-state), background-color var(--duration-state) var(--ease-state), color var(--duration-state) var(--ease-state);
+    }
+    .scenario-button:hover, .viewport-button:hover { transform: translateY(-2px); border-color: var(--primary); }
+    .scenario-button:active, .viewport-button:active { transform: translateY(2px); }
+    .scenario-button[aria-pressed="true"], .viewport-button[aria-pressed="true"] { background: var(--primary); color: var(--surface); border-color: var(--primary); }
+    .viewport-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
+    .viewport-button { text-align: center; padding-inline: var(--space-2); }
+
+    .lab-stage { min-width: 0; padding: var(--space-8); background: var(--canvas); overflow: auto; }
+    .frame-wrap { min-width: 0; display: grid; justify-items: center; gap: var(--space-4); }
+    .frame-caption { width: min(100%, 720px); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); color: var(--ink-secondary); font-size: var(--text-supporting); }
+    .device-frame { width: min(100%, 720px); min-height: 650px; position: relative; container: device / inline-size; border: 1px solid var(--control-border); border-radius: var(--radius-card); overflow: hidden; background: var(--surface); transition: max-width 300ms var(--ease-state); }
+    .device-frame[data-viewport="360"] { max-width: 360px; }
+    .device-frame[data-viewport="375"] { max-width: 375px; }
+    .device-frame[data-viewport="768"] { max-width: 768px; }
+    .device-frame[data-viewport="1024"] { max-width: 880px; }
+    .device-frame[data-viewport="1440"] { max-width: 1040px; }
+    .app-topbar { min-height: 64px; padding: var(--space-3) var(--space-4); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-bottom: var(--line); background: var(--surface); }
+    .app-brand { color: var(--brand-navy); font-family: var(--font-display); font-size: var(--text-title); font-weight: 600; }
+    .privacy-label { font-size: var(--text-label); color: var(--ink-secondary); }
+    .screen { min-height: 584px; display: none; }
+    .screen.is-active { display: grid; }
+
+    .entry-screen { grid-template-columns: minmax(0, 5fr) minmax(300px, 4fr); }
+    .entry-context { padding: var(--space-12); background: var(--brand-navy); color: var(--surface); display: grid; align-content: space-between; gap: var(--space-12); }
+    .entry-context h2 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.5rem); max-width: 11ch; }
+    .entry-context p { color: #DDE5ED; max-width: 36ch; }
+    .privacy-points { display: grid; gap: var(--space-3); font-size: var(--text-supporting); }
+    .privacy-point { display: flex; gap: var(--space-3); align-items: flex-start; }
+    .privacy-point::before { content: "✓"; color: #F2D39B; font-weight: 700; }
+    .entry-action { padding: var(--space-12); display: grid; align-content: center; gap: var(--space-6); }
+    .entry-action h3 { font-size: var(--text-h1); }
+    .entry-action p { color: var(--ink-secondary); }
+    .google-button, .primary-button, .secondary-button, .danger-button, .text-button {
+      width: 100%; min-height: 52px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-3);
+      border-radius: var(--radius-control); padding: var(--space-3) var(--space-4); font-weight: 600; cursor: pointer;
+      transition: transform var(--duration-press) var(--ease-state), background-color var(--duration-state) var(--ease-state);
+    }
+    .google-button { border: var(--control-line); background: var(--surface); color: var(--ink); }
+    .google-mark { width: 24px; height: 24px; border: var(--line); border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: var(--info); }
+    .primary-button { border: 1px solid var(--primary); background: var(--primary); color: var(--surface); }
+    .secondary-button { border: var(--control-line); background: var(--surface); color: var(--primary); }
+    .danger-button { border: 1px solid var(--error); background: var(--error); color: var(--surface); }
+    .text-button { width: auto; min-height: 44px; border: 0; background: transparent; color: var(--primary); }
+    .google-button:hover, .secondary-button:hover { transform: translateY(-2px); border-color: var(--primary); }
+    .primary-button:hover { transform: translateY(-2px); background: var(--primary-pressed); }
+    .danger-button:hover { transform: translateY(-2px); filter: brightness(0.9); }
+    .text-button:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+    .google-button:active, .primary-button:active, .secondary-button:active, .danger-button:active, .text-button:active { transform: translateY(2px); }
+    .primary-button:disabled { background: var(--control-border); border-color: var(--control-border); cursor: not-allowed; }
+    .boundary-note { padding: var(--space-4); border: var(--line); border-radius: var(--radius-control); background: var(--surface-subtle); font-size: var(--text-supporting); }
+
+    .state-screen { place-items: center; padding: var(--space-8); }
+    .state-panel { width: min(100%, 520px); display: grid; gap: var(--space-6); text-align: center; }
+    .state-symbol { width: 56px; height: 56px; margin-inline: auto; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 50%; font-size: var(--text-h2); font-weight: 700; }
+    .state-panel p { color: var(--ink-secondary); }
+    .state-panel .button-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+    .state-panel .button-row .primary-button:only-child { grid-column: 1 / -1; }
+    .state-panel.success .state-symbol { color: var(--success); }
+    .state-panel.warning .state-symbol { color: var(--warning); }
+    .state-panel.error .state-symbol { color: var(--error); }
+    .state-panel.info .state-symbol { color: var(--info); }
+    .spinner { width: 40px; height: 40px; margin-inline: auto; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 900ms var(--ease-state) infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .signed-shell { grid-template-columns: 184px minmax(0, 1fr); }
+    .shell-nav { padding: var(--space-4); border-right: var(--line); background: var(--surface-subtle); display: grid; align-content: start; gap: var(--space-2); }
+    .shell-nav button { border: 0; border-radius: var(--radius-control); padding: var(--space-3); text-align: left; background: transparent; color: var(--ink); }
+    .shell-nav button:first-child { background: var(--primary-container); color: var(--primary); font-weight: 600; }
+    .shell-content { padding: var(--space-8); display: grid; align-content: start; gap: var(--space-6); }
+    .shell-header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); }
+    .avatar-button { width: 48px; height: 48px; border: 1px solid var(--primary); border-radius: 50%; background: var(--primary-container); color: var(--primary); font-weight: 700; cursor: pointer; }
+    .avatar-button:hover { transform: translateY(-2px); }
+    .avatar-button:active { transform: translateY(2px); }
+    .snapshot { display: grid; gap: var(--space-3); padding: var(--space-6); border: var(--line); border-radius: var(--radius-card); }
+    .snapshot strong { font-size: clamp(1.75rem, 5vw, 2.75rem); font-variant-numeric: tabular-nums; }
+    .skeleton-row { height: 12px; border-radius: 999px; background: var(--surface-subtle); }
+    .skeleton-row:nth-child(2) { width: 72%; }
+    .skeleton-row:nth-child(3) { width: 54%; }
+    .bottom-nav { display: none; }
+
+    .annotation-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: var(--space-8); }
+    .annotation-list { display: grid; gap: var(--space-4); }
+    .annotation { display: grid; grid-template-columns: 36px 1fr; gap: var(--space-4); padding-bottom: var(--space-4); border-bottom: var(--line); }
+    .annotation-number { color: var(--heritage-gold); font-variant-numeric: tabular-nums; font-weight: 700; }
+    .annotation p { color: var(--ink-secondary); font-size: var(--text-supporting); margin-top: var(--space-1); }
+    .contract-box { align-self: start; padding: var(--space-6); border: 2px solid var(--warning); border-radius: var(--radius-card); background: var(--surface); display: grid; gap: var(--space-4); }
+    .contract-box h3 { color: var(--warning); }
+    .contract-box p { color: var(--ink-secondary); }
+
+    .matrix-wrap { overflow-x: auto; border: var(--line); border-radius: var(--radius-card); background: var(--surface); }
+    .matrix-wrap table { min-width: 820px; }
+    .state-pill { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-supporting); font-weight: 600; }
+    .state-pill::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+    .state-pill.safe { color: var(--success); }
+    .state-pill.attention { color: var(--warning); }
+    .state-pill.blocked { color: var(--error); }
+
+    .layers { display: grid; grid-template-columns: 1.2fr 0.8fr 1fr; grid-template-areas: "ux system interactions" "screens components interactions" "flows flows interactions"; border: var(--line); border-radius: var(--radius-card); overflow: hidden; background: var(--surface); }
+    .layer { padding: var(--space-6); border-right: var(--line); border-bottom: var(--line); }
+    .layer h3 { margin-bottom: var(--space-3); }
+    .layer p { color: var(--ink-secondary); font-size: var(--text-supporting); }
+    .layer.ux { grid-area: ux; }
+    .layer.system { grid-area: system; }
+    .layer.components { grid-area: components; }
+    .layer.screens { grid-area: screens; }
+    .layer.flows { grid-area: flows; border-bottom: 0; }
+    .layer.interactions { grid-area: interactions; border-right: 0; border-bottom: 0; background: var(--brand-navy); color: var(--surface); }
+    .layer.interactions p { color: #DDE5ED; }
+
+    .approval-layout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr); gap: var(--space-12); }
+    .checklist { display: grid; gap: var(--space-3); }
+    .check-row { min-height: 52px; display: grid; grid-template-columns: 24px 1fr; gap: var(--space-3); align-items: start; padding: var(--space-3); border-bottom: var(--line); }
+    .check-row input { width: 20px; height: 20px; accent-color: var(--primary); }
+    .decision-box { padding: var(--space-6); border-radius: var(--radius-card); background: var(--brand-navy); color: var(--surface); display: grid; align-content: start; gap: var(--space-4); }
+    .decision-box p { color: #DDE5ED; }
+    .decision-box .primary-button { background: var(--surface); border-color: var(--surface); color: var(--brand-navy); }
+    .review-result { min-height: 48px; padding: var(--space-3); border: 1px solid #7FAF9A; border-radius: var(--radius-control); color: #DDF5E8; display: none; }
+    .review-result.is-visible { display: block; }
+
+    footer { padding: var(--space-12) 0; border-top: var(--line); color: var(--ink-secondary); font-size: var(--text-supporting); }
+    .footer-grid { display: flex; justify-content: space-between; gap: var(--space-8); }
+
+    dialog { width: min(calc(100% - 2rem), 480px); border: 0; border-radius: var(--radius-modal); padding: 0; color: var(--ink); background: var(--surface); box-shadow: 0 12px 32px rgba(24, 43, 69, 0.22); }
+    dialog::backdrop { background: var(--overlay); }
+    .dialog-body { display: grid; gap: var(--space-4); padding: var(--space-8); }
+    .dialog-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); padding: 0 var(--space-8) var(--space-8); }
+
+    button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+    @media (max-width: 900px) {
+      .hero-grid, .section-head, .annotation-grid, .approval-layout { grid-template-columns: 1fr; }
+      .flow-map { grid-template-columns: 1fr 1fr; }
+      .flow-node { border-bottom: var(--line); }
+      .flow-node:nth-child(2n) { border-right: 0; }
+      .flow-node:last-child { grid-column: 1 / -1; border-bottom: 0; }
+      .lab { grid-template-columns: 1fr; }
+      .lab-controls { border-right: 0; border-bottom: var(--line); }
+      .control-list { grid-template-columns: repeat(3, 1fr); }
+      .layers { grid-template-columns: 1fr 1fr; grid-template-areas: "ux system" "screens components" "flows flows" "interactions interactions"; }
+      .layer.interactions { border-top: var(--line); }
+    }
+
+    @media (max-width: 620px) {
+      .container { width: min(calc(100% - 2rem), var(--content)); }
+      .topnav a { display: none; }
+      .hero { padding-block: var(--space-12) var(--space-16); }
+      .hero-grid { gap: var(--space-12); }
+      .section { padding-block: var(--space-12); }
+      .section-head { gap: var(--space-6); margin-bottom: var(--space-8); }
+      .flow-map { grid-template-columns: 1fr; }
+      .flow-node, .flow-node:nth-child(2n) { min-height: auto; border-right: 0; border-bottom: var(--line); }
+      .flow-node:last-child { grid-column: auto; }
+      .control-list { grid-template-columns: 1fr; }
+      .viewport-row { grid-template-columns: repeat(3, 1fr); }
+      .lab-stage { padding: var(--space-4); }
+      .frame-caption { align-items: flex-start; flex-direction: column; }
+      .entry-screen { grid-template-columns: 1fr; }
+      .entry-context { padding: var(--space-8) var(--space-6); gap: var(--space-6); }
+      .entry-context h2 { font-size: 2.25rem; }
+      .entry-action { padding: var(--space-8) var(--space-6); }
+      .state-screen { padding: var(--space-6); }
+      .state-panel .button-row { grid-template-columns: 1fr; }
+      .signed-shell { grid-template-columns: 1fr; padding-bottom: 72px; }
+      .shell-nav { display: none; }
+      .shell-content { padding: var(--space-6); }
+      .bottom-nav { position: absolute; inset: auto 0 0; min-height: 68px; display: grid; grid-template-columns: repeat(5, 1fr); border-top: var(--line); background: var(--surface); }
+      .bottom-nav span { display: grid; place-items: center; padding: var(--space-2) var(--space-1); font-size: 0.65rem; text-align: center; }
+      .bottom-nav span:first-child { color: var(--primary); background: var(--primary-container); font-weight: 700; }
+      .device-frame { position: relative; }
+      .layers { grid-template-columns: 1fr; grid-template-areas: "ux" "system" "components" "screens" "flows" "interactions"; }
+      .layer { border-right: 0; }
+      .footer-grid { flex-direction: column; }
+      .dialog-actions { grid-template-columns: 1fr; }
+      .matrix-wrap { border-radius: 0; margin-inline: -1rem; }
+    }
+
+    @container device (max-width: 620px) {
+      .app-topbar { align-items: flex-start; }
+      .privacy-label { max-width: 176px; text-align: right; }
+      .entry-screen { grid-template-columns: minmax(0, 1fr); }
+      .entry-context { min-width: 0; padding: var(--space-8) var(--space-6); gap: var(--space-6); }
+      .entry-context h2 { font-size: 2.25rem; }
+      .entry-action { min-width: 0; padding: var(--space-8) var(--space-6); }
+      .state-screen { padding: var(--space-6); }
+      .state-panel .button-row { grid-template-columns: minmax(0, 1fr); }
+      .signed-shell { grid-template-columns: minmax(0, 1fr); padding-bottom: 80px; }
+      .shell-nav { display: none; }
+      .shell-content { min-width: 0; padding: var(--space-6); }
+      .snapshot strong { font-size: 1.75rem; overflow-wrap: anywhere; }
+      .bottom-nav { position: absolute; inset: auto 0 0; min-height: 72px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: var(--line); background: var(--surface); }
+      .bottom-nav span { min-width: 0; display: grid; place-items: center; padding: var(--space-2) var(--space-1); font-size: 0.65rem; line-height: 1.25; text-align: center; overflow-wrap: anywhere; }
+      .bottom-nav span:first-child { color: var(--primary); background: var(--primary-container); font-weight: 700; }
+    }
+
+    @media print {
+      .topnav, .lab-controls, button, dialog { display: none !important; }
+      .lab { display: block; }
+      .lab-stage { padding: 0; }
+      .device-frame { max-width: none !important; min-height: auto; }
+      .screen { display: none !important; }
+      .screen[data-screen="entry"] { display: grid !important; }
+      .section { break-inside: avoid; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Chuyển đến nội dung chính</a>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="wordmark" aria-label="Rikkaus Wealth OS">
+        <span class="wordmark-mark" aria-hidden="true">R</span>
+        <strong>Rikkaus</strong>
+      </div>
+      <nav class="topnav" aria-label="Điều hướng tài liệu">
+        <a href="#prototype">Thử luồng</a>
+        <a href="#matrix">State matrix</a>
+        <a href="#approval">PO duyệt</a>
+        <span class="status-chip info">Issue #40</span>
+      </nav>
+    </div>
+  </header>
+
+  <div class="notice">
+    <div class="container">
+      <p><strong>Mô phỏng thiết kế.</strong> File này không xác thực, lưu phiên, phân quyền hoặc kết nối Google thật. Dữ liệu và kết quả chỉ phục vụ PO duyệt hướng UX/UI.</p>
+    </div>
+  </div>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1>Một cánh cửa.<br>Ranh giới rõ ràng.</h1>
+          <p>Google Account là lối vào duy nhất. Rikkaus không yêu cầu, xử lý hay lưu mật khẩu của người dùng.</p>
+          <div class="hero-meta" aria-label="Phạm vi review">
+            <span class="tag">Google OIDC</span>
+            <span class="tag">Session recovery</span>
+            <span class="tag">Ownership boundary</span>
+            <span class="tag">Mobile first</span>
+          </div>
+        </div>
+        <div class="identity-spine" aria-label="Identity spine">
+          <div class="spine-step"><strong>Rikkaus</strong><small>Khởi tạo yêu cầu đăng nhập</small></div>
+          <div class="spine-step"><strong>Google boundary</strong><small>Người dùng xác thực bên ngoài ứng dụng</small></div>
+          <div class="spine-step"><strong>Phiên Rikkaus</strong><small>Ứng dụng tiếp nhận kết quả an toàn</small></div>
+          <div class="spine-step"><strong>Dữ liệu của tôi</strong><small>Quyền sở hữu được kiểm tra độc lập</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="structure">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-title"><span class="section-index">01</span><h2>Luồng và ranh giới</h2></div>
+          <p>Đăng ký và đăng nhập dùng cùng một điểm vào. Lần Google trả về thành công đầu tiên tạo tài khoản Rikkaus; các lần sau khôi phục phiên hiện có.</p>
+        </div>
+        <div class="flow-map" aria-label="Sơ đồ luồng OIDC">
+          <div class="flow-node active"><strong>Tiếp tục với Google</strong><span>Một CTA duy nhất trong Rikkaus.</span></div>
+          <div class="flow-node"><strong>Rời ứng dụng</strong><span>Google sở hữu chọn tài khoản và xác thực.</span></div>
+          <div class="flow-node"><strong>Quay lại</strong><span>Rikkaus xử lý kết quả, không hiển thị token.</span></div>
+          <div class="flow-node"><strong>Tạo hoặc nối phiên</strong><span>Lần đầu tạo hồ sơ tối thiểu; lần sau tiếp tục.</span></div>
+          <div class="flow-node"><strong>Kiểm tra quyền sở hữu</strong><span>Phiên hợp lệ không đồng nghĩa được mở mọi bản ghi.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="prototype">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-title"><span class="section-index">02</span><h2>Phòng thử luồng</h2></div>
+          <p>Chọn kích thước và kịch bản. Mỗi nút chuyển sang một kết quả cố định để PO kiểm tra copy, hành động phục hồi và mức độ tiết lộ thông tin.</p>
+        </div>
+
+        <div class="lab">
+          <aside class="lab-controls" aria-label="Điều khiển prototype">
+            <div class="control-group">
+              <span class="control-label">Viewport</span>
+              <div class="viewport-row">
+                <button class="viewport-button" type="button" data-viewport="360" aria-pressed="true">360</button>
+                <button class="viewport-button" type="button" data-viewport="375" aria-pressed="false">375</button>
+                <button class="viewport-button" type="button" data-viewport="768" aria-pressed="false">768</button>
+                <button class="viewport-button" type="button" data-viewport="1024" aria-pressed="false">1024</button>
+                <button class="viewport-button" type="button" data-viewport="1440" aria-pressed="false">1440</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <span class="control-label">Vào hệ thống</span>
+              <div class="control-list">
+                <button class="scenario-button" type="button" data-state="entry" aria-pressed="true">Điểm vào Google</button>
+                <button class="scenario-button" type="button" data-state="processing" aria-pressed="false">Đang xử lý</button>
+                <button class="scenario-button" type="button" data-state="first-success" aria-pressed="false">Lần đầu thành công</button>
+                <button class="scenario-button" type="button" data-state="return-success" aria-pressed="false">Quay lại thành công</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <span class="control-label">Phục hồi</span>
+              <div class="control-list">
+                <button class="scenario-button" type="button" data-state="cancel" aria-pressed="false">Người dùng hủy</button>
+                <button class="scenario-button" type="button" data-state="deny" aria-pressed="false">Chưa cấp quyền</button>
+                <button class="scenario-button" type="button" data-state="callback-error" aria-pressed="false">Không hoàn tất được</button>
+                <button class="scenario-button" type="button" data-state="expired" aria-pressed="false">Phiên hết hạn</button>
+                <button class="scenario-button" type="button" data-state="revoked" aria-pressed="false">Phiên kết thúc</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <span class="control-label">Quyền sở hữu</span>
+              <div class="control-list">
+                <button class="scenario-button" type="button" data-state="signed-in" aria-pressed="false">Tổng quan đã đăng nhập</button>
+                <button class="scenario-button" type="button" data-state="read-denied" aria-pressed="false">Không mở được mục</button>
+                <button class="scenario-button" type="button" data-state="write-denied" aria-pressed="false">Không lưu được thay đổi</button>
+              </div>
+            </div>
+          </aside>
+
+          <div class="lab-stage">
+            <div class="frame-wrap">
+              <div class="frame-caption">
+                <span id="screen-caption">360px · Điểm vào Google</span>
+                <span>Hành vi mô phỏng, không lưu sau khi tải lại</span>
+              </div>
+              <div class="device-frame" id="device-frame" data-viewport="360">
+                <div class="app-topbar">
+                  <span class="app-brand">Rikkaus</span>
+                  <span class="privacy-label">Không lưu thông tin đăng nhập Google</span>
+                </div>
+
+                <section class="screen entry-screen is-active" data-screen="entry" aria-labelledby="entry-title">
+                  <div class="entry-context">
+                    <div>
+                      <h2 id="entry-title">Tài sản của bạn. Một góc nhìn riêng tư.</h2>
+                      <p>Tiếp tục bằng Google Account để mở không gian tài chính cá nhân.</p>
+                    </div>
+                    <div class="privacy-points">
+                      <span class="privacy-point">Không tạo mật khẩu riêng tại Rikkaus</span>
+                      <span class="privacy-point">Chỉ yêu cầu thông tin nhận diện tối thiểu</span>
+                      <span class="privacy-point">Mỗi tài khoản chỉ truy cập dữ liệu của chính mình</span>
+                    </div>
+                  </div>
+                  <div class="entry-action">
+                    <h3>Bắt đầu an toàn</h3>
+                    <p>Lần đầu tiếp tục sẽ tạo tài khoản Rikkaus từ danh tính được Google xác nhận.</p>
+                    <button class="google-button" type="button" data-go="processing"><span class="google-mark" aria-hidden="true">G</span>Tiếp tục với Google</button>
+                    <div class="boundary-note"><strong>Ranh giới nhà cung cấp:</strong> bước chọn tài khoản và xác thực diễn ra trên Google. Prototype không mô phỏng các màn hình đó.</div>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="processing" aria-labelledby="processing-title">
+                  <div class="state-panel info" role="status" aria-live="polite">
+                    <div class="spinner" aria-hidden="true"></div>
+                    <h3 id="processing-title">Đang hoàn tất đăng nhập</h3>
+                    <p>Rikkaus đang xử lý kết quả trả về từ Google. Không đóng cửa sổ này.</p>
+                    <button class="secondary-button" type="button" data-go="entry">Hủy và quay lại</button>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="first-success" aria-labelledby="first-success-title">
+                  <div class="state-panel success" role="status" aria-live="polite">
+                    <span class="state-symbol" aria-hidden="true">✓</span>
+                    <h3 id="first-success-title">Tài khoản Rikkaus đã sẵn sàng</h3>
+                    <p>Danh tính Google đã được xác nhận. Tiếp theo, thiết lập tỷ giá để bắt đầu nhập tài sản.</p>
+                    <button class="primary-button" type="button" data-go="signed-in">Thiết lập tỷ giá USD/VND</button>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="return-success" aria-labelledby="return-success-title">
+                  <div class="state-panel success" role="status" aria-live="polite">
+                    <span class="state-symbol" aria-hidden="true">✓</span>
+                    <h3 id="return-success-title">Đã đăng nhập</h3>
+                    <p>Phiên Rikkaus đã được khôi phục. Bạn có thể tiếp tục từ điểm an toàn gần nhất.</p>
+                    <button class="primary-button" type="button" data-go="signed-in">Mở Tổng quan</button>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="cancel" aria-labelledby="cancel-title">
+                  <div class="state-panel info" role="status">
+                    <span class="state-symbol" aria-hidden="true">i</span>
+                    <h3 id="cancel-title">Bạn đã dừng đăng nhập</h3>
+                    <p>Chưa có phiên Rikkaus nào được tạo. Bạn có thể thử lại khi sẵn sàng.</p>
+                    <div class="button-row"><button class="primary-button" type="button" data-go="processing">Thử lại với Google</button><button class="secondary-button" type="button" data-go="entry">Về màn hình đầu</button></div>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="deny" aria-labelledby="deny-title">
+                  <div class="state-panel warning" role="alert">
+                    <span class="state-symbol" aria-hidden="true">!</span>
+                    <h3 id="deny-title">Chưa thể tiếp tục</h3>
+                    <p>Google chưa cho phép Rikkaus nhận thông tin nhận diện cần thiết. Chưa có tài khoản hoặc phiên nào được tạo.</p>
+                    <div class="button-row"><button class="primary-button" type="button" data-go="processing">Xem lại với Google</button><button class="secondary-button" type="button" data-go="entry">Quay lại</button></div>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="callback-error" aria-labelledby="callback-error-title">
+                  <div class="state-panel error" role="alert">
+                    <span class="state-symbol" aria-hidden="true">×</span>
+                    <h3 id="callback-error-title">Không hoàn tất được đăng nhập</h3>
+                    <p>Kết quả trả về chưa được xử lý. Không có thay đổi nào được lưu.</p>
+                    <div class="button-row"><button class="primary-button" type="button" data-go="processing">Thử lại</button><button class="secondary-button" type="button" data-go="entry">Về màn hình đầu</button></div>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="expired" aria-labelledby="expired-title">
+                  <div class="state-panel warning" role="alert">
+                    <span class="state-symbol" aria-hidden="true">!</span>
+                    <h3 id="expired-title">Phiên đăng nhập đã hết hạn</h3>
+                    <p>Để bảo vệ dữ liệu tài chính, nội dung trước đó đã được ẩn. Tiếp tục với Google để đăng nhập lại.</p>
+                    <div class="button-row"><button class="primary-button" type="button" data-go="processing">Tiếp tục với Google</button><button class="secondary-button" type="button" data-go="entry">Về màn hình đầu</button></div>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="revoked" aria-labelledby="revoked-title">
+                  <div class="state-panel error" role="alert">
+                    <span class="state-symbol" aria-hidden="true">×</span>
+                    <h3 id="revoked-title">Phiên đăng nhập đã kết thúc</h3>
+                    <p>Vì lý do bảo mật, hãy đăng nhập lại. Sau khi thành công, Rikkaus sẽ mở Tổng quan thay vì quay lại liên kết nhạy cảm.</p>
+                    <div class="button-row"><button class="primary-button" type="button" data-go="processing">Đăng nhập lại</button><button class="secondary-button" type="button" data-go="entry">Về màn hình đầu</button></div>
+                  </div>
+                </section>
+
+                <section class="screen signed-shell" data-screen="signed-in" aria-labelledby="signed-in-title">
+                  <nav class="shell-nav" aria-label="Điều hướng ứng dụng mô phỏng">
+                    <button type="button">Tổng quan</button><button type="button">Tài sản &amp; Nợ</button><button type="button">Dòng tiền</button><button type="button">Mục tiêu</button><button type="button">Nhận định</button>
+                  </nav>
+                  <div class="shell-content">
+                    <div class="shell-header"><div><small>Chào mừng trở lại</small><h3 id="signed-in-title">Tổng quan tài chính</h3></div><button class="avatar-button" id="signout-trigger" type="button" aria-label="Mở xác nhận đăng xuất">RT</button></div>
+                    <div class="snapshot"><span>Tài sản ròng</span><strong>10.470.000.000 ₫</strong><small>Cập nhật ngày 12/09/2026 · Dữ liệu mô phỏng</small></div>
+                    <div aria-label="Nội dung hỗ trợ mô phỏng"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>
+                  </div>
+                  <nav class="bottom-nav" aria-label="Điều hướng dưới mô phỏng"><span>Tổng quan</span><span>Tài sản &amp; Nợ</span><span>Dòng tiền</span><span>Mục tiêu</span><span>Nhận định</span></nav>
+                </section>
+
+                <section class="screen state-screen" data-screen="read-denied" aria-labelledby="read-denied-title">
+                  <div class="state-panel error" role="alert">
+                    <span class="state-symbol" aria-hidden="true">×</span>
+                    <h3 id="read-denied-title">Không thể mở mục này</h3>
+                    <p>Nội dung không khả dụng. Không có thông tin nào về bản ghi hoặc chủ sở hữu được hiển thị.</p>
+                    <div class="button-row"><button class="primary-button" type="button" data-go="signed-in">Quay lại Tổng quan</button><button class="secondary-button" type="button" data-go="signed-in">Về trang trước an toàn</button></div>
+                  </div>
+                </section>
+
+                <section class="screen state-screen" data-screen="write-denied" aria-labelledby="write-denied-title">
+                  <div class="state-panel error" role="alert">
+                    <span class="state-symbol" aria-hidden="true">×</span>
+                    <h3 id="write-denied-title">Không thể mở mục này</h3>
+                    <p>Không có thay đổi nào được lưu. Bạn được đưa về khu vực dữ liệu thuộc tài khoản hiện tại.</p>
+                    <div class="button-row"><button class="primary-button" type="button" data-go="signed-in">Về danh mục của tôi</button><button class="secondary-button" type="button" data-go="signed-in">Quay lại Tổng quan</button></div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="annotations">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-title"><span class="section-index">03</span><h2>Chú thích quyết định</h2></div>
+          <p>Các ghi chú này phân biệt thiết kế app-owned với giao diện Google-owned và implementation-owned, tránh prototype vô tình trở thành đặc tả token hoặc API.</p>
+        </div>
+        <div class="annotation-grid">
+          <div class="annotation-list">
+            <div class="annotation"><span class="annotation-number">01</span><div><strong>Một điểm vào</strong><p>Đăng ký và đăng nhập không tách thành hai form. Google Account quyết định tài khoản; Rikkaus quyết định tạo hay nối phiên.</p></div></div>
+            <div class="annotation"><span class="annotation-number">02</span><div><strong>Thông tin tối thiểu</strong><p>Handoff đề xuất phạm vi nhận diện <code>openid</code>, <code>email</code> và <code>profile</code>. Không xin quyền Google API khác trong thiết kế này.</p></div></div>
+            <div class="annotation"><span class="annotation-number">03</span><div><strong>Không lộ dữ liệu phía sau</strong><p>Phiên hết hạn hoặc bị thu hồi thay thế nội dung nhạy cảm, không phủ một modal lên dashboard còn đọc được.</p></div></div>
+            <div class="annotation"><span class="annotation-number">04</span><div><strong>Hai lớp kiểm soát</strong><p>Phiên hợp lệ chỉ xác nhận người dùng. Mỗi lần đọc hoặc ghi vẫn phải qua kiểm tra quyền sở hữu phía server.</p></div></div>
+            <div class="annotation"><span class="annotation-number">05</span><div><strong>Không enumeration</strong><p>Mục không tồn tại và mục không thuộc tài khoản hiện tại dùng cùng thông điệp và cùng đường quay lại an toàn.</p></div></div>
+          </div>
+          <aside class="contract-box">
+            <h3>Contract delta cần xử lý</h3>
+            <p>Backbone, architecture và issue #42 hiện còn mô tả password hashing. Quyết định PO mới thay thế hướng đó bằng Google OIDC.</p>
+            <p>Artifact này chỉ ghi nhận quyết định thiết kế. Backend và chủ sở hữu tài liệu phải cập nhật contract riêng trước khi #42 được xem là API Ready.</p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="matrix">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-title"><span class="section-index">04</span><h2>State matrix</h2></div>
+          <p>Mỗi trạng thái có trigger, thông điệp, hành động phục hồi và quy tắc bảo mật. Exact HTTP status, token shape và retry policy không thuộc artifact.</p>
+        </div>
+        <div class="matrix-wrap">
+          <table>
+            <caption>Ma trận identity, session và ownership</caption>
+            <thead><tr><th>Trạng thái</th><th>Trigger mô phỏng</th><th>Thông điệp chính</th><th>Phục hồi</th><th>Quy tắc</th></tr></thead>
+            <tbody>
+              <tr><td><span class="state-pill safe">Signed out</span></td><td>Mở ứng dụng</td><td>Tiếp tục với Google</td><td>Chuyển sang Google boundary</td><td>Không có credential form</td></tr>
+              <tr><td><span class="state-pill attention">Processing</span></td><td>Google trả về</td><td>Đang hoàn tất đăng nhập</td><td>Hủy an toàn</td><td>Không hiện token hoặc claim</td></tr>
+              <tr><td><span class="state-pill safe">First login</span></td><td>Danh tính hợp lệ lần đầu</td><td>Tài khoản đã sẵn sàng</td><td>Sang thiết lập tỷ giá</td><td>Không yêu cầu mật khẩu mới</td></tr>
+              <tr><td><span class="state-pill safe">Returning</span></td><td>Danh tính đã liên kết</td><td>Đã đăng nhập</td><td>Mở điểm an toàn gần nhất</td><td>Không lộ provider internals</td></tr>
+              <tr><td><span class="state-pill attention">Cancelled</span></td><td>Người dùng hủy</td><td>Chưa có phiên được tạo</td><td>Thử lại hoặc về đầu</td><td>Không coi là lỗi hệ thống</td></tr>
+              <tr><td><span class="state-pill blocked">Denied</span></td><td>Chưa cấp thông tin cần thiết</td><td>Chưa thể tiếp tục</td><td>Xem lại với Google</td><td>Không quy lỗi cho người dùng</td></tr>
+              <tr><td><span class="state-pill blocked">Callback failed</span></td><td>Không xử lý được kết quả</td><td>Không hoàn tất được</td><td>Thử lại hoặc về đầu</td><td>Không hiện chi tiết token</td></tr>
+              <tr><td><span class="state-pill attention">Expired</span></td><td>Phiên hết hạn</td><td>Nội dung đã được ẩn</td><td>Tiếp tục với Google</td><td>Không hứa bảo toàn draft</td></tr>
+              <tr><td><span class="state-pill blocked">Revoked</span></td><td>Phiên bị kết thúc</td><td>Đăng nhập lại</td><td>Đi về Tổng quan</td><td>Không trở lại deep link nhạy cảm</td></tr>
+              <tr><td><span class="state-pill blocked">Read denied</span></td><td>Mở mục ngoài quyền</td><td>Không thể mở mục này</td><td>Về điểm an toàn</td><td>Không xác nhận tồn tại hoặc owner</td></tr>
+              <tr><td><span class="state-pill blocked">Write denied</span></td><td>Lưu mục ngoài quyền</td><td>Không có thay đổi được lưu</td><td>Về danh mục của tôi</td><td>Không lộ mục đích bị từ chối</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="layers">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-title"><span class="section-index">05</span><h2>Sáu lớp bàn giao</h2></div>
+          <p>Cấu trúc này giữ screen styling, UX map và implementation boundary tách biệt theo contract clickable mockup của dự án.</p>
+        </div>
+        <div class="layers">
+          <div class="layer ux"><h3>UX structure</h3><p>Một điểm vào Google, callback về app, phiên Rikkaus, shell đã đăng nhập và safe-return path.</p></div>
+          <div class="layer system"><h3>Design system</h3><p>Quiet Heritage, light-only, teal cho tương tác, gold chỉ làm rule, focus và status dùng semantic color.</p></div>
+          <div class="layer components"><h3>Reusable components</h3><p>Google entry button, state panel, shell, status label, confirm dialog, denial panel và viewport control.</p></div>
+          <div class="layer screens"><h3>Screens</h3><p>Entry, processing, first/returning success, failure recovery, signed-in, sign-out, expired/revoked và denial.</p></div>
+          <div class="layer flows"><h3>User flows</h3><p>First login, returning login, cancel/deny/retry, sign-out, reauthentication và read/write ownership denial.</p></div>
+          <div class="layer interactions"><h3>Mock interactions</h3><p>Tất cả kết quả cố định trong bộ nhớ trang. Không request mạng, không persistence, không token, không Google UI giả và không business calculation.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="approval">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-title"><span class="section-index">06</span><h2>Accessibility và PO gate</h2></div>
+          <p>Checkbox chỉ hỗ trợ phiên review hiện tại và không lưu khi tải lại. Approval thật cần được ghi vào issue hoặc report sau khi PO xác nhận.</p>
+        </div>
+        <div class="approval-layout">
+          <div class="checklist">
+            <label class="check-row"><input type="checkbox"><span>Google Account là lựa chọn duy nhất; không có form mật khẩu hoặc email/password.</span></label>
+            <label class="check-row"><input type="checkbox"><span>Lần đầu đăng nhập tạo tài khoản; lần sau nối lại phiên bằng cùng một CTA.</span></label>
+            <label class="check-row"><input type="checkbox"><span>Cancel, deny, callback failure, expired và revoked đều có đường phục hồi rõ ràng.</span></label>
+            <label class="check-row"><input type="checkbox"><span>Phiên hết hạn hoặc bị thu hồi không để lộ số liệu tài chính phía sau.</span></label>
+            <label class="check-row"><input type="checkbox"><span>Cross-user read/write dùng copy không enumeration và không lộ owner hay record existence.</span></label>
+            <label class="check-row"><input type="checkbox"><span>360, 375, 768, 1024 và 1440 không overflow, che CTA hoặc phá hierarchy.</span></label>
+            <label class="check-row"><input type="checkbox"><span>Keyboard, focus, Escape, focus return, reduced motion và text scaling được chấp nhận.</span></label>
+            <label class="check-row"><input type="checkbox"><span>PO hiểu approval chỉ duyệt UX/UI, không chứng nhận OIDC, API, session hoặc security implementation.</span></label>
+            <label class="check-row"><input type="checkbox"><span>Contract password hashing cũ được chuyển thành follow-up bắt buộc cho #42 và chủ sở hữu architecture docs.</span></label>
+          </div>
+          <aside class="decision-box">
+            <h3>Kết quả phiên review</h3>
+            <p>Đánh dấu đủ các mục để mô phỏng trạng thái “sẵn sàng ghi nhận quyết định”.</p>
+            <button class="primary-button" id="review-check" type="button">Kiểm tra checklist</button>
+            <div class="review-result" id="review-result" role="status" aria-live="polite"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-grid">
+      <p><strong>Authority:</strong> <code>docs/design-guidelines.md</code>. Artifact này là evidence theo issue #40, không phải nguồn contract thay thế.</p>
+      <p>Thiết kế mô phỏng · Dữ liệu hư cấu · Không có network request</p>
+    </div>
+  </footer>
+
+  <dialog id="signout-dialog" aria-labelledby="signout-title" aria-describedby="signout-description">
+    <div class="dialog-body">
+      <h2 id="signout-title">Đăng xuất khỏi Rikkaus?</h2>
+      <p id="signout-description">Quyền truy cập dữ liệu trên thiết bị này sẽ kết thúc. Việc đăng xuất không xóa Google Account.</p>
+    </div>
+    <div class="dialog-actions">
+      <button class="secondary-button" type="button" data-dialog-close>Tiếp tục sử dụng</button>
+      <button class="danger-button" type="button" data-signout-confirm>Đăng xuất</button>
+    </div>
+  </dialog>
+
+  <script>
+    (() => {
+      const frame = document.querySelector('#device-frame');
+      const caption = document.querySelector('#screen-caption');
+      const screens = [...document.querySelectorAll('[data-screen]')];
+      const scenarioButtons = [...document.querySelectorAll('[data-state]')];
+      const viewportButtons = [...document.querySelectorAll('[data-viewport].viewport-button')];
+      const dialog = document.querySelector('#signout-dialog');
+      const signoutTrigger = document.querySelector('#signout-trigger');
+      const labels = {
+        entry: 'Điểm vào Google', processing: 'Đang xử lý', 'first-success': 'Lần đầu thành công',
+        'return-success': 'Quay lại thành công', cancel: 'Người dùng hủy', deny: 'Chưa cấp quyền',
+        'callback-error': 'Không hoàn tất được', expired: 'Phiên hết hạn', revoked: 'Phiên kết thúc',
+        'signed-in': 'Tổng quan đã đăng nhập', 'read-denied': 'Không mở được mục', 'write-denied': 'Không lưu được thay đổi'
+      };
+      let currentState = 'entry';
+
+      function showState(state, focusHeading = false) {
+        currentState = state;
+        screens.forEach((screen) => screen.classList.toggle('is-active', screen.dataset.screen === state));
+        scenarioButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.state === state)));
+        caption.textContent = `${frame.dataset.viewport}px · ${labels[state]}`;
+        if (focusHeading) {
+          const heading = document.querySelector(`[data-screen="${state}"] h2, [data-screen="${state}"] h3`);
+          if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus(); }
+        }
+      }
+
+      scenarioButtons.forEach((button) => button.addEventListener('click', () => showState(button.dataset.state, true)));
+      document.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => showState(button.dataset.go, true)));
+      viewportButtons.forEach((button) => button.addEventListener('click', () => {
+        const viewport = button.dataset.viewport;
+        frame.dataset.viewport = viewport;
+        viewportButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        caption.textContent = `${viewport}px · ${labels[currentState]}`;
+      }));
+
+      signoutTrigger.addEventListener('click', () => dialog.showModal());
+      dialog.querySelector('[data-dialog-close]').addEventListener('click', () => dialog.close());
+      dialog.querySelector('[data-signout-confirm]').addEventListener('click', () => { dialog.close(); showState('entry', true); });
+      dialog.addEventListener('close', () => { if (currentState === 'signed-in') signoutTrigger.focus(); });
+
+      const reviewButton = document.querySelector('#review-check');
+      const reviewResult = document.querySelector('#review-result');
+      reviewButton.addEventListener('click', () => {
+        const checks = [...document.querySelectorAll('.check-row input')];
+        const complete = checks.every((check) => check.checked);
+        reviewResult.classList.add('is-visible');
+        reviewResult.textContent = complete
+          ? 'Checklist đã đầy đủ. Có thể ghi nhận quyết định PO trong report hoặc issue.'
+          : `Còn ${checks.filter((check) => !check.checked).length} mục cần review trước khi ghi nhận approval.`;
+      });
+    })();
+  </script>
+</body>
+</html>
