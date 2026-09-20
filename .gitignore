@@ -79,14 +79,18 @@ logs.txt
 test-ck
 __pycache__
 
-# CK meta commands
+# Agent kit meta commands
 prompt.md
 ck.md
+ak.md
 
-# Generated runtime layout for release/install smoke tests
+# Runtime layout installed by the agent kit; repo rules live in AGENTS.md
 /.claude/
-# But track repo-level rules that Claude Code reads
-!/.claude/rules/
+
+# AgentKit project state; only the shared config and script audit are tracked
+/.agentkit/*
+!/.agentkit/config.yaml
+!/.agentkit/script-audit.json
 
 # Local-only state inside tracked claude source
 claude/agent-memory/

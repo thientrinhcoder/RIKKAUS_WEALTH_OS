@@ -26,3 +26,16 @@ modify production application code or runtime configuration:
 If the task related to Backend-FrontEnd team, also changes production code, shared runtime contracts, dependencies, or
 configuration, the normal implementation, review, and verification rules still apply to those
 changes.
+
+## Decisions and questions
+
+Before asking the user to choose between approaches (`AskUserQuestion` or otherwise), present the
+options and the reasoning behind them in visible response text first. Never ask the user to decide
+on analysis they have not seen, and write every option so it stands alone. Internal reasoning is
+invisible to the user, so externalize it before any decision point.
+
+## Hook responses
+
+If the privacy-block hook emits a marker between `@@PRIVACY_PROMPT_START@@` and
+`@@PRIVACY_PROMPT_END@@`, parse the JSON and ask the user for approval with `AskUserQuestion`.
+If access is denied, continue without that file.

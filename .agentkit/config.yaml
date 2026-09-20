@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=https://releases.agentkit.best/schemas/config/v1.json
+assertions: []
+coding_level: -1
+docs:
+    max_loc: 800
+extensions:
+    kits:
+        ClaudeKit Engineer:
+            installedSettings:
+                hooks:
+                    - node $HOME/.claude/hooks/session-init.cjs
+                    - node $HOME/.claude/hooks/usage-quota-cache-refresh.cjs
+                    - node $HOME/.claude/hooks/simplify-gate.cjs
+                    - node $HOME/.claude/hooks/dev-rules-reminder.cjs
+                    - node $HOME/.claude/hooks/subagent-init.cjs
+                    - node $HOME/.claude/hooks/descriptive-name.cjs
+                    - node $HOME/.claude/hooks/scout-block.cjs
+                    - node $HOME/.claude/hooks/privacy-block.cjs
+                    - node $HOME/.claude/hooks/plan-format-kanban.cjs
+                    - node $HOME/.claude/hooks/session-state.cjs
+                    - node $HOME/.claude/hooks/cook-after-plan-reminder.cjs
+                mcpServers: []
+gemini:
+    model: gemini-3-flash-preview
+hooks: {}
+locale:
+    response_language: null
+    thinking_language: null
+paths:
+    docs: docs
+    plans: plans
+plan:
+    date_format: YYMMDD-HHmm
+    issue_prefix: GH-
+    naming_format: '{date}-{issue}-{slug}'
+    reports_dir: reports
+    resolution:
+        branch_pattern: (?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)
+        order:
+            - session
+            - branch
+    validation:
+        focus_areas:
+            - assumptions
+            - risks
+            - tradeoffs
+            - architecture
+        max_questions: 8
+        min_questions: 3
+        mode: prompt
+privacy_block: true
+project:
+    framework: auto
+    package_manager: auto
+    type: auto
+skills:
+    research:
+        use_gemini: false
+statusline: full
+statusline_colors: true
+trust:
+    enabled: false
+    passphrase: null
