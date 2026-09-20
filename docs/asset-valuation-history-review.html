@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Rikkaus Wealth OS | Lịch sử định giá tài sản</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #F7F5EF;
+      --surface: #FFFFFF;
+      --surface-subtle: #EFEBE2;
+      --ink: #17212B;
+      --ink-secondary: #52606D;
+      --border: #D7D2C7;
+      --control-border: #8B877E;
+      --brand-navy: #182B45;
+      --primary: #0F5C5A;
+      --primary-pressed: #0B4746;
+      --primary-container: #D9EFEC;
+      --heritage-gold: #A87428;
+      --success: #1E6A45;
+      --warning: #8A5A00;
+      --warning-container: #FFF8E8;
+      --error: #B42318;
+      --error-container: #FDECE9;
+      --info: #2458A6;
+      --focus: #147D79;
+      --nav-backdrop: rgba(247, 245, 239, .96);
+      --scrim: rgba(23, 33, 43, .56);
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-display: "Noto Serif Display", Georgia, serif;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-12: 48px;
+      --space-16: 64px;
+      --radius-control: 12px;
+      --radius-card: 16px;
+      --radius-dialog: 24px;
+      --line: 1px solid var(--border);
+      --control-line: 1px solid var(--control-border);
+      --shadow-raised: 0 2px 8px rgba(24, 43, 69, .12);
+      --shadow-modal: 0 12px 32px rgba(24, 43, 69, .22);
+      --duration-press: 120ms;
+      --duration-state: 220ms;
+      --ease-state: cubic-bezier(.25, 1, .5, 1);
+      --content: 1180px;
+      --reading: 720px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font: 400 16px/1.5 var(--font-body); }
+    body:has(dialog[open]) { overflow: hidden; }
+    button, input, select, textarea { font: inherit; }
+    button, a, summary { touch-action: manipulation; }
+    h1, h2, h3, p, ul, ol, dl { margin-top: 0; }
+    h1, h2, h3 { color: var(--brand-navy); text-wrap: balance; }
+    h1 { margin-bottom: var(--space-4); font: 600 clamp(2.75rem, 7vw, 5rem)/1.08 var(--font-display); letter-spacing: -.02em; }
+    h2 { margin-bottom: var(--space-3); font-size: 1.5rem; line-height: 1.33; }
+    h3 { margin-bottom: var(--space-2); font-size: 1.125rem; line-height: 1.33; }
+    p { margin-bottom: var(--space-3); text-wrap: pretty; }
+    a { color: var(--primary); }
+    strong, .money, .number { font-variant-numeric: tabular-nums; }
+    svg { display: block; }
+
+    .skip-link { position: fixed; left: var(--space-4); top: -80px; z-index: 100; padding: var(--space-3) var(--space-4); border-radius: var(--radius-control); background: var(--surface); color: var(--primary); box-shadow: var(--shadow-raised); }
+    .skip-link:focus { top: var(--space-4); }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .page { width: min(100%, var(--content)); margin-inline: auto; padding-inline: var(--space-4); }
+    .review-hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(260px, 3fr); gap: var(--space-12); align-items: end; padding-block: var(--space-16) var(--space-12); border-bottom: 2px solid var(--heritage-gold); }
+    .review-kicker { margin-bottom: var(--space-3); color: var(--ink-secondary); font-size: .875rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+    .review-lede { max-width: 64ch; margin-bottom: 0; color: var(--ink-secondary); font-size: 1.125rem; }
+    .scope-note { margin: 0; padding: var(--space-4); border-radius: var(--radius-card); background: var(--primary-container); color: var(--ink); }
+    .review-nav { position: sticky; top: 0; z-index: 20; margin-inline: calc(var(--space-4) * -1); padding: var(--space-2) var(--space-4); border-bottom: var(--line); background: var(--nav-backdrop); }
+    .review-nav ul { display: flex; gap: var(--space-2); margin: 0; padding: 0; list-style: none; overflow-x: auto; }
+    .review-nav a { display: grid; min-height: 44px; place-items: center; padding-inline: var(--space-3); border-radius: var(--radius-control); font-size: .875rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .review-nav a:hover { background: var(--primary-container); }
+    .review-nav a:active { transform: translateY(1px); }
+    .review-section { padding-block: var(--space-16); border-bottom: var(--line); }
+    .section-head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: var(--space-8); align-items: end; margin-bottom: var(--space-8); }
+    .section-head p { margin: 0; color: var(--ink-secondary); }
+    .section-index { display: block; margin-bottom: var(--space-2); color: var(--heritage-gold); font-weight: 700; }
+    .grid { display: grid; gap: var(--space-4); }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: 1.4fr 1fr 1fr; }
+    .card { padding: var(--space-4); border: var(--line); border-radius: var(--radius-card); background: var(--surface); }
+    .card > :last-child { margin-bottom: 0; }
+    .callout { padding: var(--space-4); border-radius: var(--radius-card); background: var(--surface-subtle); }
+    .callout.pending { border: 1px solid var(--warning); background: var(--warning-container); }
+    .plain-list { margin-bottom: 0; padding-left: 1.25rem; }
+    .plain-list li + li { margin-top: var(--space-2); }
+    .mini-label { display: block; margin-bottom: var(--space-1); color: var(--ink-secondary); font-size: .75rem; font-weight: 600; }
+
+    button, .button {
+      min-height: 44px;
+      border: var(--control-line);
+      border-radius: var(--radius-control);
+      padding: var(--space-2) var(--space-4);
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform var(--duration-press) var(--ease-state), background-color var(--duration-state) var(--ease-state), color var(--duration-state) var(--ease-state), box-shadow var(--duration-state) var(--ease-state);
+    }
+    button:hover, .button:hover { transform: translateY(-1px); }
+    button:active, .button:active { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .52; transform: none; }
+    .button-primary { border-color: var(--primary); background: var(--primary); color: var(--surface); }
+    .button-primary:hover { background: var(--primary-pressed); }
+    .button-tonal { border-color: var(--primary-container); background: var(--primary-container); color: var(--primary); }
+    .button-text { border-color: transparent; background: transparent; color: var(--primary); }
+    .button-danger { border-color: var(--error); color: var(--error); }
+    .icon-button { width: 44px; padding: 0; display: grid; place-items: center; }
+    .icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+    .toolbar, .button-row, .review-switches { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .review-switches { margin-bottom: var(--space-4); }
+    .review-switches button[aria-pressed="true"] { border-color: var(--primary); background: var(--primary); color: var(--surface); }
+    .status { display: inline-flex; align-items: center; gap: var(--space-2); width: fit-content; color: var(--ink-secondary); font-size: .875rem; font-weight: 700; }
+    .status::before { width: 10px; height: 10px; border: 2px solid currentColor; border-radius: 50%; content: ""; }
+    .status.success { color: var(--success); }
+    .status.warning { color: var(--warning); }
+    .status.error { color: var(--error); }
+    .status.info { color: var(--info); }
+
+    .table-wrap { overflow-x: auto; border: var(--line); border-radius: var(--radius-card); background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; }
+    caption { padding: var(--space-4); text-align: left; font-weight: 700; color: var(--brand-navy); }
+    th, td { padding: var(--space-3); border-top: var(--line); text-align: left; vertical-align: top; }
+    th { background: var(--surface-subtle); font-size: .875rem; }
+    td { color: var(--ink-secondary); }
+    td strong { color: var(--ink); }
+
+    .prototype-controls { margin-bottom: var(--space-6); }
+    .control-label { display: block; margin-bottom: var(--space-2); color: var(--ink-secondary); font-size: .875rem; font-weight: 700; }
+    .device-stage { padding: var(--space-6); border-radius: var(--radius-card); background: var(--surface-subtle); overflow: auto; }
+    .app-shell { width: 360px; min-height: 760px; margin-inline: auto; display: grid; grid-template-rows: auto 1fr; border: 2px solid var(--brand-navy); border-radius: var(--radius-card); background: var(--canvas); overflow: hidden; transition: width 300ms var(--ease-state); }
+    .app-bar { min-height: 64px; padding: var(--space-2) var(--space-4); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-bottom: var(--line); background: var(--surface); }
+    .wordmark { font: 600 1.125rem/1.2 var(--font-display); color: var(--brand-navy); }
+    .avatar { width: 44px; padding: 0; border-radius: 50%; }
+    .app-body { min-width: 0; display: grid; grid-template-rows: 1fr auto; }
+    .app-nav { grid-row: 2; z-index: 5; border-top: var(--line); background: var(--surface); padding-bottom: max(var(--space-2), env(safe-area-inset-bottom)); }
+    .app-nav ul { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; }
+    .nav-button { width: 100%; min-width: 0; min-height: 64px; padding: var(--space-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1); border: 0; border-radius: 0; color: var(--ink-secondary); font-size: .6875rem; line-height: 1.2; text-align: center; }
+    .nav-button:hover { transform: none; background: var(--surface-subtle); }
+    .nav-button.active { background: var(--primary-container); color: var(--primary); }
+    .app-main { grid-row: 1; min-width: 0; padding: var(--space-4) var(--space-4) calc(var(--space-16) + var(--space-12)); display: grid; align-content: start; }
+    .app-view { display: none; gap: var(--space-4); }
+    .app-view.active { display: grid; }
+    .screen-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+    .screen-head h2, .screen-head p { margin-bottom: 0; }
+    .screen-eyebrow { margin-bottom: var(--space-1); color: var(--ink-secondary); font-size: .875rem; }
+    .summary-card { padding: var(--space-4); display: grid; gap: var(--space-3); border: var(--line); border-radius: var(--radius-card); background: var(--surface); }
+    .summary-top { display: flex; justify-content: space-between; gap: var(--space-3); align-items: flex-start; }
+    .current-value { font-size: clamp(1.75rem, 7vw, 2.25rem); line-height: 1.2; color: var(--brand-navy); overflow-wrap: anywhere; }
+    .trace-grid { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-4); }
+    .trace-grid dt { color: var(--ink-secondary); }
+    .trace-grid dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+    .primary-action { min-height: 52px; }
+    .history-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
+    .history-head h3 { margin-bottom: 0; }
+    .history-spine { position: relative; display: grid; gap: var(--space-3); }
+    .history-spine::before { position: absolute; top: var(--space-3); bottom: var(--space-3); left: 7px; width: 1px; background: var(--heritage-gold); content: ""; }
+    .valuation-row { position: relative; width: 100%; padding: var(--space-3) var(--space-3) var(--space-3) var(--space-8); display: grid; gap: var(--space-2); border: var(--line); border-radius: var(--radius-control); background: var(--surface); text-align: left; font-weight: 400; }
+    .valuation-row::before { position: absolute; left: 2px; top: 18px; width: 12px; height: 12px; border: 3px solid var(--canvas); border-radius: 50%; background: var(--heritage-gold); content: ""; }
+    .valuation-row.current::before { background: var(--primary); }
+    .valuation-row:hover { border-color: var(--primary); }
+    .row-top, .row-value, .row-meta { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+    .row-value strong { color: var(--brand-navy); font-size: 1.0625rem; }
+    .row-meta { color: var(--ink-secondary); font-size: .8125rem; }
+    .record-detail { padding: var(--space-4); border: var(--line); border-radius: var(--radius-card); background: var(--surface); }
+    .record-detail .trace-grid { margin-top: var(--space-4); }
+    .contract-note { padding: var(--space-3); border-radius: var(--radius-control); background: var(--surface-subtle); color: var(--ink-secondary); font-size: .875rem; }
+    .form-grid { display: grid; gap: var(--space-4); }
+    .field { display: grid; gap: var(--space-1); }
+    .field label, legend { color: var(--ink); font-weight: 700; }
+    .field input, .field select, .field textarea { width: 100%; min-height: 48px; padding: var(--space-3); border: var(--control-line); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); }
+    .field textarea { min-height: 96px; resize: vertical; }
+    .field small { color: var(--ink-secondary); }
+    .field-error { color: var(--error); font-size: .875rem; }
+    .field .invalid { border: 2px solid var(--error); }
+    .form-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .error-summary { padding: var(--space-4); border-radius: var(--radius-card); background: var(--error-container); color: var(--error); }
+    .sticky-actions { position: sticky; bottom: 0; z-index: 4; margin: var(--space-4) calc(var(--space-4) * -1) calc((var(--space-16) + var(--space-12)) * -1); padding: var(--space-3) var(--space-4) max(var(--space-3), env(safe-area-inset-bottom)); display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--space-2); border-top: var(--line); background: var(--surface); }
+    .state-panel { min-height: 360px; padding: var(--space-6); display: grid; place-items: center; border: var(--line); border-radius: var(--radius-card); background: var(--surface); text-align: center; }
+    .state-panel > div { width: min(100%, 420px); }
+    .state-symbol { width: 48px; height: 48px; margin: 0 auto var(--space-4); display: grid; place-items: center; border: 2px solid currentColor; border-radius: 50%; color: var(--info); font-weight: 700; }
+    .state-symbol svg { width: 24px; height: 24px; }
+    .state-panel .button-row { justify-content: center; }
+    .skeleton-stack { display: grid; gap: var(--space-3); }
+    .skeleton { height: 16px; border-radius: var(--radius-control); background: var(--surface-subtle); animation: pulse 1.2s var(--ease-state) infinite alternate; }
+    .skeleton.short { width: 62%; }
+    @keyframes pulse { to { opacity: .5; } }
+    .toast { position: absolute; left: var(--space-4); right: var(--space-4); bottom: 80px; z-index: 10; padding: var(--space-3) var(--space-4); border-radius: var(--radius-control); background: var(--brand-navy); color: var(--surface); box-shadow: var(--shadow-raised); }
+    .hidden { display: none !important; }
+    .viewport-note { margin-top: var(--space-3); color: var(--ink-secondary); font-size: .875rem; }
+
+    .device-stage[data-viewport="375"] .app-shell { width: 375px; }
+    .device-stage[data-viewport="768"] .app-shell { width: 768px; }
+    .device-stage[data-viewport="1024"] .app-shell { width: min(1024px, 100%); }
+    .device-stage[data-viewport="1440"] .app-shell { width: min(1180px, 100%); }
+    .device-stage[data-viewport="768"] .app-body,
+    .device-stage[data-viewport="1024"] .app-body,
+    .device-stage[data-viewport="1440"] .app-body { grid-template-rows: 1fr; grid-template-columns: 92px minmax(0, 1fr); }
+    .device-stage[data-viewport="1024"] .app-body,
+    .device-stage[data-viewport="1440"] .app-body { grid-template-columns: 240px minmax(0, 1fr); }
+    .device-stage[data-viewport="768"] .app-nav,
+    .device-stage[data-viewport="1024"] .app-nav,
+    .device-stage[data-viewport="1440"] .app-nav { grid-row: 1; border-top: 0; border-right: var(--line); padding: var(--space-2); }
+    .device-stage[data-viewport="1024"] .app-nav,
+    .device-stage[data-viewport="1440"] .app-nav { padding: var(--space-4); }
+    .device-stage[data-viewport="768"] .app-nav ul,
+    .device-stage[data-viewport="1024"] .app-nav ul,
+    .device-stage[data-viewport="1440"] .app-nav ul { grid-template-columns: 1fr; gap: var(--space-2); }
+    .device-stage[data-viewport="768"] .nav-button { min-height: 64px; }
+    .device-stage[data-viewport="1024"] .nav-button,
+    .device-stage[data-viewport="1440"] .nav-button { min-height: 48px; flex-direction: row; justify-content: flex-start; padding-inline: var(--space-3); font-size: .875rem; }
+    .device-stage[data-viewport="768"] .app-main,
+    .device-stage[data-viewport="1024"] .app-main,
+    .device-stage[data-viewport="1440"] .app-main { grid-row: 1; padding: var(--space-6); }
+    .device-stage[data-viewport="1024"] .app-main,
+    .device-stage[data-viewport="1440"] .app-main { width: min(100%, 860px); justify-self: center; padding: var(--space-8); }
+    .device-stage[data-viewport="1024"] .detail-layout,
+    .device-stage[data-viewport="1440"] .detail-layout { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(360px, 1.2fr); gap: var(--space-4); align-items: start; }
+    .device-stage[data-viewport="768"] .sticky-actions,
+    .device-stage[data-viewport="1024"] .sticky-actions,
+    .device-stage[data-viewport="1440"] .sticky-actions { position: static; margin: 0; padding: var(--space-4) 0 0; border-top: var(--line); background: transparent; }
+    .device-stage[data-viewport="768"] .app-shell,
+    .device-stage[data-viewport="1024"] .app-shell,
+    .device-stage[data-viewport="1440"] .app-shell { min-height: 700px; }
+
+    dialog { width: min(calc(100% - 32px), 520px); border: 0; border-radius: var(--radius-dialog); padding: var(--space-6); background: var(--surface); color: var(--ink); box-shadow: var(--shadow-modal); }
+    dialog::backdrop { background: var(--scrim); }
+    dialog h2 { margin-bottom: var(--space-3); }
+    .dialog-actions { margin-top: var(--space-6); display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-2); }
+    .checklist { display: grid; gap: var(--space-3); }
+    .check { min-height: 44px; display: grid; grid-template-columns: 24px 1fr; gap: var(--space-3); align-items: start; }
+    .check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--primary); }
+    .review-result { display: none; margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--radius-control); background: var(--primary-container); color: var(--primary); }
+    .review-result.visible { display: block; }
+    footer { padding-block: var(--space-8); color: var(--ink-secondary); font-size: .875rem; }
+
+    @media (max-width: 760px) {
+      .review-hero, .section-head, .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .review-hero { gap: var(--space-6); }
+      .section-head { gap: var(--space-3); }
+      .review-section { padding-block: var(--space-12); }
+      .table-wrap { border-inline: 0; border-radius: 0; }
+      table, tbody, tr, th, td { display: block; width: 100%; }
+      thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      tr { padding: var(--space-3); border-top: var(--line); }
+      td { padding: var(--space-2) 0; border: 0; display: grid; grid-template-columns: minmax(112px, 38%) 1fr; gap: var(--space-2); }
+      td::before { content: attr(data-label); color: var(--ink); font-size: .8125rem; font-weight: 700; }
+      caption { padding-inline: var(--space-3); }
+    }
+
+    @media (max-width: 420px) {
+      .page { padding-inline: var(--space-3); }
+      h1 { font-size: 2.75rem; }
+      .review-nav { margin-inline: calc(var(--space-3) * -1); padding-inline: var(--space-3); }
+      .device-stage { margin-inline: calc(var(--space-3) * -1); padding-inline: 0; border-radius: 0; }
+      .app-shell { max-width: 100%; border-inline: 0; border-radius: 0; }
+      .app-main, .app-bar { padding-inline: var(--space-3); }
+      .form-pair { grid-template-columns: 1fr; }
+      .summary-top, .row-top, .row-value, .row-meta { display: grid; }
+      .trace-grid { grid-template-columns: 1fr; }
+      .trace-grid dd { text-align: left; }
+      .review-switches button { flex: 1; }
+      .sticky-actions { margin-inline: calc(var(--space-3) * -1); padding-inline: var(--space-3); }
+      td { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Bỏ qua đến nội dung chính</a>
+  <div class="page">
+    <header class="review-hero">
+      <div>
+        <p class="review-kicker">Issue #57 · Hiện vật xem xét thiết kế · 15/09/2026</p>
+        <h1>Mỗi lần định giá.<br>Một dấu vết còn lại.</h1>
+        <p class="review-lede">Cập nhật giá trị hiện tại mà không xóa lịch sử, đồng thời giữ tiền tệ, ngày hiệu lực và tỷ giá đã dùng trong tầm mắt.</p>
+      </div>
+      <p class="scope-note"><strong>Dữ liệu và hành vi mô phỏng.</strong> Tệp ngoại tuyến này chỉ dùng để Product Owner duyệt UX/UI. Không có API, lưu trữ, xác thực, phân quyền hay phép tính nghiệp vụ thật.</p>
+    </header>
+
+    <nav class="review-nav" aria-label="Điều hướng hiện vật">
+      <ul>
+        <li><a href="#scope">Phạm vi</a></li>
+        <li><a href="#prototype">Thử luồng</a></li>
+        <li><a href="#proof">Đối soát</a></li>
+        <li><a href="#matrices">Ma trận</a></li>
+        <li><a href="#approval">PO duyệt</a></li>
+      </ul>
+    </nav>
+
+    <noscript>
+      <section class="review-section" aria-labelledby="noscript-title">
+        <div class="callout">
+          <h2 id="noscript-title">Nội dung cốt lõi vẫn đọc được</h2>
+          <p>JavaScript đang tắt nên các nút chuyển màn hình không hoạt động. Luồng được duyệt là Chi tiết tài sản, Thêm định giá, Lưu, Giá trị hiện tại được cập nhật, Lịch sử cũ vẫn còn. Luồng điều chỉnh luôn tạo thêm bản ghi và giữ bản ghi gốc.</p>
+          <p><strong>Fixture USD:</strong> 20.000 USD nhân 25.100 VND bằng 502.000.000 VND vào 12/09/2026. Bản ghi trước 18.500 USD nhân 25.020 VND bằng 462.870.000 VND vẫn còn trong lịch sử.</p>
+        </div>
+      </section>
+    </noscript>
+
+    <main id="main">
+      <section class="review-section" id="scope" aria-labelledby="scope-title">
+        <div class="section-head">
+          <div><span class="section-index">01</span><h2 id="scope-title">Phạm vi và đường đi</h2></div>
+          <p>Một luồng hẹp, có thể kiểm tra từ giá trị hiện tại về từng bản ghi nguồn.</p>
+        </div>
+        <div class="grid three">
+          <article class="card">
+            <h3>Luồng chính</h3>
+            <p>Chi tiết tài sản → Thêm định giá → Kiểm tra trường → Lưu → Giá trị hiện tại mới → Lịch sử cũ còn nguyên.</p>
+          </article>
+          <article class="card">
+            <h3>Luồng điều chỉnh</h3>
+            <p>Mở bản ghi → Ghi nhận điều chỉnh → Nêu lý do → Thêm bản ghi mới → Bản gốc vẫn đọc được.</p>
+          </article>
+          <article class="card">
+            <h3>Ranh giới</h3>
+            <p>#57 sở hữu thiết kế. #58 sở hữu giao diện production. #59 sở hữu API và tính nguyên tử.</p>
+          </article>
+        </div>
+        <div class="grid two" style="margin-top: var(--space-4)">
+          <div class="callout pending">
+            <h3>Đang chờ shared contract</h3>
+            <ul class="plain-list">
+              <li>Cách hệ thống xác định bản ghi hiện tại khi ngày hiệu lực trùng hoặc được nhập lùi.</li>
+              <li>Cách máy đọc liên kết bản ghi điều chỉnh với bản ghi gốc.</li>
+              <li>Cách chọn và lưu ảnh chụp tỷ giá lịch sử.</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h3>Nguyên tắc mô phỏng</h3>
+            <p>Prototype chỉ hiển thị dấu “Hiện tại” do contract cung cấp. Nó không suy luận thứ tự, không xóa bản ghi và không định nghĩa schema.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="review-section" id="prototype" aria-labelledby="prototype-title">
+        <div class="section-head">
+          <div><span class="section-index">02</span><h2 id="prototype-title">Phòng thử lịch sử định giá</h2></div>
+          <p>Chọn kích thước, màn hình hoặc trạng thái. Mọi kết quả đều xác định và reset khi tải lại.</p>
+        </div>
+
+        <div class="prototype-controls">
+          <span class="control-label">Chiều rộng mô phỏng</span>
+          <div class="review-switches" role="group" aria-label="Chọn chiều rộng mô phỏng">
+            <button type="button" data-width="360" aria-pressed="true">360</button>
+            <button type="button" data-width="375" aria-pressed="false">375</button>
+            <button type="button" data-width="768" aria-pressed="false">768</button>
+            <button type="button" data-width="1024" aria-pressed="false">1024</button>
+            <button type="button" data-width="1440" aria-pressed="false">1440</button>
+          </div>
+          <span class="control-label">Màn hình</span>
+          <div class="review-switches" role="group" aria-label="Chọn màn hình mô phỏng">
+            <button type="button" data-go="detail" aria-pressed="true">Chi tiết</button>
+            <button type="button" data-go="history" aria-pressed="false">Lịch sử</button>
+            <button type="button" data-go="record" aria-pressed="false">Bản ghi</button>
+            <button type="button" data-go="add" aria-pressed="false">Thêm định giá</button>
+            <button type="button" data-go="correction" aria-pressed="false">Điều chỉnh</button>
+            <button type="button" data-go="states" aria-pressed="false">Trạng thái</button>
+          </div>
+        </div>
+
+        <div class="device-stage" id="device-stage" data-viewport="360">
+          <div class="app-shell" id="app-shell">
+            <header class="app-bar">
+              <span class="wordmark">Rikkaus</span>
+              <button class="avatar" type="button" aria-label="Mở hồ sơ và cài đặt">RT</button>
+            </header>
+            <div class="app-body">
+              <nav class="app-nav" aria-label="Điều hướng chính mô phỏng">
+                <ul>
+                  <li><button class="nav-button" type="button"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg><span>Tổng quan</span></button></li>
+                  <li><button class="nav-button active" type="button"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 8h18M5 8V5h14v3M5 8v11h14V8M9 12h6"/></svg><span>Tài sản &amp; Nợ</span></button></li>
+                  <li><button class="nav-button" type="button"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14M7 3v4m10-4v4M5 11h14v9H5zM9 15h2m2 0h2"/></svg><span>Dòng tiền</span></button></li>
+                  <li><button class="nav-button" type="button"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2"/></svg><span>Mục tiêu</span></button></li>
+                  <li><button class="nav-button" type="button"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 18h14M7 14l3-3 3 2 4-6"/></svg><span>Nhận định</span></button></li>
+                </ul>
+              </nav>
+
+              <div class="app-main" id="app-main" tabindex="-1">
+                <section class="app-view active" data-view="detail" aria-labelledby="detail-title">
+                  <div class="screen-head">
+                    <button class="button-text" type="button" data-safe-back>Quay lại</button>
+                    <button class="icon-button" type="button" aria-label="Mở thao tác tài sản"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+                  </div>
+                  <div><p class="screen-eyebrow">Tài khoản ngân hàng</p><h2 id="detail-title" tabindex="-1">Tài khoản USD</h2></div>
+                  <div class="detail-layout">
+                    <div class="summary-card">
+                      <div class="summary-top"><span class="mini-label">Giá trị hiện tại</span><span class="status success" id="freshness-status">Mới cập nhật</span></div>
+                      <strong class="current-value" id="current-vnd">502.000.000 VND</strong>
+                      <dl class="trace-grid">
+                        <dt>Giá trị gốc</dt><dd id="current-original">20.000 USD</dd>
+                        <dt>Ngày định giá</dt><dd id="current-date">12/09/2026</dd>
+                        <dt>Tỷ giá đã dùng</dt><dd id="current-rate">25.100 VND</dd>
+                        <dt>Ngày tỷ giá</dt><dd id="current-rate-date">12/09/2026</dd>
+                      </dl>
+                      <button class="button-primary primary-action" type="button" data-go="add">Thêm định giá</button>
+                    </div>
+                    <div>
+                      <div class="history-head"><h3>Lịch sử gần đây</h3><button class="button-text" type="button" data-go="history">Xem tất cả</button></div>
+                      <div class="history-spine" id="detail-history"></div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="app-view" data-view="history" aria-labelledby="history-title">
+                  <div class="screen-head"><button class="button-text" type="button" data-go="detail">Quay lại</button><button class="button-tonal" type="button" data-go="add">Thêm định giá</button></div>
+                  <div><p class="screen-eyebrow">Tài khoản USD</p><h2 id="history-title" tabindex="-1">Lịch sử định giá</h2></div>
+                  <p class="contract-note">Dấu “Hiện tại” do shared contract cung cấp. Màn hình không tự chọn bản ghi theo vị trí trong danh sách.</p>
+                  <div class="history-spine" id="full-history"></div>
+                </section>
+
+                <section class="app-view" data-view="record" aria-labelledby="record-title">
+                  <div class="screen-head"><button class="button-text" type="button" data-go="history">Quay lại</button><span class="status info" id="record-status">Bản ghi được giữ lại</span></div>
+                  <div><p class="screen-eyebrow">Chi tiết bản ghi</p><h2 id="record-title" tabindex="-1">Định giá ngày 31/05/2026</h2></div>
+                  <div class="record-detail">
+                    <strong class="current-value" id="record-vnd">450.360.000 VND</strong>
+                    <dl class="trace-grid">
+                      <dt>Giá trị gốc</dt><dd id="record-original">18.000 USD</dd>
+                      <dt>Ngày hiệu lực</dt><dd id="record-date">31/05/2026</dd>
+                      <dt>Tỷ giá đã dùng</dt><dd id="record-rate">25.020 VND</dd>
+                      <dt>Ngày tỷ giá</dt><dd id="record-rate-date">30/05/2026</dd>
+                      <dt>Ghi chú</dt><dd id="record-note">Số dư cuối tháng được nhập ban đầu</dd>
+                    </dl>
+                  </div>
+                  <div class="callout" id="correction-callout"><span class="status warning">Điều chỉnh sẽ tạo bản ghi mới</span><p style="margin-top: var(--space-2)">Bản ghi gốc vẫn đọc được. Cách liên kết máy đọc đang chờ shared contract.</p></div>
+                  <button class="button-tonal" id="correction-action" type="button" data-go="correction">Ghi nhận điều chỉnh</button>
+                </section>
+
+                <form class="app-view" data-view="add" id="add-form" novalidate aria-labelledby="add-title">
+                  <div class="screen-head"><button class="button-text" type="button" data-leave-form>Quay lại</button><span class="status info">Tạo bản ghi mới</span></div>
+                  <div><p class="screen-eyebrow">Tài khoản USD</p><h2 id="add-title" tabindex="-1">Thêm định giá</h2></div>
+                  <div class="error-summary hidden" id="add-errors" role="alert" tabindex="-1"><strong>Cần kiểm tra thông tin</strong><p style="margin: var(--space-1) 0 0">Nội dung hợp lệ vẫn được giữ để bạn sửa.</p></div>
+                  <div class="form-grid">
+                    <div class="form-pair">
+                      <div class="field"><label for="add-value">Giá trị <span aria-hidden="true">*</span></label><input id="add-value" name="value" inputmode="decimal" value="21.250" aria-describedby="add-value-help add-value-error"><small id="add-value-help">Nhập giá trị gốc, không nhập giá trị quy đổi.</small><span class="field-error hidden" id="add-value-error">Nhập giá trị lớn hơn 0.</span></div>
+                      <div class="field"><label for="add-currency">Tiền tệ <span aria-hidden="true">*</span></label><select id="add-currency" name="currency"><option>USD</option><option>VND</option></select></div>
+                    </div>
+                    <div class="field"><label for="add-date">Ngày định giá <span aria-hidden="true">*</span></label><input id="add-date" name="date" type="date" value="2026-09-14" aria-describedby="add-date-error"><span class="field-error hidden" id="add-date-error">Chọn ngày định giá.</span></div>
+                    <div class="form-pair" id="add-rate-group">
+                      <div class="field"><label for="add-rate">Tỷ giá USD/VND đã dùng <span aria-hidden="true">*</span></label><input id="add-rate" name="rate" inputmode="decimal" value="25.100" aria-describedby="add-rate-help add-rate-error"><small id="add-rate-help">Bản chụp dùng cho lần định giá này.</small><span class="field-error hidden" id="add-rate-error">Nhập tỷ giá lớn hơn 0.</span></div>
+                      <div class="field"><label for="add-rate-date">Ngày tỷ giá <span aria-hidden="true">*</span></label><input id="add-rate-date" name="rateDate" type="date" value="2026-09-12"></div>
+                    </div>
+                    <div class="field"><label for="add-note">Ghi chú</label><textarea id="add-note" name="note">Cập nhật số dư sau khi đối chiếu sao kê.</textarea></div>
+                    <div class="callout"><span class="mini-label">Giá trị báo cáo mô phỏng</span><strong id="add-preview">533.375.000 VND</strong><p style="margin: var(--space-1) 0 0">21.250 USD × 25.100 VND</p></div>
+                  </div>
+                  <div class="sticky-actions"><button type="button" data-leave-form>Hủy</button><button class="button-primary" id="add-submit" type="submit">Lưu định giá</button></div>
+                </form>
+
+                <form class="app-view" data-view="correction" id="correction-form" novalidate aria-labelledby="correction-title">
+                  <div class="screen-head"><button class="button-text" type="button" data-leave-correction>Quay lại</button><span class="status warning">Không sửa bản gốc</span></div>
+                  <div><p class="screen-eyebrow">Bản ghi ngày 31/05/2026</p><h2 id="correction-title" tabindex="-1">Ghi nhận điều chỉnh</h2></div>
+                  <div class="callout"><strong>Bản gốc vẫn còn</strong><p style="margin: var(--space-1) 0 0">18.000 USD · 450.360.000 VND · tỷ giá 25.020 VND.</p></div>
+                  <div class="error-summary hidden" id="correction-errors" role="alert" tabindex="-1"><strong>Nhập lý do điều chỉnh</strong><p style="margin: var(--space-1) 0 0">Lý do giúp người dùng hiểu vì sao có thêm bản ghi.</p></div>
+                  <div class="form-grid">
+                    <div class="form-pair">
+                      <div class="field"><label for="correction-value">Giá trị đúng <span aria-hidden="true">*</span></label><input id="correction-value" inputmode="decimal" value="18.500"></div>
+                      <div class="field"><label for="correction-currency">Tiền tệ</label><input id="correction-currency" value="USD" readonly aria-readonly="true"></div>
+                    </div>
+                    <div class="field"><label for="correction-date">Ngày định giá</label><input id="correction-date" type="date" value="2026-05-31"></div>
+                    <div class="form-pair">
+                      <div class="field"><label for="correction-rate">Tỷ giá đã dùng</label><input id="correction-rate" inputmode="decimal" value="25.020"></div>
+                      <div class="field"><label for="correction-rate-date">Ngày tỷ giá</label><input id="correction-rate-date" type="date" value="2026-05-30"></div>
+                    </div>
+                    <div class="field"><label for="correction-reason">Lý do điều chỉnh <span aria-hidden="true">*</span></label><textarea id="correction-reason" aria-describedby="correction-reason-help correction-reason-error">Điều chỉnh số dư cuối tháng sau khi đối chiếu sao kê.</textarea><small id="correction-reason-help">Nội dung này xuất hiện cùng bản ghi mới.</small><span class="field-error hidden" id="correction-reason-error">Nhập lý do trước khi lưu.</span></div>
+                    <div class="callout"><span class="mini-label">Giá trị báo cáo mô phỏng</span><strong>462.870.000 VND</strong><p style="margin: var(--space-1) 0 0">18.500 USD × 25.020 VND</p></div>
+                    <p class="contract-note">Cách liên kết dữ liệu giữa bản điều chỉnh và bản gốc đang chờ shared contract. Prototype chỉ mô tả ngữ cảnh người dùng nhìn thấy.</p>
+                  </div>
+                  <div class="sticky-actions"><button type="button" data-leave-correction>Hủy</button><button class="button-primary" type="submit">Lưu bản ghi mới</button></div>
+                </form>
+
+                <section class="app-view" data-view="states" aria-labelledby="states-title">
+                  <div class="screen-head"><button class="button-text" type="button" data-go="detail">Quay lại</button><h2 id="states-title" tabindex="-1">Mẫu trạng thái</h2></div>
+                  <div class="review-switches" role="group" aria-label="Chọn trạng thái mô phỏng">
+                    <button type="button" data-state="loading" aria-pressed="true">Đang tải</button>
+                    <button type="button" data-state="initial" aria-pressed="false">Ban đầu</button>
+                    <button type="button" data-state="partial" aria-pressed="false">Thiếu dữ liệu</button>
+                    <button type="button" data-state="stale" aria-pressed="false">Dữ liệu cũ</button>
+                    <button type="button" data-state="validation" aria-pressed="false">Lỗi nhập</button>
+                    <button type="button" data-state="submitting" aria-pressed="false">Đang lưu</button>
+                    <button type="button" data-state="request" aria-pressed="false">Lỗi yêu cầu</button>
+                    <button type="button" data-state="offline" aria-pressed="false">Ngoại tuyến</button>
+                    <button type="button" data-state="success" aria-pressed="false">Thành công</button>
+                    <button type="button" data-state="unsaved" aria-pressed="false">Chưa lưu</button>
+                    <button type="button" data-state="unavailable" aria-pressed="false">Không thể mở</button>
+                  </div>
+                  <div id="state-host" aria-live="polite"></div>
+                </section>
+              </div>
+            </div>
+            <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <p class="viewport-note" id="viewport-note" aria-live="polite">360px: điều hướng dưới, một cột, hành động nằm trên vùng an toàn.</p>
+      </section>
+
+      <section class="review-section" id="proof" aria-labelledby="proof-title">
+        <div class="section-head">
+          <div><span class="section-index">03</span><h2 id="proof-title">Bằng chứng nối tiếp và đối soát</h2></div>
+          <p>Bản ghi mới thay đổi giá trị hiện tại trong mô phỏng, nhưng số lượng lịch sử chỉ tăng và không có thao tác xóa.</p>
+        </div>
+        <div class="grid two">
+          <article class="card"><span class="mini-label">Trước khi cập nhật</span><strong class="current-value">502.000.000 VND</strong><p>20.000 USD × 25.100 VND · 12/09/2026 · 4 bản ghi.</p></article>
+          <article class="card"><span class="mini-label">Sau khi cập nhật mô phỏng</span><strong class="current-value">533.375.000 VND</strong><p>21.250 USD × 25.100 VND · 14/09/2026 · 5 bản ghi.</p></article>
+        </div>
+        <div class="table-wrap" style="margin-top: var(--space-4)">
+          <table>
+            <caption>Đối soát fixture USD</caption>
+            <thead><tr><th>Ngữ cảnh</th><th>Giá trị gốc</th><th>Tỷ giá</th><th>Giá trị VND</th><th>Chứng minh</th></tr></thead>
+            <tbody>
+              <tr><td data-label="Ngữ cảnh"><strong>Hiện tại ban đầu</strong></td><td data-label="Giá trị gốc">20.000 USD</td><td data-label="Tỷ giá">25.100 VND</td><td data-label="Giá trị VND">502.000.000 VND</td><td data-label="Chứng minh">20.000 × 25.100</td></tr>
+              <tr><td data-label="Ngữ cảnh"><strong>Cập nhật mô phỏng</strong></td><td data-label="Giá trị gốc">21.250 USD</td><td data-label="Tỷ giá">25.100 VND</td><td data-label="Giá trị VND">533.375.000 VND</td><td data-label="Chứng minh">21.250 × 25.100</td></tr>
+              <tr><td data-label="Ngữ cảnh"><strong>Bản gốc cần điều chỉnh</strong></td><td data-label="Giá trị gốc">18.000 USD</td><td data-label="Tỷ giá">25.020 VND</td><td data-label="Giá trị VND">450.360.000 VND</td><td data-label="Chứng minh">18.000 × 25.020</td></tr>
+              <tr><td data-label="Ngữ cảnh"><strong>Bản điều chỉnh mới</strong></td><td data-label="Giá trị gốc">18.500 USD</td><td data-label="Tỷ giá">25.020 VND</td><td data-label="Giá trị VND">462.870.000 VND</td><td data-label="Chứng minh">18.500 × 25.020</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="review-section" id="matrices" aria-labelledby="matrices-title">
+        <div class="section-head">
+          <div><span class="section-index">04</span><h2 id="matrices-title">Ma trận bàn giao</h2></div>
+          <p>Trạng thái, phục hồi và responsive behavior được mô tả mà không mở rộng sang implementation.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>Trạng thái và đường phục hồi</caption>
+            <thead><tr><th>Trạng thái</th><th>Kích hoạt</th><th>Dữ liệu giữ lại</th><th>Phục hồi</th><th>Chủ sở hữu</th></tr></thead>
+            <tbody>
+              <tr><td data-label="Trạng thái"><strong>Loading</strong></td><td data-label="Kích hoạt">Mở lịch sử</td><td data-label="Dữ liệu giữ lại">Khung ổn định</td><td data-label="Phục hồi">Tự chuyển sang kết quả</td><td data-label="Chủ sở hữu">#57 giải phẫu, #58 triển khai</td></tr>
+              <tr><td data-label="Trạng thái"><strong>Initial</strong></td><td data-label="Kích hoạt">Chỉ có định giá đầu tiên</td><td data-label="Dữ liệu giữ lại">Bản ghi ban đầu</td><td data-label="Phục hồi">Thêm định giá tiếp theo</td><td data-label="Chủ sở hữu">#57</td></tr>
+              <tr><td data-label="Trạng thái"><strong>Partial / stale</strong></td><td data-label="Kích hoạt">Thiếu rate metadata hoặc quá ngưỡng freshness</td><td data-label="Dữ liệu giữ lại">Giá trị có sẵn và ngày tuyệt đối</td><td data-label="Phục hồi">Bổ sung hoặc cập nhật</td><td data-label="Chủ sở hữu">#57 + shared contract</td></tr>
+              <tr><td data-label="Trạng thái"><strong>Validation / submitting</strong></td><td data-label="Kích hoạt">Gửi form</td><td data-label="Dữ liệu giữ lại">Tất cả trường hợp lệ</td><td data-label="Phục hồi">Sửa trường đầu hoặc chờ kết quả</td><td data-label="Chủ sở hữu">#57, #58</td></tr>
+              <tr><td data-label="Trạng thái"><strong>Request / offline</strong></td><td data-label="Kích hoạt">Không thể lưu hoặc tải</td><td data-label="Dữ liệu giữ lại">Nội dung form và bối cảnh tài sản</td><td data-label="Phục hồi">Thử lại hoặc quay về an toàn</td><td data-label="Chủ sở hữu">#58, #59</td></tr>
+              <tr><td data-label="Trạng thái"><strong>Success</strong></td><td data-label="Kích hoạt">Lưu mô phỏng hoàn tất</td><td data-label="Dữ liệu giữ lại">Toàn bộ lịch sử</td><td data-label="Phục hồi">Xem bản ghi hoặc tài sản</td><td data-label="Chủ sở hữu">#57, #58</td></tr>
+              <tr><td data-label="Trạng thái"><strong>Unsaved</strong></td><td data-label="Kích hoạt">Rời form đã thay đổi</td><td data-label="Dữ liệu giữ lại">Bản nháp trong phiên</td><td data-label="Phục hồi">Tiếp tục sửa hoặc bỏ</td><td data-label="Chủ sở hữu">#57, #58</td></tr>
+              <tr><td data-label="Trạng thái"><strong>Unavailable</strong></td><td data-label="Kích hoạt">Không mở được mục tiêu</td><td data-label="Dữ liệu giữ lại">Không tiết lộ tồn tại hay quyền</td><td data-label="Phục hồi">Quay lại danh mục</td><td data-label="Chủ sở hữu">#40</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap" style="margin-top: var(--space-4)">
+          <table>
+            <caption>Hành vi theo chiều rộng</caption>
+            <thead><tr><th>Viewport</th><th>Điều hướng</th><th>Lịch sử</th><th>Form và hành động</th><th>Gate</th></tr></thead>
+            <tbody>
+              <tr><td data-label="Viewport"><strong>360 / 375</strong></td><td data-label="Điều hướng">Năm mục dưới</td><td data-label="Lịch sử">Spine một cột, không cuộn ngang</td><td data-label="Form một cột, CTA trên safe area</td><td data-label="Gate">Thumb reach, bàn phím, chữ dài</td></tr>
+              <tr><td data-label="Viewport"><strong>768</strong></td><td data-label="Điều hướng">Rail 92px</td><td data-label="Lịch sử">Cột rộng hơn, giữ thứ tự</td><td data-label="Form tối đa 720px</td><td data-label="Gate">Portrait và landscape</td></tr>
+              <tr><td data-label="Viewport"><strong>1024</strong></td><td data-label="Điều hướng">Sidebar 240px</td><td data-label="Lịch sử">Summary và spine hai cột</td><td data-label="CTA trong luồng tài liệu</td><td data-label="Gate">Bounded content</td></tr>
+              <tr><td data-label="Viewport"><strong>1440</strong></td><td data-label="Điều hướng">Sidebar ổn định</td><td data-label="Lịch sử">Tối đa 860px nội dung</td><td data-label="Không kéo dài dòng đọc</td><td data-label="Gate">Hierarchy và khoảng trắng</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="review-section" id="approval" aria-labelledby="approval-title">
+        <div class="section-head">
+          <div><span class="section-index">05</span><h2 id="approval-title">Khả năng tiếp cận và PO gate</h2></div>
+          <p>Các ô kiểm chỉ hỗ trợ phiên duyệt hiện tại. Quyết định thật phải được ghi vào issue hoặc report sau khi PO xác nhận.</p>
+        </div>
+        <div class="grid two">
+          <article class="card">
+            <h3>Kiểm tra trải nghiệm</h3>
+            <div class="checklist">
+              <label class="check"><input type="checkbox" data-review-check><span>Luồng thêm định giá kết thúc ở giá trị hiện tại mới và mọi bản ghi cũ vẫn còn.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>Luồng điều chỉnh tạo bản ghi mới, nêu lý do và giữ bản gốc.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>Mọi bản ghi hiển thị giá trị gốc, tiền tệ, ngày hiệu lực, VND và tỷ giá/ngày tỷ giá khi cần.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>Freshness dùng chữ, hình dạng, ngày tuyệt đối, giá trị bị ảnh hưởng và đường cập nhật.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>Các trạng thái loading, initial, partial, stale, validation, submitting, request, offline, success, unsaved và unavailable đều có đường về.</span></label>
+            </div>
+          </article>
+          <article class="card">
+            <h3>Kiểm tra chất lượng</h3>
+            <div class="checklist">
+              <label class="check"><input type="checkbox" data-review-check><span>360, 375, 768, 1024 và 1440 không cuộn ngang trang, che CTA hoặc phá hierarchy.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>Touch target tối thiểu 44px; focus rõ; keyboard order và focus return hợp lý.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>Text scaling, zoom và reduced motion không làm mất dữ liệu hoặc hành động.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>Fixture USD đối soát đúng ở detail, form, history, success và bảng bằng chứng.</span></label>
+              <label class="check"><input type="checkbox" data-review-check><span>PO hiểu approval chỉ duyệt UX/UI, không chứng nhận API, sorting, persistence, ownership hay calculation.</span></label>
+            </div>
+            <button class="button-primary" id="review-check" type="button" style="margin-top: var(--space-4)">Kiểm tra checklist</button>
+            <div class="review-result" id="review-result" role="status" aria-live="polite"></div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer><strong>Nguồn thẩm quyền:</strong> `docs/design-guidelines.md` và MVP Product Backbone. Hiện vật này không phải nguồn thiết kế thường trực và không đại diện hành vi production.</footer>
+  </div>
+
+  <dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
+    <h2 id="unsaved-title">Giữ thay đổi chưa lưu?</h2>
+    <p>Nội dung đang nhập chưa được lưu. Bạn có thể tiếp tục sửa hoặc bỏ thay đổi để quay lại.</p>
+    <div class="dialog-actions"><button type="button" id="discard-changes">Bỏ thay đổi</button><button class="button-primary" type="button" id="keep-editing">Tiếp tục sửa</button></div>
+  </dialog>
+
+  <dialog id="success-dialog" aria-labelledby="success-title">
+    <span class="status success">Đã thêm bản ghi mới</span>
+    <h2 id="success-title" style="margin-top: var(--space-3)">Lịch sử vẫn còn nguyên</h2>
+    <p id="success-copy">Giá trị hiện tại mô phỏng là 533.375.000 VND. Bốn bản ghi trước vẫn đọc được.</p>
+    <div class="dialog-actions"><button type="button" data-success-go="history">Xem lịch sử</button><button class="button-primary" type="button" data-success-go="detail">Xem tài sản</button></div>
+  </dialog>
+
+  <script>
+    (() => {
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+      const stage = $('#device-stage');
+      const main = $('#app-main');
+      const toast = $('#toast');
+      const unsavedDialog = $('#unsaved-dialog');
+      const successDialog = $('#success-dialog');
+      let currentView = 'detail';
+      let lastFocus = null;
+      let activeForm = null;
+      let addDirty = false;
+      let correctionDirty = false;
+      let addedUpdate = false;
+      let addedCorrection = false;
+
+      const baseRecords = [
+        { id: 'current', date: '12/09/2026', original: '20.000 USD', vnd: '502.000.000 VND', rate: '25.100 VND', rateDate: '12/09/2026', note: 'Cập nhật số dư sau khi đối chiếu sao kê.', current: true },
+        { id: 'original', date: '31/05/2026', original: '18.000 USD', vnd: '450.360.000 VND', rate: '25.020 VND', rateDate: '30/05/2026', note: 'Số dư cuối tháng được nhập ban đầu.', referenced: true },
+        { id: 'april', date: '30/04/2026', original: '17.500 USD', vnd: '436.625.000 VND', rate: '24.950 VND', rateDate: '29/04/2026', note: 'Đối chiếu số dư cuối tháng.' },
+        { id: 'initial', date: '31/03/2026', original: '16.750 USD', vnd: '416.740.000 VND', rate: '24.880 VND', rateDate: '30/03/2026', note: 'Định giá ban đầu.' }
+      ];
+
+      function records() {
+        const list = baseRecords.map(record => ({ ...record, current: addedUpdate ? false : record.current }));
+        if (addedCorrection) list.splice(1, 0, { id: 'new-correction', date: '31/05/2026', original: '18.500 USD', vnd: '462.870.000 VND', rate: '25.020 VND', rateDate: '30/05/2026', note: 'Điều chỉnh số dư cuối tháng sau khi đối chiếu sao kê.', correction: true });
+        if (addedUpdate) list.unshift({ id: 'new-current', date: '14/09/2026', original: '21.250 USD', vnd: '533.375.000 VND', rate: '25.100 VND', rateDate: '12/09/2026', note: 'Cập nhật số dư sau khi đối chiếu sao kê.', current: true });
+        return list;
+      }
+
+      function rowTemplate(record) {
+        const label = record.current ? '<span class="status success">Hiện tại</span>' : record.correction ? '<span class="status warning">Bản ghi điều chỉnh</span>' : record.referenced ? '<span class="status info">Bản gốc vẫn giữ</span>' : '<span class="status info">Lịch sử</span>';
+        return `<button class="valuation-row${record.current ? ' current' : ''}" type="button" data-record="${record.id}">
+          <span class="row-top"><strong>${record.date}</strong>${label}</span>
+          <span class="row-value"><strong>${record.vnd}</strong><span>${record.original}</span></span>
+          <span class="row-meta"><span>Tỷ giá ${record.rate}</span><span>${record.rateDate}</span></span>
+        </button>`;
+      }
+
+      function openRecord(id, trigger) {
+        const record = records().find(item => item.id === id) || records()[0];
+        $('#record-title').textContent = `Định giá ngày ${record.date}`;
+        $('#record-vnd').textContent = record.vnd;
+        $('#record-original').textContent = record.original;
+        $('#record-date').textContent = record.date;
+        $('#record-rate').textContent = record.rate;
+        $('#record-rate-date').textContent = record.rateDate;
+        $('#record-note').textContent = record.note;
+        const recordStatus = $('#record-status');
+        recordStatus.textContent = record.current ? 'Bản ghi hiện tại' : record.correction ? 'Bản ghi điều chỉnh' : 'Bản ghi được giữ lại';
+        recordStatus.className = `status ${record.current ? 'success' : record.correction ? 'warning' : 'info'}`;
+        const correctionSpecimen = record.id === 'original';
+        $('#correction-callout').classList.toggle('hidden', !correctionSpecimen);
+        $('#correction-action').classList.toggle('hidden', !correctionSpecimen);
+        showView('record', trigger);
+      }
+
+      function bindRows() {
+        $$('[data-record]').forEach(button => button.addEventListener('click', () => openRecord(button.dataset.record, button)));
+      }
+
+      function renderHistory() {
+        const list = records();
+        $('#detail-history').innerHTML = list.slice(0, 3).map(rowTemplate).join('');
+        $('#full-history').innerHTML = list.map(rowTemplate).join('');
+        bindRows();
+      }
+
+      function updateCurrentSummary() {
+        if (!addedUpdate) return;
+        $('#current-vnd').textContent = '533.375.000 VND';
+        $('#current-original').textContent = '21.250 USD';
+        $('#current-date').textContent = '14/09/2026';
+        $('#current-rate').textContent = '25.100 VND';
+        $('#current-rate-date').textContent = '12/09/2026';
+        $('#freshness-status').textContent = 'Vừa cập nhật';
+      }
+
+      function showView(name, trigger, focus = true) {
+        currentView = name;
+        $$('.app-view').forEach(view => view.classList.toggle('active', view.dataset.view === name));
+        $$('.prototype-controls [data-go]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.go === name)));
+        if (focus) {
+          const heading = $(`[data-view="${name}"] h2`);
+          requestAnimationFrame(() => heading?.focus());
+        }
+        if (trigger) lastFocus = trigger;
+      }
+
+      const viewportNotes = {
+        360: '360px: điều hướng dưới, một cột, hành động nằm trên vùng an toàn.',
+        375: '375px: điều hướng dưới, nhãn tiếng Việt và số tiền được phép xuống dòng.',
+        768: '768px: navigation rail 92px, nội dung mở rộng nhưng vẫn giữ thứ tự đọc.',
+        1024: '1024px: sidebar 240px, summary và lịch sử có thể so sánh hai cột.',
+        1440: '1440px: sidebar ổn định, nội dung được giới hạn để không kéo dài dòng đọc.'
+      };
+
+      $$('[data-width]').forEach(button => button.addEventListener('click', () => {
+        stage.dataset.viewport = button.dataset.width;
+        $$('[data-width]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+        $('#viewport-note').textContent = viewportNotes[button.dataset.width];
+      }));
+
+      $$('[data-go]').forEach(button => button.addEventListener('click', () => showView(button.dataset.go, button)));
+      $$('[data-safe-back]').forEach(button => button.addEventListener('click', () => showToast('Danh mục tài sản là đường về an toàn trong flow đầy đủ.')));
+      $$('.nav-button:not(.active)').forEach(button => button.addEventListener('click', () => showToast('Điểm đến này nằm ngoài phạm vi xem xét của issue #57.')));
+      $('.avatar').addEventListener('click', () => showToast('Hồ sơ và cài đặt nằm ngoài phạm vi xem xét của issue #57.'));
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.remove('hidden');
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.add('hidden'), 3200);
+      }
+
+      function openUnsaved(formName, trigger) {
+        activeForm = formName;
+        lastFocus = trigger;
+        unsavedDialog.showModal();
+        requestAnimationFrame(() => $('#keep-editing').focus());
+      }
+
+      $$('[data-leave-form]').forEach(button => button.addEventListener('click', () => addDirty ? openUnsaved('add', button) : showView('detail', button)));
+      $$('[data-leave-correction]').forEach(button => button.addEventListener('click', () => correctionDirty ? openUnsaved('correction', button) : showView('record', button)));
+      $$('#add-form input, #add-form select, #add-form textarea').forEach(control => control.addEventListener('input', () => { addDirty = true; }));
+      $$('#correction-form input, #correction-form textarea').forEach(control => control.addEventListener('input', () => { correctionDirty = true; }));
+
+      $('#keep-editing').addEventListener('click', () => {
+        unsavedDialog.close();
+        requestAnimationFrame(() => lastFocus?.focus());
+      });
+      $('#discard-changes').addEventListener('click', () => {
+        unsavedDialog.close();
+        if (activeForm === 'add') { addDirty = false; showView('detail'); }
+        else { correctionDirty = false; showView('record'); }
+      });
+      unsavedDialog.addEventListener('close', () => { if (unsavedDialog.returnValue !== 'discard') requestAnimationFrame(() => lastFocus?.focus()); });
+
+      function numericValue(value) { return Number(String(value).replaceAll('.', '').replaceAll(',', '')); }
+      function formatVnd(value) { return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value) + ' VND'; }
+      function updatePreview() {
+        const currency = $('#add-currency').value;
+        const value = numericValue($('#add-value').value);
+        const rate = currency === 'USD' ? numericValue($('#add-rate').value) : 1;
+        $('#add-rate-group').classList.toggle('hidden', currency === 'VND');
+        $('#add-preview').textContent = value > 0 && rate > 0 ? formatVnd(value * rate) : 'Chưa đủ dữ liệu';
+      }
+      $('#add-value').addEventListener('input', updatePreview);
+      $('#add-rate').addEventListener('input', updatePreview);
+      $('#add-currency').addEventListener('change', updatePreview);
+
+      $('#add-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const valueValid = numericValue($('#add-value').value) > 0;
+        const dateValid = Boolean($('#add-date').value);
+        const rateValid = $('#add-currency').value === 'VND' || numericValue($('#add-rate').value) > 0;
+        $('#add-value').classList.toggle('invalid', !valueValid);
+        $('#add-value-error').classList.toggle('hidden', valueValid);
+        $('#add-date').classList.toggle('invalid', !dateValid);
+        $('#add-date-error').classList.toggle('hidden', dateValid);
+        $('#add-rate').classList.toggle('invalid', !rateValid);
+        $('#add-rate-error').classList.toggle('hidden', rateValid);
+        const valid = valueValid && dateValid && rateValid;
+        $('#add-errors').classList.toggle('hidden', valid);
+        if (!valid) { $('#add-errors').focus(); (!valueValid ? $('#add-value') : !dateValid ? $('#add-date') : $('#add-rate')).focus(); return; }
+        const submit = $('#add-submit');
+        submit.disabled = true;
+        submit.textContent = 'Đang lưu';
+        window.setTimeout(() => {
+          submit.disabled = false;
+          submit.textContent = 'Lưu định giá';
+          addDirty = false;
+          addedUpdate = true;
+          updateCurrentSummary();
+          renderHistory();
+          lastFocus = submit;
+          successDialog.showModal();
+          requestAnimationFrame(() => $('[data-success-go="detail"]').focus());
+        }, 520);
+      });
+
+      $('#correction-form').addEventListener('submit', event => {
+        event.preventDefault();
+        const reason = $('#correction-reason');
+        const valid = reason.value.trim().length > 0;
+        reason.classList.toggle('invalid', !valid);
+        $('#correction-reason-error').classList.toggle('hidden', valid);
+        $('#correction-errors').classList.toggle('hidden', valid);
+        if (!valid) { $('#correction-errors').focus(); reason.focus(); return; }
+        const submit = event.submitter;
+        submit.disabled = true;
+        submit.textContent = 'Đang lưu';
+        window.setTimeout(() => {
+          submit.disabled = false;
+          submit.textContent = 'Lưu bản ghi mới';
+          correctionDirty = false;
+          addedCorrection = true;
+          renderHistory();
+          $('#success-copy').textContent = 'Bản ghi điều chỉnh 462.870.000 VND đã được thêm. Bản gốc 450.360.000 VND vẫn đọc được.';
+          lastFocus = submit;
+          successDialog.showModal();
+          requestAnimationFrame(() => $('[data-success-go="history"]').focus());
+        }, 520);
+      });
+
+      $$('[data-success-go]').forEach(button => button.addEventListener('click', () => {
+        const destination = button.dataset.successGo;
+        successDialog.close();
+        showView(destination, button);
+      }));
+      successDialog.addEventListener('close', () => { if (currentView === 'add' || currentView === 'correction') requestAnimationFrame(() => lastFocus?.focus()); });
+
+      const statePanels = {
+        loading: `<div class="state-panel" role="status"><div><div class="skeleton-stack" aria-label="Đang tải lịch sử"><span class="skeleton short"></span><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton short"></span></div><p style="margin-top: var(--space-6)">Đang tải lịch sử định giá</p></div></div>`,
+        initial: `<div class="state-panel"><div><span class="state-symbol info"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></svg></span><h3>Chưa có lần cập nhật khác</h3><p>Định giá ban đầu 16.750 USD ngày 31/03/2026 vẫn là bản ghi duy nhất.</p><div class="button-row"><button class="button-primary" data-panel-go="add">Thêm định giá</button></div></div></div>`,
+        partial: `<div class="state-panel"><div><span class="state-symbol warning">!</span><h3>Thiếu ngày tỷ giá</h3><p>Giá trị 502.000.000 VND vẫn hiển thị, nhưng dấu vết USD chưa đủ để kiểm tra. Không thay dữ liệu thiếu bằng số 0.</p><div class="button-row"><button class="button-tonal" data-panel-go="detail">Xem dữ liệu có sẵn</button></div></div></div>`,
+        stale: `<div class="state-panel"><div><span class="state-symbol warning"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Giá trị cần được cập nhật</h3><p>502.000.000 VND được định giá ngày 12/06/2026. Ngưỡng tham chiếu của hệ thống cho biết dữ liệu này đã cũ.</p><div class="button-row"><button class="button-primary" data-panel-go="add">Thêm định giá</button></div></div></div>`,
+        validation: `<div class="state-panel" role="alert"><div><span class="state-symbol error">!</span><h3>Cần kiểm tra giá trị</h3><p>Giá trị phải lớn hơn 0. Nội dung hợp lệ vẫn được giữ để sửa.</p><div class="button-row"><button class="button-primary" data-panel-go="add">Sửa thông tin</button></div></div></div>`,
+        submitting: `<div class="state-panel" role="status"><div><span class="state-symbol info"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg></span><h3>Đang lưu định giá</h3><p>Hành động được khóa để tránh gửi trùng. Giá trị hiện tại chưa đổi cho đến khi có kết quả.</p><button class="button-primary" disabled>Đang lưu</button></div></div>`,
+        request: `<div class="state-panel" role="alert"><div><span class="state-symbol error">!</span><h3>Không thể lưu định giá</h3><p>Nội dung đã nhập vẫn được giữ. Thử lại khi dịch vụ sẵn sàng.</p><div class="button-row"><button data-panel-retry>Thử lại</button><button class="button-primary" data-panel-go="add">Quay lại form</button></div></div></div>`,
+        offline: `<div class="state-panel" role="alert"><div><span class="state-symbol warning"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 8a12 12 0 0 1 16 0M7 11a8 8 0 0 1 10 0M10 15a3 3 0 0 1 4 0M4 4l16 16"/></svg></span><h3>Thiết bị đang ngoại tuyến</h3><p>Bản nháp vẫn còn trong phiên này. Kết nối lại rồi thử lưu.</p><div class="button-row"><button class="button-primary" data-panel-go="add">Quay lại form</button></div></div></div>`,
+        success: `<div class="state-panel" role="status"><div><span class="state-symbol success"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span><h3>Đã thêm định giá</h3><p>Giá trị hiện tại là 533.375.000 VND. Bốn bản ghi trước vẫn còn.</p><div class="button-row"><button data-panel-go="history">Xem lịch sử</button><button class="button-primary" data-panel-go="detail">Xem tài sản</button></div></div></div>`,
+        unsaved: `<div class="state-panel"><div><span class="state-symbol warning">!</span><h3>Thay đổi chưa được lưu</h3><p>Rời màn hình sẽ mở xác nhận. Tiếp tục sửa là hành động ưu tiên.</p><div class="button-row"><button data-panel-dialog>Mở xác nhận</button><button class="button-primary" data-panel-go="add">Tiếp tục sửa</button></div></div></div>`,
+        unavailable: `<div class="state-panel" role="alert"><div><span class="state-symbol error">!</span><h3>Không thể mở mục này</h3><p>Quay lại danh mục để tiếp tục. Thông báo không xác nhận mục tiêu có tồn tại hay không.</p><div class="button-row"><button class="button-primary" data-panel-safe>Quay lại danh mục</button></div></div></div>`
+      };
+
+      function renderState(name) {
+        $('#state-host').innerHTML = statePanels[name];
+        $$('[data-state]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.state === name)));
+        $$('[data-panel-go]').forEach(button => button.addEventListener('click', () => showView(button.dataset.panelGo, button)));
+        $('[data-panel-safe]')?.addEventListener('click', () => showToast('Đã trở về danh mục mô phỏng.'));
+        $('[data-panel-dialog]')?.addEventListener('click', event => openUnsaved('add', event.currentTarget));
+        $('[data-panel-retry]')?.addEventListener('click', event => {
+          const button = event.currentTarget;
+          button.disabled = true;
+          button.textContent = 'Đang thử lại';
+          window.setTimeout(() => renderState('success'), 480);
+        });
+      }
+      $$('[data-state]').forEach(button => button.addEventListener('click', () => renderState(button.dataset.state)));
+
+      $('#review-check').addEventListener('click', () => {
+        const checks = $$('[data-review-check]');
+        const missing = checks.filter(check => !check.checked).length;
+        const result = $('#review-result');
+        result.classList.add('visible');
+        result.textContent = missing === 0 ? 'Checklist đã đủ cho phiên xem xét. Quyết định thật vẫn cần được ghi vào issue hoặc report.' : `Còn ${missing} mục cần xem xét trước khi ghi nhận quyết định.`;
+      });
+
+      renderHistory();
+      renderState('loading');
+    })();
+  </script>
+</body>
+</html>
