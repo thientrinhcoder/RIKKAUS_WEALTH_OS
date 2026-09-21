@@ -1,0 +1,1520 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F5EF">
+  <title>Rikkaus Wealth OS | Financial-health indicators review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
+      --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --line:1px solid var(--border); --control-line:1px solid var(--control);
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
+    body:has(dialog[open]){overflow:hidden}
+    button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
+    button{min-height:44px;border:var(--control-line);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--ink);cursor:pointer;transition:transform var(--motion) var(--ease),background-color var(--motion) var(--ease),color var(--motion) var(--ease),box-shadow var(--motion) var(--ease)}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    button:disabled{cursor:not-allowed;opacity:.58;background:var(--surface-subtle);transform:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    h1,h2,h3,h4,p{margin:0}
+    h1{color:var(--navy);font:600 clamp(2.5rem,5.5vw,4.5rem)/1.08 var(--display);letter-spacing:-.02em;text-wrap:balance;max-width:17ch}
+    h2{font-size:1.5rem;line-height:1.33;text-wrap:balance} h3{font-size:1.125rem;line-height:1.33;text-wrap:balance}
+    h4{font-size:1rem;line-height:1.5}
+    p,td,th,label,button,li{overflow-wrap:anywhere}
+    ul{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s1)}
+    .page{width:min(100%,var(--page));margin:auto;padding:var(--s4)}
+    .hidden{display:none !important}
+    .skip{position:absolute;top:-6rem;left:var(--s4);z-index:90;background:var(--surface);padding:var(--s3)}.skip:focus{top:var(--s4)}
+    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s8);border-bottom:2px solid var(--gold)}
+    .hero-copy{display:grid;gap:var(--s4)}
+    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container)}
+    .meta,.helper{color:var(--ink-secondary);font-size:.875rem}
+    .kicker{color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    section{padding:var(--s12) 0;border-bottom:var(--line)}
+    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s6)}
+    .section-mark{color:var(--gold);font-weight:600}
+    .grid{display:grid;gap:var(--s4)}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.split{grid-template-columns:1.5fr 1fr}
+    .card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);align-content:start}
+    .callout{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
+    .primary{border-color:var(--primary);background:var(--primary);color:var(--surface);font-weight:600}.primary:hover{background:var(--primary-pressed)}
+    .tonal{border-color:var(--primary-container);background:var(--primary-container);color:var(--primary);font-weight:600}
+    .danger{border-color:var(--error);color:var(--error)}
+    .text-btn{border-color:transparent;background:transparent;color:var(--primary)}
+    .fig{font-variant-numeric:tabular-nums}
+    .toolbar,.switches,.actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{border-color:var(--primary);background:var(--primary);color:var(--surface)}
+    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.875rem;font-weight:600}
+    .status::before{content:"";width:.75rem;height:.75rem;border-radius:50%;background:currentColor;flex:none}
+    .status.ok{color:var(--success)}
+    .status.warn{color:var(--warning)}.status.warn::before{border-radius:2px}
+    .status.bad{color:var(--error)}.status.bad::before{border-radius:2px;transform:rotate(45deg)}
+    .status.info{color:var(--info)}
+    .status.none{color:var(--ink-secondary)}.status.none::before{border-radius:2px;background:transparent;border:2px dashed currentColor;width:.875rem;height:.875rem}
+    .flow{display:grid;grid-template-columns:repeat(6,minmax(8rem,1fr));gap:var(--s2);overflow-x:auto;padding-bottom:var(--s2)}
+    .flow div{min-height:6rem;padding:var(--s3);border-top:2px solid var(--primary);background:var(--surface)}
+    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--s2)}
+    .token{min-height:6rem;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .swatch{display:block;height:2rem;border-radius:var(--r-input);margin-bottom:var(--s2)}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{text-align:left;padding:var(--s2) var(--s3);border-bottom:var(--line);vertical-align:top}
+    th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-secondary)}
+    td.fig,th.fig{text-align:right}
+    tbody tr:last-child td{border-bottom:0}
+    caption{text-align:left;padding-bottom:var(--s2);color:var(--ink-secondary);font-size:.875rem}
+    .stage{display:grid;gap:var(--s4)}
+    .stage-bar{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:center}
+    .device-wrap{padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);overflow:hidden}
+    .device{container-type:inline-size;width:100%;max-width:24rem;min-height:48rem;margin:auto;border:1px solid var(--control);border-radius:var(--r-card);background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
+    .device[data-mode="tablet"]{max-width:48rem}.device[data-mode="desktop"]{max-width:64rem}.device[data-mode="wide"]{max-width:100%}
+    .app{min-height:48rem;display:grid;grid-template-rows:auto 1fr auto}
+    .topbar{height:4rem;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);border-bottom:var(--line);background:var(--surface)}
+    .wordmark{font:600 1.25rem/1 var(--display);color:var(--navy)}
+    .avatar{width:44px;padding:0;border-radius:50%;font-weight:600}
+    .app-body{min-width:0}
+    .app-nav{order:3;border-top:var(--line);background:var(--surface)}
+    .nav-list{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none}
+    .nav-btn{width:100%;min-height:64px;border:0;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.68rem;color:var(--ink-secondary)}
+    .nav-btn.active{color:var(--primary);font-weight:600}
+    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .product-main{min-width:0;padding:var(--s4);padding-bottom:2rem}
+    .view{display:none}.view.active{display:grid;gap:var(--s4)}
+    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+    input,select,textarea{width:100%;min-height:48px;border:var(--control-line);border-radius:var(--r-input);background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem}
+    .field{display:grid;gap:var(--s1)}
+    .error-copy{color:var(--error);font-size:.8125rem;font-weight:500}
+    .summary-box{padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container);border-left:3px solid var(--primary);display:grid;gap:var(--s2)}
+    .summary-box strong{color:var(--primary)}
+    .summary-sentence{font-size:1.0625rem;line-height:1.45;font-weight:600;color:var(--ink)}
+    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.75rem;color:var(--ink-secondary);white-space:nowrap}
+    .tag.warn{color:var(--warning);border-color:var(--warning)}
+    .tag.brand{color:var(--primary);border-color:var(--primary)}
+    .tag.muted{background:var(--surface-subtle)}
+    .tag-row{display:flex;flex-wrap:wrap;gap:var(--s1)}
+    .facts{display:grid;gap:var(--s2)}
+    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.9rem;padding-bottom:var(--s2);border-bottom:var(--line)}
+    .fact:last-child{border-bottom:0;padding-bottom:0}
+    .fact dt{color:var(--ink-secondary)}.fact dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+    .skeleton{display:grid;gap:var(--s2)}
+    .skeleton span{display:block;height:1rem;border-radius:.25rem;background:linear-gradient(90deg,var(--surface-subtle),#E4DFD4,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+    @keyframes shimmer{to{background-position:-200% 0}}
+
+    /* KPI card and band rail */
+    .kpi-grid{display:grid;gap:var(--s3)}
+    .kpi{position:relative;width:100%;display:grid;gap:var(--s3);text-align:left;padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);min-height:4.5rem;align-content:start}
+    button.kpi:hover{border-color:var(--primary)}
+    .kpi.lead{border-left:3px solid var(--primary)}
+    .kpi-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3);flex-wrap:wrap}
+    .kpi-name{font-weight:600;font-size:.9375rem;line-height:1.35}
+    .kpi-value{font-size:1.75rem;line-height:1.15;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink)}
+    .kpi-value .unit{font-size:.9375rem;font-weight:500;color:var(--ink-secondary);margin-left:.25rem}
+    .kpi-value.na{font-size:1.125rem;color:var(--ink-secondary);font-weight:600}
+    .kpi-sub{font-size:.8125rem;color:var(--ink-secondary)}
+    .rail{display:grid;gap:var(--s1)}
+    .rail-track{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border-radius:999px;overflow:hidden}
+    .rail-seg{height:.625rem;background:var(--surface-subtle);position:relative}
+    .rail-seg.on.ok{background:var(--success)}
+    .rail-seg.on.warn{background:var(--warning)}
+    .rail-seg.on.bad{background:var(--error)}
+    .rail-seg.on.info{background:var(--info)}
+    .rail-seg.on::after{content:"";position:absolute;left:50%;top:-.3125rem;width:.5rem;height:1.25rem;transform:translateX(-50%);border-radius:2px;background:var(--ink);border:2px solid var(--surface)}
+    .rail-track.na .rail-seg{background:repeating-linear-gradient(45deg,var(--surface-subtle),var(--surface-subtle) 4px,#E4DFD4 4px,#E4DFD4 8px)}
+    .rail-scale{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;font-size:.6875rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .rail-scale span{text-align:center;overflow-wrap:anywhere}
+    .rail-scale span.on{color:var(--ink);font-weight:600}
+    .na-note{display:grid;gap:var(--s1);padding:var(--s3);border-radius:var(--r-input);background:var(--surface-subtle);font-size:.8125rem}
+    .na-note strong{font-weight:600}
+    .period-bar{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);flex-wrap:wrap;padding:var(--s3);border-radius:var(--r-card);background:var(--surface);border:var(--line)}
+
+    /* Rule report */
+    .group{display:grid;gap:var(--s2);margin-top:var(--s3)}
+    .group-title{font-size:.8125rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-secondary);font-weight:600}
+    .insight{width:100%;display:grid;gap:var(--s2);text-align:left;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface);min-height:4.5rem;align-content:start}
+    button.insight:hover{border-color:var(--primary)}
+    .insight.fired{border-left:3px solid var(--warning)}
+    .insight.clear{border-left:3px solid var(--success)}
+    .insight.unknown{border-left:3px dashed var(--control)}
+    .insight-title{font-weight:600;font-size:.9375rem;line-height:1.35}
+    .insight-metric{font-size:.8125rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .anatomy{display:grid;gap:var(--s3)}
+    .anatomy-row{display:grid;gap:var(--s1);padding-bottom:var(--s3);border-bottom:var(--line)}
+    .anatomy-row:last-child{border-bottom:0;padding-bottom:0}
+    .anatomy-row dt{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--primary);font-weight:600}
+    .anatomy-row dd{margin:0;font-size:.9375rem;line-height:1.5}
+    .record-row{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;text-align:left;border:var(--line);border-radius:var(--r-card);background:var(--surface);padding:var(--s3);min-height:4.5rem}
+    .record-row:hover{border-color:var(--primary)}
+    .record-main{display:grid;gap:var(--s1);min-width:0}
+    .record-amount{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .record-amount.in{color:var(--success)}
+    .formula{font-variant-numeric:tabular-nums;font-size:.9375rem;padding:var(--s3);border-radius:var(--r-input);background:var(--surface-subtle);overflow-wrap:anywhere}
+    .state-panel{min-height:13rem}
+    .check-row,.review-choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s2) 0;min-height:44px;align-content:center}
+    .check-row input{width:1.25rem;min-height:1.25rem;margin-top:.1875rem}
+    .review-list{display:grid;gap:var(--s3)}
+    .review-row{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-radius:var(--r-card)}
+    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0}
+    .review-options{display:flex;gap:var(--s4);flex-wrap:wrap}
+    .review-choice input{width:1.25rem;min-height:1.25rem;margin:0}
+    dialog{width:min(100%,34rem);border:0;border-radius:var(--r-sheet);padding:var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal)}
+    dialog::backdrop{background:var(--scrim)}
+    .sheet{margin:auto auto 0;width:min(100%,34rem);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s3)}
+    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6)}
+    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.9rem}
+    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.875rem}
+    /* Responsive behaviour inside the device stage follows the DEVICE width, not the page viewport. */
+    @container (min-width:44rem){
+      .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .app{grid-template-rows:auto 1fr;grid-template-columns:auto minmax(0,1fr)}
+      .topbar{grid-column:1 / -1}
+      .app-nav{order:0;grid-column:1;grid-row:2;border-top:0;border-right:var(--line)}
+      .nav-list{grid-template-columns:1fr;align-content:start;padding:var(--s2) var(--s1)}
+      .nav-btn{min-height:68px;width:5.5rem;border-radius:var(--r-input)}
+      .app-body{grid-column:2;grid-row:2}
+    }
+    @container (min-width:60rem){
+      .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .nav-list{padding:var(--s3) var(--s2);gap:var(--s1)}
+      .nav-btn{width:12rem;min-height:52px;grid-auto-flow:column;grid-template-columns:auto 1fr;place-items:center start;gap:var(--s3);padding:0 var(--s4);font-size:.8125rem;text-align:left}
+      .product-main{padding:var(--s6)}
+      .view[data-view="metric"],.view[data-view="insight"],.view[data-view="record"]{max-width:45rem}
+    }
+    @media (max-width:60rem){
+      .hero,.section-head,.two,.three,.split{grid-template-columns:1fr}
+      .hero{padding-top:var(--s8);gap:var(--s6)}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
+      html{scroll-behavior:auto}
+    }
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
+<div class="page">
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="kicker">Rikkaus Wealth OS · MVP 1B · Issue #81</p>
+      <h1>Chỉ số sức khỏe tài chính</h1>
+      <p class="meta">Bản duyệt thiết kế cho Product Owner. Năm chỉ số, sáu quy tắc nhận định, ngưỡng tham chiếu của hệ thống, và trạng thái khi thiếu mẫu số. Dữ liệu hư cấu, hành vi mô phỏng, không kết nối API.</p>
+    </div>
+    <div class="hero-note">
+      <p><strong>Nguyên tắc nền tảng của bản thiết kế này</strong></p>
+      <p>Thiếu mẫu số thì hiển thị <em>Không khả dụng</em> kèm lý do và đường hoàn thiện, không bao giờ hiển thị 0 hoặc 0%. Một chỉ số ở trạng thái <em>Một phần</em> không kích hoạt quy tắc nhận định.</p>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+
+    <noscript>
+      <section aria-labelledby="noscript-title">
+        <div class="callout">
+          <h2 id="noscript-title">Bằng chứng vẫn đọc được khi JavaScript tắt</h2>
+          <p><strong>Năm chỉ số và công thức:</strong> Số tháng dự phòng bằng nhóm tài sản thanh khoản chia chi phí thiết yếu định kỳ quy về tháng. Gánh nặng trả nợ định kỳ bằng khoản trả nợ định kỳ trong kỳ chia tổng thu nhập trong kỳ. Số dư tiền thấp nhất là giá trị nhỏ nhất trong ba tháng dự báo. Tỷ trọng thu nhập thụ động bằng thu nhập có liên kết tài sản chia tổng thu nhập. Tỷ trọng chi phí thiết yếu bằng chi phí thuộc nhóm thiết yếu chia tổng chi phí.</p>
+          <p><strong>Kịch bản cơ sở, kỳ 09/2026:</strong> 1.850.000.000 chia 61.600.000 bằng 30,0 tháng. 16.250.000 chia 180.000.000 bằng 9,0%. Số dư tiền thấp nhất 739.900.000 ₫ vào 10/2026. 21.565.000 chia 180.000.000 bằng 12,0%. 76.700.000 chia 92.000.000 bằng 83,4%.</p>
+          <p><strong>Đối soát:</strong> thu nhập 180.000.000 ₫, chi phí 92.000.000 ₫, dòng tiền ròng 88.000.000 ₫ khớp danh mục 16 bản ghi của review #69. Tài sản 12.002.000.000 ₫ trừ công nợ 1.532.000.000 ₫ bằng giá trị ròng 10.470.000.000 ₫ khớp review #66.</p>
+          <p><strong>Sáu quy tắc:</strong> chi vượt thu; dự báo dòng tiền chuyển âm; dự phòng dưới ba tháng; trả nợ định kỳ trên 35% thu nhập; tiền và ngân hàng thấp hơn nghĩa vụ đến hạn trong 30 ngày; một nguồn thu chiếm trên 60% tổng thu. Mỗi ngưỡng là ngưỡng tham chiếu của hệ thống, không phải tiêu chuẩn phổ quát.</p>
+        </div>
+      </section>
+    </noscript>
+
+    <section aria-labelledby="ux-title">
+      <div class="section-head">
+        <div><span class="section-mark">01</span><h2 id="ux-title">Cấu trúc UX và phạm vi</h2></div>
+        <p class="meta">Sức khỏe tài chính nằm trong đích đến <strong>Nhận định</strong> của thanh điều hướng năm mục đã duyệt. Tổng quan chỉ dẫn sang, không nhân bản chỉ số.</p>
+      </div>
+
+      <div class="flow" role="list" aria-label="Bản đồ màn hình">
+        <div role="listitem"><p class="kicker">01</p><p>Tổng quan</p><p class="meta">Điều kiện cần chú ý dẫn sang Nhận định.</p></div>
+        <div role="listitem"><p class="kicker">02</p><p>Sức khỏe tài chính</p><p class="meta">Năm thẻ chỉ số trên trục ngưỡng.</p></div>
+        <div role="listitem"><p class="kicker">03</p><p>Cách tính chỉ số</p><p class="meta">Công thức, đầu vào chuẩn, ngưỡng.</p></div>
+        <div role="listitem"><p class="kicker">04</p><p>Nhận định</p><p class="meta">Sáu quy tắc theo ba nhóm.</p></div>
+        <div role="listitem"><p class="kicker">05</p><p>Chi tiết nhận định</p><p class="meta">Quan sát, ngưỡng, dữ liệu, hành động, lưu ý.</p></div>
+        <div role="listitem"><p class="kicker">06</p><p>Bản ghi nguồn</p><p class="meta">Mở bản ghi liên quan và quay lại an toàn.</p></div>
+      </div>
+
+      <div class="grid three" style="margin-top:var(--s4)">
+        <div class="card"><h3>Trong issue #81</h3><p>Thẻ chỉ số sức khỏe, trạng thái không khả dụng và một phần, ngưỡng tham chiếu của hệ thống, nội dung giải thích và hành động đề xuất cho sáu quy tắc.</p></div>
+        <div class="callout"><h3>Không thuộc phạm vi</h3><p>Dashboard sức khỏe tài chính production và liên kết tới bản ghi thuộc Frontend #82. Năm phép tính chỉ số và sáu quy tắc cấu hình được thuộc Backend #83. Báo cáo tháng #21 và dự báo ba tháng #22 là feature khác; dự báo chỉ xuất hiện ở đây như đầu vào của chỉ số số dư tiền thấp nhất.</p></div>
+        <div class="callout"><h3>Contract không đổi</h3><p>Artifact này không định nghĩa API, schema, định danh chỉ số, chính sách cấu hình ngưỡng hay cách lưu trữ. Những điểm chưa chốt được nêu thành câu hỏi cho Feature Contract #23 ở mục 06.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="system-title">
+      <div class="section-head">
+        <div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div>
+        <p class="meta">Chỉ dùng token ngữ nghĩa mục 5 của design guidelines. Không có giá trị riêng cho trang này.</p>
+      </div>
+
+      <div class="tokens" aria-label="Token màu được dùng">
+        <div class="token"><span class="swatch" style="background:#F7F5EF;border:1px solid #D7D2C7"></span><p class="kicker">canvas</p><p class="meta fig">#F7F5EF</p></div>
+        <div class="token"><span class="swatch" style="background:#FFFFFF;border:1px solid #D7D2C7"></span><p class="kicker">surface</p><p class="meta fig">#FFFFFF</p></div>
+        <div class="token"><span class="swatch" style="background:#0F5C5A"></span><p class="kicker">primary</p><p class="meta fig">#0F5C5A</p></div>
+        <div class="token"><span class="swatch" style="background:#1E6A45"></span><p class="kicker">success</p><p class="meta fig">#1E6A45</p></div>
+        <div class="token"><span class="swatch" style="background:#8A5A00"></span><p class="kicker">warning</p><p class="meta fig">#8A5A00</p></div>
+        <div class="token"><span class="swatch" style="background:#B42318"></span><p class="kicker">error</p><p class="meta fig">#B42318</p></div>
+        <div class="token"><span class="swatch" style="background:#2458A6"></span><p class="kicker">info</p><p class="meta fig">#2458A6</p></div>
+        <div class="token"><span class="swatch" style="background:#A87428"></span><p class="kicker">heritageGold</p><p class="meta fig">#A87428</p></div>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Giải phẫu thẻ chỉ số</h3>
+          <ul>
+            <li>Tên chỉ số và kỳ áp dụng ở trên cùng.</li>
+            <li>Giá trị dùng chữ số bảng, một chữ số thập phân cho tháng và phần trăm, không thập phân cho tiền.</li>
+            <li><strong>Trục ngưỡng</strong>: ba dải tham chiếu, dải đang áp dụng được tô và có dấu chỉ vị trí. Ranh giới in bằng số ngay dưới trục.</li>
+            <li>Nhãn trạng thái luôn gồm chữ và hình dạng riêng, không chỉ dựa vào màu.</li>
+            <li>Một dòng nguồn và ngày dữ liệu, rồi đường mở <em>Cách tính</em>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Ngôn ngữ của trục ngưỡng</h3>
+          <ul>
+            <li>Ba dải chia đều theo bề rộng để đọc nhanh; ranh giới thật được in bằng số nên trục không ngụ ý tỷ lệ tuyến tính.</li>
+            <li>Dấu chỉ vị trí là hình chữ nhật màu mực, thấy rõ trên cả bốn màu dải.</li>
+            <li>Khi thiếu mẫu số, trục chuyển sang nền gạch chéo, bỏ dấu chỉ vị trí và không tô dải nào.</li>
+            <li>Trục có bảng tương đương cho trình đọc màn hình ở mục 04.</li>
+            <li>Không có chuyển động trên giá trị tài chính.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Bốn trạng thái của một thẻ chỉ số</h3>
+        <div class="grid two">
+          <div class="callout">
+            <p class="kicker">Đủ dữ liệu</p>
+            <p class="kpi-value fig">30,0<span class="unit">tháng</span></p>
+            <p class="status ok">Đang ổn · từ 6 tháng trở lên</p>
+          </div>
+          <div class="callout">
+            <p class="kicker">Một phần</p>
+            <p class="kpi-value fig">466.550.000<span class="unit">₫</span></p>
+            <p class="status warn">Một phần · thiếu thu nhập định kỳ</p>
+          </div>
+          <div class="callout">
+            <p class="kicker">Không khả dụng</p>
+            <p class="kpi-value na">Không khả dụng</p>
+            <p class="status none">Chưa có mẫu số</p>
+          </div>
+          <div class="callout">
+            <p class="kicker">Lỗi tải</p>
+            <p class="kpi-value na">Chưa tải được</p>
+            <p class="status bad">Giữ nguyên dữ liệu đã hiển thị</p>
+          </div>
+        </div>
+        <p class="helper">Không có trạng thái nào thay mẫu số thiếu bằng 0. Đây là ràng buộc nghiệm thu của Feature #23.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="prototype-title">
+      <div class="section-head">
+        <div><span class="section-mark">03</span><h2 id="prototype-title">Prototype clickable</h2></div>
+        <p class="meta">Chuyển kịch bản để duyệt từng dải ngưỡng và từng trạng thái. Mỗi kịch bản là một biến thể có kiểm soát của fixture cơ sở và tự đối soát trong mục 04.</p>
+      </div>
+
+      <div class="stage">
+        <div class="stage-bar">
+          <div class="switches" role="group" aria-label="Kịch bản dữ liệu">
+            <button type="button" data-scen="base" aria-pressed="true">Cơ sở · 09/2026</button>
+            <button type="button" data-scen="stress" aria-pressed="false">Áp lực · 10/2026</button>
+            <button type="button" data-scen="partial" aria-pressed="false">Một phần</button>
+            <button type="button" data-scen="empty" aria-pressed="false">Chưa có dữ liệu</button>
+          </div>
+          <div class="switches" role="group" aria-label="Bề rộng hiển thị">
+            <button type="button" data-mode="phone" aria-pressed="true">360px</button>
+            <button type="button" data-mode="tablet" aria-pressed="false">768px</button>
+            <button type="button" data-mode="desktop" aria-pressed="false">1024px</button>
+            <button type="button" data-mode="wide" aria-pressed="false">1440px</button>
+          </div>
+        </div>
+
+        <p class="helper" id="scen-note">Fixture đã duyệt ở review #66 và #69. Không thay đổi dữ liệu nào.</p>
+
+        <div class="device-wrap">
+          <div class="device" id="device" data-mode="phone">
+            <div class="app">
+              <div class="topbar">
+                <span class="wordmark">Rikkaus</span>
+                <button class="avatar" type="button" aria-label="Hồ sơ và cài đặt">TT</button>
+              </div>
+              <div class="app-body">
+                <div class="product-main">
+
+                  <section class="view active" data-view="health" id="view-health" tabindex="-1" aria-labelledby="health-heading">
+                    <div class="screen-head">
+                      <div><p class="meta">Nhận định</p><h2 id="health-heading">Sức khỏe tài chính</h2></div>
+                    </div>
+
+                    <div class="period-bar">
+                      <div>
+                        <p class="meta">Kỳ báo cáo</p>
+                        <p class="fig" id="period-label" style="font-weight:600">09/2026</p>
+                      </div>
+                      <p class="meta fig" id="asof-label">Dữ liệu tới 19/09/2026</p>
+                    </div>
+
+                    <div class="kpi-grid" id="kpi-grid" aria-live="polite"></div>
+
+                    <div class="card">
+                      <h3>Nhận định theo quy tắc</h3>
+                      <p class="meta" id="rule-summary">—</p>
+                      <button class="tonal" type="button" data-go="rules">Mở báo cáo nhận định</button>
+                    </div>
+
+                    <p class="helper">Mọi ngưỡng ở đây là ngưỡng tham chiếu của hệ thống, không phải tiêu chuẩn phổ quát. Chỉ số dựa trên dữ liệu người dùng nhập thủ công.</p>
+                  </section>
+
+                  <section class="view" data-view="metric" id="view-metric" tabindex="-1" aria-labelledby="metric-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="health">Quay lại sức khỏe tài chính</button><h2 id="metric-heading">Cách tính</h2></div>
+                    </div>
+                    <div id="metric-body"></div>
+                  </section>
+
+                  <section class="view" data-view="rules" id="view-rules" tabindex="-1" aria-labelledby="rules-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="health">Quay lại sức khỏe tài chính</button><h2 id="rules-heading">Nhận định</h2></div>
+                    </div>
+                    <p class="meta" id="rules-intro">—</p>
+                    <div id="rule-groups" aria-live="polite"></div>
+                  </section>
+
+                  <section class="view" data-view="insight" id="view-insight" tabindex="-1" aria-labelledby="insight-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="rules">Quay lại nhận định</button><h2 id="insight-heading">—</h2></div>
+                    </div>
+                    <div id="insight-body"></div>
+                  </section>
+
+                  <section class="view" data-view="record" id="view-record" tabindex="-1" aria-labelledby="record-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="insight">Quay lại nhận định</button><h2 id="record-heading">Bản ghi nguồn</h2></div>
+                    </div>
+                    <div id="record-body"></div>
+                  </section>
+
+                  <section class="view" data-view="states" id="view-states" tabindex="-1" aria-labelledby="states-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="health">Quay lại</button><h2 id="states-heading">Mẫu trạng thái</h2></div>
+                    </div>
+                    <div class="switches" role="group" aria-label="Chọn trạng thái">
+                      <button type="button" data-state="default" aria-pressed="true">Mặc định</button>
+                      <button type="button" data-state="loading" aria-pressed="false">Đang tải</button>
+                      <button type="button" data-state="unavailable" aria-pressed="false">Không khả dụng</button>
+                      <button type="button" data-state="partial" aria-pressed="false">Một phần</button>
+                      <button type="button" data-state="error" aria-pressed="false">Lỗi</button>
+                      <button type="button" data-state="success" aria-pressed="false">Thành công</button>
+                    </div>
+                    <div id="state-panel" class="card state-panel" aria-live="polite"></div>
+                  </section>
+
+                </div>
+              </div>
+              <nav class="app-nav" aria-label="Điều hướng chính">
+                <ul class="nav-list">
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg>Tổng quan</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 8h18M5 8V5h14v3M5 8v11h14V8M9 12h6"/></svg>Tài sản &amp; Nợ</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h13M14 4l3 3-3 3M20 17H7M10 14l-3 3 3 3"/></svg>Dòng tiền</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Mục tiêu</button></li>
+                  <li><button class="nav-btn active" type="button" aria-current="page"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 2 5-7"/></svg>Nhận định</button></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button class="tonal" type="button" data-go="states">Mở mẫu trạng thái</button>
+          <button type="button" id="open-threshold">Cấu hình ngưỡng tham chiếu</button>
+          <button type="button" id="open-missing">Mở bản ghi không còn tồn tại</button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="defs-title">
+      <div class="section-head">
+        <div><span class="section-mark">04</span><h2 id="defs-title">Định nghĩa, ngưỡng và đối chiếu</h2></div>
+        <p class="meta">Các bảng dưới đây là bảng tương đương cho trục ngưỡng và là bằng chứng đối soát của kịch bản đang chọn.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>Năm chỉ số: công thức và đầu vào chuẩn</caption>
+          <thead><tr><th>Chỉ số</th><th>Công thức</th><th>Đầu vào chuẩn</th><th>Đơn vị và độ chính xác</th></tr></thead>
+          <tbody>
+            <tr><td>Số tháng dự phòng</td><td>Nhóm tài sản thanh khoản ÷ chi phí thiết yếu định kỳ quy về tháng</td><td>Danh mục tài sản, nhóm thanh khoản; chuỗi chi phí định kỳ thuộc nhóm thiết yếu</td><td>Tháng, một chữ số thập phân</td></tr>
+            <tr><td>Gánh nặng trả nợ định kỳ</td><td>Khoản trả nợ định kỳ trong kỳ ÷ tổng thu nhập trong kỳ</td><td>Bản ghi chi phí thuộc hai danh mục thanh toán nợ; bản ghi thu nhập trong kỳ</td><td>Phần trăm, một chữ số thập phân</td></tr>
+            <tr><td>Số dư tiền thấp nhất theo dự báo</td><td>Giá trị nhỏ nhất của số dư tiền cuối tháng trong ba tháng dự báo</td><td>Số dư tiền và ngân hàng cuối kỳ; bản ghi định kỳ và lịch công nợ hiển thị được</td><td>VND, không thập phân</td></tr>
+            <tr><td>Tỷ trọng thu nhập thụ động</td><td>Thu nhập có liên kết tài sản ÷ tổng thu nhập trong kỳ</td><td>Bản ghi thu nhập có trường liên kết tài sản</td><td>Phần trăm, một chữ số thập phân</td></tr>
+            <tr><td>Tỷ trọng chi phí thiết yếu</td><td>Chi phí thuộc nhóm thiết yếu ÷ tổng chi phí trong kỳ</td><td>Bản ghi chi phí trong kỳ và bảng phân nhóm thiết yếu</td><td>Phần trăm, một chữ số thập phân</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:var(--s6)">
+        <table>
+          <caption>Dải ngưỡng tham chiếu của hệ thống, và vị trí của kịch bản đang chọn</caption>
+          <thead><tr><th>Chỉ số</th><th>Dải thấp</th><th>Dải giữa</th><th>Dải cao</th><th class="fig">Giá trị quan sát</th><th>Dải đang áp dụng</th></tr></thead>
+          <tbody id="band-table"></tbody>
+        </table>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Phân nhóm chi phí thiết yếu</h3>
+          <p class="meta">Đề xuất để duyệt. Danh mục lấy từ chín danh mục chi phí của review #69.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Danh mục</th><th>Nhóm</th></tr></thead>
+              <tbody>
+                <tr><td>Chi phí sinh hoạt</td><td>Thiết yếu</td></tr>
+                <tr><td>Nhà ở</td><td>Thiết yếu</td></tr>
+                <tr><td>Y tế</td><td>Thiết yếu</td></tr>
+                <tr><td>Bảo hiểm</td><td>Thiết yếu</td></tr>
+                <tr><td>Thuế và phí</td><td>Thiết yếu</td></tr>
+                <tr><td>Thanh toán gốc công nợ</td><td>Thiết yếu</td></tr>
+                <tr><td>Thanh toán lãi</td><td>Thiết yếu</td></tr>
+                <tr><td>Giáo dục</td><td>Có thể điều chỉnh <span class="tag warn">cần quyết định</span></td></tr>
+                <tr><td>Chi phí khác</td><td>Có thể điều chỉnh</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Chi phí thiết yếu định kỳ quy về tháng</h3>
+          <p class="meta">Mẫu số của chỉ số số tháng dự phòng. Dùng chuỗi định kỳ để một khoản chi một lần không làm chỉ số nhảy.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Chuỗi</th><th>Chu kỳ</th><th class="fig">Quy về tháng</th></tr></thead>
+              <tbody>
+                <tr><td>Chi phí sinh hoạt</td><td>Hàng tháng</td><td class="fig">23.400.000</td></tr>
+                <tr><td>Nhà ở</td><td>Hàng tháng</td><td class="fig">18.750.000</td></tr>
+                <tr><td>Bảo hiểm</td><td>Hàng năm</td><td class="fig">450.000</td></tr>
+                <tr><td>Thuế và phí</td><td>Hàng quý</td><td class="fig">2.750.000</td></tr>
+                <tr><td>Thanh toán gốc công nợ</td><td>Hàng tháng</td><td class="fig">10.000.000</td></tr>
+                <tr><td>Thanh toán lãi</td><td>Hàng tháng</td><td class="fig">6.250.000</td></tr>
+                <tr><td><strong>Tổng</strong></td><td></td><td class="fig"><strong>61.600.000</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Không đếm hai lần một khoản nợ</h3>
+        <p>Fixture hiện chứa cả hai cách nhập cho cùng một khoản vay mua căn hộ: một bản ghi <strong>Nhà ở</strong> 18.750.000 ₫ và cặp <strong>Thanh toán gốc công nợ</strong> 10.000.000 ₫ cộng <strong>Thanh toán lãi</strong> 6.250.000 ₫. Hai quy tắc dưới đây giữ cho chỉ số không cộng trùng.</p>
+        <ul>
+          <li>Gánh nặng trả nợ định kỳ chỉ cộng hai danh mục thanh toán nợ. Bản ghi <em>Nhà ở</em> không được cộng vào dù có liên kết tới cùng khoản nợ.</li>
+          <li>Dự báo dùng bản ghi dòng tiền định kỳ. Một kỳ trong lịch công nợ chỉ được cộng thêm khi chưa có bản ghi định kỳ nào liên kết tới cùng khoản nợ đó.</li>
+        </ul>
+        <p class="helper">Cách hai bản ghi này cùng tồn tại là câu hỏi mở cho Feature Contract #23, nêu ở mục 06.</p>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s4)">
+        <div class="card">
+          <h3>Đối soát kịch bản đang chọn</h3>
+          <div class="table-wrap"><table id="recon-table"><tbody></tbody></table></div>
+        </div>
+        <div class="card">
+          <h3>Dự báo ba tháng dùng cho chỉ số số dư thấp nhất</h3>
+          <div class="table-wrap"><table id="forecast-table"><thead><tr><th>Tháng</th><th class="fig">Thu định kỳ</th><th class="fig">Chi định kỳ</th><th class="fig">Số dư cuối tháng</th></tr></thead><tbody></tbody></table></div>
+          <p class="helper" id="forecast-note">—</p>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:var(--s6)">
+        <table>
+          <caption>Sáu quy tắc nhận định và ngưỡng kích hoạt</caption>
+          <thead><tr><th>Quy tắc</th><th>Ngưỡng tham chiếu của hệ thống</th><th>Chỉ số phụ thuộc</th><th>Trạng thái ở kịch bản đang chọn</th></tr></thead>
+          <tbody id="rule-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="matrix-title">
+      <div class="section-head">
+        <div><span class="section-mark">05</span><h2 id="matrix-title">Ma trận trạng thái và responsive</h2></div>
+        <p class="meta">Trạng thái theo mục 11 của design guidelines, áp dụng cho thẻ chỉ số và cho mục nhận định.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>Ma trận trạng thái</caption>
+          <thead><tr><th>Trạng thái</th><th>Thẻ chỉ số hiển thị gì</th><th>Mục nhận định hiển thị gì</th><th>Đường hoàn thiện</th></tr></thead>
+          <tbody>
+            <tr><td>Mặc định</td><td>Giá trị, trục ngưỡng, nhãn dải, nguồn và ngày dữ liệu</td><td>Quan sát, ngưỡng, dữ liệu, hành động, lưu ý</td><td>Mở cách tính hoặc mở bản ghi nguồn</td></tr>
+            <tr><td>Đang tải</td><td>Khung xương giữ đúng chiều cao thẻ; không có số nào nhảy</td><td>Khung xương ba dòng theo đúng số mục của lần tải trước</td><td>Tự chuyển sang trạng thái đã thiết kế, không ngẫu nhiên</td></tr>
+            <tr><td>Không khả dụng</td><td>Chữ “Không khả dụng”, tên đầu vào còn thiếu, không có dấu trên trục</td><td>“Chưa đánh giá được” kèm lý do</td><td>Nút mở đúng màn hình nhập dữ liệu còn thiếu</td></tr>
+            <tr><td>Một phần</td><td>Giá trị có được, thẻ gắn nhãn Một phần, nêu phần thiếu và ảnh hưởng tới cách hiểu</td><td>Quy tắc phụ thuộc không kích hoạt và nói rõ vì sao</td><td>Nút bổ sung đầu vào còn thiếu</td></tr>
+            <tr><td>Lỗi tải</td><td>Nêu điều gì hỏng, giữ nguyên dữ liệu đã hiển thị, có nút thử lại</td><td>Giữ danh sách cũ kèm băng thông báo lỗi</td><td>Thử lại, hoặc quay lại Tổng quan</td></tr>
+            <tr><td>Thành công</td><td>Xác nhận đã cập nhật đầu vào và chỉ số nào đổi theo</td><td>Mục chuyển nhóm và nói rõ đã chuyển từ đâu sang đâu</td><td>Xem chỉ số vừa đổi</td></tr>
+            <tr><td>Vô hiệu</td><td>Nút cấu hình ngưỡng vô hiệu khi ngưỡng do hệ thống cố định, kèm lý do bên cạnh</td><td>Không áp dụng</td><td>Không áp dụng</td></tr>
+            <tr><td>Không mở được mục</td><td>Không áp dụng</td><td>Hộp thoại “Không thể mở mục này” không liệt kê nguyên nhân, có đường quay lại an toàn</td><td>Quay lại danh sách nhận định</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:var(--s6)">
+        <table>
+          <caption>Hành vi responsive</caption>
+          <thead><tr><th>Bề rộng</th><th>Điều hướng</th><th>Lưới thẻ chỉ số</th><th>Ghi chú</th></tr></thead>
+          <tbody>
+            <tr><td>360 – 767px</td><td>Thanh dưới năm mục</td><td>Một cột</td><td>Giá trị và nhãn dải xuống dòng thay vì cắt chữ. Không cuộn ngang. Nút chính trong vùng ngón tay cái.</td></tr>
+            <tr><td>768 – 1023px</td><td>Thanh điều hướng dọc</td><td>Hai cột</td><td>Hai cột giúp so sánh dải ngưỡng giữa các chỉ số. Chi tiết nhận định vẫn một cột.</td></tr>
+            <tr><td>1024 – 1439px</td><td>Sidebar cố định</td><td>Ba cột</td><td>Chi tiết nhận định giới hạn 45rem để giữ độ dài dòng chữ đọc được.</td></tr>
+            <tr><td>Từ 1440px</td><td>Sidebar cố định</td><td>Ba cột, vùng nội dung căn giữa</td><td>Không kéo giãn bảng; phần trống nằm ở lề.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="review-title">
+      <div class="section-head">
+        <div><span class="section-mark">06</span><h2 id="review-title">Khả năng tiếp cận và duyệt Product Owner</h2></div>
+        <p class="meta">Cổng duyệt theo mục 16.4 của design guidelines.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>Checklist kiểm tra</h3>
+          <label class="check-row"><input type="checkbox"><span>Mọi giá trị trên màn hình được tính lại từ đầu vào đang hiển thị, không có số cứng tách rời đầu vào.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Mẫu số thiếu luôn ra “Không khả dụng” kèm lý do, không bao giờ ra 0 hoặc 0%.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Chỉ số ở trạng thái Một phần không kích hoạt quy tắc phụ thuộc.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Mỗi trạng thái màu đều kèm chữ và hình dạng riêng.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Trục ngưỡng có bảng tương đương cho trình đọc màn hình.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Đổi màn hình thì tiêu điểm chuyển tới tiêu đề mới; thao tác bằng bàn phím đi hết được luồng.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Ở 360px không có cuộn ngang và không có chữ bị cắt.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Mỗi ngưỡng được gọi là ngưỡng tham chiếu của hệ thống, không phải tiêu chuẩn phổ quát.</span></label>
+        </div>
+
+        <div class="card">
+          <h3>Quyết định Product Owner</h3>
+          <div class="review-list">
+            <div class="review-row">
+              <strong>Màn hình sức khỏe tài chính</strong>
+              <div class="review-options">
+                <label class="review-choice"><input type="radio" name="po-health" value="ok"><span>Duyệt</span></label>
+                <label class="review-choice"><input type="radio" name="po-health" value="change"><span>Cần sửa</span></label>
+                <label class="review-choice"><input type="radio" name="po-health" value="no"><span>Từ chối</span></label>
+              </div>
+            </div>
+            <div class="review-row">
+              <strong>Cách tính và ngưỡng tham chiếu</strong>
+              <div class="review-options">
+                <label class="review-choice"><input type="radio" name="po-metric" value="ok"><span>Duyệt</span></label>
+                <label class="review-choice"><input type="radio" name="po-metric" value="change"><span>Cần sửa</span></label>
+                <label class="review-choice"><input type="radio" name="po-metric" value="no"><span>Từ chối</span></label>
+              </div>
+            </div>
+            <div class="review-row">
+              <strong>Báo cáo nhận định và nội dung hành động</strong>
+              <div class="review-options">
+                <label class="review-choice"><input type="radio" name="po-rules" value="ok"><span>Duyệt</span></label>
+                <label class="review-choice"><input type="radio" name="po-rules" value="change"><span>Cần sửa</span></label>
+                <label class="review-choice"><input type="radio" name="po-rules" value="no"><span>Từ chối</span></label>
+              </div>
+            </div>
+            <div class="review-row">
+              <strong>Trạng thái không khả dụng và một phần</strong>
+              <div class="review-options">
+                <label class="review-choice"><input type="radio" name="po-states" value="ok"><span>Duyệt</span></label>
+                <label class="review-choice"><input type="radio" name="po-states" value="change"><span>Cần sửa</span></label>
+                <label class="review-choice"><input type="radio" name="po-states" value="no"><span>Từ chối</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="po-note">Ghi chú cho Feature Contract #23</label>
+            <textarea id="po-note" rows="3" placeholder="Ví dụ: Giáo dục nên thuộc nhóm thiết yếu."></textarea>
+          </div>
+          <button class="primary" type="button" id="po-save">Ghi lại quyết định</button>
+          <p class="helper">Lựa chọn chỉ tồn tại trong phiên xem này. Duyệt prototype chỉ chấp thuận hướng UX/UI, không nghiệm thu phép tính, API hay bảo mật.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Câu hỏi mở cho Feature Contract #23</h3>
+        <p class="meta">Design không tự quyết những điểm dưới đây vì chúng đổi ý nghĩa sản phẩm chứ không chỉ đổi giao diện.</p>
+        <ol>
+          <li>Bảng phân nhóm chi phí thiết yếu là mặc định cố định của hệ thống hay người dùng chỉnh được, và <strong>Giáo dục</strong> thuộc nhóm nào?</li>
+          <li>Sáu ngưỡng quy tắc cấu hình theo người dùng, theo môi trường triển khai, hay cố định cho pilot? Nút cấu hình trong prototype đang ở trạng thái vô hiệu chờ câu trả lời này.</li>
+          <li>Thu nhập được coi là thụ động chỉ khi có liên kết tài sản, hay còn theo danh mục? Fixture hiện có <strong>Thu nhập kinh doanh</strong> 26.200.000 ₫ không liên kết tài sản nên đang không tính là thụ động.</li>
+          <li>Khi một kỳ trong lịch công nợ và một bản ghi dòng tiền định kỳ cùng mô tả một khoản trả, bản ghi nào thắng trong dự báo và trong gánh nặng trả nợ?</li>
+          <li>Fixture dashboard của issue #63 ghi Bất động sản 6.100.000.000 ₫, trong khi baseline mục 16.3 và review #66 ghi 7.500.000.000 ₫. Con số nào là chuẩn cho MVP 1B?</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Artifact duyệt thiết kế cho issue #81. Dữ liệu hư cấu, hành vi mô phỏng, không kết nối API và không yêu cầu máy chủ. Không phải mã frontend production.</p>
+  </footer>
+</div>
+
+<dialog id="threshold-sheet" class="sheet" aria-labelledby="threshold-title">
+  <div class="dialog-head">
+    <div><p class="meta">Ngưỡng tham chiếu của hệ thống</p><h2 id="threshold-title">Cấu hình ngưỡng</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <p>Sáu quy tắc được Feature #23 mô tả là cấu hình được, nhưng phạm vi cấu hình chưa được Feature Contract chốt. Trong bản duyệt này các ô nhập đang vô hiệu và nêu rõ lý do ngay bên cạnh.</p>
+  <div class="field" style="margin-top:var(--s4)">
+    <label for="th-reserve">Số tháng dự phòng tối thiểu</label>
+    <input id="th-reserve" type="number" value="3" disabled>
+    <p class="helper">Vô hiệu: phạm vi cấu hình chưa được Feature Contract #23 chốt.</p>
+  </div>
+  <div class="field" style="margin-top:var(--s3)">
+    <label for="th-debt">Gánh nặng trả nợ tối đa theo phần trăm</label>
+    <input id="th-debt" type="number" value="35" disabled>
+    <p class="helper">Vô hiệu: phạm vi cấu hình chưa được Feature Contract #23 chốt.</p>
+  </div>
+  <div class="dialog-actions"><button type="button" data-close>Đóng</button></div>
+</dialog>
+
+<dialog id="missing-dialog" aria-labelledby="missing-title">
+  <h2 id="missing-title">Không thể mở mục này</h2>
+  <p>Bạn có thể quay lại danh sách nhận định và tiếp tục.</p>
+  <div class="dialog-actions"><button class="primary" type="button" data-close>Quay lại nhận định</button></div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(s){ return document.querySelector(s); };
+  var nf = new Intl.NumberFormat("vi-VN");
+  function money(n){ return nf.format(Math.round(n)) + " ₫"; }
+  function dec(n){ return n.toFixed(1).replace(".", ","); }
+  function pct(n){ return dec(n * 100) + "%"; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function sum(rows, pick){ return rows.reduce(function(a,r){ return a + (pick(r) ? r.amount : 0); }, 0); }
+
+  var BASE_INCOME = [
+    {cat:"Lương", amount:132000000, timing:"Hàng tháng", link:null},
+    {cat:"Thu nhập kinh doanh", amount:26200000, timing:"Một lần", link:null},
+    {cat:"Thu nhập cho thuê", amount:14800000, timing:"Hàng tháng", link:"Căn hộ cho thuê Quận 2"},
+    {cat:"Cổ tức", amount:3765000, timing:"Hàng quý", link:"Danh mục cổ phiếu HOSE", note:"150 USD theo tỷ giá 25.100 ngày 12/09/2026"},
+    {cat:"Lãi tiền gửi", amount:1500000, timing:"Hàng tháng", link:"Tiền gửi kỳ hạn 12 tháng"},
+    {cat:"Thu nhập trái phiếu hoặc quỹ", amount:1500000, timing:"Hàng quý", link:"Quỹ trái phiếu An Tâm"},
+    {cat:"Thu nhập khác", amount:235000, timing:"Một lần", link:null}
+  ];
+  var BASE_EXPENSE = [
+    {cat:"Chi phí sinh hoạt", amount:23400000, timing:"Hàng tháng", essential:true, debt:false},
+    {cat:"Nhà ở", amount:18750000, timing:"Hàng tháng", essential:true, debt:false, link:"Khoản vay mua căn hộ"},
+    {cat:"Giáo dục", amount:12800000, timing:"Một lần", essential:false, debt:false},
+    {cat:"Y tế", amount:4650000, timing:"Một lần", essential:true, debt:false},
+    {cat:"Bảo hiểm", amount:5400000, timing:"Hàng năm", essential:true, debt:false},
+    {cat:"Thuế và phí", amount:8250000, timing:"Hàng quý", essential:true, debt:false},
+    {cat:"Thanh toán gốc công nợ", amount:10000000, timing:"Hàng tháng", essential:true, debt:true, link:"Khoản vay mua căn hộ"},
+    {cat:"Thanh toán lãi", amount:6250000, timing:"Hàng tháng", essential:true, debt:true, link:"Khoản vay mua căn hộ"},
+    {cat:"Chi phí khác", amount:2500000, timing:"Một lần", essential:false, debt:false}
+  ];
+  var STRESS_INCOME = [
+    {cat:"Thu nhập cho thuê", amount:14800000, timing:"Hàng tháng", link:"Căn hộ cho thuê Quận 2"}
+  ];
+  var STRESS_EXPENSE = [
+    {cat:"Chi phí sinh hoạt", amount:23400000, timing:"Hàng tháng", essential:true, debt:false},
+    {cat:"Nhà ở", amount:18750000, timing:"Hàng tháng", essential:true, debt:false, link:"Khoản vay mua căn hộ"},
+    {cat:"Thanh toán gốc công nợ", amount:10000000, timing:"Hàng tháng", essential:true, debt:true, link:"Khoản vay mua căn hộ"},
+    {cat:"Thanh toán lãi", amount:6250000, timing:"Hàng tháng", essential:true, debt:true, link:"Khoản vay mua căn hộ"}
+  ];
+
+  var ESS_MONTHLY = 61600000;
+
+  var SCEN = {
+    base: {
+      label:"Cơ sở · 09/2026", period:"09/2026", asof:"19/09/2026",
+      note:"Fixture đã duyệt ở review #66 và #69. Không thay đổi dữ liệu nào.",
+      assetsEntered:true, cashBank:650000000, term:1200000000,
+      totalAssets:12002000000, totalLiab:1532000000,
+      income:BASE_INCOME, expense:BASE_EXPENSE,
+      essMonthly:ESS_MONTHLY, openBal:650000000, forecastPartial:false,
+      forecast:[
+        {m:"10/2026", inc:148300000, out:58400000},
+        {m:"11/2026", inc:146800000, out:58400000},
+        {m:"12/2026", inc:152065000, out:66650000}
+      ],
+      obligations:[
+        {name:"Khoản vay mua căn hộ · kỳ 09/2026", amount:18750000, date:"20/09/2026", exists:true},
+        {name:"Thẻ tín dụng · dư nợ đến hạn", amount:32000000, date:"25/09/2026", exists:true}
+      ]
+    },
+    stress: {
+      label:"Áp lực · 10/2026", period:"10/2026", asof:"19/10/2026",
+      note:"Biến thể có kiểm soát của fixture cơ sở: chuỗi Lương kết thúc 30/09/2026 do đổi việc, tiền gửi kỳ hạn đã tất toán, tiền và ngân hàng còn 42.000.000 ₫. Dùng để duyệt trạng thái kích hoạt của cả sáu quy tắc.",
+      assetsEntered:true, cashBank:42000000, term:0,
+      totalAssets:10802000000, totalLiab:1532000000,
+      income:STRESS_INCOME, expense:STRESS_EXPENSE,
+      essMonthly:ESS_MONTHLY, openBal:-1600000, forecastPartial:false,
+      forecast:[
+        {m:"11/2026", inc:14800000, out:58400000},
+        {m:"12/2026", inc:20065000, out:66650000},
+        {m:"01/2027", inc:14800000, out:58400000}
+      ],
+      obligations:[
+        {name:"Khoản vay mua căn hộ · kỳ 10/2026", amount:18750000, date:"20/10/2026", exists:true},
+        {name:"Thẻ tín dụng · dư nợ đến hạn", amount:32000000, date:"25/10/2026", exists:false}
+      ]
+    },
+    partial: {
+      label:"Một phần · 09/2026", period:"09/2026", asof:"19/09/2026",
+      note:"Biến thể có kiểm soát: người dùng đã nhập đủ tài sản, công nợ và chín bản ghi chi phí, nhưng chưa nhập bản ghi thu nhập nào cho kỳ 09/2026. Đây là kịch bản chứng minh mẫu số thiếu không tạo con số giả.",
+      assetsEntered:true, cashBank:650000000, term:1200000000,
+      totalAssets:12002000000, totalLiab:1532000000,
+      income:[], expense:BASE_EXPENSE,
+      essMonthly:ESS_MONTHLY, openBal:650000000, forecastPartial:true,
+      forecast:[
+        {m:"10/2026", inc:0, out:58400000},
+        {m:"11/2026", inc:0, out:58400000},
+        {m:"12/2026", inc:0, out:66650000}
+      ],
+      obligations:[
+        {name:"Khoản vay mua căn hộ · kỳ 09/2026", amount:18750000, date:"20/09/2026", exists:true},
+        {name:"Thẻ tín dụng · dư nợ đến hạn", amount:32000000, date:"25/09/2026", exists:true}
+      ]
+    },
+    empty: {
+      label:"Chưa có dữ liệu", period:"09/2026", asof:"19/09/2026",
+      note:"Người dùng mới hoàn tất đăng ký, chưa nhập tài sản, công nợ hay bản ghi dòng tiền nào. Toàn bộ năm chỉ số phải ở trạng thái Không khả dụng.",
+      assetsEntered:false, cashBank:null, term:null,
+      totalAssets:null, totalLiab:null,
+      income:[], expense:[],
+      essMonthly:null, openBal:null, forecastPartial:false,
+      forecast:null, obligations:[]
+    }
+  };
+
+  function derive(s){
+    var d = {};
+    d.incomeTotal = s.income.length ? sum(s.income, function(){ return true; }) : null;
+    d.expenseTotal = s.expense.length ? sum(s.expense, function(){ return true; }) : null;
+    d.essentialExp = s.expense.length ? sum(s.expense, function(r){ return r.essential; }) : null;
+    d.flexExp = s.expense.length ? sum(s.expense, function(r){ return !r.essential; }) : null;
+    d.debtPay = s.expense.length ? sum(s.expense, function(r){ return r.debt; }) : null;
+    d.passive = s.income.length ? sum(s.income, function(r){ return !!r.link; }) : null;
+    d.net = (d.incomeTotal !== null && d.expenseTotal !== null) ? d.incomeTotal - d.expenseTotal : null;
+    d.liquid = (s.assetsEntered && s.cashBank !== null) ? s.cashBank + s.term : null;
+
+    d.top = null;
+    if(s.income.length){
+      d.top = s.income.slice().sort(function(a,b){ return b.amount - a.amount; })[0];
+    }
+
+    d.balances = null; d.minBal = null; d.minMonth = null;
+    if(s.forecast && s.openBal !== null){
+      var bal = s.openBal;
+      d.balances = s.forecast.map(function(f){
+        bal = bal + f.inc - f.out;
+        return {m:f.m, inc:f.inc, out:f.out, bal:bal};
+      });
+      d.balances.forEach(function(b){
+        if(d.minBal === null || b.bal < d.minBal){ d.minBal = b.bal; d.minMonth = b.m; }
+      });
+    }
+
+    d.obligationTotal = s.obligations.length ? s.obligations.reduce(function(a,o){ return a + o.amount; }, 0) : null;
+    return d;
+  }
+
+  function bandOf(defs, idx, avail){
+    return {index: idx, tone: avail ? defs[idx].tone : "none", label: defs[idx].label};
+  }
+
+  var BANDS = {
+    reserve: [{tone:"bad", label:"Dưới 3 tháng"}, {tone:"warn", label:"3 – 6 tháng"}, {tone:"ok", label:"Từ 6 tháng"}],
+    debt:    [{tone:"ok", label:"Tới 25%"}, {tone:"warn", label:"25 – 35%"}, {tone:"bad", label:"Trên 35%"}],
+    minbal:  [{tone:"bad", label:"Dưới 0 ₫"}, {tone:"warn", label:"0 – 61.600.000 ₫"}, {tone:"ok", label:"Từ 61.600.000 ₫"}],
+    passive: [{tone:"info", label:"Thấp · dưới 20%", short:"Thấp"}, {tone:"info", label:"Trung bình · 20 – 50%", short:"Trung bình"}, {tone:"info", label:"Cao · từ 50%", short:"Cao"}],
+    ess:     [{tone:"ok", label:"Tới 70%"}, {tone:"warn", label:"70 – 80%"}, {tone:"bad", label:"Trên 80%"}]
+  };
+
+  var TONE_TEXT = {ok:"Đang ổn", warn:"Theo dõi", bad:"Cần chú ý", info:"Thông tin", none:"Không khả dụng"};
+
+  function indicators(s, d){
+    var out = [];
+
+    // 1 reserve
+    var r = {id:"reserve", name:"Số tháng dự phòng", bands:BANDS.reserve, unit:"tháng"};
+    if(d.liquid === null || !s.essMonthly){
+      r.available = false;
+      r.missing = !s.assetsEntered
+        ? "Chưa có bản ghi tài sản nào, nên chưa xác định được nhóm tài sản thanh khoản."
+        : "Chưa có chuỗi chi phí thiết yếu định kỳ nào, nên chưa có mẫu số.";
+      r.fix = "Thêm tài sản và chi phí định kỳ";
+    } else {
+      r.available = true;
+      r.raw = d.liquid / s.essMonthly;
+      r.display = dec(r.raw);
+      r.bandIndex = r.raw < 3 ? 0 : (r.raw < 6 ? 1 : 2);
+      r.sub = "Nhóm thanh khoản " + money(d.liquid) + " chia chi phí thiết yếu định kỳ " + money(s.essMonthly);
+      r.formula = money(d.liquid) + " ÷ " + money(s.essMonthly) + " = " + r.display + " tháng";
+      r.inputs = [
+        ["Tiền và tài khoản ngân hàng", money(s.cashBank)],
+        ["Tiền gửi có kỳ hạn", money(s.term)],
+        ["Nhóm tài sản thanh khoản", money(d.liquid)],
+        ["Chi phí thiết yếu định kỳ quy về tháng", money(s.essMonthly)]
+      ];
+    }
+    out.push(r);
+
+    // 2 debt burden
+    var b = {id:"debt", name:"Gánh nặng trả nợ định kỳ", bands:BANDS.debt, unit:"%"};
+    if(d.incomeTotal === null || d.incomeTotal === 0 || d.debtPay === null){
+      b.available = false;
+      b.missing = d.incomeTotal === null
+        ? "Chưa có bản ghi thu nhập nào trong kỳ " + s.period + ". Mẫu số chưa tồn tại nên không hiển thị 0%."
+        : "Chưa có bản ghi chi phí thuộc nhóm thanh toán nợ.";
+      b.fix = "Thêm bản ghi thu nhập";
+    } else {
+      b.available = true;
+      b.raw = d.debtPay / d.incomeTotal;
+      b.display = dec(b.raw * 100);
+      b.bandIndex = b.raw <= 0.25 ? 0 : (b.raw <= 0.35 ? 1 : 2);
+      b.sub = "Trả nợ định kỳ " + money(d.debtPay) + " trên tổng thu " + money(d.incomeTotal);
+      b.formula = money(d.debtPay) + " ÷ " + money(d.incomeTotal) + " = " + b.display + "%";
+      b.inputs = [
+        ["Thanh toán gốc công nợ", money(sum(s.expense, function(x){ return x.cat === "Thanh toán gốc công nợ"; }))],
+        ["Thanh toán lãi", money(sum(s.expense, function(x){ return x.cat === "Thanh toán lãi"; }))],
+        ["Bản ghi Nhà ở cùng liên kết khoản vay", "Không cộng vào, tránh đếm hai lần"],
+        ["Tổng thu nhập kỳ " + s.period, money(d.incomeTotal)]
+      ];
+    }
+    out.push(b);
+
+    // 3 min forecast balance
+    var m = {id:"minbal", name:"Số dư tiền thấp nhất theo dự báo", bands:BANDS.minbal, unit:"₫", money:true};
+    if(d.minBal === null){
+      m.available = false;
+      m.missing = "Chưa có số dư tiền đầu kỳ và chưa có bản ghi định kỳ nào để dựng dự báo ba tháng.";
+      m.fix = "Thêm tài khoản tiền và bản ghi định kỳ";
+    } else {
+      m.available = true;
+      m.raw = d.minBal;
+      m.display = nf.format(d.minBal);
+      m.bandIndex = d.minBal < 0 ? 0 : (d.minBal < s.essMonthly ? 1 : 2);
+      m.partial = s.forecastPartial;
+      m.sub = "Tháng thấp nhất trong ba tháng dự báo: " + d.minMonth;
+      m.formula = "min(" + d.balances.map(function(x){ return nf.format(x.bal); }).join("; ") + ") = " + nf.format(d.minBal) + " ₫";
+      m.inputs = [
+        ["Số dư tiền và ngân hàng đầu dự báo", money(s.openBal)],
+        ["Tháng dự báo", d.balances.map(function(x){ return x.m; }).join(", ")],
+        ["Tháng thấp nhất", d.minMonth],
+        ["Nguồn dự báo", "Bản ghi dòng tiền định kỳ hiển thị được; kỳ lịch công nợ đã có bản ghi định kỳ liên kết thì không cộng thêm"]
+      ];
+      if(s.forecastPartial){
+        m.partialNote = "Một phần: chưa có chuỗi thu nhập định kỳ nào, nên dự báo chỉ gồm chi phí. Con số này chỉ là cận dưới và không kích hoạt quy tắc dự báo âm.";
+      }
+    }
+    out.push(m);
+
+    // 4 passive share
+    var p = {id:"passive", name:"Tỷ trọng thu nhập thụ động", bands:BANDS.passive, unit:"%"};
+    if(d.incomeTotal === null || d.incomeTotal === 0){
+      p.available = false;
+      p.missing = "Chưa có bản ghi thu nhập nào trong kỳ " + s.period + ". Mẫu số chưa tồn tại nên không hiển thị 0%.";
+      p.fix = "Thêm bản ghi thu nhập";
+    } else {
+      p.available = true;
+      p.raw = d.passive / d.incomeTotal;
+      p.display = dec(p.raw * 100);
+      p.bandIndex = p.raw < 0.2 ? 0 : (p.raw < 0.5 ? 1 : 2);
+      p.sub = "Thu nhập có liên kết tài sản " + money(d.passive) + " trên tổng thu " + money(d.incomeTotal);
+      p.formula = money(d.passive) + " ÷ " + money(d.incomeTotal) + " = " + p.display + "%";
+      p.inputs = s.income.filter(function(x){ return !!x.link; }).map(function(x){
+        return [x.cat + " · " + x.link, money(x.amount)];
+      }).concat([["Tổng thu nhập kỳ " + s.period, money(d.incomeTotal)]]);
+    }
+    out.push(p);
+
+    // 5 essential share
+    var e = {id:"ess", name:"Tỷ trọng chi phí thiết yếu", bands:BANDS.ess, unit:"%"};
+    if(d.expenseTotal === null || d.expenseTotal === 0){
+      e.available = false;
+      e.missing = "Chưa có bản ghi chi phí nào trong kỳ " + s.period + ". Mẫu số chưa tồn tại nên không hiển thị 0%.";
+      e.fix = "Thêm bản ghi chi phí";
+    } else {
+      e.available = true;
+      e.raw = d.essentialExp / d.expenseTotal;
+      e.display = dec(e.raw * 100);
+      e.bandIndex = e.raw <= 0.7 ? 0 : (e.raw <= 0.8 ? 1 : 2);
+      e.sub = "Chi phí thiết yếu " + money(d.essentialExp) + " trên tổng chi " + money(d.expenseTotal);
+      e.formula = money(d.essentialExp) + " ÷ " + money(d.expenseTotal) + " = " + e.display + "%";
+      e.inputs = [
+        ["Chi phí thiết yếu", money(d.essentialExp)],
+        ["Chi phí có thể điều chỉnh", money(d.flexExp)],
+        ["Tổng chi phí kỳ " + s.period, money(d.expenseTotal)],
+        ["Bảng phân nhóm", "Bảy danh mục thiết yếu, hai danh mục có thể điều chỉnh"]
+      ];
+    }
+    out.push(e);
+
+    out.forEach(function(i){
+      i.tone = i.available ? i.bands[i.bandIndex].tone : "none";
+      i.bandLabel = i.available ? i.bands[i.bandIndex].label : "Không khả dụng";
+      var word = i.available
+        ? (i.tone === "info" ? i.bands[i.bandIndex].short : TONE_TEXT[i.tone])
+        : "Chưa có mẫu số";
+      i.chipText = i.available && i.partial ? "Một phần" : word;
+      i.statusText = i.available ? word + " · " + i.bandLabel : "Chưa có mẫu số";
+      if(i.partial){ i.tone = "warn"; }
+    });
+    return out;
+  }
+
+  function ruleSet(s, d, ind){
+    function byId(id){ return ind.filter(function(i){ return i.id === id; })[0]; }
+    var reserve = byId("reserve"), debt = byId("debt"), minbal = byId("minbal"),
+        passive = byId("passive"), ess = byId("ess");
+    var NOTE_MANUAL = "Dựa trên dữ liệu người dùng nhập thủ công và ngưỡng tham chiếu của hệ thống. Đây không phải tư vấn đầu tư.";
+    var rules = [];
+
+    // R1 spending exceeds income
+    (function(){
+      var r = {id:"r1", title:"Chi vượt thu", threshold:"Kích hoạt khi tổng chi trong kỳ lớn hơn tổng thu trong kỳ.", depends:"Tổng thu và tổng chi trong kỳ"};
+      if(d.incomeTotal === null || d.expenseTotal === null){
+        r.state = "unknown";
+        r.metric = "Chưa đánh giá được";
+        r.observation = d.incomeTotal === null
+          ? "Chưa có bản ghi thu nhập nào trong kỳ " + s.period + ", nên không so sánh được với tổng chi " + (d.expenseTotal === null ? "chưa có" : money(d.expenseTotal)) + ". Hệ thống không coi thu nhập chưa nhập là 0 ₫."
+          : "Chưa có bản ghi chi phí nào trong kỳ " + s.period + ", nên chưa so sánh được.";
+        r.action = "Nhập bản ghi còn thiếu của kỳ " + s.period + " rồi mở lại nhận định.";
+      } else if(d.expenseTotal > d.incomeTotal){
+        r.state = "fired";
+        r.metric = "Dòng tiền ròng " + money(d.net);
+        r.title = "Chi trong kỳ đang vượt thu";
+        r.observation = "Tổng chi " + money(d.expenseTotal) + " lớn hơn tổng thu " + money(d.incomeTotal) + " trong kỳ " + s.period + ", dòng tiền ròng " + money(d.net) + ".";
+        r.action = "Có thể xem lại các khoản chi lớn nhất trong kỳ và xác nhận các bản ghi định kỳ còn đúng với thực tế.";
+      } else {
+        r.state = "clear";
+        r.metric = "Dòng tiền ròng " + money(d.net);
+        r.title = "Thu trong kỳ vẫn lớn hơn chi";
+        r.observation = "Tổng thu " + money(d.incomeTotal) + " lớn hơn tổng chi " + money(d.expenseTotal) + " trong kỳ " + s.period + ", dòng tiền ròng " + money(d.net) + ".";
+        r.action = "Chưa cần hành động. Có thể xem lại khi kỳ báo cáo đóng.";
+      }
+      r.records = "Danh mục dòng tiền kỳ " + s.period + " · " + s.income.length + " bản ghi thu · " + s.expense.length + " bản ghi chi";
+      r.note = NOTE_MANUAL + " Hệ thống không xác nhận giao dịch đã được thực hiện.";
+      r.link = s.expense.length ? {label:"Mở danh mục chi phí kỳ " + s.period, exists:true, kind:"expense"} : null;
+      rules.push(r);
+    })();
+
+    // R2 forecast negative
+    (function(){
+      var r = {id:"r2", title:"Dự báo dòng tiền chuyển âm", threshold:"Kích hoạt khi số dư tiền dự báo của bất kỳ tháng nào trong ba tháng nhỏ hơn 0 ₫.", depends:"Số dư tiền thấp nhất theo dự báo"};
+      if(!minbal.available){
+        r.state = "unknown";
+        r.metric = "Chưa đánh giá được";
+        r.observation = minbal.missing;
+        r.action = "Nhập số dư tiền và các bản ghi định kỳ để dựng được dự báo ba tháng.";
+      } else if(minbal.partial){
+        r.state = "unknown";
+        r.metric = "Chưa đánh giá được · dự báo một phần";
+        r.observation = "Dự báo hiện chỉ gồm chi phí định kỳ vì chưa có chuỗi thu nhập định kỳ nào. Một chỉ số ở trạng thái Một phần không kích hoạt quy tắc, để tránh kết luận sai từ dữ liệu chưa đủ.";
+        r.action = "Nhập các chuỗi thu nhập định kỳ rồi mở lại nhận định.";
+      } else if(d.minBal < 0){
+        r.state = "fired";
+        r.title = "Dự báo cho thấy số dư tiền sẽ âm";
+        r.metric = money(d.minBal) + " · " + d.minMonth;
+        r.observation = "Theo dự báo ba tháng, số dư tiền thấp nhất là " + money(d.minBal) + " vào " + d.minMonth + ", thấp hơn ngưỡng 0 ₫.";
+        r.action = "Có thể kiểm tra các kỳ chi lớn trong ba tháng tới và cân nhắc nguồn tiền sẵn có trước tháng " + d.minMonth + ".";
+      } else {
+        r.state = "clear";
+        r.title = "Dự báo ba tháng không có tháng âm";
+        r.metric = money(d.minBal) + " · " + d.minMonth;
+        r.observation = "Số dư tiền thấp nhất trong ba tháng dự báo là " + money(d.minBal) + " vào " + d.minMonth + ", vẫn trên 0 ₫.";
+        r.action = "Chưa cần hành động. Dự báo sẽ đổi khi bản ghi định kỳ thay đổi.";
+      }
+      r.records = d.balances
+        ? d.balances.map(function(x){ return x.m + " · " + money(x.bal); }).join("; ")
+        : "Chưa có dữ liệu dự báo";
+      r.note = "Dự báo chỉ dùng bản ghi định kỳ và lịch công nợ đang hiển thị. Đây là ước tính, không phải cam kết. " + NOTE_MANUAL;
+      r.link = minbal.available ? {label:"Mở dự báo ba tháng", exists:true, kind:"forecast"} : null;
+      rules.push(r);
+    })();
+
+    // R3 reserve below range
+    (function(){
+      var r = {id:"r3", title:"Dự phòng dưới ngưỡng tham chiếu", threshold:"Kích hoạt khi số tháng dự phòng nhỏ hơn 3 tháng. Dải tham chiếu đầy đủ là 3 đến 6 tháng.", depends:"Số tháng dự phòng"};
+      if(!reserve.available){
+        r.state = "unknown";
+        r.metric = "Chưa đánh giá được";
+        r.observation = reserve.missing;
+        r.action = "Nhập tài sản thanh khoản và chi phí thiết yếu định kỳ.";
+      } else if(reserve.raw < 3){
+        r.state = "fired";
+        r.title = "Dự phòng đang dưới ngưỡng tham chiếu";
+        r.metric = reserve.display + " tháng";
+        r.observation = "Nhóm tài sản thanh khoản " + money(d.liquid) + " chia chi phí thiết yếu định kỳ " + money(s.essMonthly) + " bằng " + reserve.display + " tháng, thấp hơn ngưỡng tham chiếu 3 tháng.";
+        r.action = "Có thể xem lại mức tiền mặt giữ lại và các nghĩa vụ đến hạn gần nhất trước khi phân bổ thêm vào tài sản kém thanh khoản.";
+      } else {
+        r.state = "clear";
+        r.title = "Dự phòng trên ngưỡng tham chiếu";
+        r.metric = reserve.display + " tháng";
+        r.observation = "Nhóm tài sản thanh khoản " + money(d.liquid) + " tương đương " + reserve.display + " tháng chi phí thiết yếu định kỳ, trên dải tham chiếu 3 đến 6 tháng.";
+        r.action = "Chưa cần hành động. Có thể xem lại khi chi phí thiết yếu định kỳ thay đổi.";
+      }
+      r.records = reserve.available
+        ? "Tiền và ngân hàng · " + money(s.cashBank) + "; Tiền gửi có kỳ hạn · " + money(s.term) + "; Chi phí thiết yếu định kỳ · " + money(s.essMonthly)
+        : "Chưa có dữ liệu";
+      r.note = "Dải 3 đến 6 tháng là ngưỡng tham chiếu của hệ thống, không phải tiêu chuẩn phổ quát. " + NOTE_MANUAL;
+      r.link = reserve.available ? {label:"Mở nhóm tài sản thanh khoản", exists:true, kind:"liquid"} : null;
+      rules.push(r);
+    })();
+
+    // R4 debt burden high
+    (function(){
+      var r = {id:"r4", title:"Trả nợ định kỳ chiếm tỷ trọng cao", threshold:"Kích hoạt khi khoản trả nợ định kỳ vượt 35% tổng thu nhập trong kỳ.", depends:"Gánh nặng trả nợ định kỳ"};
+      if(!debt.available){
+        r.state = "unknown";
+        r.metric = "Chưa đánh giá được";
+        r.observation = debt.missing;
+        r.action = "Nhập bản ghi thu nhập của kỳ " + s.period + ".";
+      } else if(debt.raw > 0.35){
+        r.state = "fired";
+        r.title = "Khoản trả nợ định kỳ đang chiếm tỷ trọng cao";
+        r.metric = debt.display + "% thu nhập kỳ";
+        r.observation = "Khoản trả nợ định kỳ " + money(d.debtPay) + " chiếm " + debt.display + "% tổng thu nhập " + money(d.incomeTotal) + " trong kỳ " + s.period + ", trên ngưỡng tham chiếu 35%.";
+        r.action = "Có thể đối chiếu lịch trả nợ với thu nhập dự kiến của các kỳ tới và xem lại thứ tự ưu tiên thanh toán.";
+      } else {
+        r.state = "clear";
+        r.title = "Khoản trả nợ định kỳ trong ngưỡng tham chiếu";
+        r.metric = debt.display + "% thu nhập kỳ";
+        r.observation = "Khoản trả nợ định kỳ " + money(d.debtPay) + " chiếm " + debt.display + "% tổng thu nhập " + money(d.incomeTotal) + " trong kỳ " + s.period + ", dưới ngưỡng tham chiếu 35%.";
+        r.action = "Chưa cần hành động.";
+      }
+      r.records = debt.available
+        ? "Thanh toán gốc công nợ và Thanh toán lãi kỳ " + s.period + " · " + money(d.debtPay) + "; Tổng thu nhập · " + money(d.incomeTotal)
+        : "Chưa có dữ liệu";
+      r.note = "Chỉ hai danh mục thanh toán nợ được cộng vào. Bản ghi Nhà ở cùng liên kết khoản vay không được cộng để tránh đếm hai lần. " + NOTE_MANUAL;
+      r.link = debt.available ? {label:"Mở Khoản vay mua căn hộ", exists:true, kind:"liability"} : null;
+      rules.push(r);
+    })();
+
+    // R5 liquidity vs upcoming obligations
+    (function(){
+      var r = {id:"r5", title:"Thanh khoản có thể không đủ cho nghĩa vụ sắp tới", threshold:"Kích hoạt khi tiền và tài khoản ngân hàng thấp hơn tổng nghĩa vụ đến hạn trong 30 ngày tới.", depends:"Tiền và tài khoản ngân hàng, lịch công nợ"};
+      if(s.cashBank === null || d.obligationTotal === null){
+        r.state = "unknown";
+        r.metric = "Chưa đánh giá được";
+        r.observation = s.cashBank === null
+          ? "Chưa có bản ghi tiền mặt hoặc tài khoản ngân hàng nào."
+          : "Chưa có nghĩa vụ nào đến hạn trong 30 ngày tới được nhập.";
+        r.action = "Nhập tài khoản tiền và lịch thanh toán của các khoản nợ.";
+      } else if(s.cashBank < d.obligationTotal){
+        r.state = "fired";
+        r.title = "Tiền hiện có thấp hơn nghĩa vụ đến hạn trong 30 ngày";
+        r.metric = "Thiếu " + money(d.obligationTotal - s.cashBank);
+        r.observation = "Tiền và tài khoản ngân hàng " + money(s.cashBank) + " thấp hơn tổng nghĩa vụ đến hạn trong 30 ngày " + money(d.obligationTotal) + ", chênh lệch " + money(d.obligationTotal - s.cashBank) + ".";
+        r.action = "Có thể kiểm tra nguồn tiền có thể chuyển sang trước ngày đến hạn gần nhất và xác nhận lịch thanh toán đã nhập.";
+      } else {
+        r.state = "clear";
+        r.title = "Tiền hiện có bao phủ nghĩa vụ đến hạn trong 30 ngày";
+        r.metric = "Dư " + money(s.cashBank - d.obligationTotal);
+        r.observation = "Tiền và tài khoản ngân hàng " + money(s.cashBank) + " cao hơn tổng nghĩa vụ đến hạn trong 30 ngày " + money(d.obligationTotal) + ".";
+        r.action = "Chưa cần hành động.";
+      }
+      r.records = s.obligations.length
+        ? s.obligations.map(function(o){ return o.name + " · " + money(o.amount) + " · " + o.date; }).join("; ")
+        : "Chưa có nghĩa vụ nào được nhập";
+      r.note = "Ngày và số tiền do người dùng nhập thủ công. Hệ thống không xác nhận khoản nào đã được thanh toán. " + NOTE_MANUAL;
+      r.link = s.obligations.length
+        ? {label:"Mở " + s.obligations[s.obligations.length - 1].name, exists:s.obligations[s.obligations.length - 1].exists, kind:"obligation", index:s.obligations.length - 1}
+        : null;
+      rules.push(r);
+    })();
+
+    // R6 income concentration
+    (function(){
+      var r = {id:"r6", title:"Thu nhập phụ thuộc một nguồn", threshold:"Kích hoạt khi nguồn thu lớn nhất chiếm trên 60% tổng thu nhập trong kỳ.", depends:"Tổng thu nhập trong kỳ và cơ cấu nguồn thu"};
+      if(d.incomeTotal === null || d.incomeTotal === 0 || !d.top){
+        r.state = "unknown";
+        r.metric = "Chưa đánh giá được";
+        r.observation = "Chưa có bản ghi thu nhập nào trong kỳ " + s.period + ", nên chưa xác định được cơ cấu nguồn thu.";
+        r.action = "Nhập bản ghi thu nhập của kỳ " + s.period + ".";
+      } else {
+        var share = d.top.amount / d.incomeTotal;
+        r.metric = d.top.cat + " · " + dec(share * 100) + "%";
+        if(share > 0.6){
+          r.state = "fired";
+          r.title = "Thu nhập đang phụ thuộc vào một nguồn";
+          r.observation = "Nguồn thu lớn nhất là " + d.top.cat + " với " + money(d.top.amount) + ", chiếm " + dec(share * 100) + "% tổng thu nhập " + money(d.incomeTotal) + " trong kỳ " + s.period + ", trên ngưỡng tham chiếu 60%.";
+          r.action = "Có thể xem lại mức phụ thuộc vào nguồn thu này và đối chiếu với tỷ trọng thu nhập thụ động hiện tại" + (passive.available ? " là " + passive.display + "%" : "") + ".";
+        } else {
+          r.state = "clear";
+          r.title = "Cơ cấu nguồn thu trong ngưỡng tham chiếu";
+          r.observation = "Nguồn thu lớn nhất là " + d.top.cat + " với " + money(d.top.amount) + ", chiếm " + dec(share * 100) + "% tổng thu nhập " + money(d.incomeTotal) + " trong kỳ " + s.period + ", dưới ngưỡng tham chiếu 60%.";
+          r.action = "Chưa cần hành động.";
+        }
+      }
+      r.records = s.income.length
+        ? s.income.map(function(x){ return x.cat + " · " + money(x.amount); }).join("; ")
+        : "Chưa có bản ghi thu nhập";
+      r.note = "Ngưỡng 60% là ngưỡng tham chiếu của hệ thống. " + NOTE_MANUAL;
+      r.link = s.income.length ? {label:"Mở bản ghi " + d.top.cat, exists:true, kind:"income"} : null;
+      rules.push(r);
+    })();
+
+    return rules;
+  }
+
+  // ---------- rendering ----------
+  var state = {scen:"base", view:"health", metric:"reserve", insight:"r1", panel:"default"};
+  var S, D, IND, RULES;
+
+  function recompute(){
+    S = SCEN[state.scen];
+    D = derive(S);
+    IND = indicators(S, D);
+    RULES = ruleSet(S, D, IND);
+  }
+
+  function rail(i){
+    var track = '<div class="rail-track' + (i.available ? "" : " na") + '">' +
+      i.bands.map(function(b, k){
+        var on = i.available && k === i.bandIndex;
+        return '<span class="rail-seg' + (on ? " on " + i.bands[k].tone : "") + '"></span>';
+      }).join("") + "</div>";
+    var scale = '<div class="rail-scale">' + i.bands.map(function(b, k){
+      var on = i.available && k === i.bandIndex;
+      return '<span class="' + (on ? "on" : "") + '">' + esc(b.label) + "</span>";
+    }).join("") + "</div>";
+    return '<div class="rail" role="img" aria-label="' + esc(i.name + ": " + i.statusText) + '">' + track + scale + "</div>";
+  }
+
+  function kpiCard(i){
+    var value = i.available
+      ? '<p class="kpi-value fig">' + esc(i.display) + '<span class="unit">' + esc(i.unit) + "</span></p>"
+      : '<p class="kpi-value na">Không khả dụng</p>';
+    var body = value + rail(i);
+    if(i.available){
+      body += '<p class="kpi-sub">' + esc(i.sub) + "</p>";
+      if(i.partialNote){ body += '<div class="na-note"><strong>Một phần</strong><span>' + esc(i.partialNote) + "</span></div>"; }
+    } else {
+      body += '<div class="na-note"><strong>Thiếu đầu vào</strong><span>' + esc(i.missing) + "</span><span>Đường hoàn thiện: " + esc(i.fix) + ".</span></div>";
+    }
+    return '<button class="kpi' + (i.id === "reserve" ? " lead" : "") + '" type="button" data-metric="' + i.id + '">' +
+      '<div class="kpi-head"><span class="kpi-name">' + esc(i.name) + '</span>' +
+      '<span class="status ' + i.tone + '">' + esc(i.chipText) + "</span></div>" +
+      body +
+      '<span class="tag brand">Cách tính</span></button>';
+  }
+
+  function renderHealth(){
+    $("#period-label").textContent = S.period;
+    $("#asof-label").textContent = "Dữ liệu tới " + S.asof;
+    $("#kpi-grid").innerHTML = IND.map(kpiCard).join("");
+    var fired = RULES.filter(function(r){ return r.state === "fired"; }).length;
+    var unknown = RULES.filter(function(r){ return r.state === "unknown"; }).length;
+    var clear = RULES.length - fired - unknown;
+    $("#rule-summary").textContent = clear + " quy tắc đang ổn · " + fired + " cần chú ý · " + unknown + " chưa đánh giá được.";
+    $("#rules-intro").textContent = "Sáu quy tắc của kỳ " + S.period + ". " + clear + " đang ổn, " + fired + " cần chú ý, " + unknown + " chưa đánh giá được.";
+  }
+
+  function renderMetric(){
+    var i = IND.filter(function(x){ return x.id === state.metric; })[0];
+    var html = '<div class="card"><p class="meta">' + esc(S.period) + '</p><h3>' + esc(i.name) + "</h3>";
+    html += i.available
+      ? '<p class="kpi-value fig">' + esc(i.display) + '<span class="unit">' + esc(i.unit) + "</span></p>"
+      : '<p class="kpi-value na">Không khả dụng</p>';
+    html += '<span class="status ' + i.tone + '">' + esc(i.statusText) + "</span>" + rail(i) + "</div>";
+
+    if(i.available){
+      html += '<div class="card"><h3>Phép tính</h3><p class="formula">' + esc(i.formula) + "</p>";
+      html += '<dl class="facts">' + i.inputs.map(function(row){
+        return '<div class="fact"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
+      }).join("") + "</dl></div>";
+      if(i.partialNote){
+        html += '<div class="summary-box"><strong>Trạng thái một phần</strong><p>' + esc(i.partialNote) + "</p></div>";
+      }
+    } else {
+      html += '<div class="card"><h3>Vì sao không khả dụng</h3><p>' + esc(i.missing) + "</p>" +
+        "<p class=\"helper\">Hệ thống không thay mẫu số còn thiếu bằng 0 để tránh tạo ra con số trông có vẻ chính xác.</p>" +
+        '<button class="primary" type="button" data-toast="Mở màn hình nhập dữ liệu còn thiếu.">' + esc(i.fix) + "</button></div>";
+    }
+
+    html += '<div class="card"><h3>Ngưỡng tham chiếu của hệ thống</h3><div class="table-wrap"><table><thead><tr><th>Dải</th><th>Ý nghĩa</th></tr></thead><tbody>' +
+      i.bands.map(function(b, k){
+        var on = i.available && k === i.bandIndex;
+        return "<tr><td>" + esc(b.label) + "</td><td>" + esc(TONE_TEXT[b.tone]) + (on ? " · dải đang áp dụng" : "") + "</td></tr>";
+      }).join("") + "</tbody></table></div>" +
+      '<p class="helper">Đây là ngưỡng tham chiếu của hệ thống, không phải tiêu chuẩn tài chính phổ quát.</p></div>';
+
+    $("#metric-body").innerHTML = html;
+  }
+
+  function renderRules(){
+    var groups = [
+      {key:"clear", title:"Đang ổn"},
+      {key:"fired", title:"Cần chú ý"},
+      {key:"unknown", title:"Chưa đánh giá được"}
+    ];
+    var html = groups.map(function(g){
+      var items = RULES.filter(function(r){ return r.state === g.key; });
+      if(!items.length){
+        return '<div class="group"><p class="group-title">' + esc(g.title) + '</p><div class="callout"><p class="meta">Không có mục nào trong nhóm này ở kỳ ' + esc(S.period) + ".</p></div></div>";
+      }
+      return '<div class="group"><p class="group-title">' + esc(g.title) + "</p>" +
+        items.map(function(r){
+          return '<button class="insight ' + r.state + '" type="button" data-insight="' + r.id + '">' +
+            '<span class="insight-title">' + esc(r.title) + "</span>" +
+            '<span class="insight-metric fig">' + esc(r.metric) + "</span>" +
+            '<span class="status ' + (r.state === "fired" ? "warn" : r.state === "clear" ? "ok" : "none") + '">' +
+            esc(r.state === "fired" ? "Cần chú ý" : r.state === "clear" ? "Đang ổn" : "Chưa đánh giá được") + "</span></button>";
+        }).join("") + "</div>";
+    }).join("");
+
+    var actionable = RULES.filter(function(r){ return r.state === "fired"; });
+    html += '<div class="group"><p class="group-title">Hành động có thể cân nhắc</p>';
+    if(actionable.length){
+      html += '<div class="callout"><p><strong>Ưu tiên theo mức ảnh hưởng tới tiền mặt:</strong> ' +
+        esc(actionable.map(function(r){ return r.title.toLowerCase(); }).join("; ")) + '.</p>' +
+        '<button class="tonal" type="button" data-insight="' + actionable[0].id + '">Mở mục cần xem trước</button></div>';
+    } else {
+      html += '<div class="callout"><p>Chưa có mục nào cần hành động ở kỳ ' + esc(S.period) + ". Có thể xem lại khi kỳ báo cáo đóng hoặc khi bản ghi thay đổi.</p></div>";
+    }
+    html += "</div>";
+    $("#rule-groups").innerHTML = html;
+  }
+
+  function renderInsight(){
+    var r = RULES.filter(function(x){ return x.id === state.insight; })[0];
+    $("#insight-heading").textContent = r.title;
+    var tone = r.state === "fired" ? "warn" : r.state === "clear" ? "ok" : "none";
+    var label = r.state === "fired" ? "Cần chú ý" : r.state === "clear" ? "Đang ổn" : "Chưa đánh giá được";
+    var html = '<div class="card"><span class="status ' + tone + '">' + esc(label) + "</span>" +
+      '<p class="summary-sentence fig">' + esc(r.metric) + "</p></div>";
+    html += '<div class="card"><dl class="anatomy">' +
+      '<div class="anatomy-row"><dt>Quan sát</dt><dd>' + esc(r.observation) + "</dd></div>" +
+      '<div class="anatomy-row"><dt>Ngưỡng tham chiếu</dt><dd>' + esc(r.threshold) + "</dd></div>" +
+      '<div class="anatomy-row"><dt>Dữ liệu liên quan</dt><dd class="fig">' + esc(r.records) + "</dd></div>" +
+      '<div class="anatomy-row"><dt>Hành động đề xuất</dt><dd>' + esc(r.action) + "</dd></div>" +
+      '<div class="anatomy-row"><dt>Lưu ý</dt><dd>' + esc(r.note) + "</dd></div>" +
+      "</dl></div>";
+    html += '<div class="card"><h3>Chỉ số phụ thuộc</h3><p class="meta">' + esc(r.depends) + "</p>";
+    if(r.link){
+      html += '<button class="primary" type="button" data-open-record="' + r.id + '">' + esc(r.link.label) + "</button>";
+    } else {
+      html += '<button class="primary" type="button" disabled>Chưa có bản ghi để mở</button><p class="helper">Vô hiệu vì chưa có bản ghi nguồn nào cho quy tắc này.</p>';
+    }
+    html += "</div>";
+    $("#insight-body").innerHTML = html;
+  }
+
+  function renderRecord(){
+    var r = RULES.filter(function(x){ return x.id === state.insight; })[0];
+    var link = r.link;
+    var html = '<div class="card"><p class="meta">Bản ghi nguồn của nhận định</p><h3>' + esc(link.label.replace(/^Mở /, "")) + "</h3>" +
+      '<dl class="facts">' +
+      '<div class="fact"><dt>Kỳ báo cáo</dt><dd>' + esc(S.period) + "</dd></div>" +
+      '<div class="fact"><dt>Dữ liệu tới</dt><dd>' + esc(S.asof) + "</dd></div>" +
+      '<div class="fact"><dt>Dữ liệu liên quan</dt><dd>' + esc(r.records) + "</dd></div>" +
+      "</dl></div>";
+    html += '<div class="card"><h3>Bản ghi trong nguồn</h3>';
+    var rows = [];
+    if(link.kind === "income"){ rows = S.income.map(function(x){ return {name:x.cat, meta:x.timing + (x.link ? " · " + x.link : " · Không liên kết"), amount:x.amount, dir:"in"}; }); }
+    else if(link.kind === "expense"){ rows = S.expense.map(function(x){ return {name:x.cat, meta:x.timing + (x.essential ? " · Thiết yếu" : " · Có thể điều chỉnh"), amount:x.amount, dir:"out"}; }); }
+    else if(link.kind === "obligation"){ rows = S.obligations.map(function(o){ return {name:o.name, meta:"Đến hạn " + o.date, amount:o.amount, dir:"out"}; }); }
+    else if(link.kind === "liquid"){ rows = [{name:"Tiền và tài khoản ngân hàng", meta:"Nhóm thanh khoản", amount:S.cashBank, dir:"in"}, {name:"Tiền gửi có kỳ hạn", meta:"Nhóm thanh khoản", amount:S.term, dir:"in"}]; }
+    else if(link.kind === "liability"){ rows = [{name:"Khoản vay mua căn hộ", meta:"Dư nợ", amount:1500000000, dir:"out"}, {name:"Thẻ tín dụng", meta:"Dư nợ", amount:32000000, dir:"out"}]; }
+    else if(link.kind === "forecast"){ rows = D.balances.map(function(b){ return {name:b.m, meta:"Thu " + money(b.inc) + " · Chi " + money(b.out), amount:b.bal, dir:b.bal < 0 ? "out" : "in"}; }); }
+    html += rows.map(function(x){
+      return '<div class="record-row"><span class="record-main"><strong>' + esc(x.name) + '</strong><span class="meta">' + esc(x.meta) + "</span></span>" +
+        '<span class="record-amount ' + x.dir + ' fig">' + esc(money(x.amount)) + "</span></div>";
+    }).join("");
+    html += '<p class="helper">Mọi số trên màn hình nhận định đều lấy từ đúng các bản ghi này.</p></div>';
+    html += '<div class="card"><h3>Cập nhật bản ghi</h3><p class="meta">Thao tác mô phỏng để duyệt trạng thái thành công.</p>' +
+      '<button class="primary" type="button" data-toast="Đã cập nhật bản ghi. Chỉ số liên quan được tính lại trong lần mở tiếp theo.">Lưu thay đổi mô phỏng</button></div>';
+    $("#record-body").innerHTML = html;
+  }
+
+  var PANELS = {
+    "default": function(){
+      var i = IND[0];
+      return "<h3>Mặc định</h3>" + kpiCard(i).replace("<button", "<div").replace(/<\/button>$/, "</div>") +
+        '<p class="helper">Thẻ hiển thị giá trị, trục ngưỡng, nhãn dải, nguồn và đường mở cách tính.</p>';
+    },
+    loading: function(){
+      return "<h3>Đang tải</h3><div class=\"skeleton\" aria-hidden=\"true\"><span style=\"width:55%\"></span><span style=\"width:35%;height:2rem\"></span><span></span><span style=\"width:70%\"></span></div>" +
+        '<p class="helper">Khung xương giữ đúng chiều cao thẻ nên không có gì nhảy khi dữ liệu về. Không có giá trị tài chính nào chuyển động.</p>';
+    },
+    unavailable: function(){
+      return "<h3>Không khả dụng</h3><p class=\"kpi-value na\">Không khả dụng</p>" +
+        '<span class="status none">Chưa có mẫu số</span>' +
+        '<div class="na-note"><strong>Thiếu đầu vào</strong><span>Chưa có bản ghi thu nhập nào trong kỳ 09/2026. Mẫu số chưa tồn tại nên không hiển thị 0%.</span><span>Đường hoàn thiện: Thêm bản ghi thu nhập.</span></div>' +
+        '<button class="primary" type="button" data-toast="Mở màn hình thêm bản ghi thu nhập.">Thêm bản ghi thu nhập</button>' +
+        '<p class="helper">Không hiển thị 0, 0% hay một dấu gạch có thể bị đọc nhầm là giá trị thật.</p>';
+    },
+    partial: function(){
+      return "<h3>Một phần</h3><p class=\"kpi-value fig\">466.550.000<span class=\"unit\">₫</span></p>" +
+        '<span class="status warn">Một phần · dự báo chỉ gồm chi phí</span>' +
+        '<div class="na-note"><strong>Phần còn thiếu</strong><span>Chưa có chuỗi thu nhập định kỳ nào, nên con số này chỉ là cận dưới.</span><span>Ảnh hưởng tới cách hiểu: quy tắc dự báo âm không được kích hoạt từ chỉ số này.</span></div>' +
+        '<button class="primary" type="button" data-toast="Mở màn hình thêm chuỗi thu nhập định kỳ.">Thêm thu nhập định kỳ</button>';
+    },
+    error: function(){
+      return "<h3>Lỗi tải</h3><p class=\"kpi-value na\">Chưa tải được</p>" +
+        '<span class="status bad">Không lấy được chỉ số</span>' +
+        '<p>Dữ liệu đang hiển thị được giữ nguyên và không có thay đổi nào bị mất.</p>' +
+        '<div class="actions"><button class="primary" type="button" data-toast="Đang thử lại.">Thử lại</button><button type="button" data-toast="Quay lại Tổng quan.">Quay lại Tổng quan</button></div>';
+    },
+    success: function(){
+      return "<h3>Thành công</h3><div class=\"summary-box\"><strong>Đã cập nhật bản ghi thu nhập</strong>" +
+        "<p>Tổng thu nhập kỳ 09/2026 đổi từ chưa có sang 180.000.000 ₫. Hai chỉ số được tính lại: gánh nặng trả nợ định kỳ và tỷ trọng thu nhập thụ động.</p></div>" +
+        '<button class="tonal" type="button" data-toast="Mở chỉ số vừa được tính lại.">Xem chỉ số vừa đổi</button>';
+    }
+  };
+
+  function renderPanel(){ $("#state-panel").innerHTML = PANELS[state.panel](); }
+
+  function renderTables(){
+    $("#band-table").innerHTML = IND.map(function(i){
+      return "<tr><td>" + esc(i.name) + "</td>" +
+        i.bands.map(function(b){ return "<td>" + esc(b.label) + "</td>"; }).join("") +
+        '<td class="fig">' + esc(i.available ? i.display + (i.unit === "₫" ? " ₫" : " " + i.unit) : "Không khả dụng") + "</td>" +
+        "<td>" + esc(i.available ? i.bandLabel + (i.partial ? " · một phần" : "") : "Không áp dụng") + "</td></tr>";
+    }).join("");
+
+    var rows = [];
+    if(D.incomeTotal !== null){ rows.push(["Tổng thu nhập kỳ " + S.period, money(D.incomeTotal)]); }
+    else { rows.push(["Tổng thu nhập kỳ " + S.period, "Không khả dụng"]); }
+    if(D.expenseTotal !== null){
+      rows.push(["Chi phí thiết yếu", money(D.essentialExp)]);
+      rows.push(["Chi phí có thể điều chỉnh", money(D.flexExp)]);
+      rows.push(["Tổng chi phí kỳ " + S.period, money(D.expenseTotal)]);
+      rows.push(["Trong đó khoản trả nợ định kỳ", money(D.debtPay)]);
+    } else {
+      rows.push(["Tổng chi phí kỳ " + S.period, "Không khả dụng"]);
+    }
+    rows.push(["Dòng tiền ròng", D.net === null ? "Không khả dụng" : money(D.net)]);
+    rows.push(["Nhóm tài sản thanh khoản", D.liquid === null ? "Không khả dụng" : money(D.liquid)]);
+    rows.push(["Tổng tài sản", S.totalAssets === null ? "Không khả dụng" : money(S.totalAssets)]);
+    rows.push(["Tổng công nợ", S.totalLiab === null ? "Không khả dụng" : money(S.totalLiab)]);
+    rows.push(["Giá trị ròng", (S.totalAssets === null || S.totalLiab === null) ? "Không khả dụng" : money(S.totalAssets - S.totalLiab)]);
+    $("#recon-table").innerHTML = rows.map(function(r){
+      return "<tr><td>" + esc(r[0]) + '</td><td class="fig">' + esc(r[1]) + "</td></tr>";
+    }).join("");
+
+    var fbody = $("#forecast-table").querySelector("tbody");
+    if(D.balances){
+      fbody.innerHTML = D.balances.map(function(b){
+        return "<tr><td>" + esc(b.m) + '</td><td class="fig">' + esc(nf.format(b.inc)) + '</td><td class="fig">' + esc(nf.format(b.out)) + '</td><td class="fig">' + esc(nf.format(b.bal)) + "</td></tr>";
+      }).join("");
+      $("#forecast-note").textContent = "Số dư đầu dự báo " + money(S.openBal) + ". Thấp nhất " + money(D.minBal) + " vào " + D.minMonth + "." +
+        (S.forecastPartial ? " Dự báo ở trạng thái một phần vì chưa có chuỗi thu nhập định kỳ nào." : "");
+    } else {
+      fbody.innerHTML = '<tr><td colspan="4">Không khả dụng. Chưa có số dư tiền đầu kỳ và chưa có bản ghi định kỳ nào.</td></tr>';
+      $("#forecast-note").textContent = "Không hiển thị 0 ₫ thay cho dự báo chưa dựng được.";
+    }
+
+    $("#rule-table").innerHTML = RULES.map(function(r){
+      var label = r.state === "fired" ? "Kích hoạt" : r.state === "clear" ? "Không kích hoạt" : "Chưa đánh giá được";
+      return "<tr><td>" + esc(r.title) + "</td><td>" + esc(r.threshold) + "</td><td>" + esc(r.depends) + "</td><td>" + esc(label) + "</td></tr>";
+    }).join("");
+  }
+
+  function show(view, focus){
+    state.view = view;
+    document.querySelectorAll("[data-view]").forEach(function(v){
+      v.classList.toggle("active", v.getAttribute("data-view") === view);
+    });
+    if(view === "metric"){ renderMetric(); }
+    if(view === "rules"){ renderRules(); }
+    if(view === "insight"){ renderInsight(); }
+    if(view === "record"){ renderRecord(); }
+    if(view === "states"){ renderPanel(); }
+    if(focus !== false){
+      var el = $("#view-" + view);
+      if(el){ el.focus({preventScroll:true}); }
+    }
+  }
+
+  function renderAll(){
+    recompute();
+    renderHealth();
+    renderTables();
+    if(state.view === "metric"){ renderMetric(); }
+    if(state.view === "rules"){ renderRules(); }
+    if(state.view === "insight"){ renderInsight(); }
+    if(state.view === "states"){ renderPanel(); }
+  }
+
+  function toast(msg){
+    var old = document.querySelector(".toast");
+    if(old){ old.remove(); }
+    var t = document.createElement("p");
+    t.className = "toast";
+    t.setAttribute("role", "status");
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){ if(t.parentNode){ t.remove(); } }, 4000);
+  }
+
+  document.addEventListener("click", function(ev){
+    var el = ev.target.closest("[data-scen],[data-mode],[data-go],[data-metric],[data-insight],[data-open-record],[data-state],[data-toast],[data-close]");
+    if(!el){ return; }
+
+    if(el.hasAttribute("data-scen")){
+      state.scen = el.getAttribute("data-scen");
+      document.querySelectorAll("[data-scen]").forEach(function(b){
+        b.setAttribute("aria-pressed", String(b === el));
+      });
+      renderAll();
+      $("#scen-note").textContent = SCEN[state.scen].note;
+      show("health");
+      return;
+    }
+    if(el.hasAttribute("data-mode")){
+      $("#device").setAttribute("data-mode", el.getAttribute("data-mode"));
+      document.querySelectorAll("[data-mode][aria-pressed]").forEach(function(b){
+        b.setAttribute("aria-pressed", String(b === el));
+      });
+      return;
+    }
+    if(el.hasAttribute("data-go")){ show(el.getAttribute("data-go")); return; }
+    if(el.hasAttribute("data-metric")){ state.metric = el.getAttribute("data-metric"); show("metric"); return; }
+    if(el.hasAttribute("data-insight")){ state.insight = el.getAttribute("data-insight"); show("insight"); return; }
+    if(el.hasAttribute("data-open-record")){
+      var r = RULES.filter(function(x){ return x.id === el.getAttribute("data-open-record"); })[0];
+      if(r.link && r.link.exists === false){ $("#missing-dialog").showModal(); return; }
+      show("record");
+      return;
+    }
+    if(el.hasAttribute("data-state")){
+      state.panel = el.getAttribute("data-state");
+      document.querySelectorAll("[data-state]").forEach(function(b){
+        b.setAttribute("aria-pressed", String(b === el));
+      });
+      renderPanel();
+      return;
+    }
+    if(el.hasAttribute("data-toast")){ toast(el.getAttribute("data-toast")); return; }
+    if(el.hasAttribute("data-close")){ el.closest("dialog").close(); return; }
+  });
+
+  $("#open-threshold").addEventListener("click", function(){ $("#threshold-sheet").showModal(); });
+  $("#open-missing").addEventListener("click", function(){ $("#missing-dialog").showModal(); });
+  $("#po-save").addEventListener("click", function(){
+    var done = ["po-health", "po-metric", "po-rules", "po-states"].filter(function(n){
+      return document.querySelector('input[name="' + n + '"]:checked');
+    }).length;
+    toast("Đã ghi lại " + done + " trên 4 quyết định trong phiên xem này.");
+  });
+
+  renderAll();
+  show("health", false);
+})();
+</script>
+</body>
+</html>

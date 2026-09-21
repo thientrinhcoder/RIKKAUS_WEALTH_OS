@@ -1,0 +1,1755 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F5EF">
+  <title>Rikkaus Wealth OS | Transparent goal projection &amp; status review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
+      --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --line:1px solid var(--border); --control-line:1px solid var(--control);
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
+    body:has(dialog[open]){overflow:hidden}
+    button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
+    button{min-height:44px;border:var(--control-line);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--ink);cursor:pointer;transition:transform var(--motion) var(--ease),background-color var(--motion) var(--ease),color var(--motion) var(--ease),box-shadow var(--motion) var(--ease)}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    button:disabled{cursor:not-allowed;opacity:.58;background:var(--surface-subtle);transform:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    h1,h2,h3,h4,p{margin:0}
+    h1{color:var(--navy);font:600 clamp(2.5rem,5.5vw,4.5rem)/1.08 var(--display);letter-spacing:-.02em;text-wrap:balance;max-width:17ch}
+    h2{font-size:1.5rem;line-height:1.33;text-wrap:balance} h3{font-size:1.125rem;line-height:1.33;text-wrap:balance}
+    h4{font-size:1rem;line-height:1.5}
+    p,td,th,label,button,li{overflow-wrap:anywhere}
+    ul{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s1)}
+    .page{width:min(100%,var(--page));margin:auto;padding:var(--s4)}
+    .hidden{display:none !important}
+    .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+    .skip{position:absolute;top:-6rem;left:var(--s4);z-index:90;background:var(--surface);padding:var(--s3)}.skip:focus{top:var(--s4)}
+    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s8);border-bottom:2px solid var(--gold)}
+    .hero-copy{display:grid;gap:var(--s4)}
+    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container)}
+    .meta,.helper{color:var(--ink-secondary);font-size:.875rem}
+    .kicker{color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    section{padding:var(--s12) 0;border-bottom:var(--line)}
+    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s6)}
+    .section-mark{color:var(--gold);font-weight:600}
+    .grid{display:grid;gap:var(--s4)}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.split{grid-template-columns:1.5fr 1fr}
+    .card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);align-content:start}
+    .callout{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
+    .primary{border-color:var(--primary);background:var(--primary);color:var(--surface);font-weight:600}.primary:hover{background:var(--primary-pressed)}
+    .tonal{border-color:var(--primary-container);background:var(--primary-container);color:var(--primary);font-weight:600}
+    .danger{border-color:var(--error);color:var(--error)}
+    .text-btn{border-color:transparent;background:transparent;color:var(--primary)}
+    .fig{font-variant-numeric:tabular-nums}
+    .toolbar,.switches,.actions,.segments{display:flex;flex-wrap:wrap;gap:var(--s2)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{border-color:var(--primary);background:var(--primary);color:var(--surface)}
+    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.875rem;font-weight:600}
+    .status::before{content:"";width:.75rem;height:.75rem;border-radius:50%;background:currentColor;flex:none}
+    .status.ok{color:var(--success)}
+    .status.warn{color:var(--warning)}.status.warn::before{border-radius:2px}
+    .status.bad{color:var(--error)}.status.bad::before{border-radius:2px;transform:rotate(45deg)}
+    .status.info{color:var(--info)}
+    .status.done{color:var(--success)}.status.done::before{background:transparent;border:3px solid currentColor;border-radius:50%}
+    .status.over{color:var(--warning)}.status.over::before{border-radius:0;background:transparent;width:0;height:0;border-left:.4375rem solid transparent;border-right:.4375rem solid transparent;border-bottom:.75rem solid currentColor}
+    .status.na{color:var(--ink-secondary)}.status.na::before{height:.1875rem;width:.875rem;border-radius:1px}
+    .flow{display:grid;grid-template-columns:repeat(6,minmax(8rem,1fr));gap:var(--s2);overflow-x:auto;padding-bottom:var(--s2)}
+    .flow div{min-height:6rem;padding:var(--s3);border-top:2px solid var(--primary);background:var(--surface)}
+    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--s2)}
+    .token{min-height:6rem;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .swatch{display:block;height:2rem;border-radius:var(--r-input);margin-bottom:var(--s2)}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{text-align:left;padding:var(--s2) var(--s3);border-bottom:var(--line);vertical-align:top}
+    th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-secondary)}
+    td.fig,th.fig{text-align:right}
+    tbody tr:last-child td{border-bottom:0}
+    tfoot td{border-top:2px solid var(--border);border-bottom:0}
+    .stage{display:grid;gap:var(--s4)}
+    .stage-bar{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:center}
+    .device-wrap{padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);overflow:hidden}
+    .device{width:100%;max-width:24rem;min-height:48rem;margin:auto;border:1px solid var(--control);border-radius:var(--r-card);background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
+    .device[data-mode="tablet"]{max-width:48rem}.device[data-mode="desktop"]{max-width:64rem}.device[data-mode="wide"]{max-width:100%}
+    .app{min-height:48rem;display:grid;grid-template-rows:auto 1fr auto}
+    .topbar{height:4rem;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);border-bottom:var(--line);background:var(--surface)}
+    .wordmark{font:600 1.25rem/1 var(--display);color:var(--navy)}
+    .avatar{width:44px;padding:0;border-radius:50%;font-weight:600}
+    .app-body{min-width:0}
+    .app-nav{order:3;border-top:var(--line);background:var(--surface)}
+    .nav-list{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none}
+    .nav-btn{width:100%;min-height:64px;border:0;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.68rem;color:var(--ink-secondary);background:transparent}
+    .nav-btn.active{color:var(--primary);font-weight:600}
+    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .product-main{min-width:0;padding:var(--s4);padding-bottom:2rem}
+    .view{display:none}.view.active{display:grid;gap:var(--s4)}
+    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+    input,select,textarea{width:100%;min-height:48px;border:var(--control-line);border-radius:var(--r-input);background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem}
+    textarea{min-height:5rem}
+    .field{display:grid;gap:var(--s1)}
+    .field-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s3)}
+    .form-section{display:grid;gap:var(--s3);margin:0;padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    legend{padding:0 var(--s2);font-size:.875rem}
+    .required{color:var(--error)}
+    .error-copy{color:var(--error);font-size:.8125rem;font-weight:500}
+    .error-summary{padding:var(--s3);border:2px solid var(--error);border-radius:var(--r-card);background:var(--surface);display:grid;gap:var(--s1)}
+    .summary-box{padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container);border-left:3px solid var(--primary);display:grid;gap:var(--s2)}
+    .summary-box strong{color:var(--primary)}
+    .summary-sentence{font-size:1.0625rem;line-height:1.45;font-weight:600;color:var(--ink)}
+    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.75rem;color:var(--ink-secondary);white-space:nowrap}
+    .tag.warn{color:var(--warning);border-color:var(--warning)}
+    .tag.brand{color:var(--primary);border-color:var(--primary)}
+    .tag.navy{color:var(--navy);border-color:var(--navy)}
+    .tag-row{display:flex;flex-wrap:wrap;gap:var(--s1)}
+    .facts{display:grid;gap:var(--s2)}
+    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.9rem;padding-bottom:var(--s2);border-bottom:var(--line)}
+    .fact:last-child{border-bottom:0;padding-bottom:0}
+    .fact dt{color:var(--ink-secondary)}.fact dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+    .detail-amount{font-size:clamp(1.25rem,5.2vw,1.75rem);font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2;overflow-wrap:normal;word-break:keep-all}
+    .sticky-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;padding-top:var(--s2)}
+    .sticky-actions button{flex:1 1 9rem}
+    .skeleton{display:grid;gap:var(--s2)}
+    .skeleton span{display:block;height:1rem;border-radius:.25rem;background:linear-gradient(90deg,var(--surface-subtle),#E4DFD4,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+    @keyframes shimmer{to{background-position:-200% 0}}
+    .state-panel{min-height:11rem}
+    .check-row,.review-choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s2) 0;min-height:44px;align-content:center}
+    .check-row input{width:1.25rem;min-height:1.25rem;margin-top:.1875rem}
+    .review-list{display:grid;gap:var(--s3)}
+    .review-row{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-radius:var(--r-card)}
+    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0}
+    .review-options{display:flex;gap:var(--s4);flex-wrap:wrap}
+    .review-choice input{width:1.25rem;min-height:1.25rem;margin:0}
+
+    /* ---- Issue #87 device: the breakdown column ---- */
+    .break-wrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s4);align-items:start;padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle)}
+    .break-col{position:relative;width:4.5rem;height:17rem;border:var(--line);border-radius:var(--r-input);background:var(--surface);overflow:hidden;display:flex;flex-direction:column-reverse;flex:none}
+    .seg{width:100%;transition:height var(--motion) var(--ease)}
+    .seg.alloc{background:var(--primary)}
+    .seg.contrib{background:var(--primary-container);border-top:1px solid var(--primary)}
+    .seg.short{background:repeating-linear-gradient(135deg,#F3EFE6,#F3EFE6 5px,#E8E2D5 5px,#E8E2D5 10px)}
+    .goal-line{position:absolute;left:0;right:0;border-top:2px dashed var(--navy);pointer-events:none}
+    .goal-line span{position:absolute;right:.125rem;top:-1.15rem;font-size:.625rem;font-weight:600;color:var(--navy);background:var(--surface);padding:0 .1875rem;border-radius:2px;white-space:nowrap}
+    .break-legend{display:grid;gap:var(--s3);align-content:start;min-width:0}
+    .leg{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3);align-items:start}
+    .leg-key{width:1rem;height:1rem;border-radius:.25rem;margin-top:.1875rem;flex:none;border:var(--line)}
+    .leg-key.alloc{background:var(--primary);border-color:var(--primary)}
+    .leg-key.contrib{background:var(--primary-container);border-color:var(--primary)}
+    .leg-key.goalmark{background:var(--surface);border-top:2px dashed var(--navy);border-radius:0;height:.5rem;margin-top:.4375rem}
+    .leg-body{display:grid;gap:.125rem;min-width:0}
+    .leg-amount{font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:normal;word-break:keep-all}
+    .leg-note{font-size:.8125rem;color:var(--ink-secondary)}
+    .break-total{display:grid;gap:var(--s1);padding-top:var(--s3);border-top:var(--line)}
+    .progress{display:grid;gap:var(--s1)}
+    .progress-track{position:relative;height:.5rem;border-radius:999px;background:var(--surface-subtle);overflow:hidden}
+    .progress-fill{position:absolute;inset:0 auto 0 0;background:var(--primary);border-radius:999px}
+    .progress-meta{display:flex;justify-content:space-between;gap:var(--s2);font-size:.8125rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .goal-card{position:relative;width:100%;display:grid;gap:var(--s3);text-align:left;border:var(--line);border-radius:var(--r-card);background:var(--surface);padding:var(--s4);min-height:4.5rem}
+    .goal-card:hover{border-color:var(--primary)}
+    .goal-top{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;flex-wrap:wrap}
+    .goal-top .status{white-space:nowrap}
+    .goal-name{font-weight:600;font-size:1.0625rem;line-height:1.3}
+    .assump{display:grid;gap:var(--s2);padding:var(--s3);border-radius:var(--r-input);background:#FBF7EF;border-left:3px solid var(--gold)}
+    .assump p{font-size:.8125rem;color:var(--ink-secondary)}
+    .ledger{display:grid;gap:0}
+    .ledger-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:start;padding:var(--s3) 0;border-bottom:var(--line)}
+    .ledger-row:last-child{border-bottom:0}
+    .ledger-main{display:grid;gap:.125rem;min-width:0}
+    .ledger-name{font-weight:600;font-size:.9375rem}
+    .ledger-note{font-size:.8125rem;color:var(--ink-secondary)}
+    .src{white-space:nowrap;font-size:.75rem;font-weight:600;border-radius:999px;padding:.125rem .5rem;border:1px solid}
+    .src.user{color:var(--primary);border-color:var(--primary);background:var(--primary-container)}
+    .src.sys{color:var(--navy);border-color:var(--navy);background:var(--surface)}
+    .src.none{color:var(--ink-secondary);border-color:var(--control);background:var(--surface-subtle)}
+    .diff-table td.was{color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .diff-table td.now{font-weight:600;font-variant-numeric:tabular-nums}
+    .delta{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+    .delta.up{color:var(--success)}.delta.down{color:var(--error)}.delta.flat{color:var(--ink-secondary);font-weight:400}
+    .changed-row td{background:#FBF7EF}
+    .whatchanged{display:grid;gap:var(--s3);padding:var(--s4);border-radius:var(--r-card);background:var(--surface);border:1px solid var(--gold)}
+    .cause{display:grid;gap:var(--s1);padding:var(--s3);border-radius:var(--r-input);background:var(--surface-subtle);font-size:.875rem}
+    .steppers{display:flex;gap:var(--s2);align-items:center;flex-wrap:nowrap}
+    .steppers button{min-width:44px;padding:var(--s2);flex:none}
+    .steppers input{min-width:0}
+    .calc-step{display:grid;gap:var(--s1);padding:var(--s3);border-radius:var(--r-input);background:var(--surface-subtle)}
+    .calc-step code{font-size:.8125rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+    .calc-step .res{font-weight:600;font-variant-numeric:tabular-nums}
+    .na-box{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface);border:var(--line);border-left:3px solid var(--control)}
+    .inventory li{margin-bottom:var(--s2)}
+    .inventory .tag{margin-right:var(--s1)}
+    /* Adaptive shell: rail from 768px, sidebar from 1024px */
+    .device:not([data-mode="phone"]) .app{grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto 1fr}
+    .device:not([data-mode="phone"]) .topbar{grid-column:1/-1}
+    .device:not([data-mode="phone"]) .app-nav{grid-column:1;grid-row:2;border-top:0;border-right:var(--line)}
+    .device:not([data-mode="phone"]) .nav-list{grid-template-columns:1fr;align-content:start;gap:var(--s1);padding:var(--s2)}
+    .device:not([data-mode="phone"]) .nav-btn{width:5rem;min-height:68px;border-radius:var(--r-input)}
+    .device:not([data-mode="phone"]) .app-body{grid-column:2;grid-row:2}
+    .device:not([data-mode="phone"]) #goal-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .device:not([data-mode="phone"]) #view-adjust,.device:not([data-mode="phone"]) #view-assumptions{max-width:45rem}
+    .device:not([data-mode="phone"]) .break-col{width:6.5rem}
+    .device[data-mode="desktop"] .nav-btn,.device[data-mode="wide"] .nav-btn{width:11rem;min-height:52px;grid-auto-flow:column;grid-template-columns:auto 1fr;justify-content:start;justify-items:start;align-items:center;gap:var(--s3);padding:var(--s2) var(--s3);font-size:.8125rem;text-align:left}
+    .device[data-mode="desktop"] .nav-btn.active,.device[data-mode="wide"] .nav-btn.active{background:var(--primary-container)}
+    .device[data-mode="desktop"] #view-projection,.device[data-mode="wide"] #view-projection{grid-template-columns:1.35fr 1fr;align-items:start}
+    .device[data-mode="desktop"] #view-projection .screen-head,.device[data-mode="wide"] #view-projection .screen-head{grid-column:1/-1}
+    .device[data-mode="desktop"] #view-projection .full,.device[data-mode="wide"] #view-projection .full{grid-column:1/-1}
+    .device[data-mode="wide"] #goal-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+    dialog{width:min(100%,38rem);border:0;border-radius:var(--r-sheet);padding:var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal);max-height:90vh}
+    dialog::backdrop{background:var(--scrim)}
+    .sheet{margin:auto auto 0;width:min(100%,34rem);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s3)}
+    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6)}
+    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.9rem}
+    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.875rem}
+    noscript .callout{border-left:3px solid var(--warning)}
+    @media (max-width:60rem){
+      .hero,.section-head,.two,.three,.split{grid-template-columns:1fr}
+      .hero{padding-top:var(--s8);gap:var(--s6)}
+      .field-row{grid-template-columns:1fr}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+      button:hover,button:active{transform:none}
+    }
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua, đến nội dung chính</a>
+<div class="page">
+
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="kicker">Issue #87 · MVP 1C · Design review</p>
+      <h1>Dự phóng mục tiêu minh bạch</h1>
+      <p class="meta">Bản dựng thiết kế có thể bấm được, dùng để Product Owner duyệt hướng UX/UI cho
+        bốn thứ: cách phân rã một con số dự phóng thành các phần có tên, cách công khai toàn bộ giả
+        định đứng sau con số đó, cách phản hồi “điều gì đã thay đổi” khi người dùng sửa một đầu vào,
+        và cách trình bày trạng thái khi dự phóng không tính được hoặc mục tiêu đã quá hạn.</p>
+      <p class="meta">Ngày tham chiếu: 20/09/2026 · Tiền báo cáo: VND · Tỷ giá người dùng nhập:
+        1 USD = 25.100 VND (cập nhật 12/09/2026).</p>
+    </div>
+    <div class="hero-note">
+      <h2>Đây là bản thiết kế, không phải sản phẩm</h2>
+      <p>Toàn bộ dữ liệu là hư cấu và mọi phép tính hiển thị ở đây là minh họa phía thiết kế. Bản
+        này không định nghĩa schema, công thức sản xuất hay hành vi API. Việc duyệt chỉ xác nhận
+        hướng UX/UI.</p>
+      <p class="meta">Phạm vi Feature #25 · Sibling: Frontend #88, Backend #89 · Kế thừa mô hình mục
+        tiêu đã duyệt ở issue #84.</p>
+    </div>
+  </header>
+
+  <noscript>
+    <div class="callout" style="margin-top:var(--s6)">
+      <h2>JavaScript đang tắt</h2>
+      <p>Trang vẫn đọc được: phạm vi issue, luồng chính, danh mục màn hình, bảng token, quy tắc
+        tính, ma trận trạng thái, phần responsive, danh mục kiểm tra khả năng tiếp cận và danh sách
+        câu hỏi còn mở đều hiển thị đầy đủ.</p>
+      <p>Ba phần cần JavaScript để dựng: prototype bấm thử ở mục 03, bảng đối chiếu số liệu ở mục
+        04, và bộ điều khiển ghi quyết định duyệt ở mục 06. Hãy bật JavaScript trước khi duyệt.</p>
+    </div>
+  </noscript>
+
+  <main id="main" tabindex="-1">
+
+    <!-- 01 -->
+    <section aria-labelledby="ux-title">
+      <div class="section-head">
+        <div><span class="section-mark">01</span><h2 id="ux-title">Cấu trúc UX và phạm vi</h2></div>
+        <p class="meta">Toàn bộ luồng của issue này nằm trong điểm đến <strong>Mục tiêu</strong>, ở
+          lớp sâu hơn màn danh sách mà issue #84 đã duyệt. Không thêm điểm đến mới, không thêm menu
+          phụ, không thiết kế lại biểu mẫu tạo mục tiêu.</p>
+      </div>
+
+      <div class="grid three">
+        <div class="card">
+          <h3>Trong phạm vi</h3>
+          <ul>
+            <li>Phân rã dự phóng thành các phần có tên.</li>
+            <li>Công khai giả định kèm nguồn của từng giả định.</li>
+            <li>Phản hồi “điều gì đã thay đổi” khi sửa ngày đích, mức đóng góp hoặc lợi suất.</li>
+            <li>Trạng thái không khả dụng khi thiếu đầu vào.</li>
+            <li>Trạng thái quá hạn, đã đạt, và không mở được.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Ngoài phạm vi</h3>
+          <ul>
+            <li>Chọn mẫu và biểu mẫu tạo mục tiêu (đã duyệt ở issue #84).</li>
+            <li>Nhận định theo quy tắc (feature khác của MVP 1C).</li>
+            <li>Mô hình lạm phát, thuế, phí, hoặc dải kịch bản.</li>
+            <li>Liên kết tự động giữa đóng góp và dòng tiền.</li>
+            <li>API thật, đăng nhập thật, lưu trữ thật.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Cách đọc bản này</h3>
+          <ul>
+            <li>Mục 03 là prototype bấm được; hãy bắt đầu từ đó.</li>
+            <li>Mục 04 giải thích phương pháp và đối chiếu mọi con số.</li>
+            <li>Mục 05 là ma trận trạng thái và responsive.</li>
+            <li>Mục 06 là nơi ghi quyết định duyệt theo từng màn hình và từng luồng.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top:var(--s8)">Luồng chính</h3>
+      <p class="meta" style="margin-bottom:var(--s3)">Đường đi hạnh phúc chính không phụ thuộc vào
+        cử chỉ ẩn hay trạng thái hover.</p>
+      <div class="flow">
+        <div><p class="kicker">01</p><p>Danh sách mục tiêu</p><p class="meta">Mỗi thẻ đã cho thấy trạng thái và khoảng cách.</p></div>
+        <div><p class="kicker">02</p><p>Dự phóng</p><p class="meta">Cột phân rã trả lời “số này từ đâu ra”.</p></div>
+        <div><p class="kicker">03</p><p>Giả định</p><p class="meta">Từng giả định kèm nguồn: bạn nhập, hệ thống, chưa xét.</p></div>
+        <div><p class="kicker">04</p><p>Điều chỉnh</p><p class="meta">Sửa ngày đích, đóng góp, lợi suất.</p></div>
+        <div><p class="kicker">05</p><p>Điều gì đã thay đổi</p><p class="meta">Trước và sau cho cả sáu kết quả, kèm hoàn tác.</p></div>
+        <div><p class="kicker">06</p><p>Cách tính</p><p class="meta">Từng bước bằng chính số liệu của mục tiêu.</p></div>
+      </div>
+
+      <h3 style="margin-top:var(--s8)">Danh mục màn hình của issue này</h3>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Danh mục màn hình và mức độ hoàn thành</caption>
+          <thead><tr><th>Màn hình</th><th>Vai trò</th><th>Trạng thái bàn giao</th></tr></thead>
+          <tbody>
+            <tr><td>Danh sách mục tiêu</td><td>Điểm vào; mỗi thẻ mang sẵn trạng thái và chênh lệch</td><td>Sẵn sàng duyệt</td></tr>
+            <tr><td>Dự phóng mục tiêu</td><td>Cột phân rã, năm kết quả, lý do trạng thái</td><td>Sẵn sàng duyệt</td></tr>
+            <tr><td>Giả định đang dùng</td><td>Sổ giả định kèm nguồn của từng dòng</td><td>Sẵn sàng duyệt</td></tr>
+            <tr><td>Điều chỉnh &amp; so sánh</td><td>Ba đầu vào, tính lại tức thời, bảng trước/sau, hoàn tác</td><td>Sẵn sàng duyệt</td></tr>
+            <tr><td>Cách tính</td><td>Diễn giải từng bước bằng số liệu thật của mục tiêu</td><td>Sẵn sàng duyệt</td></tr>
+            <tr><td>Không khả dụng &amp; quá hạn</td><td>Quá hạn, đã đạt, hết tháng đóng góp, thiếu đầu vào</td><td>Sẵn sàng duyệt</td></tr>
+            <tr><td>Mẫu trạng thái</td><td>Tải, thiếu dữ liệu, dữ liệu cũ, lỗi, thành công, không mở được</td><td>Sẵn sàng duyệt</td></tr>
+            <tr><td>Chọn mẫu và tạo mục tiêu</td><td>Biểu mẫu chung và bộ mẫu</td><td>Đã duyệt ở issue #84</td></tr>
+            <tr><td>Nhận định từ mục tiêu</td><td>Báo cáo theo quy tắc</td><td>Ngoài phạm vi issue này</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section aria-labelledby="system-title">
+      <div class="section-head">
+        <div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div>
+        <p class="meta">Bản này chỉ dùng token ngữ nghĩa đã duyệt trong
+          <code>docs/design-guidelines.md</code>. Không có giá trị màu riêng cho trang.</p>
+      </div>
+
+      <div class="tokens">
+        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><p>color.canvas</p><p class="meta">#F7F5EF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface);border:var(--line)"></span><p>color.surface</p><p class="meta">#FFFFFF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface-subtle)"></span><p>color.surfaceSubtle</p><p class="meta">#EFEBE2</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary)"></span><p>color.primary</p><p class="meta">#0F5C5A</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><p>color.primaryContainer</p><p class="meta">#D9EFEC</p></div>
+        <div class="token"><span class="swatch" style="background:var(--navy)"></span><p>color.brandNavy</p><p class="meta">#182B45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--gold)"></span><p>color.heritageGold</p><p class="meta">#A87428 · chỉ trang trí</p></div>
+        <div class="token"><span class="swatch" style="background:var(--success)"></span><p>color.success</p><p class="meta">#1E6A45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--warning)"></span><p>color.warning</p><p class="meta">#8A5A00</p></div>
+        <div class="token"><span class="swatch" style="background:var(--error)"></span><p>color.error</p><p class="meta">#B42318</p></div>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Thành phần tái sử dụng trong bản này</h3>
+          <ul class="inventory">
+            <li><span class="tag brand">Nút</span> chính, tông nhạt, chữ, phá hủy; mặc định, nhấn, focus, vô hiệu, đang tải.</li>
+            <li><span class="tag brand">Ô nhập</span> tiền tệ, phần trăm, ngày; nhãn, trợ giúp, lỗi, chỉ đọc.</li>
+            <li><span class="tag brand">Thẻ</span> mục tiêu, tổng hợp, trạng thái không khả dụng kèm hành động kế tiếp.</li>
+            <li><span class="tag brand">Bảng</span> sổ giả định và bảng so sánh trước/sau.</li>
+            <li><span class="tag brand">Thanh điều hướng</span> năm điểm đến có nhãn chữ.</li>
+            <li><span class="tag brand">Hộp thoại</span> cách tính, thay đổi chưa lưu, đóng mục tiêu quá hạn.</li>
+            <li><span class="tag brand">Chỉ báo</span> sáu trạng thái, mỗi trạng thái một hình khối riêng.</li>
+            <li><span class="tag brand">Phản hồi</span> khung xương, biểu ngữ giả định, thông báo ngắn, hoàn tác.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Thiết bị thị giác riêng của issue này</h3>
+          <p><strong>Cột phân rã</strong> trả lời câu hỏi “con số dự phóng này từ đâu mà có”. Cột
+            luôn gồm đúng hai phần xếp chồng: phần dưới là số tiền đã phân bổ lớn lên theo lợi suất,
+            phần trên là các khoản đóng góp hàng tháng cộng dồn. Đường nét đứt cắt ngang cột là số
+            tiền mục tiêu. Người duyệt chỉ cần học cách đọc một lần, rồi dùng đúng cột đó để kiểm
+            tra sổ giả định, bảng trước/sau và các trạng thái quá hạn.</p>
+          <div class="break-wrap" style="background:var(--surface)">
+            <div class="break-col" role="img" aria-label="Ví dụ cột phân rã: phần đã phân bổ chiếm khoảng một nửa, phần đóng góp thêm chiếm phần còn lại, tổng dự phóng vượt nhẹ đường mục tiêu.">
+              <div class="seg alloc" style="height:49%"></div>
+              <div class="seg contrib" style="height:51%"></div>
+              <div class="goal-line" style="bottom:92.6%"><span>Mục tiêu</span></div>
+            </div>
+            <div class="break-legend">
+              <div class="leg"><span class="leg-key alloc"></span><span class="leg-body"><span class="leg-note">Phần đã phân bổ, lớn lên theo lợi suất giả định</span></span></div>
+              <div class="leg"><span class="leg-key contrib"></span><span class="leg-body"><span class="leg-note">Phần đóng góp thêm, cộng dồn theo từng tháng</span></span></div>
+              <div class="leg"><span class="leg-key goalmark"></span><span class="leg-body"><span class="leg-note">Số tiền mục tiêu, vẽ cắt ngang cột làm ngưỡng</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s6)">
+        <h3>Sáu trạng thái, sáu hình khối</h3>
+        <p class="meta">Không trạng thái nào chỉ dựa vào màu. Thử bỏ màu bằng chế độ xám: sáu hình
+          khối vẫn phân biệt được, và mỗi chỉ báo luôn đi kèm nhãn chữ.</p>
+        <div class="toolbar" style="gap:var(--s4)">
+          <span class="status ok">Đúng kế hoạch</span>
+          <span class="status warn">Có rủi ro</span>
+          <span class="status bad">Chậm kế hoạch</span>
+          <span class="status done">Đã đạt mục tiêu</span>
+          <span class="status over">Quá hạn</span>
+          <span class="status na">Không khả dụng</span>
+        </div>
+        <p class="meta">Ba nhãn đầu là trạng thái mức độ đủ của kế hoạch, đã duyệt ở issue #84. Hai
+          nhãn giữa là trạng thái vòng đời do bản thiết kế này đề xuất cho mục tiêu đã qua ngày
+          đích. Nhãn cuối không phải một trạng thái mà là lời thừa nhận rằng hệ thống chưa đủ đầu
+          vào để kết luận.</p>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section aria-labelledby="prototype-title">
+      <div class="section-head">
+        <div><span class="section-mark">03</span><h2 id="prototype-title">Prototype clickable</h2></div>
+        <p class="meta">Bấm thử trực tiếp. Chuyển chiều rộng bằng các nút bên dưới để xem hành vi
+          responsive ở 360px, máy tính bảng và máy tính để bàn.</p>
+      </div>
+
+      <div class="stage">
+        <div class="stage-bar">
+          <div class="switches" role="group" aria-label="Chiều rộng xem thử">
+            <button type="button" data-width="phone" aria-pressed="true">Điện thoại 360–375px</button>
+            <button type="button" data-width="tablet" aria-pressed="false">Máy tính bảng 768px</button>
+            <button type="button" data-width="desktop" aria-pressed="false">Máy tính 1024px</button>
+            <button type="button" data-width="wide" aria-pressed="false">Rộng 1440px</button>
+          </div>
+          <div class="actions">
+            <button type="button" data-go="goals">Về danh sách</button>
+            <button type="button" data-go="states">Mẫu trạng thái</button>
+          </div>
+        </div>
+
+        <div class="device-wrap">
+          <div class="device" data-mode="phone">
+            <div class="app">
+              <div class="topbar">
+                <span class="wordmark">Rikkaus</span>
+                <button class="avatar" type="button" aria-label="Hồ sơ và cài đặt (ngoài phạm vi issue này)">TT</button>
+              </div>
+
+              <div class="app-body">
+                <main class="product-main" id="product-main">
+
+                  <!-- Goal list -->
+                  <section class="view active" data-view="goals" id="view-goals" tabindex="-1" aria-labelledby="goals-heading">
+                    <div class="screen-head">
+                      <div><p class="meta">Điểm đến chính</p><h2 id="goals-heading">Mục tiêu</h2></div>
+                      <span class="tag">20/09/2026</span>
+                    </div>
+                    <div class="summary-box">
+                      <p class="meta">Tổng đóng góp đang dự kiến mỗi tháng</p>
+                      <p class="summary-sentence"><span class="fig" id="sum-planned">—</span> trên dòng
+                        tiền ròng <span class="fig">88.000.000 ₫</span> mỗi tháng.</p>
+                      <p class="meta">Bảy mục tiêu còn hạn đang nhận đóng góp. Ba mục tiêu đã qua ngày
+                        đích không còn tháng đóng góp nào nên không nằm trong tổng này.</p>
+                    </div>
+                    <p class="meta">Chạm vào một mục tiêu để mở phần dự phóng của nó.</p>
+                    <div class="grid" id="goal-list" style="gap:var(--s3)"></div>
+                  </section>
+
+                  <!-- Projection -->
+                  <section class="view" data-view="projection" id="view-projection" tabindex="-1" aria-labelledby="proj-heading">
+                    <div class="screen-head">
+                      <div>
+                        <p class="meta"><button class="text-btn" type="button" data-go="goals">← Mục tiêu</button></p>
+                        <h2 id="proj-heading">—</h2>
+                        <p class="meta" id="proj-sub">—</p>
+                      </div>
+                      <span class="status" id="proj-status">—</span>
+                    </div>
+
+                    <div id="proj-computable">
+                      <div class="break-wrap">
+                        <div class="break-col" role="img" id="proj-col-img" aria-label="">
+                          <div class="seg alloc" id="proj-seg-alloc" style="height:0%"></div>
+                          <div class="seg contrib" id="proj-seg-contrib" style="height:0%"></div>
+                          <div class="goal-line" id="proj-goal-line" style="bottom:0%"><span>Mục tiêu</span></div>
+                        </div>
+                        <div class="break-legend">
+                          <div class="leg"><span class="leg-key alloc"></span><span class="leg-body">
+                            <span class="leg-amount" id="proj-fv-alloc">—</span>
+                            <span class="leg-note" id="proj-fv-alloc-note">—</span></span></div>
+                          <div class="leg"><span class="leg-key contrib"></span><span class="leg-body">
+                            <span class="leg-amount" id="proj-fv-contrib">—</span>
+                            <span class="leg-note" id="proj-fv-contrib-note">—</span></span></div>
+                          <div class="leg"><span class="leg-key goalmark"></span><span class="leg-body">
+                            <span class="leg-amount" id="proj-goal-amount">—</span>
+                            <span class="leg-note">Số tiền mục tiêu bạn đã đặt</span></span></div>
+                          <div class="break-total">
+                            <p class="meta">Dự phóng tại ngày đích</p>
+                            <p class="detail-amount" id="proj-total">—</p>
+                            <p class="meta" id="proj-delta">—</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="summary-box" style="margin-top:var(--s4)">
+                        <p class="summary-sentence" id="proj-sentence">—</p>
+                        <p class="meta" id="proj-reason">—</p>
+                      </div>
+
+                      <div class="card full" style="margin-top:var(--s4)">
+                        <h3>Năm kết quả của mục tiêu</h3>
+                        <dl class="facts" id="proj-facts"></dl>
+                      </div>
+
+                      <div class="assump full" style="margin-top:var(--s4)">
+                        <p><strong>Lợi suất kỳ vọng <span class="fig" id="proj-return">—</span>/năm là giá
+                          trị do bạn tự nhập.</strong></p>
+                        <p>Đây là dự phóng theo giả định, không phải cam kết. Kết quả thực tế phụ thuộc
+                          vào thị trường và vào việc bạn có đóng góp đúng kế hoạch hay không.</p>
+                      </div>
+
+                      <div class="sticky-actions full" style="margin-top:var(--s4)">
+                        <button type="button" data-go="assumptions">Giả định đang dùng</button>
+                        <button type="button" data-open="#calc-dialog">Cách tính</button>
+                        <button class="primary" type="button" data-go="adjust">Điều chỉnh</button>
+                      </div>
+                    </div>
+
+                    <div id="proj-uncomputable" class="hidden"></div>
+                  </section>
+
+                  <!-- Assumptions -->
+                  <section class="view" data-view="assumptions" id="view-assumptions" tabindex="-1" aria-labelledby="assump-heading">
+                    <div class="screen-head">
+                      <div>
+                        <p class="meta"><button class="text-btn" type="button" data-go="projection">← Dự phóng</button></p>
+                        <h2 id="assump-heading">Giả định đang dùng</h2>
+                        <p class="meta" id="assump-sub">—</p>
+                      </div>
+                    </div>
+                    <p>Mỗi dòng dưới đây là một giả định đã tham gia vào con số dự phóng. Nhãn bên phải
+                      cho biết giả định đó đến từ đâu.</p>
+                    <div class="toolbar" style="gap:var(--s3)">
+                      <span class="src user">Bạn nhập</span>
+                      <span class="src sys">Hệ thống</span>
+                      <span class="src none">Chưa xét</span>
+                    </div>
+                    <div class="card"><div class="ledger" id="ledger"></div></div>
+                    <div class="assump">
+                      <p><strong>“Chưa xét” nghĩa là hệ thống hoàn toàn không mô hình hóa yếu tố đó.</strong></p>
+                      <p>Con số dự phóng vì vậy là giá trị danh nghĩa tại ngày đích, chưa trừ lạm phát,
+                        chưa trừ thuế và phí. Nếu bạn muốn một mục tiêu giữ được sức mua, hãy tự nâng số
+                        tiền mục tiêu khi đặt.</p>
+                    </div>
+                    <div class="sticky-actions">
+                      <button type="button" data-go="projection">Quay lại dự phóng</button>
+                      <button class="primary" type="button" data-go="adjust">Điều chỉnh giả định</button>
+                    </div>
+                  </section>
+
+                  <!-- Adjust -->
+                  <section class="view" data-view="adjust" id="view-adjust" tabindex="-1" aria-labelledby="adjust-heading">
+                    <div class="screen-head">
+                      <div>
+                        <p class="meta"><button class="text-btn" type="button" id="adjust-back">← Dự phóng</button></p>
+                        <h2 id="adjust-heading">Điều chỉnh &amp; so sánh</h2>
+                        <p class="meta" id="adjust-sub">—</p>
+                      </div>
+                    </div>
+
+                    <p>Sửa một trong ba đầu vào bên dưới. Kết quả được tính lại ngay khi bạn nhập, và
+                      bảng so sánh sẽ cho biết chính xác điều gì đã thay đổi.</p>
+
+                    <div class="error-summary hidden" id="adjust-errors" tabindex="-1" role="alert">
+                      <strong>Chưa tính lại được. Hãy sửa các mục sau:</strong>
+                      <ul id="adjust-errors-list"></ul>
+                    </div>
+
+                    <fieldset class="form-section">
+                      <legend>Ba đầu vào bạn kiểm soát</legend>
+                      <div class="field">
+                        <label for="adj-date">Ngày đích</label>
+                        <input id="adj-date" type="date" aria-describedby="adj-date-help">
+                        <p class="helper" id="adj-date-help">Phải sau ngày tham chiếu 20/09/2026. Tháng
+                          đóng góp đầu tiên được tính là tháng kế tiếp.</p>
+                        <p class="error-copy hidden" id="adj-date-err"></p>
+                      </div>
+                      <div class="field">
+                        <label for="adj-planned">Đóng góp hàng tháng (₫)</label>
+                        <div class="steppers">
+                          <button type="button" id="adj-planned-dec" aria-label="Giảm 1.000.000 đồng mỗi tháng">−</button>
+                          <input id="adj-planned" type="text" inputmode="numeric" aria-describedby="adj-planned-help">
+                          <button type="button" id="adj-planned-inc" aria-label="Tăng 1.000.000 đồng mỗi tháng">+</button>
+                        </div>
+                        <p class="helper" id="adj-planned-help">Số tiền bạn dự định dành ra mỗi tháng.
+                          Hệ thống không tự động trừ khoản này vào dòng tiền.</p>
+                        <p class="error-copy hidden" id="adj-planned-err"></p>
+                      </div>
+                      <div class="field">
+                        <label for="adj-return">Lợi suất kỳ vọng (%/năm)</label>
+                        <div class="steppers">
+                          <button type="button" id="adj-return-dec" aria-label="Giảm 0,5 phần trăm mỗi năm">−</button>
+                          <input id="adj-return" type="text" inputmode="decimal" aria-describedby="adj-return-help">
+                          <button type="button" id="adj-return-inc" aria-label="Tăng 0,5 phần trăm mỗi năm">+</button>
+                        </div>
+                        <p class="helper" id="adj-return-help">Giá trị do bạn tự nhập, từ 0 đến 30. Đây
+                          là giả định, không phải lợi suất được đảm bảo.</p>
+                        <p class="error-copy hidden" id="adj-return-err"></p>
+                      </div>
+                    </fieldset>
+
+                    <div class="whatchanged" id="whatchanged" aria-live="polite">
+                      <h3 id="wc-title">Chưa có thay đổi nào</h3>
+                      <p class="meta" id="wc-intro">Khi bạn sửa một trong ba đầu vào, bảng này sẽ liệt kê
+                        giá trị trước và sau của cả sáu kết quả.</p>
+                      <div class="table-wrap">
+                        <table class="diff-table">
+                          <caption class="visually-hidden">So sánh kết quả trước và sau khi điều chỉnh</caption>
+                          <thead><tr><th>Kết quả</th><th>Trước</th><th>Sau</th><th>Chênh lệch</th></tr></thead>
+                          <tbody id="wc-body"></tbody>
+                        </table>
+                      </div>
+                      <div class="cause hidden" id="wc-cause"></div>
+                    </div>
+
+                    <div class="sticky-actions">
+                      <button type="button" id="adj-undo" disabled aria-describedby="adj-undo-why">Hoàn tác</button>
+                      <button class="primary" type="button" id="adj-save" disabled>Lưu thay đổi</button>
+                    </div>
+                    <p class="meta" id="adj-undo-why">Hoàn tác khôi phục đúng ba giá trị đã lưu của mục
+                      tiêu. Trong bản dựng thiết kế, việc lưu chỉ minh họa phản hồi thành công.</p>
+                  </section>
+
+                  <!-- States gallery -->
+                  <section class="view" data-view="states" id="view-states" tabindex="-1" aria-labelledby="states-heading">
+                    <div class="screen-head">
+                      <div>
+                        <p class="meta"><button class="text-btn" type="button" data-go="goals">← Mục tiêu</button></p>
+                        <h2 id="states-heading">Mẫu trạng thái</h2>
+                      </div>
+                    </div>
+                    <p class="meta">Các trạng thái quá hạn và không khả dụng đã xuất hiện ngay trong danh
+                      sách ở màn trước. Phần này gom các trạng thái còn lại để duyệt cạnh nhau.</p>
+
+                    <div class="card state-panel">
+                      <h3>Đang tải</h3>
+                      <p class="meta">Khung xương giữ đúng chỗ của cột phân rã và của năm kết quả, không
+                        làm động số tiền.</p>
+                      <div class="skeleton">
+                        <span style="width:40%"></span><span style="width:90%"></span>
+                        <span style="width:75%"></span><span style="width:60%"></span>
+                      </div>
+                    </div>
+
+                    <div class="card state-panel">
+                      <h3>Thiếu dữ liệu</h3>
+                      <p><strong>Quỹ học tiếp cho bản thân</strong> chưa có mức đóng góp hàng tháng.</p>
+                      <p class="meta">Có: số tiền mục tiêu, số đã phân bổ, ngày đích, lợi suất kỳ vọng.
+                        Thiếu: đóng góp hàng tháng. Ảnh hưởng: tính được mức cần thiết mỗi tháng, nhưng
+                        chưa kết luận được kế hoạch có đủ hay không.</p>
+                      <p class="status na">Không khả dụng</p>
+                      <div class="actions"><button class="primary" type="button" data-goal="g7">Nhập mức đóng góp</button></div>
+                    </div>
+
+                    <div class="card state-panel">
+                      <h3>Dữ liệu cũ</h3>
+                      <p><strong>Tăng trưởng tài sản ròng</strong> lấy số đã phân bổ từ tài sản ròng.</p>
+                      <p class="status over">Định giá bất động sản cập nhật lần cuối 30/06/2026</p>
+                      <p class="meta">Giá trị bị ảnh hưởng: số đã phân bổ 10.470.000.000 ₫, và do đó cả
+                        cột phân rã lẫn mức cần thiết mỗi tháng.</p>
+                      <div class="actions"><button type="button" data-toast="Điều hướng tới Tài sản để thêm một lần định giá mới. Lịch sử định giá cũ được giữ nguyên.">Cập nhật định giá</button></div>
+                    </div>
+
+                    <div class="card state-panel">
+                      <h3>Lỗi yêu cầu</h3>
+                      <p>Không tải được dự phóng mới nhất.</p>
+                      <p class="meta">Những gì được giữ lại: ba giá trị bạn vừa nhập trong màn điều chỉnh
+                        vẫn còn nguyên. Bản dự phóng đang hiển thị là bản đã tải lúc 16:04 hôm nay.</p>
+                      <div class="actions">
+                        <button class="primary" type="button" data-toast="Đã thử lại. Trong bản dựng thiết kế, lần thử này luôn thành công.">Thử lại</button>
+                        <button type="button" data-go="goals">Quay về danh sách</button>
+                      </div>
+                    </div>
+
+                    <div class="card state-panel">
+                      <h3>Thành công</h3>
+                      <p class="status ok">Đã lưu đóng góp hàng tháng mới</p>
+                      <p class="meta">Đã thay đổi: đóng góp hàng tháng từ 25.000.000 ₫ thành 18.000.000 ₫.
+                        Trạng thái chuyển từ Đúng kế hoạch sang Có rủi ro.</p>
+                      <div class="actions"><button type="button" data-go="projection">Mở lại dự phóng</button></div>
+                    </div>
+
+                    <div class="card state-panel">
+                      <h3>Vô hiệu kèm lý do</h3>
+                      <div class="actions"><button type="button" disabled aria-describedby="disabled-why">Gắn đóng góp vào dòng tiền</button></div>
+                      <p class="meta" id="disabled-why">Chưa nằm trong Feature Contract #25. Đây là một
+                        quyết định cần Product Owner, không phải một lỗi.</p>
+                    </div>
+
+                    <div class="card state-panel">
+                      <h3>Không mở được</h3>
+                      <p class="meta">Dùng khi điều hướng sâu tới một mục tiêu không truy cập được.</p>
+                      <div class="actions"><button type="button" data-go="unavailable">Mở trạng thái này</button></div>
+                    </div>
+                  </section>
+
+                  <!-- Unavailable record -->
+                  <section class="view" data-view="unavailable" id="view-unavailable" tabindex="-1" aria-labelledby="unavail-heading">
+                    <h2 id="unavail-heading">Không thể mở mục này</h2>
+                    <p>Hãy quay lại danh sách mục tiêu và thử lại từ đó.</p>
+                    <p class="meta">Thông báo này cố ý không cho biết mục tiêu có tồn tại hay không, thuộc
+                      về ai, hay vì sao không mở được.</p>
+                    <div class="actions"><button class="primary" type="button" data-go="goals">Về danh sách mục tiêu</button></div>
+                  </section>
+
+                  <!-- Other destination -->
+                  <section class="view" data-view="other" id="view-other" tabindex="-1" aria-labelledby="other-heading">
+                    <h2 id="other-heading">Điểm đến này được thiết kế ở issue khác</h2>
+                    <p>Bản dựng này chỉ bao phủ phần dự phóng trong điểm đến Mục tiêu.</p>
+                    <p class="meta" id="other-name">—</p>
+                    <div class="actions"><button class="primary" type="button" data-go="goals">Về Mục tiêu</button></div>
+                  </section>
+
+                </main>
+              </div>
+
+              <nav class="app-nav" aria-label="Điều hướng chính">
+                <ul class="nav-list">
+                  <li><button class="nav-btn" type="button" data-dest="Tổng quan">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Tổng quan</button></li>
+                  <li><button class="nav-btn" type="button" data-dest="Tài sản &amp; Nợ">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18"/></svg>Tài sản</button></li>
+                  <li><button class="nav-btn" type="button" data-dest="Dòng tiền">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 3 7-7"/><path d="M15 8h5v5"/></svg>Dòng tiền</button></li>
+                  <li><button class="nav-btn active" type="button" data-dest="Mục tiêu" aria-current="page">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Mục tiêu</button></li>
+                  <li><button class="nav-btn" type="button" data-dest="Nhận định">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 1 3 11v3H9v-3a6 6 0 0 1 3-11z"/><path d="M10 21h4"/></svg>Nhận định</button></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section aria-labelledby="rules-title">
+      <div class="section-head">
+        <div><span class="section-mark">04</span><h2 id="rules-title">Phương pháp và đối chiếu số liệu</h2></div>
+        <p class="meta">Phần này giải thích mọi con số xuất hiện trong prototype. Công thức sản xuất
+          và chính sách làm tròn thuộc Backend #89; đây là minh họa phía thiết kế.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>Quy tắc được đưa ra duyệt</h3>
+          <ol style="padding-left:1.2rem">
+            <li><strong>Thời gian còn lại</strong> đếm số tháng đóng góp, từ tháng kế tiếp ngày tham
+              chiếu đến hết tháng của ngày đích. Ngày tham chiếu 20/09/2026 nên tháng đầu tiên được
+              đếm là 10/2026.</li>
+            <li><strong>Dự phóng tại ngày đích</strong> bằng giá trị tương lai của số đã phân bổ cộng
+              giá trị tương lai của dòng đóng góp đều hàng tháng, cùng ở mức lãi tháng bằng một phần
+              mười hai lợi suất năm do người dùng nhập.</li>
+            <li><strong>Mức cần thiết mỗi tháng</strong> là mức đóng góp đều làm cho dự phóng vừa đúng
+              bằng số tiền mục tiêu. Khi lợi suất bằng 0, nó rút gọn thành số còn lại chia số tháng.</li>
+            <li><strong>Trạng thái</strong> so sánh mức đang dự kiến với mức cần thiết theo ngưỡng
+              tham chiếu của hệ thống: từ 100% trở lên là Đúng kế hoạch, từ 80% đến dưới 100% là Có
+              rủi ro, dưới 80% là Chậm kế hoạch.</li>
+            <li><strong>Thiếu đầu vào</strong> thì kết quả liên quan hiển thị “Không khả dụng” kèm tên
+              đầu vào còn thiếu. Không có kết quả nào rơi về số 0.</li>
+            <li><strong>Quá hạn</strong> thì không còn tháng đóng góp nào, nên mục tiêu báo trạng thái
+              vòng đời Quá hạn hoặc Đã đạt mục tiêu thay vì trạng thái mức độ đủ của kế hoạch.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Công thức, viết bằng ký hiệu</h3>
+          <div class="calc-step">
+            <p class="meta">Với <code>n</code> tháng còn lại và lãi tháng <code>r = lợi suất năm / 12 / 100</code>, đặt <code>g = (1 + r)^n</code>:</p>
+            <p><code>Phần đã phân bổ = đã phân bổ × g</code></p>
+            <p><code>Phần đóng góp thêm = đóng góp × (g − 1) / r</code></p>
+            <p><code>Dự phóng = phần đã phân bổ + phần đóng góp thêm</code></p>
+            <p><code>Cần mỗi tháng = (mục tiêu − đã phân bổ × g) × r / (g − 1)</code></p>
+          </div>
+          <p class="meta">Khi <code>r = 0</code>, phần đóng góp thêm là <code>đóng góp × n</code> và mức
+            cần thiết là <code>(mục tiêu − đã phân bổ) / n</code>. Bản dựng làm tròn mức cần thiết lên
+            nghìn đồng để hiển thị; chính sách làm tròn thật thuộc Backend #89.</p>
+          <p class="meta">Đóng góp được coi là xảy ra vào cuối mỗi tháng. Đây là một quy ước, và nó là
+            một trong các câu hỏi còn mở ở mục 06.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:var(--s8)">Đối chiếu toàn bộ mục tiêu</h3>
+      <p class="meta" style="margin-bottom:var(--s3)">Bảng này do chính hàm dự phóng của prototype
+        dựng ra, nên nó không thể lệch khỏi những gì bạn thấy khi bấm thử.</p>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Đối chiếu dự phóng của từng mục tiêu</caption>
+          <thead><tr>
+            <th>Mục tiêu</th><th class="fig">Tháng</th><th class="fig">Phần đã phân bổ</th>
+            <th class="fig">Phần đóng góp thêm</th><th class="fig">Dự phóng</th><th class="fig">Chênh lệch</th>
+            <th class="fig">Cần/tháng</th><th class="fig">Kế hoạch</th><th>Trạng thái</th>
+          </tr></thead>
+          <tbody id="recon-body"></tbody>
+          <tfoot><tr>
+            <td colspan="7"><strong>Tổng đóng góp hàng tháng của các mục tiêu còn hạn</strong></td>
+            <td class="fig"><strong id="recon-total">—</strong></td>
+            <td>= dòng tiền ròng 88.000.000 ₫</td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <p class="meta" style="margin-top:var(--s3)">Sáu mục tiêu còn hạn có đóng góp được giữ nguyên
+        từ issue #84 nên hai bản dựng đối chiếu được với nhau. Bốn mục tiêu còn lại tồn tại để làm
+        các trạng thái thiếu đầu vào và quá hạn có thể duyệt được; chúng không có đóng góp hàng
+        tháng nên không làm lệch tổng 88.000.000 ₫.</p>
+    </section>
+
+    <!-- 05 -->
+    <section aria-labelledby="matrix-title">
+      <div class="section-head">
+        <div><span class="section-mark">05</span><h2 id="matrix-title">Ma trận trạng thái và responsive</h2></div>
+        <p class="meta">Bảng này là hợp đồng trạng thái bàn giao cho Frontend #88.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Ma trận trạng thái</caption>
+          <thead><tr><th>Trạng thái</th><th>Nơi xuất hiện</th><th>Nội dung bắt buộc</th><th>Đường phục hồi</th></tr></thead>
+          <tbody>
+            <tr><td>Đang tải</td><td>Dự phóng, danh sách</td><td>Khung xương giữ đúng chỗ cột phân rã, không làm động số tiền</td><td>Tự chuyển sang trạng thái đã thiết kế</td></tr>
+            <tr><td>Thiếu dữ liệu</td><td>Thẻ và màn dự phóng</td><td>Nêu phần có, phần thiếu, ảnh hưởng tới cách hiểu</td><td>Nhập đầu vào còn thiếu</td></tr>
+            <tr><td>Không khả dụng</td><td>Từng kết quả riêng lẻ</td><td>Chữ “Không khả dụng” kèm tên đầu vào còn thiếu, không bao giờ là số 0</td><td>Nhập đầu vào được nêu tên</td></tr>
+            <tr><td>Hết tháng đóng góp</td><td>Mục tiêu có ngày đích trong tháng hiện tại</td><td>Nêu rằng không còn tháng nào để đóng góp</td><td>Dời ngày đích hoặc nạp một lần</td></tr>
+            <tr><td>Quá hạn, chưa đạt</td><td>Thẻ và màn dự phóng</td><td>Số còn thiếu, số ngày đã quá hạn, không hiện mức cần thiết</td><td>Dời ngày đích hoặc đóng mục tiêu</td></tr>
+            <tr><td>Quá hạn, đã đạt</td><td>Thẻ và màn dự phóng</td><td>Xác nhận đã đạt và thời điểm đạt</td><td>Đóng mục tiêu hoặc tạo mục tiêu mới</td></tr>
+            <tr><td>Dữ liệu cũ</td><td>Mục tiêu tăng trưởng tài sản ròng</td><td>Chữ kèm hình khối và ngày tuyệt đối của lần định giá</td><td>Thêm một lần định giá mới</td></tr>
+            <tr><td>Lỗi nhập liệu</td><td>Màn điều chỉnh</td><td>Tóm tắt lỗi, lỗi nội tuyến, giữ nguyên giá trị đã nhập</td><td>Tiêu điểm tới trường sai đầu tiên</td></tr>
+            <tr><td>Lỗi yêu cầu</td><td>Tải lại dự phóng</td><td>Nêu việc gì hỏng và thứ gì được giữ lại</td><td>Thử lại hoặc quay về an toàn</td></tr>
+            <tr><td>Thành công</td><td>Sau khi lưu điều chỉnh</td><td>Nêu thứ đã thay đổi và trạng thái mới</td><td>Mở lại dự phóng</td></tr>
+            <tr><td>Thay đổi chưa lưu</td><td>Rời màn điều chỉnh</td><td>Nêu hậu quả, giữ đường ở lại</td><td>Ở lại, hoặc rời và bỏ thay đổi</td></tr>
+            <tr><td>Vô hiệu có lý do</td><td>Liên kết dòng tiền</td><td>Lý do đặt ngay cạnh nút</td><td>Quyết định của Product Owner</td></tr>
+            <tr><td>Không mở được</td><td>Điều hướng sâu</td><td>“Không thể mở mục này”, không liệt kê thông tin</td><td>Quay về danh sách</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Responsive theo từng chiều rộng</h3>
+          <ul>
+            <li><strong>360px và 375px:</strong> một cột; cột phân rã giữ nguyên chiều cao và nằm cạnh
+              phần chú giải, vì đọc theo chiều dọc là điểm mấu chốt; bảng trước/sau cuộn ngang trong
+              khung riêng chứ không làm cuộn cả trang; nút Lưu nằm trong vùng ngón cái.</li>
+            <li><strong>768px:</strong> điều hướng dạng rail; danh sách hai cột để so sánh; màn điều
+              chỉnh và màn giả định vẫn một cột trong khung đọc giới hạn.</li>
+            <li><strong>1024px:</strong> thanh bên cố định có nhãn chữ; màn dự phóng chia hai cột, cột
+              phân rã và phần diễn giải bên trái, năm kết quả bên phải.</li>
+            <li><strong>1440px:</strong> danh sách ba cột; nội dung căn giữa trong khung giới hạn,
+              không kéo giãn bảng số liệu ra toàn màn hình.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Nội dung và cách viết</h3>
+          <ul>
+            <li>Phân biệt rõ dữ kiện, giả định do người dùng nhập, quy ước của hệ thống và yếu tố chưa
+              xét.</li>
+            <li>Gọi kết quả là “dự phóng”, không gọi là kết quả hay lợi nhuận.</li>
+            <li>Bảng trước/sau chỉ nêu hệ quả số học. Nó không khuyên người dùng nên chọn giá trị nào.</li>
+            <li>Ngưỡng luôn được gọi là “ngưỡng tham chiếu của hệ thống”.</li>
+            <li>Không dùng từ ngữ cam kết kết quả, không dấu chấm than, không trò chơi hóa.</li>
+            <li>Thông báo lỗi nêu việc gì đã xảy ra, thứ gì được giữ lại, và bước tiếp theo.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section aria-labelledby="review-title">
+      <div class="section-head">
+        <div><span class="section-mark">06</span><h2 id="review-title">Khả năng tiếp cận và duyệt PO</h2></div>
+        <p class="meta">Người duyệt có thể tự kiểm tra từng mục bên dưới ngay trong bản dựng này.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>Danh mục kiểm tra khả năng tiếp cận</h3>
+          <label class="check-row"><input type="checkbox"><span>Bấm Tab đi hết prototype, thứ tự tiêu điểm trùng thứ tự nhìn thấy.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Viền tiêu điểm luôn nhìn thấy và không bị xóa.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Mở và đóng hộp thoại Cách tính bằng bàn phím, tiêu điểm quay lại nút đã mở nó.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Sáu trạng thái đọc được bằng chữ và hình khối khi bỏ màu.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Cột phân rã có nhãn chữ tương đương, và toàn bộ số liệu của nó cũng nằm ở phần chú giải dạng chữ.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Bảng trước/sau được đọc thành lời khi thay đổi, qua vùng aria-live.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Phóng chữ lớn: thẻ và hàng xuống dòng, không cắt số tiền.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Bật giảm chuyển động: không luồng nào phụ thuộc hoạt ảnh.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Vùng chạm tối thiểu 44px và khoảng cách giữa hai vùng chạm đủ rộng.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Ở 360px không có cuộn ngang toàn trang và không có hành động bị che.</span></label>
+        </div>
+
+        <div class="card">
+          <h3>Câu hỏi còn mở, gửi kèm bản duyệt</h3>
+          <ul>
+            <li><strong>Thời điểm đóng góp</strong> — bản dựng giả định đóng góp vào cuối mỗi tháng.
+              Đóng góp đầu tháng cho kết quả cao hơn. Chủ sở hữu: Backend #89.</li>
+            <li><strong>Nhãn vòng đời cho mục tiêu quá hạn</strong> — “Quá hạn” và “Đã đạt mục tiêu”
+              là đề xuất của bản thiết kế này, chưa có trong Feature Contract #25. Cần Product Owner
+              xác nhận.</li>
+            <li><strong>Hành vi khi quá hạn</strong> — hệ thống nên để mục tiêu ở trạng thái quá hạn,
+              tự dời ngày đích, hay nhắc người dùng đóng mục tiêu. Chủ sở hữu: Feature Integrator.</li>
+            <li><strong>Làm tròn mức cần thiết</strong> — bản dựng làm tròn lên nghìn đồng. Chính sách
+              làm tròn sản xuất thuộc Backend #89.</li>
+            <li><strong>Độ chính xác của lợi suất</strong> — bản dựng cho nhập một chữ số thập phân.
+              Cần xác nhận số chữ số được lưu và được hiển thị.</li>
+            <li><strong>Lưu hay không lưu điều chỉnh</strong> — màn điều chỉnh hiện ghi đè giá trị đã
+              lưu của mục tiêu. Một lựa chọn khác là thử kịch bản mà không ghi đè. Cần Product Owner
+              quyết định.</li>
+            <li><strong>Liên kết đóng góp với dòng tiền</strong> — đang hiển thị dạng vô hiệu kèm lý
+              do. Cần Product Owner quyết định có đưa vào MVP 1C hay không.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top:var(--s8)">Quyết định của Product Owner theo màn hình</h3>
+      <div class="review-list" id="review-screens"></div>
+
+      <h3 style="margin-top:var(--s8)">Quyết định theo luồng</h3>
+      <div class="review-list" id="review-flows"></div>
+
+      <div class="callout" style="margin-top:var(--s6)">
+        <h3>Việc duyệt này xác nhận điều gì</h3>
+        <p>Duyệt bản dựng xác nhận hướng UX/UI: cách phân rã dự phóng, cách công khai giả định kèm
+          nguồn, cách phản hồi điều gì đã thay đổi, cách mã hóa sáu trạng thái, và bộ trạng thái
+          không khả dụng, quá hạn cùng đường phục hồi của chúng. Việc duyệt không xác nhận schema,
+          công thức sản xuất, hành vi API, bảo mật, xác thực hay mức độ sẵn sàng triển khai.</p>
+        <div class="field" style="max-width:var(--reading)">
+          <label for="po-note">Ghi chú của Product Owner</label>
+          <textarea id="po-note" placeholder="Ghi chú không được lưu; hãy sao chép sang issue #87 sau khi duyệt."></textarea>
+        </div>
+        <div class="actions">
+          <button class="primary" type="button" id="summarize">Tổng hợp quyết định</button>
+          <button type="button" id="reset-review">Đặt lại</button>
+        </div>
+        <p id="review-summary" aria-live="polite" class="meta"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Rikkaus Wealth OS · Issue #87 · Bản dựng thiết kế để duyệt · Dữ liệu hư cấu · Ngày tham chiếu
+      20/09/2026 · Không có phụ thuộc mạng, mở trực tiếp từ ổ đĩa.</p>
+  </footer>
+</div>
+
+<dialog id="calc-dialog" aria-labelledby="calc-title">
+  <div class="dialog-head">
+    <div><p class="meta">Cách tính</p><h2 id="calc-title">Dự phóng và mức cần thiết</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <div id="calc-body" class="grid" style="gap:var(--s3)"></div>
+  <div class="dialog-actions"><button class="primary" type="button" data-close>Đã hiểu</button></div>
+</dialog>
+
+<dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
+  <h2 id="unsaved-title">Bỏ thay đổi chưa lưu?</h2>
+  <p style="margin-top:var(--s3)">Bạn đã điều chỉnh đầu vào của mục tiêu này nhưng chưa lưu. Rời khỏi
+    đây sẽ khôi phục ba giá trị đã lưu.</p>
+  <div class="dialog-actions">
+    <button type="button" data-close>Ở lại và tiếp tục điều chỉnh</button>
+    <button class="danger" type="button" id="confirm-leave">Rời và bỏ thay đổi</button>
+  </div>
+</dialog>
+
+<dialog id="close-dialog" aria-labelledby="close-title">
+  <h2 id="close-title">Đóng mục tiêu đã quá hạn?</h2>
+  <p style="margin-top:var(--s3)">Mục tiêu <strong id="close-name">này</strong> đã qua ngày đích.
+    Đóng mục tiêu sẽ chuyển nó khỏi danh sách đang theo dõi. Các bản ghi tài sản, công nợ và dòng
+    tiền không thay đổi.</p>
+  <p class="meta">Trong bản dựng thiết kế, hành động này không thực sự thay đổi dữ liệu.</p>
+  <div class="dialog-actions">
+    <button type="button" data-close>Hủy</button>
+    <button type="button" id="confirm-extend">Dời ngày đích thay vì đóng</button>
+    <button class="danger" type="button" id="confirm-close">Đóng mục tiêu</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  var REF_Y = 2026, REF_M = 9, REF_TEXT = "20/09/2026";
+  var nf = new Intl.NumberFormat("vi-VN");
+
+  function vnd(n) { return nf.format(Math.round(n)) + " ₫"; }
+  function pctText(n) { return nf.format(Math.round(n * 10) / 10) + "%"; }
+  function dmy(iso) { var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+  function monthsLeft(iso) {
+    var p = iso.split("-");
+    return (+p[0] - REF_Y) * 12 + (+p[1] - REF_M);
+  }
+  function daysSince(iso) {
+    var p = iso.split("-");
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    return Math.round((new Date(REF_Y, REF_M - 1, 20) - d) / 86400000);
+  }
+  function durationText(n) {
+    if (n <= 0) return "Không còn tháng nào";
+    var y = Math.floor(n / 12), m = n % 12;
+    if (y && m) return y + " năm " + m + " tháng";
+    if (y) return y + " năm";
+    return m + " tháng";
+  }
+
+  // ---------- fixture ----------
+  // Six funded goals carried over unchanged from issue #84; their planned
+  // contributions still total 88.000.000 VND, the approved monthly net cash flow.
+  var GOALS = [
+    { id:"g1", name:"Quỹ dự phòng khẩn cấp", tpl:"Quỹ dự phòng", goalAmount:552000000, allocated:350000000, date:"2027-12-31", ret:3.0, planned:15000000 },
+    { id:"g2", name:"Mua nhà cho con", tpl:"Mua nhà", goalAmount:3000000000, allocated:1200000000, date:"2031-06-30", ret:6.0, planned:25000000 },
+    { id:"g3", name:"Học phí đại học cho con", tpl:"Giáo dục", goalAmount:900000000, allocated:150000000, date:"2032-08-31", ret:5.0, planned:8000000 },
+    { id:"g4", name:"Hưu trí", tpl:"Hưu trí", goalAmount:15000000000, allocated:2150000000, date:"2041-12-31", ret:8.0, planned:20000000 },
+    { id:"g5", name:"Tất toán vay mua nhà", tpl:"Giảm nợ", goalAmount:1500000000, allocated:90000000, date:"2030-12-31", ret:0.0, planned:10000000 },
+    { id:"g6", name:"Tăng trưởng tài sản ròng", tpl:"Tăng trưởng tài sản ròng", goalAmount:15000000000, allocated:10470000000, date:"2030-12-31", ret:7.0, planned:10000000,
+      stale:"Định giá bất động sản cập nhật lần cuối 30/06/2026" },
+    // Edge-case goals. No forward contribution, so the 88.000.000 total is unaffected.
+    { id:"g7", name:"Quỹ học tiếp cho bản thân", tpl:"Mục tiêu khác", goalAmount:400000000, allocated:40000000, date:"2029-12-31", ret:4.0, planned:null },
+    { id:"g8", name:"Quà kỷ niệm 20 năm", tpl:"Mục tiêu khác", goalAmount:120000000, allocated:95000000, date:"2026-09-30", ret:0.0, planned:0 },
+    { id:"g9", name:"Đổi xe gia đình", tpl:"Mục tiêu khác", goalAmount:800000000, allocated:620000000, date:"2026-08-31", ret:4.0, planned:0 },
+    { id:"g10", name:"Du lịch châu Âu", tpl:"Mục tiêu khác", goalAmount:250000000, allocated:250000000, date:"2026-07-31", ret:0.0, planned:0 }
+  ];
+
+  // ---------- the one projection function every surface reads from ----------
+  function project(g, o) {
+    o = o || {};
+    var date = o.date || g.date;
+    var planned = (o.planned === undefined || o.planned === null) ? g.planned : o.planned;
+    var ret = (o.ret === undefined || o.ret === null) ? g.ret : o.ret;
+
+    var out = {
+      date: date, planned: planned, ret: ret,
+      goalAmount: g.goalAmount, allocated: g.allocated,
+      n: monthsLeft(date),
+      remaining: Math.max(g.goalAmount - g.allocated, 0),
+      pct: g.goalAmount > 0 ? Math.min(g.allocated / g.goalAmount * 100, 100) : null,
+      reached: g.allocated >= g.goalAmount
+    };
+
+    if (out.n < 0) {
+      out.kind = "expired";
+      out.key = out.reached ? "done" : "over";
+      out.label = out.reached ? "Đã đạt mục tiêu" : "Quá hạn";
+      out.days = daysSince(date);
+      return out;
+    }
+    if (out.n === 0) {
+      out.kind = "nomonth";
+      out.key = "na";
+      out.label = "Không khả dụng";
+      return out;
+    }
+
+    out.kind = "live";
+    var r = ret / 100 / 12;
+    var gf = Math.pow(1 + r, out.n);
+    out.growth = gf;
+    out.fvAlloc = g.allocated * gf;
+
+    if (out.remaining === 0) { out.need = 0; }
+    else if (r === 0) { out.need = Math.ceil((out.remaining / out.n) / 1000) * 1000; }
+    else {
+      var raw = (g.goalAmount - g.allocated * gf) * r / (gf - 1);
+      out.need = Math.ceil(Math.max(raw, 0) / 1000) * 1000;
+    }
+
+    if (planned === null || planned === undefined) {
+      out.fvContrib = null;
+      out.projected = null;
+      out.delta = null;
+      out.ratio = null;
+      out.key = "na";
+      out.label = "Không khả dụng";
+      out.missing = "đóng góp hàng tháng";
+      return out;
+    }
+
+    out.fvContrib = (r === 0) ? planned * out.n : planned * (gf - 1) / r;
+    out.projected = out.fvAlloc + out.fvContrib;
+    out.delta = out.projected - g.goalAmount;
+    out.ratio = out.need > 0 ? planned / out.need * 100 : 100;
+    if (out.ratio >= 100) { out.key = "ok"; out.label = "Đúng kế hoạch"; }
+    else if (out.ratio >= 80) { out.key = "warn"; out.label = "Có rủi ro"; }
+    else { out.key = "bad"; out.label = "Chậm kế hoạch"; }
+    return out;
+  }
+
+  function byId(id) { for (var i = 0; i < GOALS.length; i++) if (GOALS[i].id === id) return GOALS[i]; return null; }
+  function $(s) { return document.querySelector(s); }
+  function el(id) { return document.getElementById(id); }
+
+  // ---------- goal list ----------
+  function renderList() {
+    var wrap = el("goal-list");
+    wrap.innerHTML = "";
+    var total = 0;
+    GOALS.forEach(function (g) {
+      var p = project(g);
+      if (p.kind === "live" && p.planned) total += p.planned;
+
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "goal-card";
+      b.setAttribute("data-goal", g.id);
+
+      var line;
+      if (p.kind === "expired") {
+        line = p.reached
+          ? "<p class=\"meta\">Đã đạt " + vnd(g.goalAmount) + " trước ngày đích " + dmy(p.date) + ".</p>"
+          : "<p class=\"meta\">Còn thiếu <strong class=\"fig\">" + vnd(p.remaining) +
+            "</strong> khi tới ngày đích " + dmy(p.date) + ", đã quá " + p.days + " ngày.</p>";
+      } else if (p.kind === "nomonth") {
+        line = "<p class=\"meta\">Ngày đích " + dmy(p.date) + " nằm trong tháng này nên không còn " +
+          "tháng đóng góp nào. Mức cần thiết mỗi tháng không khả dụng.</p>";
+      } else if (p.ratio === null) {
+        line = "<p class=\"meta\">Cần <strong class=\"fig\">" + vnd(p.need) + "</strong> mỗi tháng. " +
+          "Chưa nhập đóng góp hàng tháng nên chưa kết luận được kế hoạch có đủ hay không.</p>";
+      } else {
+        line = "<p class=\"meta\">Kế hoạch <strong class=\"fig\">" + vnd(p.planned) +
+          "</strong> trên mức cần <strong class=\"fig\">" + vnd(p.need) + "</strong> mỗi tháng · " +
+          durationText(p.n) + " còn lại</p>";
+      }
+
+      var pctBar = p.pct === null ? 0 : p.pct;
+      b.innerHTML =
+        '<div class="goal-top"><span class="goal-name">' + g.name + '</span>' +
+        '<span class="status ' + p.key + '">' + p.label + "</span></div>" +
+        '<div class="progress"><div class="progress-track"><div class="progress-fill" style="width:' +
+        pctBar.toFixed(1) + '%"></div></div>' +
+        '<p class="progress-meta"><span>' + (p.pct === null ? "Không khả dụng" : pctText(p.pct)) +
+        "</span><span>" + vnd(g.goalAmount) + "</span></p></div>" + line +
+        (g.stale ? '<p class="status over" style="font-size:.8125rem">' + g.stale + "</p>" : "");
+      wrap.appendChild(b);
+    });
+    el("sum-planned").textContent = vnd(total);
+  }
+
+  // ---------- projection screen ----------
+  var currentGoal = GOALS[1];
+  var override = {};
+
+  function paintProjection() {
+    var g = currentGoal;
+    var p = project(g);
+    el("proj-heading").textContent = g.name;
+    el("proj-sub").textContent = "Mẫu: " + g.tpl + " · Ngày đích " + dmy(p.date);
+    var st = el("proj-status");
+    st.className = "status " + p.key;
+    st.textContent = p.label;
+
+    var okBox = el("proj-computable"), naBox = el("proj-uncomputable");
+
+    if (p.kind !== "live" || p.projected === null) {
+      okBox.classList.add("hidden");
+      naBox.classList.remove("hidden");
+      naBox.innerHTML = uncomputableMarkup(g, p);
+      wire(naBox);
+      return;
+    }
+    okBox.classList.remove("hidden");
+    naBox.classList.add("hidden");
+
+    var scale = Math.max(p.projected, g.goalAmount);
+    var hAlloc = p.fvAlloc / scale * 100;
+    var hContrib = p.fvContrib / scale * 100;
+    el("proj-seg-alloc").style.height = hAlloc.toFixed(2) + "%";
+    el("proj-seg-contrib").style.height = hContrib.toFixed(2) + "%";
+    el("proj-goal-line").style.bottom = (g.goalAmount / scale * 100).toFixed(2) + "%";
+
+    el("proj-col-img").setAttribute("aria-label",
+      "Cột phân rã dự phóng. Phần đã phân bổ " + vnd(p.fvAlloc) + ", chiếm " +
+      Math.round(hAlloc) + " phần trăm chiều cao cột. Phần đóng góp thêm " + vnd(p.fvContrib) +
+      ", chiếm " + Math.round(hContrib) + " phần trăm. Tổng dự phóng " + vnd(p.projected) +
+      (p.delta >= 0 ? ", vượt " : ", thấp hơn ") + "đường mục tiêu " + vnd(g.goalAmount) +
+      " một khoảng " + vnd(Math.abs(p.delta)) + ".");
+
+    el("proj-fv-alloc").textContent = vnd(p.fvAlloc);
+    el("proj-fv-alloc-note").textContent = "Phần đã phân bổ: " + vnd(g.allocated) +
+      " hôm nay, lớn lên trong " + durationText(p.n) + " ở mức " + pctText(p.ret) + "/năm.";
+    el("proj-fv-contrib").textContent = vnd(p.fvContrib);
+    el("proj-fv-contrib-note").textContent = "Phần đóng góp thêm: " + vnd(p.planned) +
+      " mỗi tháng trong " + p.n + " tháng, cộng dồn kèm lợi suất giả định.";
+    el("proj-goal-amount").textContent = vnd(g.goalAmount);
+    el("proj-total").textContent = vnd(p.projected);
+    el("proj-delta").textContent = p.delta >= 0
+      ? "Vượt mục tiêu " + vnd(p.delta) + " tại ngày đích " + dmy(p.date) + "."
+      : "Còn thiếu " + vnd(-p.delta) + " tại ngày đích " + dmy(p.date) + ".";
+
+    el("proj-sentence").textContent = p.delta >= 0
+      ? "Giữ nguyên kế hoạch hiện tại thì mục tiêu này về đích sớm hơn mức cần."
+      : "Giữ nguyên kế hoạch hiện tại thì mục tiêu này chưa về đích đúng hạn.";
+    el("proj-reason").textContent = "Bạn đang dự kiến " + vnd(p.planned) + " mỗi tháng, bằng " +
+      pctText(p.ratio) + " của mức cần thiết " + vnd(p.need) + ". Ngưỡng tham chiếu của hệ thống " +
+      "xếp từ 100% trở lên là Đúng kế hoạch, từ 80% đến dưới 100% là Có rủi ro, dưới 80% là Chậm kế hoạch.";
+    el("proj-return").textContent = pctText(p.ret);
+
+    var facts = el("proj-facts");
+    facts.innerHTML = "";
+    addFact(facts, "Phần trăm hoàn thành", pctText(p.pct));
+    addFact(facts, "Số còn lại", vnd(p.remaining));
+    addFact(facts, "Thời gian còn lại", durationText(p.n) + " (" + p.n + " tháng)");
+    addFact(facts, "Mức đóng góp cần thiết", vnd(p.need) + " mỗi tháng");
+    addFact(facts, "Trạng thái", p.label);
+  }
+
+  function addFact(dl, k, v) {
+    var d = document.createElement("div");
+    d.className = "fact";
+    d.innerHTML = "<dt>" + k + "</dt><dd>" + v + "</dd>";
+    dl.appendChild(d);
+  }
+
+  function uncomputableMarkup(g, p) {
+    var head, body, actions;
+    if (p.kind === "expired" && p.reached) {
+      head = "Mục tiêu đã đạt trước ngày đích";
+      body = "<p>Số đã phân bổ <strong class=\"fig\">" + vnd(g.allocated) + "</strong> đã bằng hoặc " +
+        "vượt số tiền mục tiêu <strong class=\"fig\">" + vnd(g.goalAmount) + "</strong> tại ngày đích " +
+        dmy(p.date) + ".</p>" +
+        "<p class=\"meta\">Không còn dự phóng nào để tính: ngày đích đã qua " + p.days +
+        " ngày, nên không còn tháng đóng góp nào ở phía trước. Mức đóng góp cần thiết mỗi tháng vì " +
+        "vậy không được hiển thị.</p>";
+      actions = '<button class="primary" type="button" data-closegoal>Đóng mục tiêu</button>' +
+        '<button type="button" data-toast="Điều hướng tới màn tạo mục tiêu, thuộc phạm vi issue #84.">Tạo mục tiêu mới</button>';
+    } else if (p.kind === "expired") {
+      head = "Mục tiêu đã quá hạn";
+      body = "<p>Tại ngày đích " + dmy(p.date) + ", số đã phân bổ là <strong class=\"fig\">" +
+        vnd(g.allocated) + "</strong> trên mục tiêu <strong class=\"fig\">" + vnd(g.goalAmount) +
+        "</strong>, còn thiếu <strong class=\"fig\">" + vnd(p.remaining) + "</strong>.</p>" +
+        "<p class=\"meta\">Ngày đích đã qua " + p.days + " ngày. Không còn tháng đóng góp nào ở phía " +
+        "trước, nên hệ thống không hiển thị mức cần thiết mỗi tháng và không xếp mục tiêu này vào " +
+        "Đúng kế hoạch, Có rủi ro hay Chậm kế hoạch.</p>";
+      actions = '<button class="primary" type="button" data-closegoal>Dời ngày đích hoặc đóng</button>' +
+        '<button type="button" data-go="goals">Về danh sách</button>';
+    } else if (p.kind === "nomonth") {
+      head = "Không còn tháng đóng góp nào";
+      body = "<p>Ngày đích <strong>" + dmy(p.date) + "</strong> nằm trong chính tháng của ngày tham " +
+        "chiếu " + REF_TEXT + ". Tháng đóng góp đầu tiên được đếm là tháng kế tiếp, nên số tháng còn " +
+        "lại bằng 0.</p>" +
+        "<p class=\"meta\">Kết quả không khả dụng: mức đóng góp cần thiết mỗi tháng và trạng thái kế " +
+        "hoạch. Kết quả vẫn khả dụng: đã phân bổ <strong class=\"fig\">" + vnd(g.allocated) +
+        "</strong>, còn lại <strong class=\"fig\">" + vnd(p.remaining) + "</strong>, hoàn thành " +
+        pctText(p.pct) + ".</p>";
+      actions = '<button class="primary" type="button" data-go="adjust">Dời ngày đích</button>' +
+        '<button type="button" data-go="goals">Về danh sách</button>';
+    } else {
+      head = "Chưa đủ đầu vào để kết luận";
+      body = "<p>Thiếu <strong>" + p.missing + "</strong>.</p>" +
+        "<p class=\"meta\">Kết quả vẫn khả dụng: hoàn thành " + pctText(p.pct) + ", còn lại " +
+        "<strong class=\"fig\">" + vnd(p.remaining) + "</strong>, thời gian còn lại " +
+        durationText(p.n) + ", và mức cần thiết <strong class=\"fig\">" + vnd(p.need) +
+        "</strong> mỗi tháng. Kết quả không khả dụng: dự phóng tại ngày đích và trạng thái kế hoạch, " +
+        "vì cả hai đều cần biết bạn dự định đóng góp bao nhiêu.</p>";
+      actions = '<button class="primary" type="button" data-go="adjust">Nhập mức đóng góp</button>' +
+        '<button type="button" data-go="goals">Về danh sách</button>';
+    }
+    return '<div class="na-box"><h3>' + head + "</h3>" + body +
+      '<p class="status ' + p.key + '">' + p.label + "</p>" +
+      '<div class="actions">' + actions + "</div></div>";
+  }
+
+  // ---------- assumption ledger ----------
+  var LEDGER = [
+    ["Lợi suất kỳ vọng hằng năm", "user", function (p) {
+      return "Bạn đã nhập " + pctText(p.ret) + "/năm. Đây là con số quyết định độ cao của phần đóng góp thêm trong cột phân rã."; }],
+    ["Số tiền mục tiêu", "user", function (p) { return vnd(p.goalAmount) + ", vẽ thành đường nét đứt cắt ngang cột."; }],
+    ["Số đã phân bổ", "user", function (p) { return vnd(p.allocated) + " tính đến " + REF_TEXT + ", là gốc của phần dưới cột."; }],
+    ["Ngày đích", "user", function (p) { return dmy(p.date) + ", quyết định số tháng còn lại."; }],
+    ["Đóng góp hàng tháng", "user", function (p) { return p.planned === null ? "Chưa nhập." : vnd(p.planned) + " mỗi tháng, do bạn dự định chứ không do hệ thống đặt."; }],
+    ["Ghép lãi theo tháng", "sys", function (p) { return "Lãi tháng bằng lợi suất năm chia 12, tức " + (p.ret / 12).toFixed(4).replace(".", ",") + "%/tháng. Hệ thống không quy đổi theo lãi kép hằng năm."; }],
+    ["Đóng góp vào cuối mỗi tháng", "sys", function () { return "Khoản đóng góp của một tháng chỉ bắt đầu sinh lợi từ tháng kế tiếp. Đóng góp đầu tháng sẽ cho kết quả cao hơn."; }],
+    ["Ngày tham chiếu và tháng đầu tiên", "sys", function (p) { return "Ngày tham chiếu " + REF_TEXT + ", nên tháng đóng góp đầu tiên được tính là 10/2026 và tổng cộng có " + p.n + " tháng."; }],
+    ["Ngưỡng 100% và 80%", "sys", function () { return "Ngưỡng tham chiếu của hệ thống để gán ba trạng thái kế hoạch. Đây không phải một chuẩn mực tài chính phổ quát."; }],
+    ["Làm tròn mức cần thiết", "sys", function () { return "Mức cần thiết mỗi tháng được làm tròn lên nghìn đồng khi hiển thị."; }],
+    ["Lạm phát", "none", function () { return "Không mô hình hóa. Con số dự phóng là giá trị danh nghĩa tại ngày đích, không phải sức mua tương đương hôm nay."; }],
+    ["Thuế và phí giao dịch", "none", function () { return "Không mô hình hóa. Lợi suất bạn nhập được coi là lợi suất ròng."; }],
+    ["Biến động của lợi suất theo năm", "none", function () { return "Không mô hình hóa. Hệ thống dùng đúng một mức lợi suất đều cho mọi tháng, không có dải kịch bản."; }],
+    ["Liên kết đóng góp với dòng tiền", "none", function () { return "Không mô hình hóa. Khoản đóng góp dự kiến không tự động tạo bản ghi chi phí trong Dòng tiền."; }]
+  ];
+  var SRC_LABEL = { user: "Bạn nhập", sys: "Hệ thống", none: "Chưa xét" };
+
+  function paintLedger() {
+    var p = project(currentGoal);
+    el("assump-sub").textContent = currentGoal.name + " · ngày đích " + dmy(p.date);
+    var box = el("ledger");
+    box.innerHTML = "";
+    LEDGER.forEach(function (row) {
+      var d = document.createElement("div");
+      d.className = "ledger-row";
+      d.innerHTML = '<span class="ledger-main"><span class="ledger-name">' + row[0] +
+        '</span><span class="ledger-note">' + row[2](p) + "</span></span>" +
+        '<span class="src ' + row[1] + '">' + SRC_LABEL[row[1]] + "</span>";
+      box.appendChild(d);
+    });
+  }
+
+  // ---------- adjust + what changed ----------
+  var ROWS = [
+    ["Phần trăm hoàn thành", function (p) { return p.pct === null ? "Không khả dụng" : pctText(p.pct); }, function (p) { return p.pct; }],
+    ["Số còn lại", function (p) { return vnd(p.remaining); }, function (p) { return -p.remaining; }],
+    ["Thời gian còn lại", function (p) { return p.n <= 0 ? "Không khả dụng" : p.n + " tháng"; }, function (p) { return p.n; }],
+    ["Mức cần thiết mỗi tháng", function (p) { return p.need === undefined ? "Không khả dụng" : vnd(p.need); }, function (p) { return p.need === undefined ? null : -p.need; }],
+    ["Dự phóng tại ngày đích", function (p) { return p.projected == null ? "Không khả dụng" : vnd(p.projected); }, function (p) { return p.projected; }],
+    ["Trạng thái", function (p) { return p.label; }, null]
+  ];
+
+  function readAdjust() {
+    var errs = [];
+    var dateV = el("adj-date").value;
+    var plannedV = el("adj-planned").value.replace(/[^\d]/g, "");
+    var returnV = el("adj-return").value.replace(",", ".").replace(/[^\d.]/g, "");
+
+    setErr("adj-date", "");
+    setErr("adj-planned", "");
+    setErr("adj-return", "");
+
+    if (!dateV) { errs.push(["adj-date", "Ngày đích", "Hãy chọn một ngày đích."]); }
+    else if (monthsLeft(dateV) < 0) {
+      errs.push(["adj-date", "Ngày đích", "Ngày đích đã qua. Hãy chọn một ngày sau " + REF_TEXT + "."]);
+    }
+    if (plannedV === "") { errs.push(["adj-planned", "Đóng góp hàng tháng", "Hãy nhập số tiền, nhập 0 nếu chưa đóng góp."]); }
+    var retN = parseFloat(returnV);
+    if (returnV === "" || isNaN(retN)) { errs.push(["adj-return", "Lợi suất kỳ vọng", "Hãy nhập một con số từ 0 đến 30."]); }
+    else if (retN < 0 || retN > 30) { errs.push(["adj-return", "Lợi suất kỳ vọng", "Chỉ nhận giá trị từ 0 đến 30."]); }
+
+    var sum = el("adjust-errors");
+    if (errs.length) {
+      el("adjust-errors-list").innerHTML = errs.map(function (e) { return "<li>" + e[1] + ": " + e[2] + "</li>"; }).join("");
+      sum.classList.remove("hidden");
+      errs.forEach(function (e) { setErr(e[0], e[2]); });
+      return null;
+    }
+    sum.classList.add("hidden");
+    return { date: dateV, planned: parseInt(plannedV, 10), ret: retN };
+  }
+
+  function setErr(id, msg) {
+    var f = el(id + "-err");
+    if (!f) return;
+    if (msg) { f.textContent = msg; f.classList.remove("hidden"); el(id).setAttribute("aria-invalid", "true"); }
+    else { f.textContent = ""; f.classList.add("hidden"); el(id).removeAttribute("aria-invalid"); }
+  }
+
+  function fillAdjust() {
+    var g = currentGoal;
+    el("adjust-sub").textContent = g.name + " · giá trị đã lưu: " + dmy(g.date) + " · " +
+      (g.planned === null ? "chưa có đóng góp" : vnd(g.planned)) + " · " + pctText(g.ret) + "/năm";
+    el("adj-date").value = g.date;
+    el("adj-planned").value = g.planned === null ? "" : nf.format(g.planned);
+    el("adj-return").value = g.ret.toFixed(1).replace(".", ",");
+    override = {};
+    paintChanges();
+  }
+
+  function paintChanges() {
+    var g = currentGoal;
+    var cur = readAdjust();
+    var body = el("wc-body");
+    body.innerHTML = "";
+
+    if (!cur) {
+      el("wc-title").textContent = "Chưa tính lại được";
+      el("wc-intro").textContent = "Hãy sửa các mục được nêu ở trên. Ba giá trị bạn đã nhập vẫn được giữ nguyên.";
+      el("wc-cause").classList.add("hidden");
+      el("adj-save").disabled = true;
+      return;
+    }
+
+    var before = project(g);
+    var after = project(g, cur);
+    override = cur;
+
+    var changed = [];
+    if (cur.date !== g.date) changed.push("ngày đích, từ " + dmy(g.date) + " thành " + dmy(cur.date));
+    if (cur.planned !== g.planned) changed.push("đóng góp hàng tháng, từ " +
+      (g.planned === null ? "chưa nhập" : vnd(g.planned)) + " thành " + vnd(cur.planned));
+    if (cur.ret !== g.ret) changed.push("lợi suất kỳ vọng, từ " + pctText(g.ret) + " thành " + pctText(cur.ret));
+
+    ROWS.forEach(function (row) {
+      var wasT = row[1](before), nowT = row[1](after);
+      var same = wasT === nowT;
+      var tr = document.createElement("tr");
+      if (!same) tr.className = "changed-row";
+      var deltaCell = "<span class=\"delta flat\">không đổi</span>";
+      if (!same) {
+        if (row[2]) {
+          var a = row[2](before), b = row[2](after);
+          if (a === null || b === null || isNaN(a) || isNaN(b)) deltaCell = '<span class="delta flat">—</span>';
+          else {
+            var dir = b > a ? "up" : "down";
+            deltaCell = '<span class="delta ' + dir + '">' + (b > a ? "tốt hơn" : "kém hơn") + "</span>";
+          }
+        } else {
+          deltaCell = '<span class="delta ' + (after.key === "ok" ? "up" : after.key === before.key ? "flat" : "down") + '">đổi nhãn</span>';
+        }
+      }
+      tr.innerHTML = "<td>" + row[0] + '</td><td class="was">' + wasT + '</td><td class="now">' +
+        nowT + "</td><td>" + deltaCell + "</td>";
+      body.appendChild(tr);
+    });
+
+    var cause = el("wc-cause");
+    if (!changed.length) {
+      el("wc-title").textContent = "Chưa có thay đổi nào";
+      el("wc-intro").textContent = "Ba đầu vào đang bằng đúng giá trị đã lưu của mục tiêu.";
+      cause.classList.add("hidden");
+      el("adj-save").disabled = true;
+      el("adj-undo").disabled = true;
+    } else {
+      el("wc-title").textContent = "Điều gì đã thay đổi";
+      el("wc-intro").textContent = "Bảng so sánh sáu kết quả trước và sau khi bạn sửa đầu vào.";
+      cause.classList.remove("hidden");
+      cause.innerHTML = "<p><strong>Bạn đã sửa " + changed.join("; và ") + ".</strong></p>" +
+        "<p>" + causeSentence(before, after) + "</p>" +
+        "<p class=\"meta\">Bảng trên chỉ nêu hệ quả số học của thay đổi này. Hệ thống không khuyến " +
+        "nghị bạn nên chọn giá trị nào.</p>";
+      el("adj-save").disabled = false;
+      el("adj-undo").disabled = false;
+    }
+  }
+
+  function causeSentence(before, after) {
+    if (after.kind === "expired") return "Ngày đích mới đã nằm trong quá khứ, nên mục tiêu chuyển sang trạng thái vòng đời và không còn dự phóng.";
+    if (after.kind === "nomonth") return "Ngày đích mới nằm trong tháng hiện tại, nên không còn tháng đóng góp nào và mức cần thiết không khả dụng.";
+    if (after.projected == null) return "Chưa có đóng góp hàng tháng nên dự phóng tại ngày đích và trạng thái kế hoạch vẫn không khả dụng.";
+    if (before.projected == null) return "Sau khi có đóng góp hàng tháng, dự phóng tại ngày đích và trạng thái kế hoạch đã tính được.";
+    var d = after.projected - before.projected;
+    var s = Math.abs(d) < 1000
+      ? "Dự phóng tại ngày đích gần như không đổi. "
+      : "Dự phóng tại ngày đích " + (d > 0 ? "tăng " : "giảm ") + vnd(Math.abs(d)) + ". ";
+    if (after.key !== before.key) {
+      s += "Trạng thái chuyển từ " + before.label + " sang " + after.label + ", vì tỷ lệ giữa mức dự kiến và mức cần thiết đi từ " +
+        pctText(before.ratio) + " sang " + pctText(after.ratio) + ".";
+    } else {
+      s += "Trạng thái vẫn là " + after.label + ", vì tỷ lệ giữa mức dự kiến và mức cần thiết vẫn nằm trong cùng một băng ngưỡng (" +
+        pctText(before.ratio) + " → " + pctText(after.ratio) + ").";
+    }
+    return s;
+  }
+
+  function dirty() {
+    if (!override.date) return false;
+    return override.date !== currentGoal.date || override.planned !== currentGoal.planned || override.ret !== currentGoal.ret;
+  }
+
+  // ---------- calc dialog ----------
+  function fillCalc() {
+    var g = currentGoal, p = project(g);
+    var b = el("calc-body");
+    if (p.kind !== "live" || p.projected == null) {
+      b.innerHTML = '<div class="calc-step"><p>Mục tiêu <strong>' + g.name + "</strong> hiện không có " +
+        "dự phóng để diễn giải.</p><p class=\"meta\">Lý do: " +
+        (p.kind === "expired" ? "ngày đích " + dmy(p.date) + " đã qua, không còn tháng đóng góp nào."
+          : p.kind === "nomonth" ? "ngày đích nằm trong tháng của ngày tham chiếu, số tháng còn lại bằng 0."
+          : "thiếu " + p.missing + ".") + "</p></div>";
+      return;
+    }
+    var r = p.ret / 100 / 12;
+    b.innerHTML =
+      '<div class="calc-step"><p class="meta">Bước 1 · Số tháng còn lại</p>' +
+      "<p>Đếm từ tháng kế tiếp ngày tham chiếu " + REF_TEXT + " đến hết tháng của ngày đích " +
+      dmy(p.date) + ".</p><p class=\"res\">" + p.n + " tháng, tháng đầu tiên là 10/2026.</p></div>" +
+
+      '<div class="calc-step"><p class="meta">Bước 2 · Lãi tháng</p>' +
+      "<p><code>r = " + pctText(p.ret) + " / 12 = " + (p.ret / 12).toFixed(4).replace(".", ",") +
+      "%/tháng</code>, do lợi suất bạn tự nhập.</p><p class=\"res\">Hệ số tăng trưởng g = (1 + r)^" +
+      p.n + " = " + p.growth.toFixed(4).replace(".", ",") +
+      (r === 0 ? "</p><p class=\"meta\">Lợi suất bằng 0 nên g bằng 1: số tiền không tự lớn lên, mọi thứ đến từ đóng góp." : "") +
+      "</p></div>" +
+
+      '<div class="calc-step"><p class="meta">Bước 3 · Phần đã phân bổ</p>' +
+      "<p><code>" + nf.format(g.allocated) + " × " + p.growth.toFixed(4).replace(".", ",") + "</code></p>" +
+      '<p class="res">' + vnd(p.fvAlloc) + "</p></div>" +
+
+      '<div class="calc-step"><p class="meta">Bước 4 · Phần đóng góp thêm</p>' +
+      "<p><code>" + nf.format(p.planned) + " × " +
+      (r === 0 ? p.n : "(g − 1) / r") + "</code>" + (r === 0 ? " (lợi suất bằng 0 nên chỉ cộng dồn)" : "") + "</p>" +
+      '<p class="res">' + vnd(p.fvContrib) + "</p></div>" +
+
+      '<div class="calc-step"><p class="meta">Bước 5 · Dự phóng tại ngày đích</p>' +
+      "<p><code>" + nf.format(Math.round(p.fvAlloc)) + " + " + nf.format(Math.round(p.fvContrib)) + "</code></p>" +
+      '<p class="res">' + vnd(p.projected) + " so với mục tiêu " + vnd(g.goalAmount) + ", " +
+      (p.delta >= 0 ? "vượt " : "thiếu ") + vnd(Math.abs(p.delta)) + "</p></div>" +
+
+      '<div class="calc-step"><p class="meta">Bước 6 · Mức cần thiết mỗi tháng</p>' +
+      "<p>Mức đóng góp đều làm cho dự phóng vừa đúng bằng " + vnd(g.goalAmount) + ".</p>" +
+      '<p class="res">' + vnd(p.need) + " mỗi tháng, làm tròn lên nghìn đồng</p></div>" +
+
+      '<div class="calc-step"><p class="meta">Bước 7 · Trạng thái</p>' +
+      "<p><code>" + nf.format(p.planned) + " / " + nf.format(p.need) + " = " + pctText(p.ratio) + "</code></p>" +
+      '<p class="res">' + p.label + ", theo ngưỡng tham chiếu của hệ thống</p></div>" +
+
+      '<div class="assump"><p><strong>Bản ghi được áp dụng:</strong> mục tiêu ' + g.name +
+      ", ngày tham chiếu " + REF_TEXT + ", lợi suất kỳ vọng " + pctText(p.ret) +
+      "/năm do bạn tự nhập.</p><p>Đây là dự phóng theo giả định, không phải cam kết.</p></div>";
+  }
+
+  // ---------- navigation ----------
+  function show(view) {
+    if (view === "projection") paintProjection();
+    if (view === "assumptions") paintLedger();
+    if (view === "adjust") fillAdjust();
+    document.querySelectorAll(".view").forEach(function (v) {
+      v.classList.toggle("active", v.getAttribute("data-view") === view);
+    });
+    var active = document.querySelector('.view[data-view="' + view + '"]');
+    if (active) active.focus();
+  }
+
+  function guard(next) {
+    if (document.querySelector('.view[data-view="adjust"]').classList.contains("active") && dirty()) {
+      pendingView = next;
+      openDialog("#unsaved-dialog", document.activeElement);
+      return true;
+    }
+    return false;
+  }
+  var pendingView = null;
+
+  function wire(scope) {
+    scope.querySelectorAll("[data-go]").forEach(function (b) {
+      if (b.dataset.wired) return;
+      b.dataset.wired = "1";
+      b.addEventListener("click", function () {
+        var v = b.getAttribute("data-go");
+        if (!guard(v)) show(v);
+      });
+    });
+    scope.querySelectorAll("[data-goal]").forEach(function (b) {
+      if (b.dataset.wired) return;
+      b.dataset.wired = "1";
+      b.addEventListener("click", function () {
+        currentGoal = byId(b.getAttribute("data-goal")) || currentGoal;
+        if (!guard("projection")) show("projection");
+      });
+    });
+    scope.querySelectorAll("[data-toast]").forEach(function (b) {
+      if (b.dataset.wired) return;
+      b.dataset.wired = "1";
+      b.addEventListener("click", function () { toast(b.getAttribute("data-toast")); });
+    });
+    scope.querySelectorAll("[data-closegoal]").forEach(function (b) {
+      if (b.dataset.wired) return;
+      b.dataset.wired = "1";
+      b.addEventListener("click", function () {
+        el("close-name").textContent = currentGoal.name;
+        openDialog("#close-dialog", b);
+      });
+    });
+    scope.querySelectorAll("[data-open]").forEach(function (b) {
+      if (b.dataset.wired) return;
+      b.dataset.wired = "1";
+      b.addEventListener("click", function () { openDialog(b.getAttribute("data-open"), b); });
+    });
+  }
+
+  document.querySelectorAll(".nav-btn").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var dest = b.getAttribute("data-dest");
+      var go = dest === "Mục tiêu" ? "goals" : "other";
+      if (guard(go)) return;
+      if (go === "other") el("other-name").textContent = "Điểm đến đang chọn: " + dest + ".";
+      show(go);
+      document.querySelectorAll(".nav-btn").forEach(function (x) {
+        x.classList.toggle("active", x === b);
+        if (x === b) x.setAttribute("aria-current", "page"); else x.removeAttribute("aria-current");
+      });
+    });
+  });
+
+  document.querySelectorAll("[data-width]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $(".device").setAttribute("data-mode", b.getAttribute("data-width"));
+      document.querySelectorAll("[data-width]").forEach(function (x) {
+        x.setAttribute("aria-pressed", String(x === b));
+      });
+    });
+  });
+
+  // ---------- dialogs ----------
+  var lastInvoker = null;
+  function openDialog(sel, invoker) {
+    var d = $(sel);
+    if (!d) return;
+    lastInvoker = invoker || document.activeElement;
+    if (sel === "#calc-dialog") fillCalc();
+    d.showModal();
+  }
+  document.querySelectorAll("dialog").forEach(function (d) {
+    d.querySelectorAll("[data-close]").forEach(function (b) {
+      b.addEventListener("click", function () { d.close(); });
+    });
+    d.addEventListener("close", function () {
+      if (lastInvoker && document.contains(lastInvoker)) lastInvoker.focus();
+    });
+  });
+  el("confirm-leave").addEventListener("click", function () {
+    $("#unsaved-dialog").close();
+    override = {};
+    var v = pendingView || "projection";
+    pendingView = null;
+    show(v);
+  });
+  el("confirm-close").addEventListener("click", function () {
+    $("#close-dialog").close();
+    toast("Trong bản dựng thiết kế, mục tiêu không thực sự bị đóng. Hộp thoại minh họa đường hủy an toàn.");
+    show("goals");
+  });
+  el("confirm-extend").addEventListener("click", function () {
+    $("#close-dialog").close();
+    show("adjust");
+  });
+
+  // ---------- adjust wiring ----------
+  ["adj-date", "adj-planned", "adj-return"].forEach(function (id) {
+    el(id).addEventListener("input", paintChanges);
+    el(id).addEventListener("blur", paintChanges);
+  });
+  function bump(id, step, fmt) {
+    var raw = el(id).value.replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, "");
+    var n = parseFloat(raw);
+    if (isNaN(n)) n = 0;
+    n = Math.max(0, n + step);
+    el(id).value = fmt(n);
+    paintChanges();
+  }
+  el("adj-planned-dec").addEventListener("click", function () { bump("adj-planned", -1000000, function (n) { return nf.format(n); }); });
+  el("adj-planned-inc").addEventListener("click", function () { bump("adj-planned", 1000000, function (n) { return nf.format(n); }); });
+  el("adj-return-dec").addEventListener("click", function () { bump("adj-return", -0.5, function (n) { return n.toFixed(1).replace(".", ","); }); });
+  el("adj-return-inc").addEventListener("click", function () { bump("adj-return", 0.5, function (n) { return n.toFixed(1).replace(".", ","); }); });
+  el("adj-undo").addEventListener("click", function () {
+    fillAdjust();
+    toast("Đã khôi phục ba giá trị đã lưu của mục tiêu.");
+  });
+  el("adj-save").addEventListener("click", function () {
+    var btn = el("adj-save");
+    var cur = readAdjust();
+    if (!cur) { el("adjust-errors").focus(); return; }
+    var before = project(currentGoal);
+    btn.disabled = true;
+    btn.textContent = "Đang lưu…";
+    window.setTimeout(function () {
+      currentGoal.date = cur.date;
+      currentGoal.planned = cur.planned;
+      currentGoal.ret = cur.ret;
+      var after = project(currentGoal);
+      btn.textContent = "Lưu thay đổi";
+      override = {};
+      renderList();
+      renderRecon();
+      show("projection");
+      toast("Đã lưu. Trạng thái " + (after.label === before.label ? "vẫn là " + after.label
+        : "chuyển từ " + before.label + " sang " + after.label) + ".");
+    }, 700);
+  });
+  el("adjust-back").addEventListener("click", function () {
+    if (!guard("projection")) show("projection");
+  });
+
+  // ---------- toast ----------
+  var toastTimer = null;
+  function toast(msg) {
+    var old = document.querySelector(".toast");
+    if (old) old.remove();
+    var t = document.createElement("div");
+    t.className = "toast";
+    t.setAttribute("role", "status");
+    t.textContent = msg;
+    document.body.appendChild(t);
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () { t.remove(); }, 4500);
+  }
+
+  // ---------- reconciliation table ----------
+  function renderRecon() {
+    var body = el("recon-body");
+    body.innerHTML = "";
+    var total = 0;
+    GOALS.forEach(function (g) {
+      var p = project(g);
+      if (p.kind === "live" && p.planned) total += p.planned;
+      var na = '<span class="status na">Không khả dụng</span>';
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + g.name + "</td>" +
+        '<td class="fig">' + (p.n < 0 ? "quá hạn" : p.n) + "</td>" +
+        '<td class="fig">' + (p.fvAlloc == null ? "—" : nf.format(Math.round(p.fvAlloc))) + "</td>" +
+        '<td class="fig">' + (p.fvContrib == null ? "—" : nf.format(Math.round(p.fvContrib))) + "</td>" +
+        '<td class="fig">' + (p.projected == null ? "—" : nf.format(Math.round(p.projected))) + "</td>" +
+        '<td class="fig">' + (p.delta == null ? "—" : (p.delta >= 0 ? "+" : "−") + nf.format(Math.abs(Math.round(p.delta)))) + "</td>" +
+        '<td class="fig">' + (p.need == null ? na : nf.format(p.need)) + "</td>" +
+        '<td class="fig">' + (p.planned == null ? na : nf.format(p.planned)) + "</td>" +
+        '<td><span class="status ' + p.key + '">' + p.label + "</span></td>";
+      body.appendChild(tr);
+    });
+    el("recon-total").textContent = nf.format(total) + " ₫";
+  }
+
+  // ---------- review controls ----------
+  var SCREENS = ["Danh sách mục tiêu", "Dự phóng và cột phân rã", "Giả định đang dùng",
+    "Điều chỉnh và bảng trước/sau", "Cách tính", "Không khả dụng và quá hạn", "Mẫu trạng thái"];
+  var FLOWS = ["Mở một mục tiêu và đọc cột phân rã",
+    "Kiểm tra nguồn của từng giả định",
+    "Sửa một đầu vào và đọc điều gì đã thay đổi",
+    "Hoàn tác về ba giá trị đã lưu",
+    "Lưu điều chỉnh và nhận xác nhận trạng thái mới",
+    "Truy nguyên toàn bộ phép tính trong Cách tính",
+    "Gặp một mục tiêu quá hạn và chọn đường xử lý",
+    "Gặp một kết quả không khả dụng và bổ sung đầu vào"];
+
+  function buildReview(box, items, group) {
+    items.forEach(function (label, i) {
+      var name = group + "-" + i;
+      var row = document.createElement("div");
+      row.className = "review-row";
+      row.innerHTML = "<strong>" + label + '</strong><div class="review-options">' +
+        opt(name, "approve", "Duyệt") + opt(name, "changes", "Cần chỉnh") + opt(name, "reject", "Từ chối") +
+        "</div>";
+      box.appendChild(row);
+    });
+  }
+  function opt(name, value, label) {
+    var id = name + "-" + value;
+    return '<label class="review-choice" for="' + id + '"><input type="radio" id="' + id +
+      '" name="' + name + '" value="' + value + '"><span>' + label + "</span></label>";
+  }
+  buildReview(el("review-screens"), SCREENS, "screen");
+  buildReview(el("review-flows"), FLOWS, "flow");
+
+  el("summarize").addEventListener("click", function () {
+    var total = SCREENS.length + FLOWS.length;
+    var counts = { approve: 0, changes: 0, reject: 0 };
+    document.querySelectorAll("#review-screens input:checked, #review-flows input:checked")
+      .forEach(function (i) { counts[i.value]++; });
+    var decided = counts.approve + counts.changes + counts.reject;
+    el("review-summary").textContent =
+      "Đã ghi " + decided + "/" + total + " quyết định · Duyệt " + counts.approve +
+      " · Cần chỉnh " + counts.changes + " · Từ chối " + counts.reject +
+      ". Ghi chú không được lưu; hãy sao chép sang issue #87.";
+  });
+  el("reset-review").addEventListener("click", function () {
+    document.querySelectorAll("#review-screens input, #review-flows input")
+      .forEach(function (i) { i.checked = false; });
+    el("po-note").value = "";
+    el("review-summary").textContent = "Đã đặt lại toàn bộ quyết định.";
+  });
+
+  // ---------- boot ----------
+  renderList();
+  renderRecon();
+  wire(document);
+})();
+</script>
+</body>
+</html>

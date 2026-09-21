@@ -1,0 +1,1559 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F5EF">
+  <title>Rikkaus Wealth OS | Basic Advisor rule-based report review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
+      --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --line:1px solid var(--border); --control-line:1px solid var(--control);
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
+    body:has(dialog[open]){overflow:hidden}
+    button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
+    button{min-height:44px;border:var(--control-line);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--ink);cursor:pointer;transition:transform var(--motion) var(--ease),background-color var(--motion) var(--ease),color var(--motion) var(--ease),box-shadow var(--motion) var(--ease)}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    button:disabled{cursor:not-allowed;opacity:.58;background:var(--surface-subtle);transform:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    h1,h2,h3,h4,p{margin:0}
+    h1{color:var(--navy);font:600 clamp(2.5rem,5.5vw,4.5rem)/1.08 var(--display);letter-spacing:-.02em;text-wrap:balance;max-width:17ch}
+    h2{font-size:1.5rem;line-height:1.33;text-wrap:balance} h3{font-size:1.125rem;line-height:1.33;text-wrap:balance}
+    h4{font-size:1rem;line-height:1.5}
+    p,td,th,label,button,li{overflow-wrap:anywhere}
+    ul{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s1)}
+    .page{width:min(100%,var(--page));margin:auto;padding:var(--s4)}
+    .hidden{display:none !important}
+    .skip{position:absolute;top:-6rem;left:var(--s4);z-index:90;background:var(--surface);padding:var(--s3)}.skip:focus{top:var(--s4)}
+    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s8);border-bottom:2px solid var(--gold)}
+    .hero-copy{display:grid;gap:var(--s4)}
+    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container)}
+    .meta,.helper{color:var(--ink-secondary);font-size:.875rem}
+    .kicker{color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    section{padding:var(--s12) 0;border-bottom:var(--line)}
+    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s6)}
+    .section-mark{color:var(--gold);font-weight:600}
+    .grid{display:grid;gap:var(--s4)}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.split{grid-template-columns:1.5fr 1fr}
+    .card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);align-content:start}
+    .callout{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
+    .primary{border-color:var(--primary);background:var(--primary);color:var(--surface);font-weight:600}.primary:hover{background:var(--primary-pressed)}
+    .tonal{border-color:var(--primary-container);background:var(--primary-container);color:var(--primary);font-weight:600}
+    .danger{border-color:var(--error);color:var(--error)}
+    .text-btn{border-color:transparent;background:transparent;color:var(--primary)}
+    .fig{font-variant-numeric:tabular-nums}
+    .toolbar,.switches,.actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{border-color:var(--primary);background:var(--primary);color:var(--surface)}
+    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.875rem;font-weight:600}
+    .status::before{content:"";width:.75rem;height:.75rem;border-radius:50%;background:currentColor;flex:none}
+    .status.ok{color:var(--success)}
+    .status.warn{color:var(--warning)}.status.warn::before{border-radius:2px}
+    .status.bad{color:var(--error)}.status.bad::before{border-radius:2px;transform:rotate(45deg)}
+    .status.info{color:var(--info)}
+    .status.none{color:var(--ink-secondary)}.status.none::before{border-radius:2px;background:transparent;border:2px dashed currentColor;width:.875rem;height:.875rem}
+    .flow{display:grid;grid-template-columns:repeat(5,minmax(8rem,1fr));gap:var(--s2);overflow-x:auto;padding-bottom:var(--s2)}
+    .flow div{min-height:6rem;padding:var(--s3);border-top:2px solid var(--primary);background:var(--surface)}
+    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--s2)}
+    .token{min-height:6rem;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .swatch{display:block;height:2rem;border-radius:var(--r-input);margin-bottom:var(--s2)}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{text-align:left;padding:var(--s2) var(--s3);border-bottom:var(--line);vertical-align:top}
+    th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-secondary)}
+    td.fig,th.fig{text-align:right}
+    tbody tr:last-child td{border-bottom:0}
+    caption{text-align:left;padding-bottom:var(--s2);color:var(--ink-secondary);font-size:.875rem}
+    .stage{display:grid;gap:var(--s4)}
+    .stage-bar{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:center}
+    .device-wrap{padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);overflow:hidden}
+    .device{container-type:inline-size;width:100%;max-width:24rem;min-height:48rem;margin:auto;border:1px solid var(--control);border-radius:var(--r-card);background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
+    .device[data-mode="tablet"]{max-width:48rem}.device[data-mode="desktop"]{max-width:64rem}.device[data-mode="wide"]{max-width:100%}
+    .app{min-height:48rem;display:grid;grid-template-rows:auto 1fr auto}
+    .topbar{height:4rem;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);border-bottom:var(--line);background:var(--surface)}
+    .wordmark{font:600 1.25rem/1 var(--display);color:var(--navy)}
+    .avatar{width:44px;padding:0;border-radius:50%;font-weight:600}
+    .app-body{min-width:0}
+    .app-nav{order:3;border-top:var(--line);background:var(--surface)}
+    .nav-list{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none}
+    .nav-btn{width:100%;min-height:64px;border:0;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.68rem;color:var(--ink-secondary)}
+    .nav-btn.active{color:var(--primary);font-weight:600}
+    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .product-main{min-width:0;padding:var(--s4);padding-bottom:2rem}
+    .view{display:none}.view.active{display:grid;gap:var(--s4)}
+    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+    input,select,textarea{width:100%;min-height:48px;border:var(--control-line);border-radius:var(--r-input);background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem}
+    .field{display:grid;gap:var(--s1)}
+    .error-copy{color:var(--error);font-size:.8125rem;font-weight:500}
+    .summary-box{padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container);border-left:3px solid var(--primary);display:grid;gap:var(--s2)}
+    .summary-box strong{color:var(--primary)}
+    .summary-sentence{font-size:1.0625rem;line-height:1.45;font-weight:600;color:var(--ink)}
+    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.75rem;color:var(--ink-secondary);white-space:nowrap}
+    .tag.warn{color:var(--warning);border-color:var(--warning)}
+    .tag.brand{color:var(--primary);border-color:var(--primary)}
+    .tag.muted{background:var(--surface-subtle)}
+    .tag-row{display:flex;flex-wrap:wrap;gap:var(--s1)}
+    .facts{display:grid;gap:var(--s2)}
+    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.9rem;padding-bottom:var(--s2);border-bottom:var(--line)}
+    .fact:last-child{border-bottom:0;padding-bottom:0}
+    .fact dt{color:var(--ink-secondary)}.fact dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+    .skeleton{display:grid;gap:var(--s2)}
+    .skeleton span{display:block;height:1rem;border-radius:.25rem;background:linear-gradient(90deg,var(--surface-subtle),#E4DFD4,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+    @keyframes shimmer{to{background-position:-200% 0}}
+
+    /* Advisor report devices */
+    .disclaimer{display:grid;gap:var(--s1);padding:var(--s3);border-radius:var(--r-card);background:var(--surface-subtle);border-left:3px solid var(--gold);font-size:.8125rem;line-height:1.5}
+    .disclaimer strong{font-weight:600;color:var(--navy)}
+    .period-bar{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);flex-wrap:wrap;padding:var(--s3);border-radius:var(--r-card);background:var(--surface);border:var(--line)}
+    .group{display:grid;gap:var(--s2);margin-top:var(--s2)}
+    .group-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;padding-bottom:var(--s1);border-bottom:var(--line)}
+    .group-title{font-size:.8125rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-secondary);font-weight:600}
+    .group-count{font-size:.8125rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .group-note{font-size:.8125rem;color:var(--ink-secondary)}
+    .finding{width:100%;display:grid;gap:var(--s2);text-align:left;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface);min-height:4.5rem;align-content:start}
+    button.finding:hover{border-color:var(--primary)}
+    .finding.attn{border-left:3px solid var(--warning)}
+    .finding.ok{border-left:3px solid var(--success)}
+    .finding.unknown{border-left:3px dashed var(--control)}
+    .finding-title{font-weight:600;font-size:.9375rem;line-height:1.35}
+    .finding-metric{font-size:.8125rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .finding-action{font-size:.875rem;line-height:1.45}
+    .finding-top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3)}
+    .prio{flex:none;display:inline-flex;align-items:center;gap:.25rem;border-radius:999px;padding:.0625rem .5rem;font-size:.6875rem;font-weight:600;color:var(--surface);background:var(--primary);white-space:nowrap}
+    .rank{flex:none;width:1.5rem;height:1.5rem;display:grid;place-items:center;border-radius:50%;background:var(--surface-subtle);font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-secondary)}
+    .src{display:inline-flex;align-items:center;gap:.25rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.6875rem;color:var(--ink-secondary);white-space:nowrap}
+    .src.snapshot{border-color:var(--info);color:var(--info)}
+    .src.health{border-color:var(--primary);color:var(--primary)}
+    .src.goal{border-color:var(--gold);color:var(--gold)}
+    .anatomy{display:grid;gap:var(--s3)}
+    .anatomy-row{display:grid;gap:var(--s1);padding-bottom:var(--s3);border-bottom:var(--line)}
+    .anatomy-row:last-child{border-bottom:0;padding-bottom:0}
+    .anatomy-row dt{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--primary);font-weight:600}
+    .anatomy-row dd{margin:0;font-size:.9375rem;line-height:1.5}
+    .anatomy-row dd.note-row{font-size:.8125rem;color:var(--ink-secondary)}
+    .record-row{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;text-align:left;border:var(--line);border-radius:var(--r-card);background:var(--surface);padding:var(--s3);min-height:4.5rem}
+    .record-row:hover{border-color:var(--primary)}
+    .record-main{display:grid;gap:var(--s1);min-width:0}
+    .record-amount{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .merge-box{display:grid;gap:var(--s2);padding:var(--s3);border-radius:var(--r-input);background:var(--primary-container);font-size:.8125rem}
+    .completion{display:grid;gap:var(--s2);padding:var(--s3);border:1px dashed var(--control);border-radius:var(--r-card);background:var(--surface);font-size:.875rem}
+    .lex{display:grid;gap:var(--s2)}
+    .lex-row{display:grid;gap:var(--s1);padding:var(--s3);border-radius:var(--r-input);background:var(--surface)}
+    .lex-bad{color:var(--error);font-weight:500}
+    .lex-good{color:var(--success);font-weight:500}
+    .lex-row .mark{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+    .pipe{display:grid;gap:var(--s2)}
+    .pipe-step{display:grid;grid-template-columns:2rem minmax(0,1fr);gap:var(--s3);align-items:start;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .pipe-num{width:2rem;height:2rem;display:grid;place-items:center;border-radius:50%;background:var(--primary-container);color:var(--primary);font-weight:600;font-size:.875rem}
+    .state-panel{min-height:13rem}
+    .check-row,.review-choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s2) 0;min-height:44px;align-content:center}
+    .check-row input{width:1.25rem;min-height:1.25rem;margin-top:.1875rem}
+    .review-list{display:grid;gap:var(--s3)}
+    .review-row{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-radius:var(--r-card)}
+    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0}
+    .review-options{display:flex;gap:var(--s4);flex-wrap:wrap}
+    .review-choice input{width:1.25rem;min-height:1.25rem;margin:0}
+    dialog{width:min(100%,34rem);border:0;border-radius:var(--r-sheet);padding:var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal)}
+    dialog::backdrop{background:var(--scrim)}
+    .sheet{margin:auto auto 0;width:min(100%,34rem);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s3)}
+    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6)}
+    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.9rem}
+    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.875rem}
+    /* Responsive behaviour inside the device stage follows the DEVICE width, not the page viewport. */
+    @container (min-width:44rem){
+      .app{grid-template-rows:auto 1fr;grid-template-columns:auto minmax(0,1fr)}
+      .topbar{grid-column:1 / -1}
+      .app-nav{order:0;grid-column:1;grid-row:2;border-top:0;border-right:var(--line)}
+      .nav-list{grid-template-columns:1fr;align-content:start;padding:var(--s2) var(--s1)}
+      .nav-btn{min-height:68px;width:5.5rem;border-radius:var(--r-input)}
+      .app-body{grid-column:2;grid-row:2}
+      .group{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .group-head{grid-column:1 / -1}
+    }
+    @container (min-width:60rem){
+      .nav-list{padding:var(--s3) var(--s2);gap:var(--s1)}
+      .nav-btn{width:12rem;min-height:52px;grid-auto-flow:column;grid-template-columns:auto 1fr;place-items:center start;gap:var(--s3);padding:0 var(--s4);font-size:.8125rem;text-align:left}
+      .product-main{padding:var(--s6)}
+      .view[data-view="detail"],.view[data-view="record"],.view[data-view="compose"]{max-width:45rem}
+    }
+    @media (max-width:60rem){
+      .hero,.section-head,.two,.three,.split{grid-template-columns:1fr}
+      .hero{padding-top:var(--s8);gap:var(--s6)}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
+      html{scroll-behavior:auto}
+    }
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
+<div class="page">
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="kicker">Rikkaus Wealth OS · MVP 1C · Issue #90</p>
+      <h1>Nhận định theo quy tắc</h1>
+      <p class="meta">Bản duyệt thiết kế cho Product Owner. Cách gộp báo cáo thành ba nhóm, giải phẫu khối bằng chứng năm dòng, hợp đồng ngôn ngữ cho hành động đề xuất, và vị trí của lưu ý thông tin. Dữ liệu hư cấu, hành vi mô phỏng, không kết nối API, không dùng AI hay LLM.</p>
+    </div>
+    <div class="hero-note">
+      <p><strong>Nguyên tắc nền tảng của bản thiết kế này</strong></p>
+      <p>Báo cáo này <em>tổng hợp</em>, không tính lại. Mọi con số là đầu ra đã duyệt của Wealth Snapshot (#66), Sức khỏe tài chính (#81) và Mục tiêu (#84). Issue #90 không tạo thêm chỉ số hay ngưỡng nào.</p>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+
+    <noscript>
+      <section aria-labelledby="noscript-title">
+        <div class="callout">
+          <h2 id="noscript-title">Bằng chứng vẫn đọc được khi JavaScript tắt</h2>
+          <p><strong>Ba nhóm bắt buộc:</strong> Đang ổn, Cần chú ý, và Hành động có thể cân nhắc. Nhóm thứ ba là danh sách dẫn xuất: mỗi nhận định trong nhóm Cần chú ý đóng góp đúng một hành động đề xuất. Nhận định chưa đánh giá được không tạo thành nhóm thứ tư mà được gom vào một khối Chưa đủ dữ liệu đặt phía trên ba nhóm.</p>
+          <p><strong>Giải phẫu khối bằng chứng, năm dòng, không có biến thể:</strong> Quan sát, Ngưỡng tham chiếu, Dữ liệu liên quan, Hành động đề xuất, Lưu ý. Một hành động đề xuất thiếu bất kỳ dòng nào thì không hiển thị được.</p>
+          <p><strong>Mười tám đầu vào của kỳ 09/2026, ngày chốt 19/09/2026:</strong> sáu nhận định Wealth Snapshot, sáu quy tắc Sức khỏe tài chính, sáu trạng thái Mục tiêu. Kết quả: tám mục Đang ổn, mười mục Cần chú ý, mười hành động đề xuất.</p>
+          <p><strong>Thứ tự ưu tiên năm bậc:</strong> nghĩa vụ và thanh khoản sắp tới; dòng tiền trong kỳ; dự phòng và cơ cấu; trạng thái mục tiêu; độ tươi dữ liệu. Cùng bậc thì xét ngày đến hạn gần nhất, rồi mức lệch tương đối so với ngưỡng, rồi mã quy tắc tăng dần. Ba hành động đầu mang dấu Ưu tiên, khớp hợp đồng ba điều kiện hàng đầu của Tổng quan.</p>
+          <p><strong>Gộp trùng:</strong> hai nhận định chỉ gộp thành một hành động khi cùng họ hành động và có ít nhất một bản ghi liên quan trùng nhau. Hành động đã gộp giữ bậc cao hơn và liệt kê cả hai nguồn.</p>
+          <p><strong>Lưu ý thông tin:</strong> một lưu ý cấp báo cáo luôn hiển thị và không tắt được, cộng một lưu ý cấp mục nêu giới hạn dữ liệu của chính mục đó. Ngôn ngữ hành động không được hứa kết quả, không dự đoán lợi suất, không nêu tên sản phẩm hay tổ chức tài chính, không tạo cảm giác gấp gáp.</p>
+          <p><strong>Đối soát:</strong> tổng tài sản 12.002.000.000 ₫, tổng công nợ 1.532.000.000 ₫, tài sản ròng 10.470.000.000 ₫, thu 180.000.000 ₫, chi 92.000.000 ₫, dòng tiền ròng 88.000.000 ₫, tỷ giá 1 USD = 25.100 ₫ ngày 12/09/2026.</p>
+        </div>
+      </section>
+    </noscript>
+
+    <section aria-labelledby="ux-title">
+      <div class="section-head">
+        <div><span class="section-mark">01</span><h2 id="ux-title">Cấu trúc UX và phạm vi</h2></div>
+        <p class="meta">Nhận định là một trong năm điểm đến chính. Issue #90 sở hữu lớp tổng hợp báo cáo, không sở hữu phép tính nào.</p>
+      </div>
+
+      <div class="grid three">
+        <div class="card">
+          <h3>Trong issue #90</h3>
+          <p>Cách gộp ba nhóm, thứ tự ưu tiên, quy tắc gộp trùng, giải phẫu khối bằng chứng năm dòng, hợp đồng ngôn ngữ cho hành động đề xuất, hai cấp lưu ý thông tin, và các trạng thái của báo cáo.</p>
+        </div>
+        <div class="callout">
+          <h3>Không thuộc phạm vi</h3>
+          <p>Màn hình Nhận định production và liên kết tới bản ghi thuộc Frontend #91. API tổng hợp báo cáo từ InsightResults và trạng thái mục tiêu thuộc Backend #92. Năm chỉ số và sáu quy tắc thuộc #81. Sáu nhận định Wealth Snapshot thuộc #66. Dự phóng mục tiêu thuộc #84.</p>
+        </div>
+        <div class="callout">
+          <h3>Contract không đổi</h3>
+          <p>Artifact này không định nghĩa API, schema, sổ đăng ký mã quy tắc, chính sách cấu hình ngưỡng hay cách lưu trữ. Những điểm Feature Contract #26 chưa chốt được nêu thành câu hỏi mở ở mục 06 thay vì được thiết kế thay.</p>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:var(--s6)">
+        <h3>Bản đồ màn hình và đường quay lại</h3>
+        <div class="flow">
+          <div><p class="kicker">01</p><p><strong>Báo cáo nhận định</strong></p><p class="meta">Điểm đến Nhận định. Lưu ý cấp báo cáo, khối chưa đủ dữ liệu, ba nhóm.</p></div>
+          <div><p class="kicker">02</p><p><strong>Chi tiết một mục</strong></p><p class="meta">Khối bằng chứng năm dòng, nguồn, quy tắc, ngưỡng.</p></div>
+          <div><p class="kicker">03</p><p><strong>Bản ghi nguồn</strong></p><p class="meta">Bản ghi bị ảnh hưởng và cập nhật mô phỏng.</p></div>
+          <div><p class="kicker">04</p><p><strong>Cách tổng hợp</strong></p><p class="meta">Đầu vào, phân nhóm, gộp trùng, xếp ưu tiên.</p></div>
+          <div><p class="kicker">05</p><p><strong>Mẫu trạng thái</strong></p><p class="meta">Tám trạng thái dùng chính các thành phần của báo cáo.</p></div>
+        </div>
+        <p class="meta">Mỗi màn hình con có một nút quay lại hiển thị rõ. Không có thao tác chính nào phụ thuộc cử chỉ ẩn hay trạng thái hover.</p>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Vị trí trong danh mục màn hình MVP</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>Nhóm Nhận định trong mục 16.2 của design guidelines.</caption>
+              <thead><tr><th>Màn hình</th><th>Chủ sở hữu</th><th>Trạng thái</th></tr></thead>
+              <tbody>
+                <tr><td>Báo cáo theo quy tắc, gộp nhóm</td><td>#90</td><td>Sẵn sàng duyệt</td></tr>
+                <tr><td>Chi tiết nhận định với năm phần bắt buộc</td><td>#90</td><td>Sẵn sàng duyệt</td></tr>
+                <tr><td>Điều hướng tới bản ghi liên quan</td><td>#90 mô phỏng, #91 triển khai</td><td>Sẵn sàng duyệt</td></tr>
+                <tr><td>Trạng thái tích cực, cần chú ý, đã xử lý, trống, đang tải, lỗi</td><td>#90</td><td>Sẵn sàng duyệt</td></tr>
+                <tr><td>Chỉ số sức khỏe tài chính</td><td>#81</td><td>Đã duyệt trước đó</td></tr>
+                <tr><td>Nhận định Wealth Snapshot</td><td>#66</td><td>Đã duyệt trước đó</td></tr>
+                <tr><td>Danh sách và chi tiết mục tiêu</td><td>#84</td><td>Đã duyệt trước đó</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Thứ tự nội dung trên điện thoại</h3>
+          <ul>
+            <li>Kỳ báo cáo, ngày chốt và lưu ý thông tin cấp báo cáo.</li>
+            <li>Khối chưa đủ dữ liệu, chỉ hiện khi có mục chưa đánh giá được.</li>
+            <li>Hành động có thể cân nhắc, ba mục đầu mang dấu Ưu tiên.</li>
+            <li>Cần chú ý, kèm số lượng.</li>
+            <li>Đang ổn, kèm số lượng, thu gọn được.</li>
+          </ul>
+          <p class="meta">Hành động đứng trước Cần chú ý vì đó là thứ người dùng mở báo cáo để tìm. Mục 7.5 của design guidelines quy định ba nhóm, không quy định thứ tự hiển thị của chúng.</p>
+          <div class="disclaimer"><p><strong>Lưu ý cấp báo cáo.</strong> Nội dung mang tính thông tin, dựa trên dữ liệu bạn nhập thủ công và ngưỡng tham chiếu của hệ thống. Đây không phải tư vấn tài chính và không bảo đảm bất kỳ kết quả nào.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="system-title">
+      <div class="section-head">
+        <div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div>
+        <p class="meta">Chỉ dùng token ngữ nghĩa của mục 5 design guidelines. Không có giá trị riêng cho trang này.</p>
+      </div>
+
+      <div class="tokens">
+        <div class="token"><span class="swatch" style="background:#0F5C5A"></span><p><strong>color.primary</strong></p><p class="meta">Hành động chính, dấu Ưu tiên, nhãn dòng bằng chứng.</p></div>
+        <div class="token"><span class="swatch" style="background:#1E6A45"></span><p><strong>color.success</strong></p><p class="meta">Viền trái nhóm Đang ổn, luôn kèm chữ và hình.</p></div>
+        <div class="token"><span class="swatch" style="background:#8A5A00"></span><p><strong>color.warning</strong></p><p class="meta">Viền trái nhóm Cần chú ý, luôn kèm chữ và hình.</p></div>
+        <div class="token"><span class="swatch" style="background:#A87428"></span><p><strong>color.heritageGold</strong></p><p class="meta">Chỉ dùng làm vạch trang trí của khối lưu ý và huy hiệu nguồn Mục tiêu.</p></div>
+        <div class="token"><span class="swatch" style="background:#2458A6"></span><p><strong>color.info</strong></p><p class="meta">Huy hiệu nguồn Wealth Snapshot. Trung tính, không phải trạng thái.</p></div>
+        <div class="token"><span class="swatch" style="background:#8B877E"></span><p><strong>color.controlBorder</strong></p><p class="meta">Viền nét đứt của mục chưa đánh giá được.</p></div>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Giải phẫu khối bằng chứng</h3>
+          <p class="meta">Một thành phần duy nhất, năm dòng, dùng lại không biến thể ở mọi mục và mọi nguồn. Đây là cách mục 7.5 design guidelines và backbone gặp nhau.</p>
+          <dl class="anatomy">
+            <div class="anatomy-row"><dt>Quan sát</dt><dd>Chỉ số quan sát được, viết thành một câu có đủ tử số, mẫu số và kỳ.</dd></div>
+            <div class="anatomy-row"><dt>Ngưỡng tham chiếu</dt><dd>Quy tắc hoặc ngưỡng đã kích hoạt mục này, luôn gọi là ngưỡng tham chiếu của hệ thống.</dd></div>
+            <div class="anatomy-row"><dt>Dữ liệu liên quan</dt><dd>Các bản ghi bị ảnh hưởng, mở được từ đây.</dd></div>
+            <div class="anatomy-row"><dt>Hành động đề xuất</dt><dd>Một hành động duy nhất, viết theo khung ngôn ngữ được phép ở mục 04.</dd></div>
+            <div class="anatomy-row"><dt>Lưu ý</dt><dd class="note-row">Giới hạn dữ liệu của chính mục này, cộng với lưu ý thông tin cấp báo cáo.</dd></div>
+          </dl>
+        </div>
+        <div class="card">
+          <h3>Huy hiệu nguồn và mã quy tắc</h3>
+          <p class="meta">Mỗi mục mang huy hiệu nguồn và mã quy tắc để người duyệt truy ngược về feature sở hữu phép tính.</p>
+          <div class="tag-row">
+            <span class="src snapshot">Wealth Snapshot · #66</span>
+            <span class="src health">Sức khỏe tài chính · #81</span>
+            <span class="src goal">Mục tiêu · #84</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <caption>Tiền tố mã quy tắc hiển thị trong artifact này chỉ để người duyệt đối chiếu. Sổ đăng ký mã chính thức thuộc Backend #92.</caption>
+              <thead><tr><th>Tiền tố</th><th>Nguồn</th><th>Số lượng</th></tr></thead>
+              <tbody>
+                <tr><td>S-</td><td>Wealth Snapshot</td><td class="fig">6</td></tr>
+                <tr><td>H-</td><td>Sức khỏe tài chính</td><td class="fig">6</td></tr>
+                <tr><td>G-</td><td>Mục tiêu</td><td class="fig">6</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="meta">Không có avatar trợ lý, không bong bóng hội thoại, không ô nhập câu hỏi. Đây là một báo cáo, không phải giao diện trò chuyện.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Trạng thái hiển thị của một mục</h3>
+        <p class="meta">Ba trạng thái, mỗi trạng thái có chữ, hình dạng chấm và kiểu viền riêng. Không trạng thái nào chỉ phân biệt bằng màu.</p>
+        <div class="grid three">
+          <div class="finding ok"><p class="status ok">Đang ổn</p><p class="finding-title">Quy tắc đã đánh giá và không kích hoạt</p><p class="finding-metric">Viền trái liền, chấm tròn</p></div>
+          <div class="finding attn"><p class="status warn">Cần chú ý</p><p class="finding-title">Quy tắc đã kích hoạt hoặc dữ liệu đã cũ</p><p class="finding-metric">Viền trái liền, chấm vuông</p></div>
+          <div class="finding unknown"><p class="status none">Chưa đánh giá được</p><p class="finding-title">Thiếu đầu vào bắt buộc, không tạo số giả</p><p class="finding-metric">Viền trái nét đứt, chấm rỗng</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="prototype-title">
+      <div class="section-head">
+        <div><span class="section-mark">03</span><h2 id="prototype-title">Prototype clickable</h2></div>
+        <p class="meta">Bốn kịch bản dùng chung một bộ đầu vào khai báo. Đổi kịch bản sẽ dựng lại cả ba nhóm từ chính bộ đầu vào đó, không có kết quả ngẫu nhiên.</p>
+      </div>
+
+      <div class="stage">
+        <div class="stage-bar">
+          <div class="switches" role="group" aria-label="Chọn kịch bản dữ liệu">
+            <button type="button" data-scen="base" aria-pressed="true">Cơ sở · 09/2026</button>
+            <button type="button" data-scen="stress" aria-pressed="false">Áp lực · 10/2026</button>
+            <button type="button" data-scen="partial" aria-pressed="false">Một phần · 09/2026</button>
+            <button type="button" data-scen="empty" aria-pressed="false">Chưa có dữ liệu</button>
+          </div>
+          <div class="switches" role="group" aria-label="Chọn bề ngang khung xem">
+            <button type="button" data-w="360" aria-pressed="true">360px</button>
+            <button type="button" data-w="tablet" aria-pressed="false">Máy tính bảng</button>
+            <button type="button" data-w="desktop" aria-pressed="false">Máy tính</button>
+          </div>
+        </div>
+        <p class="meta" id="scen-note">—</p>
+
+        <div class="device-wrap">
+          <div class="device" id="device" data-mode="360">
+            <div class="app">
+              <div class="topbar">
+                <span class="wordmark">Rikkaus</span>
+                <button class="avatar" type="button" aria-label="Hồ sơ và cài đặt">TH</button>
+              </div>
+              <div class="app-body">
+                <main class="product-main" id="product-main" tabindex="-1">
+
+                  <section class="view active" data-view="report" id="view-report" tabindex="-1" aria-labelledby="report-heading">
+                    <div class="screen-head">
+                      <div><p class="meta">Nhận định</p><h2 id="report-heading">Báo cáo theo quy tắc</h2></div>
+                      <button class="text-btn" type="button" data-go="compose">Cách tổng hợp</button>
+                    </div>
+                    <div class="period-bar">
+                      <div><p class="meta">Kỳ báo cáo</p><p class="fig" id="report-period">—</p></div>
+                      <div><p class="meta">Ngày chốt</p><p class="fig" id="report-asof">—</p></div>
+                    </div>
+                    <div class="disclaimer" id="report-disclaimer">
+                      <p><strong>Lưu ý thông tin.</strong> Báo cáo mang tính thông tin, dựa trên dữ liệu bạn nhập thủ công và ngưỡng tham chiếu của hệ thống. Đây không phải tư vấn tài chính và không bảo đảm bất kỳ kết quả nào.</p>
+                    </div>
+                    <div id="report-body"></div>
+                  </section>
+
+                  <section class="view" data-view="detail" id="view-detail" tabindex="-1" aria-labelledby="detail-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="report">Quay lại báo cáo</button><h2 id="detail-heading">—</h2></div>
+                    </div>
+                    <div id="detail-body"></div>
+                  </section>
+
+                  <section class="view" data-view="record" id="view-record" tabindex="-1" aria-labelledby="record-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="detail">Quay lại nhận định</button><h2 id="record-heading">Bản ghi nguồn</h2></div>
+                    </div>
+                    <div id="record-body"></div>
+                  </section>
+
+                  <section class="view" data-view="compose" id="view-compose" tabindex="-1" aria-labelledby="compose-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="report">Quay lại báo cáo</button><h2 id="compose-heading">Cách tổng hợp báo cáo</h2></div>
+                    </div>
+                    <div id="compose-body"></div>
+                  </section>
+
+                  <section class="view" data-view="states" id="view-states" tabindex="-1" aria-labelledby="states-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="report">Quay lại báo cáo</button><h2 id="states-heading">Mẫu trạng thái</h2></div>
+                    </div>
+                    <div class="switches" role="group" aria-label="Chọn trạng thái">
+                      <button type="button" data-panel="default" aria-pressed="true">Mặc định</button>
+                      <button type="button" data-panel="clear" aria-pressed="false">Không có mục cần chú ý</button>
+                      <button type="button" data-panel="loading" aria-pressed="false">Đang tải</button>
+                      <button type="button" data-panel="empty" aria-pressed="false">Trống</button>
+                      <button type="button" data-panel="partial" aria-pressed="false">Một phần</button>
+                      <button type="button" data-panel="error" aria-pressed="false">Lỗi tải</button>
+                      <button type="button" data-panel="resolved" aria-pressed="false">Đã xử lý</button>
+                      <button type="button" data-panel="missing" aria-pressed="false">Không mở được mục</button>
+                    </div>
+                    <div class="card state-panel" id="state-panel"></div>
+                  </section>
+
+                </main>
+              </div>
+              <nav class="app-nav" aria-label="Điều hướng chính">
+                <ul class="nav-list">
+                  <li><button class="nav-btn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 12 5l8 7"/><path d="M6 11v8h12v-8"/></svg>Tổng quan</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16"/></svg>Tài sản &amp; Nợ</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 9 11l4 4 7-8"/></svg>Dòng tiền</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/></svg>Mục tiêu</button></li>
+                  <li><button class="nav-btn active" type="button" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9"/><path d="M12 19V5"/><path d="M19 19v-6"/></svg>Nhận định</button></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button type="button" data-go="states">Mở mẫu trạng thái</button>
+          <button type="button" data-go="compose">Mở cách tổng hợp</button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="rules-title">
+      <div class="section-head">
+        <div><span class="section-mark">04</span><h2 id="rules-title">Tổng hợp, ngôn ngữ và đối soát</h2></div>
+        <p class="meta">Bốn quyết định thiết kế mà Product Owner cần duyệt: phân nhóm, gộp trùng, xếp ưu tiên, và ngôn ngữ của hành động đề xuất.</p>
+      </div>
+
+      <div class="pipe">
+        <div class="pipe-step"><span class="pipe-num">1</span><div><p><strong>Thu thập đầu vào</strong></p><p class="meta">Mười tám kết quả đã được đánh giá từ ba nguồn. Báo cáo không tính lại bất kỳ con số nào; nếu một nguồn đổi phép tính thì báo cáo đổi theo mà không cần sửa lớp tổng hợp.</p></div></div>
+        <div class="pipe-step"><span class="pipe-num">2</span><div><p><strong>Phân nhóm</strong></p><p class="meta">Mỗi kết quả vào đúng một nhóm theo trạng thái đánh giá. Kết quả chưa đánh giá được không vào nhóm nào mà gom vào khối Chưa đủ dữ liệu.</p></div></div>
+        <div class="pipe-step"><span class="pipe-num">3</span><div><p><strong>Gộp trùng</strong></p><p class="meta">Chỉ gộp khi cùng họ hành động và trùng ít nhất một bản ghi liên quan. Gộp làm giảm số hành động, không làm mất nhận định nào ở nhóm Cần chú ý.</p></div></div>
+        <div class="pipe-step"><span class="pipe-num">4</span><div><p><strong>Xếp ưu tiên</strong></p><p class="meta">Năm bậc, ba tiêu chí phân định đều xác định trước. Cùng một bộ dữ liệu luôn cho cùng một thứ tự.</p></div></div>
+        <div class="pipe-step"><span class="pipe-num">5</span><div><p><strong>Gắn lưu ý</strong></p><p class="meta">Lưu ý cấp mục đi kèm từng kết quả; lưu ý cấp báo cáo luôn hiển thị và không tắt được.</p></div></div>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Quy tắc phân nhóm</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>Ba nhóm của mục 7.5 design guidelines. Nhóm thứ ba là danh sách dẫn xuất, không phải bậc nghiêm trọng thứ ba.</caption>
+              <thead><tr><th>Trạng thái đánh giá của đầu vào</th><th>Đích đến</th></tr></thead>
+              <tbody>
+                <tr><td>Quy tắc đã đánh giá và không kích hoạt</td><td>Đang ổn</td></tr>
+                <tr><td>Nhận định Wealth Snapshot ở trạng thái Đang ổn</td><td>Đang ổn</td></tr>
+                <tr><td>Mục tiêu ở trạng thái Đúng kế hoạch</td><td>Đang ổn</td></tr>
+                <tr><td>Quy tắc đã kích hoạt</td><td>Cần chú ý, và sinh một hành động</td></tr>
+                <tr><td>Nhận định ở trạng thái Cần chú ý hoặc Dữ liệu cũ</td><td>Cần chú ý, và sinh một hành động</td></tr>
+                <tr><td>Mục tiêu ở trạng thái Có rủi ro hoặc Chậm kế hoạch</td><td>Cần chú ý, và sinh một hành động</td></tr>
+                <tr><td>Thiếu đầu vào bắt buộc</td><td>Khối Chưa đủ dữ liệu, không vào nhóm nào</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="meta">Một mục ở trạng thái Một phần không kích hoạt quy tắc và không sinh hành động, thống nhất với quyết định đã duyệt ở #81.</p>
+        </div>
+        <div class="card">
+          <h3>Quy tắc gộp trùng</h3>
+          <p>Hai nhận định gộp thành một hành động khi thoả <strong>cả hai</strong> điều kiện: cùng họ hành động, và trùng ít nhất một bản ghi liên quan.</p>
+          <div class="merge-box">
+            <p><strong>Ví dụ có gộp, kịch bản Áp lực.</strong> <span class="fig">S-DUE</span> khoản vay mua căn hộ đến hạn 18.750.000 ₫ ngày 20/10/2026, và <span class="fig">H-LIQ</span> tiền và ngân hàng 42.000.000 ₫ thấp hơn tổng nghĩa vụ 30 ngày 50.750.000 ₫. Cùng họ hành động đối chiếu nguồn tiền với nghĩa vụ sắp tới, cùng bản ghi Khoản vay mua căn hộ. Kết quả là một hành động mang hai nguồn và hợp của các bản ghi.</p>
+          </div>
+          <div class="merge-box">
+            <p><strong>Lần gộp thứ hai trong cùng kịch bản.</strong> <span class="fig">S-LIQ</span> tỷ trọng thanh khoản 0,3% và <span class="fig">H-RES</span> số tháng dự phòng 0,7 tháng cùng họ hành động đối chiếu nguồn tiền với mức dự phòng, cùng bản ghi Tiền và ngân hàng. Kịch bản Áp lực vì vậy có mười lăm mục cần chú ý nhưng chỉ mười ba hành động.</p>
+          </div>
+          <div class="callout">
+            <p><strong>Ví dụ không gộp, kịch bản Cơ sở.</strong> <span class="fig">S-CONC</span> tỷ trọng bất động sản 62,5% và <span class="fig">S-VAL</span> định giá Căn hộ Thảo Điền cũ 48 ngày cùng trỏ vào một bản ghi nhưng khác họ hành động. Hai mục giữ nguyên là hai hành động và chỉ liên kết chéo với nhau.</p>
+          </div>
+          <p class="meta">Gộp không bao giờ làm biến mất một nhận định khỏi nhóm Cần chú ý. Nó chỉ làm ngắn danh sách hành động.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Bậc ưu tiên và tiêu chí phân định</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>Ba hành động đầu tiên mang dấu Ưu tiên, khớp hợp đồng tối đa ba điều kiện cần chú ý của Tổng quan ở mục 7.1 design guidelines.</caption>
+            <thead><tr><th>Bậc</th><th>Nhóm nội dung</th><th>Quy tắc thuộc bậc này</th></tr></thead>
+            <tbody>
+              <tr><td class="fig">1</td><td>Nghĩa vụ và thanh khoản sắp tới</td><td>S-DUE, H-LIQ, H-CF2 khi dự báo âm</td></tr>
+              <tr><td class="fig">2</td><td>Dòng tiền trong kỳ</td><td>H-CF1, H-DEBT</td></tr>
+              <tr><td class="fig">3</td><td>Dự phòng và cơ cấu</td><td>H-RES, H-INC, S-CONC, S-LIQ</td></tr>
+              <tr><td class="fig">4</td><td>Trạng thái mục tiêu</td><td>G-1 tới G-6</td></tr>
+              <tr><td class="fig">5</td><td>Độ tươi dữ liệu</td><td>S-VAL, S-FX, phân bổ mục tiêu đã cũ</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Trong cùng một bậc, thứ tự xét lần lượt: ngày đến hạn gần nhất trước, mục không có ngày đến hạn xếp sau; rồi mức lệch tương đối so với ngưỡng giảm dần; rồi mã quy tắc tăng dần.</p>
+        <p class="meta">Mức lệch tương đối bằng trị tuyệt đối của hiệu giữa giá trị quan sát và ngưỡng, chia cho ngưỡng. Với mục tiêu, mức lệch bằng phần trăm còn thiếu so với mức đóng góp cần thiết, nên Chậm kế hoạch luôn đứng trước Có rủi ro mà không cần một quy tắc riêng.</p>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Khung ngôn ngữ được phép cho hành động đề xuất</h3>
+          <p class="meta">Mọi hành động trong artifact này đều viết theo một trong sáu khung dưới đây. Một hành động chỉ nêu đúng một việc và luôn gọi tên bản ghi bị ảnh hưởng.</p>
+          <ul>
+            <li>Có thể xem lại <em>&lt;bản ghi hoặc cơ cấu&gt;</em> cùng <em>&lt;bối cảnh&gt;</em>.</li>
+            <li>Có thể đối chiếu <em>&lt;giá trị A&gt;</em> với <em>&lt;giá trị B&gt;</em>.</li>
+            <li>Có thể kiểm tra <em>&lt;dữ liệu đã nhập&gt;</em> trước <em>&lt;mốc thời gian&gt;</em>.</li>
+            <li>Có thể cập nhật <em>&lt;bản ghi&gt;</em> để <em>&lt;kết quả trong sản phẩm&gt;</em>.</li>
+            <li>Có thể cân nhắc <em>&lt;lựa chọn A&gt;</em>, <em>&lt;lựa chọn B&gt;</em>, hoặc <em>&lt;lựa chọn C&gt;</em> rồi xem lại kết quả.</li>
+            <li>Chưa cần hành động. <em>&lt;điều kiện kiểm tra lại&gt;</em>.</li>
+          </ul>
+          <p class="meta">Khung cuối chỉ dùng cho nhóm Đang ổn, nơi không sinh hành động đề xuất.</p>
+        </div>
+        <div class="card">
+          <h3>Cấu trúc bị cấm và cách viết lại</h3>
+          <div class="lex">
+            <div class="lex-row"><p class="mark lex-bad">Cấm · Hứa kết quả</p><p class="lex-bad">Tăng đóng góp lên 8.500.000 ₫ sẽ giúp bạn đạt mục tiêu đúng hạn.</p><p class="mark lex-good">Viết lại</p><p class="lex-good">Có thể cân nhắc tăng mức đóng góp, lùi ngày đích, hoặc điều chỉnh số tiền đích rồi xem lại dự phóng.</p></div>
+            <div class="lex-row"><p class="mark lex-bad">Cấm · Dự đoán lợi suất</p><p class="lex-bad">Danh mục này dự kiến sinh lời 7% mỗi năm.</p><p class="mark lex-good">Viết lại</p><p class="lex-good">Lợi suất kỳ vọng 7% mỗi năm là giá trị bạn nhập, không phải dự báo của hệ thống.</p></div>
+            <div class="lex-row"><p class="mark lex-bad">Cấm · Tên sản phẩm hoặc tổ chức</p><p class="lex-bad">Chuyển phần tiền nhàn rỗi sang một quỹ mở trái phiếu.</p><p class="mark lex-good">Viết lại</p><p class="lex-good">Có thể xem lại mức tập trung này cùng nhu cầu thanh khoản dự kiến trước khi thay đổi phân bổ.</p></div>
+            <div class="lex-row"><p class="mark lex-bad">Cấm · Tạo cảm giác gấp gáp</p><p class="lex-bad">Cảnh báo! Cần xử lý ngay trước khi quá muộn.</p><p class="mark lex-good">Viết lại</p><p class="lex-good">Có thể kiểm tra số dư thanh khoản và xác nhận lịch thanh toán đã nhập trước ngày đến hạn.</p></div>
+            <div class="lex-row"><p class="mark lex-bad">Cấm · Mệnh lệnh</p><p class="lex-bad">Hãy cắt giảm chi phí sinh hoạt xuống dưới 20.000.000 ₫.</p><p class="mark lex-good">Viết lại</p><p class="lex-good">Có thể xem lại các khoản chi lớn nhất trong kỳ và xác nhận các bản ghi định kỳ còn đúng với thực tế.</p></div>
+            <div class="lex-row"><p class="mark lex-bad">Cấm · Quan hệ tư vấn</p><p class="lex-bad">Chuyên gia của chúng tôi khuyến nghị bạn tái cơ cấu danh mục.</p><p class="mark lex-good">Viết lại</p><p class="lex-good">Nội dung mang tính thông tin, dựa trên dữ liệu bạn nhập và ngưỡng tham chiếu của hệ thống.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Hai cấp lưu ý thông tin</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Cấp</th><th>Vị trí</th><th>Nội dung</th><th>Tắt được</th></tr></thead>
+              <tbody>
+                <tr><td>Báo cáo</td><td>Ngay dưới thanh kỳ báo cáo, trên mọi nhóm</td><td>Tính thông tin, dữ liệu nhập thủ công, ngưỡng tham chiếu của hệ thống, không phải tư vấn tài chính, không bảo đảm kết quả</td><td>Không</td></tr>
+                <tr><td>Mục</td><td>Dòng Lưu ý trong khối bằng chứng</td><td>Giới hạn dữ liệu của chính mục đó, ví dụ hệ thống không xác nhận giao dịch đã thực hiện, hoặc tỷ giá là dữ liệu người dùng nhập</td><td>Không</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="meta">Lưu ý cấp báo cáo không phải một banner có thể bỏ qua. Nó nằm trong luồng đọc và đi cùng báo cáo khi in hoặc xuất.</p>
+        </div>
+        <div class="card">
+          <h3>Đối soát fixture cơ sở</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>Mọi con số hiển thị trong prototype truy về các bản ghi dưới đây, đã duyệt ở #66, #69, #81 và #84.</caption>
+              <thead><tr><th>Giá trị</th><th class="fig">Số tiền</th><th>Nguồn</th></tr></thead>
+              <tbody>
+                <tr><td>Tổng tài sản</td><td class="fig">12.002.000.000 ₫</td><td>Danh mục tài sản</td></tr>
+                <tr><td>Tổng công nợ</td><td class="fig">1.532.000.000 ₫</td><td>Danh mục công nợ</td></tr>
+                <tr><td>Tài sản ròng</td><td class="fig">10.470.000.000 ₫</td><td>Hiệu của hai dòng trên</td></tr>
+                <tr><td>Nhóm thanh khoản</td><td class="fig">1.850.000.000 ₫</td><td>650.000.000 cộng 1.200.000.000</td></tr>
+                <tr><td>Tổng thu kỳ 09/2026</td><td class="fig">180.000.000 ₫</td><td>7 bản ghi thu</td></tr>
+                <tr><td>Tổng chi kỳ 09/2026</td><td class="fig">92.000.000 ₫</td><td>9 bản ghi chi</td></tr>
+                <tr><td>Dòng tiền ròng</td><td class="fig">88.000.000 ₫</td><td>Hiệu của hai dòng trên</td></tr>
+                <tr><td>Chi phí thiết yếu định kỳ quy về tháng</td><td class="fig">61.600.000 ₫</td><td>Quy tắc nhóm thiết yếu của #81</td></tr>
+                <tr><td>Nghĩa vụ đến hạn trong 30 ngày</td><td class="fig">50.750.000 ₫</td><td>18.750.000 cộng 32.000.000</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Biến thể có kiểm soát của kịch bản Áp lực</h3>
+        <p class="meta">Kịch bản Áp lực mở rộng biến thể đã duyệt ở #81 bằng hai sự kiện được ghi nhận, nhằm kích hoạt cả sáu quy tắc và tạo đúng một lần gộp trùng. Tổng tài sản không đổi vì đây là một lần hoán đổi tài sản, nên biến thể vẫn đối soát được với fixture cơ sở.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sự kiện</th><th>Ảnh hưởng tới bản ghi</th><th class="fig">Sau sự kiện</th></tr></thead>
+            <tbody>
+              <tr><td>30/09/2026 · chuỗi thu nhập Lương kết thúc do đổi việc</td><td>Tổng thu kỳ 10/2026 chỉ còn Thu nhập cho thuê</td><td class="fig">14.800.000 ₫</td></tr>
+              <tr><td>05/10/2026 · tiền gửi kỳ hạn đáo hạn và cùng 608.000.000 ₫ từ tài khoản ngân hàng mua Nhà phố Thủ Đức 1.808.000.000 ₫</td><td>Tiền và ngân hàng</td><td class="fig">42.000.000 ₫</td></tr>
+              <tr><td></td><td>Tiền gửi có kỳ hạn</td><td class="fig">0 ₫</td></tr>
+              <tr><td></td><td>Bất động sản, gồm hai bản ghi</td><td class="fig">9.308.000.000 ₫</td></tr>
+              <tr><td></td><td>Tổng tài sản, không đổi</td><td class="fig">12.002.000.000 ₫</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="meta">Số dư đầu của dự báo ba tháng trong kịch bản này lấy bằng tiền và tài khoản ngân hàng tại ngày chốt, 42.000.000 ₫ ngày 19/10/2026. Quy ước điểm bắt đầu của dự báo thuộc Feature Contract và được nêu lại ở câu hỏi mở.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="matrix-title">
+      <div class="section-head">
+        <div><span class="section-mark">05</span><h2 id="matrix-title">Ma trận trạng thái và responsive</h2></div>
+        <p class="meta">Tám trạng thái bắt buộc của mục 11 design guidelines, áp cho báo cáo nhận định.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>Mỗi trạng thái đều dùng lại đúng các thành phần của báo cáo, không có biến thể riêng cho trang trạng thái.</caption>
+          <thead><tr><th>Trạng thái</th><th>Điều kiện</th><th>Hiển thị</th><th>Đường đi tiếp</th></tr></thead>
+          <tbody>
+            <tr><td>Mặc định</td><td>Có ít nhất một mục cần chú ý</td><td>Khối hành động, nhóm Cần chú ý, nhóm Đang ổn, kèm số lượng</td><td>Mở chi tiết một mục</td></tr>
+            <tr><td>Không có mục cần chú ý</td><td>Mọi quy tắc đã đánh giá và không kích hoạt</td><td>Câu tóm tắt tích cực, nhóm Đang ổn đầy đủ, nhóm hành động trống kèm lời giải thích</td><td>Xem lại khi kỳ báo cáo đóng</td></tr>
+            <tr><td>Đang tải</td><td>Đang dựng báo cáo</td><td>Khung xương giữ đúng chỗ ba nhóm, lưu ý cấp báo cáo hiển thị ngay</td><td>Tự chuyển sang trạng thái đã dựng</td></tr>
+            <tr><td>Trống</td><td>Chưa có bản ghi nào</td><td>Điểm đến vẫn hiển thị, nêu cần nhập gì để có nhận định đầu tiên</td><td>Thêm tài sản, công nợ hoặc bản ghi dòng tiền</td></tr>
+            <tr><td>Một phần</td><td>Một hoặc nhiều đầu vào chưa đánh giá được</td><td>Khối Chưa đủ dữ liệu kèm số lượng, lý do và đường hoàn thiện, đặt trên ba nhóm</td><td>Nhập bản ghi còn thiếu rồi mở lại</td></tr>
+            <tr><td>Lỗi tải</td><td>Không dựng được báo cáo</td><td>Nêu việc gì hỏng, dữ liệu đã nhập không mất, nút thử lại</td><td>Thử lại hoặc quay về Tổng quan</td></tr>
+            <tr><td>Đã xử lý</td><td>Bản ghi nguồn vừa được cập nhật</td><td>Xác nhận mục nào đổi trạng thái và giá trị mới</td><td>Quay lại báo cáo đã dựng lại</td></tr>
+            <tr><td>Không mở được mục</td><td>Bản ghi đích không khả dụng</td><td>Thông điệp không liệt kê, không xác nhận bản ghi có tồn tại hay không</td><td>Quay lại báo cáo</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:var(--s6)">
+        <table>
+          <caption>Hành vi responsive. Tên, thứ tự và trạng thái chọn của điều hướng giữ nguyên ở mọi bề ngang.</caption>
+          <thead><tr><th>Bề ngang</th><th>Điều hướng</th><th>Bố cục báo cáo</th><th>Điểm cần kiểm tra</th></tr></thead>
+          <tbody>
+            <tr><td>360 và 375px</td><td>Thanh dưới, năm nhãn</td><td>Một cột, nhóm xếp dọc, mỗi mục là một thẻ chạm được cao tối thiểu 4,5rem</td><td>Không cuộn ngang, tiêu đề nhóm không bị cắt, dấu Ưu tiên xuống dòng cùng tiêu đề</td></tr>
+            <tr><td>768 tới 1023px</td><td>Thanh điều hướng dọc dạng rail</td><td>Hai cột trong mỗi nhóm, tiêu đề nhóm chiếm cả hàng</td><td>Khối bằng chứng vẫn một cột để giữ thứ tự đọc năm dòng</td></tr>
+            <tr><td>1024px trở lên</td><td>Thanh bên cố định, nhãn nằm ngang</td><td>Hai cột, màn hình chi tiết giới hạn 45rem</td><td>Văn bản giải thích không trải rộng quá bề ngang đọc được</td></tr>
+            <tr><td>1440px</td><td>Như trên</td><td>Vùng nội dung căn giữa, có giới hạn</td><td>Khoảng trắng hai bên không làm mất liên kết giữa nhóm và số lượng</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout" style="margin-top:var(--s4)">
+        <h3>Cỡ chữ lớn và thu phóng</h3>
+        <p>Thẻ của một mục xuống dòng theo chiều dọc thay vì cắt chữ. Dấu Ưu tiên và huy hiệu nguồn nằm trên hàng riêng khi không đủ chỗ. Không có giá trị tiền hay nhãn nào bị ẩn ở cỡ chữ lớn nhất, và trình duyệt không bị chặn thu phóng.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="review-title">
+      <div class="section-head">
+        <div><span class="section-mark">06</span><h2 id="review-title">Khả năng tiếp cận và duyệt Product Owner</h2></div>
+        <p class="meta">Phần này là cổng duyệt. Product Owner ghi quyết định theo từng màn hình và từng luồng.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>Checklist kiểm tra</h3>
+          <div id="check-list"></div>
+          <p class="meta" id="check-progress">—</p>
+        </div>
+        <div class="card">
+          <h3>Quyết định Product Owner</h3>
+          <div class="review-list" id="review-list"></div>
+          <div class="actions">
+            <button class="primary" type="button" id="summary-btn">Tạo bản tóm tắt</button>
+            <button type="button" id="reset-btn">Xoá lựa chọn</button>
+          </div>
+          <div class="summary-box hidden" id="summary-box" tabindex="-1" role="status"></div>
+        </div>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Cơ sở khả năng tiếp cận</h3>
+          <ul>
+            <li>Tương phản đạt WCAG 2.2 AA: chữ thường 4,5:1, chữ lớn và hình đồ hoạ mang nghĩa 3:1.</li>
+            <li>Mọi trạng thái có chữ và hình dạng riêng; màu không bao giờ là dấu hiệu duy nhất.</li>
+            <li>Thứ tự tiêu đề liên tục, không nhảy bậc; đổi màn hình sẽ chuyển tiêu điểm về tiêu đề mới.</li>
+            <li>Vòng tiêu điểm dày 3px, lệch 3px, không bị gỡ ở bất kỳ thành phần nào.</li>
+            <li>Mọi thẻ, hàng bản ghi và nút thao tác được bằng bàn phím, vùng chạm tối thiểu 44px.</li>
+            <li>Số lượng của mỗi nhóm nằm trong chính tiêu đề nhóm nên trình đọc màn hình đọc được ngay.</li>
+            <li>Thông báo thành công dùng vùng lịch sự, không cướp tiêu điểm.</li>
+            <li>Tôn trọng thiết lập giảm chuyển động; không luồng nào phụ thuộc hiệu ứng.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Câu hỏi mở cho Feature Contract #26</h3>
+          <ol>
+            <li><strong>Sổ đăng ký mã quy tắc.</strong> Tiền tố S, H, G trong artifact này chỉ dùng để đối chiếu khi duyệt. Backend #92 cần chốt định danh chính thức và ai sở hữu nó.</li>
+            <li><strong>Điểm bắt đầu của dự báo ba tháng.</strong> Kịch bản Áp lực lấy số dư đầu bằng tiền và ngân hàng tại ngày chốt. Cần chốt quy ước này ở cấp Feature vì #78 và #81 đang dùng cách diễn đạt khác nhau.</li>
+            <li><strong>Ngưỡng cấu hình được hay cố định.</strong> Artifact trình bày ngưỡng như ngưỡng tham chiếu của hệ thống. Nếu pilot user được sửa ngưỡng thì cần thêm một dòng trong khối bằng chứng nêu ngưỡng đang dùng là mặc định hay do người dùng đặt.</li>
+            <li><strong>Trạng thái đã xử lý có lưu lại không.</strong> Artifact mô phỏng việc một mục rời nhóm Cần chú ý sau khi cập nhật bản ghi. Việc có giữ lịch sử nhận định đã xử lý hay không là quyết định sản phẩm, chưa thuộc MVP 1C.</li>
+            <li><strong>Số hành động hiển thị tối đa.</strong> Kịch bản Cơ sở sinh mười hành động. Artifact hiển thị đủ và chỉ đánh dấu ba mục đầu. Nếu Product Owner muốn cắt bớt thì cần một quy tắc rõ ràng, vì cắt danh sách sẽ ẩn một nhận định đã kích hoạt.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Rikkaus Wealth OS · Bản duyệt thiết kế issue #90 · MVP 1C · Dữ liệu hư cấu, hành vi mô phỏng, không kết nối API, không dùng AI hay LLM.</p>
+    <p>Duyệt prototype chỉ chấp thuận hướng UX và UI. Việc duyệt không chứng nhận kiến trúc production, phép tính thật, hành vi API, bảo mật hay mức sẵn sàng triển khai.</p>
+  </footer>
+</div>
+
+<dialog id="threshold-dialog" aria-labelledby="threshold-title">
+  <div class="dialog-head">
+    <div><p class="meta">Ngưỡng tham chiếu của hệ thống</p><h2 id="threshold-title">Ngưỡng đã kích hoạt mục này</h2></div>
+    <button class="text-btn" type="button" data-close="threshold-dialog">Đóng</button>
+  </div>
+  <div id="threshold-body"></div>
+  <div class="dialog-actions"><button class="primary" type="button" data-close="threshold-dialog">Đã hiểu</button></div>
+</dialog>
+
+<dialog id="missing-dialog" aria-labelledby="missing-title">
+  <div class="dialog-head">
+    <div><h2 id="missing-title">Không thể mở mục này</h2></div>
+    <button class="text-btn" type="button" data-close="missing-dialog">Đóng</button>
+  </div>
+  <p>Bạn có thể quay lại báo cáo nhận định và thử lại sau.</p>
+  <p class="meta">Thông điệp này không xác nhận bản ghi có tồn tại hay không, và không nêu quyền truy cập.</p>
+  <div class="dialog-actions"><button class="primary" type="button" data-close="missing-dialog">Quay lại báo cáo</button></div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  var NOTE_REPORT = "Nội dung mang tính thông tin, dựa trên dữ liệu bạn nhập thủ công và ngưỡng tham chiếu của hệ thống. Đây không phải tư vấn tài chính.";
+  var SRC_LABEL = { snapshot: "Wealth Snapshot · #66", health: "Sức khỏe tài chính · #81", goal: "Mục tiêu · #84" };
+
+  function rec(label, exists) { return { label: label, exists: exists !== false }; }
+
+  // ---------- shared finding builders: the report consumes evaluated results, it never recalculates ----------
+  function snapConc(asof, share, realEstate, records) {
+    return {
+      code: "S-CONC", src: "snapshot", rule: "Tập trung theo nhóm tài sản", family: "composition", tier: 3,
+      state: "attn", title: "Tỷ trọng bất động sản cần được xem lại",
+      metric: share + "% tổng tài sản", threshold: "Trên 50% tổng tài sản",
+      observation: "Bất động sản " + realEstate + " trên tổng tài sản 12.002.000.000 ₫, tương đương " + share + "%, trên ngưỡng tham chiếu 50%.",
+      records: records,
+      action: "Có thể xem lại mức tập trung này cùng nhu cầu thanh khoản dự kiến trước khi thay đổi phân bổ.",
+      note: "Cách nhóm tài sản và ngưỡng là quy tắc của hệ thống, không phải tiêu chuẩn phổ quát. " + NOTE_REPORT
+    };
+  }
+
+  var BASE = [
+    snapConc("19/09/2026", "62,5", "7.500.000.000 ₫", [rec("Căn hộ Thảo Điền · Bất động sản · 7.500.000.000 ₫"), rec("Tổng tài sản · 12.002.000.000 ₫")]),
+    {
+      code: "S-DEBT", src: "snapshot", rule: "Công nợ trên tổng tài sản", family: "composition", tier: 3,
+      state: "ok", title: "Tỷ lệ công nợ đang dưới ngưỡng tham chiếu",
+      metric: "12,8% công nợ trên tài sản", threshold: "Trên 40% tổng tài sản",
+      observation: "Tổng công nợ 1.532.000.000 ₫ chia tổng tài sản 12.002.000.000 ₫ bằng 12,8%, dưới ngưỡng tham chiếu 40%.",
+      records: [rec("Khoản vay mua căn hộ · 1.500.000.000 ₫"), rec("Dư nợ thẻ tín dụng · 32.000.000 ₫"), rec("Tổng tài sản · 12.002.000.000 ₫")],
+      action: "Chưa cần hành động. Kết quả sẽ được kiểm tra lại khi số dư công nợ hoặc tổng tài sản thay đổi.",
+      note: "Trạng thái hiện tại không bảo đảm mức công nợ luôn phù hợp. Ngưỡng chỉ là tham chiếu của hệ thống."
+    },
+    {
+      code: "S-LIQ", src: "snapshot", rule: "Thanh khoản thấp", family: "composition", tier: 3, dev: 23.0,
+      state: "attn", title: "Tỷ trọng tài sản thanh khoản đang thấp",
+      metric: "15,4% tổng tài sản", threshold: "Dưới 20% tổng tài sản",
+      observation: "Tiền và ngân hàng 650.000.000 ₫ cộng tiền gửi có kỳ hạn 1.200.000.000 ₫ bằng 1.850.000.000 ₫, tương đương 15,4% tổng tài sản 12.002.000.000 ₫, dưới ngưỡng tham chiếu 20%.",
+      records: [rec("Tiền và ngân hàng · 650.000.000 ₫"), rec("Tiền gửi có kỳ hạn 12 tháng · 1.200.000.000 ₫"), rec("Tổng tài sản · 12.002.000.000 ₫")],
+      action: "Có thể đối chiếu nguồn tiền sẵn có với các nghĩa vụ sắp tới và mức dự phòng bạn muốn giữ.",
+      note: "Cách nhóm thanh khoản và ngưỡng là quy tắc của hệ thống, không phải tiêu chuẩn phổ quát. " + NOTE_REPORT
+    },
+    {
+      code: "S-DUE", src: "snapshot", rule: "Khoản trả hoặc đáo hạn sắp tới", family: "liquidity-due", tier: 1, due: "20/09/2026", dev: 96.7,
+      state: "attn", title: "Một khoản thanh toán sắp đến ngày",
+      metric: "18.750.000 ₫ · 20/09/2026", threshold: "Trong 30 ngày tới",
+      observation: "Khoản vay mua căn hộ có kỳ thanh toán 18.750.000 ₫ vào 20/09/2026, còn 1 ngày so với ngày chốt 19/09/2026.",
+      records: [rec("Khoản vay mua căn hộ · Dư nợ 1.500.000.000 ₫"), rec("Kỳ tiếp theo · 18.750.000 ₫ · 20/09/2026")],
+      action: "Có thể kiểm tra số dư thanh khoản và xác nhận lịch thanh toán đã nhập trước ngày đến hạn.",
+      note: "Ngày và số tiền do bạn nhập thủ công. Hệ thống không xác nhận giao dịch đã được thực hiện. " + NOTE_REPORT
+    },
+    {
+      code: "S-VAL", src: "snapshot", rule: "Định giá cũ", family: "freshness", tier: 5, dev: 60.0,
+      state: "attn", title: "Định giá căn hộ cần được cập nhật",
+      metric: "48 ngày từ lần định giá", threshold: "Quá 30 ngày",
+      observation: "Căn hộ Thảo Điền có định giá gần nhất ngày 02/08/2026, cách ngày chốt 19/09/2026 là 48 ngày, quá ngưỡng tham chiếu 30 ngày.",
+      records: [rec("Căn hộ Thảo Điền · 7.500.000.000 ₫"), rec("Định giá gần nhất · 02/08/2026")],
+      action: "Có thể cập nhật định giá của Căn hộ Thảo Điền để làm mới Wealth Snapshot.",
+      note: "Giá trị cũ vẫn được hiển thị kèm ngày. Cập nhật tạo bản ghi mới, không ghi đè lịch sử.",
+      resolve: { label: "Thêm định giá mới 7.500.000.000 ₫ ngày 19/09/2026", result: "Tuổi định giá về 0 ngày, mục rời nhóm Cần chú ý." }
+    },
+    {
+      code: "S-FX", src: "snapshot", rule: "Tỷ giá USD/VND cũ", family: "freshness", tier: 5, dev: 40.0,
+      state: "attn", title: "Tỷ giá USD/VND cần được kiểm tra",
+      metric: "1 USD = 25.100 ₫ · 12/09/2026", threshold: "Quá 5 ngày",
+      observation: "Tỷ giá 1 USD = 25.100 ₫ được cập nhật ngày 12/09/2026, cách ngày chốt 7 ngày, và đang quy đổi khoản tiền gửi 20.000 USD thành 502.000.000 ₫.",
+      records: [rec("Tỷ giá · 1 USD = 25.100 ₫ · 12/09/2026"), rec("Tiền gửi USD · 20.000 USD · 502.000.000 ₫")],
+      action: "Có thể kiểm tra và cập nhật tỷ giá trước khi dùng giá trị quy đổi cho một quyết định.",
+      note: "Tỷ giá là dữ liệu bạn nhập, không phải dữ liệu thị trường trực tiếp.",
+      resolve: { label: "Cập nhật tỷ giá ngày 19/09/2026", result: "Ngày tỷ giá về hôm nay, mục rời nhóm Cần chú ý." }
+    },
+    {
+      code: "H-CF1", src: "health", rule: "Chi vượt thu", family: "inperiod", tier: 2,
+      state: "ok", title: "Thu trong kỳ vẫn lớn hơn chi",
+      metric: "Dòng tiền ròng 88.000.000 ₫", threshold: "Kích hoạt khi tổng chi trong kỳ lớn hơn tổng thu trong kỳ",
+      observation: "Tổng thu 180.000.000 ₫ lớn hơn tổng chi 92.000.000 ₫ trong kỳ 09/2026, dòng tiền ròng 88.000.000 ₫.",
+      records: [rec("Danh mục dòng tiền kỳ 09/2026 · 7 bản ghi thu · 9 bản ghi chi")],
+      action: "Chưa cần hành động. Kết quả sẽ được kiểm tra lại khi kỳ báo cáo đóng.",
+      note: "Hệ thống không xác nhận giao dịch đã được thực hiện. " + NOTE_REPORT
+    },
+    {
+      code: "H-CF2", src: "health", rule: "Dự báo dòng tiền chuyển âm", family: "liquidity-due", tier: 1,
+      state: "ok", title: "Dự báo ba tháng không có tháng âm",
+      metric: "Thấp nhất 739.900.000 ₫ · 10/2026", threshold: "Kích hoạt khi số dư tiền dự báo của bất kỳ tháng nào nhỏ hơn 0 ₫",
+      observation: "Số dư tiền thấp nhất trong ba tháng dự báo là 739.900.000 ₫ vào 10/2026, vẫn trên ngưỡng 0 ₫.",
+      records: [rec("10/2026 · 739.900.000 ₫"), rec("11/2026 · 828.300.000 ₫"), rec("12/2026 · 913.715.000 ₫")],
+      action: "Chưa cần hành động. Dự báo sẽ đổi khi bản ghi định kỳ thay đổi.",
+      note: "Dự báo chỉ dùng bản ghi định kỳ và lịch công nợ đang hiển thị. Đây là ước tính, không phải cam kết."
+    },
+    {
+      code: "H-RES", src: "health", rule: "Dự phòng dưới ngưỡng tham chiếu", family: "composition", tier: 3,
+      state: "ok", title: "Số tháng dự phòng trên ngưỡng tham chiếu",
+      metric: "30,0 tháng", threshold: "Kích hoạt khi số tháng dự phòng nhỏ hơn 3 tháng",
+      observation: "Nhóm tài sản thanh khoản 1.850.000.000 ₫ chia chi phí thiết yếu định kỳ quy về tháng 61.600.000 ₫ bằng 30,0 tháng, trên ngưỡng tham chiếu 3 tháng.",
+      records: [rec("Nhóm thanh khoản · 1.850.000.000 ₫"), rec("Chi phí thiết yếu định kỳ · 61.600.000 ₫ mỗi tháng")],
+      action: "Chưa cần hành động. Kết quả sẽ đổi khi tài sản thanh khoản hoặc chi phí thiết yếu thay đổi.",
+      note: "Ngưỡng 3 tháng là ngưỡng tham chiếu của hệ thống. " + NOTE_REPORT
+    },
+    {
+      code: "H-DEBT", src: "health", rule: "Gánh nặng trả nợ định kỳ", family: "inperiod", tier: 2,
+      state: "ok", title: "Khoản trả nợ định kỳ trong ngưỡng tham chiếu",
+      metric: "9,0% thu nhập kỳ", threshold: "Kích hoạt khi khoản trả nợ định kỳ vượt 35% tổng thu nhập trong kỳ",
+      observation: "Khoản trả nợ định kỳ 16.250.000 ₫ chiếm 9,0% tổng thu nhập 180.000.000 ₫ trong kỳ 09/2026, dưới ngưỡng tham chiếu 35%.",
+      records: [rec("Thanh toán gốc công nợ · 10.000.000 ₫"), rec("Thanh toán lãi · 6.250.000 ₫"), rec("Tổng thu nhập kỳ 09/2026 · 180.000.000 ₫")],
+      action: "Chưa cần hành động. Kết quả sẽ đổi khi lịch trả nợ hoặc thu nhập thay đổi.",
+      note: "Chỉ hai danh mục thanh toán nợ được cộng vào. Bản ghi Nhà ở cùng liên kết khoản vay không được cộng để tránh đếm hai lần."
+    },
+    {
+      code: "H-LIQ", src: "health", rule: "Tiền so với nghĩa vụ đến hạn", family: "liquidity-due", tier: 1,
+      state: "ok", title: "Tiền hiện có bao phủ nghĩa vụ đến hạn trong 30 ngày",
+      metric: "Dư 599.250.000 ₫", threshold: "Kích hoạt khi tiền và tài khoản ngân hàng thấp hơn tổng nghĩa vụ đến hạn trong 30 ngày tới",
+      observation: "Tiền và tài khoản ngân hàng 650.000.000 ₫ cao hơn tổng nghĩa vụ đến hạn trong 30 ngày 50.750.000 ₫, chênh lệch 599.250.000 ₫.",
+      records: [rec("Khoản vay mua căn hộ · kỳ 09/2026 · 18.750.000 ₫ · 20/09/2026"), rec("Thẻ tín dụng · dư nợ đến hạn · 32.000.000 ₫ · 25/09/2026")],
+      action: "Chưa cần hành động. Kết quả sẽ đổi khi lịch thanh toán hoặc số dư tiền thay đổi.",
+      note: "Ngày và số tiền do bạn nhập thủ công. Hệ thống không xác nhận khoản nào đã được thanh toán."
+    },
+    {
+      code: "H-INC", src: "health", rule: "Thu nhập phụ thuộc một nguồn", family: "composition", tier: 3, dev: 22.2,
+      state: "attn", title: "Thu nhập đang phụ thuộc vào một nguồn",
+      metric: "Lương · 73,3% tổng thu", threshold: "Trên 60% tổng thu nhập trong kỳ",
+      observation: "Nguồn thu lớn nhất là Lương với 132.000.000 ₫, chiếm 73,3% tổng thu nhập 180.000.000 ₫ trong kỳ 09/2026, trên ngưỡng tham chiếu 60%.",
+      records: [rec("Lương · 132.000.000 ₫ · hàng tháng"), rec("Tổng thu nhập kỳ 09/2026 · 180.000.000 ₫")],
+      action: "Có thể xem lại mức phụ thuộc vào nguồn thu này và đối chiếu với tỷ trọng thu nhập thụ động hiện tại là 12,0%.",
+      note: "Ngưỡng 60% là ngưỡng tham chiếu của hệ thống. " + NOTE_REPORT
+    }
+  ];
+
+  function goal(code, name, state, label, ratio, need, planned, pct, amount, months, annual, extraNote) {
+    return {
+      code: code, src: "goal", rule: "Trạng thái dự phóng mục tiêu", family: "goal", tier: 4,
+      dev: state === "ok" ? 0 : Math.round((100 - ratio) * 10) / 10,
+      state: state, title: name + " · " + label,
+      metric: label + " · " + ratio.toFixed(1).replace(".", ",") + "% mức cần thiết",
+      threshold: "Có rủi ro khi đóng góp kế hoạch dưới 100% mức cần thiết, Chậm kế hoạch khi dưới 80%",
+      observation: "Đóng góp kế hoạch " + planned + " mỗi tháng so với mức cần thiết " + need + " mỗi tháng, đạt " + ratio.toFixed(1).replace(".", ",") + "%. Đã đạt " + pct + " của " + amount + ", còn " + months + " tháng.",
+      records: [rec(name + " · đích " + amount), rec("Đóng góp kế hoạch · " + planned + " mỗi tháng"), rec("Mức cần thiết · " + need + " mỗi tháng")],
+      action: state === "ok"
+        ? "Chưa cần hành động. Kết quả sẽ đổi khi bạn thay đổi ngày đích hoặc mức đóng góp."
+        : "Có thể cân nhắc tăng mức đóng góp, lùi ngày đích, hoặc điều chỉnh số tiền đích rồi xem lại dự phóng.",
+      note: "Mức cần thiết dùng lợi suất kỳ vọng " + annual + " mỗi năm do bạn nhập. Đây là ước tính, không phải kết quả được bảo đảm." + (extraNote ? " " + extraNote : "")
+    };
+  }
+
+  var BASE_GOALS = [
+    goal("G-1", "Quỹ dự phòng khẩn cấp", "ok", "Đúng kế hoạch", 121.4, "12.358.000 ₫", "15.000.000 ₫", "63,4%", "552.000.000 ₫", 15, "3%"),
+    goal("G-2", "Mua nhà cho con", "ok", "Đúng kế hoạch", 117.0, "21.371.000 ₫", "25.000.000 ₫", "40,0%", "3.000.000.000 ₫", 57, "6%"),
+    goal("G-3", "Học phí đại học cho con", "attn", "Có rủi ro", 94.4, "8.475.000 ₫", "8.000.000 ₫", "16,7%", "900.000.000 ₫", 71, "5%"),
+    goal("G-4", "Hưu trí", "attn", "Có rủi ro", 91.9, "21.760.000 ₫", "20.000.000 ₫", "14,3%", "15.000.000.000 ₫", 183, "8%"),
+    goal("G-5", "Tất toán vay mua nhà", "attn", "Chậm kế hoạch", 36.2, "27.648.000 ₫", "10.000.000 ₫", "6,0%", "1.500.000.000 ₫", 51, "0%"),
+    goal("G-6", "Tăng trưởng tài sản ròng", "attn", "Chậm kế hoạch", 64.7, "15.448.000 ₫", "10.000.000 ₫", "69,8%", "15.000.000.000 ₫", 51, "7%", "Số đã phân bổ lấy từ tài sản ròng cập nhật ngày 12/09/2026.")
+  ];
+
+  var STRESS_GOALS = [
+    goal("G-1", "Quỹ dự phòng khẩn cấp", "ok", "Đúng kế hoạch", 112.6, "13.321.000 ₫", "15.000.000 ₫", "63,4%", "552.000.000 ₫", 14, "3%"),
+    goal("G-2", "Mua nhà cho con", "ok", "Đúng kế hoạch", 114.0, "21.933.000 ₫", "25.000.000 ₫", "40,0%", "3.000.000.000 ₫", 56, "6%"),
+    goal("G-3", "Học phí đại học cho con", "attn", "Có rủi ro", 92.8, "8.625.000 ₫", "8.000.000 ₫", "16,7%", "900.000.000 ₫", 70, "5%"),
+    goal("G-4", "Hưu trí", "attn", "Có rủi ro", 90.5, "22.103.000 ₫", "20.000.000 ₫", "14,3%", "15.000.000.000 ₫", 182, "8%"),
+    goal("G-5", "Tất toán vay mua nhà", "attn", "Chậm kế hoạch", 35.5, "28.200.000 ₫", "10.000.000 ₫", "6,0%", "1.500.000.000 ₫", 50, "0%"),
+    goal("G-6", "Tăng trưởng tài sản ròng", "attn", "Chậm kế hoạch", 58.1, "17.217.000 ₫", "10.000.000 ₫", "69,8%", "15.000.000.000 ₫", 50, "7%", "Số đã phân bổ lấy từ tài sản ròng cập nhật ngày 12/09/2026.")
+  ];
+
+  BASE[0].dev = 25.0;
+
+  var STRESS = [
+    (function () { var f = snapConc("19/10/2026", "77,6", "9.308.000.000 ₫", [rec("Căn hộ Thảo Điền · Bất động sản · 7.500.000.000 ₫"), rec("Nhà phố Thủ Đức · Bất động sản · 1.808.000.000 ₫"), rec("Tổng tài sản · 12.002.000.000 ₫")]); f.dev = 55.1; return f; })(),
+    {
+      code: "S-DEBT", src: "snapshot", rule: "Công nợ trên tổng tài sản", family: "composition", tier: 3,
+      state: "ok", title: "Tỷ lệ công nợ đang dưới ngưỡng tham chiếu",
+      metric: "12,8% công nợ trên tài sản", threshold: "Trên 40% tổng tài sản",
+      observation: "Tổng công nợ 1.532.000.000 ₫ chia tổng tài sản 12.002.000.000 ₫ bằng 12,8%, dưới ngưỡng tham chiếu 40%. Lần hoán đổi tài sản ngày 05/10/2026 không làm đổi tổng tài sản.",
+      records: [rec("Khoản vay mua căn hộ · 1.500.000.000 ₫"), rec("Dư nợ thẻ tín dụng · 32.000.000 ₫"), rec("Tổng tài sản · 12.002.000.000 ₫")],
+      action: "Chưa cần hành động. Kết quả sẽ được kiểm tra lại khi số dư công nợ hoặc tổng tài sản thay đổi.",
+      note: "Trạng thái hiện tại không bảo đảm mức công nợ luôn phù hợp. Ngưỡng chỉ là tham chiếu của hệ thống."
+    },
+    {
+      code: "S-LIQ", src: "snapshot", rule: "Thanh khoản thấp", family: "composition", tier: 3, dev: 98.3,
+      state: "attn", title: "Tỷ trọng tài sản thanh khoản đang rất thấp",
+      metric: "0,3% tổng tài sản", threshold: "Dưới 20% tổng tài sản",
+      observation: "Tiền và ngân hàng 42.000.000 ₫ cộng tiền gửi có kỳ hạn 0 ₫ bằng 42.000.000 ₫, tương đương 0,3% tổng tài sản 12.002.000.000 ₫, dưới ngưỡng tham chiếu 20%.",
+      records: [rec("Tiền và ngân hàng · 42.000.000 ₫"), rec("Tiền gửi có kỳ hạn · 0 ₫ · đã tất toán 05/10/2026"), rec("Tổng tài sản · 12.002.000.000 ₫")],
+      action: "Có thể đối chiếu nguồn tiền sẵn có với các nghĩa vụ sắp tới và mức dự phòng bạn muốn giữ.",
+      note: "Cách nhóm thanh khoản và ngưỡng là quy tắc của hệ thống, không phải tiêu chuẩn phổ quát. " + NOTE_REPORT
+    },
+    {
+      code: "S-DUE", src: "snapshot", rule: "Khoản trả hoặc đáo hạn sắp tới", family: "liquidity-due", tier: 1, due: "20/10/2026", dev: 96.7,
+      state: "attn", title: "Một khoản thanh toán sắp đến ngày",
+      metric: "18.750.000 ₫ · 20/10/2026", threshold: "Trong 30 ngày tới",
+      observation: "Khoản vay mua căn hộ có kỳ thanh toán 18.750.000 ₫ vào 20/10/2026, còn 1 ngày so với ngày chốt 19/10/2026.",
+      records: [rec("Khoản vay mua căn hộ · Dư nợ 1.500.000.000 ₫"), rec("Kỳ tiếp theo · 18.750.000 ₫ · 20/10/2026")],
+      action: "Có thể kiểm tra số dư thanh khoản và xác nhận lịch thanh toán đã nhập trước ngày đến hạn.",
+      note: "Ngày và số tiền do bạn nhập thủ công. Hệ thống không xác nhận giao dịch đã được thực hiện. " + NOTE_REPORT
+    },
+    {
+      code: "S-VAL", src: "snapshot", rule: "Định giá cũ", family: "freshness", tier: 5, dev: 160.0,
+      state: "attn", title: "Định giá căn hộ cần được cập nhật",
+      metric: "78 ngày từ lần định giá", threshold: "Quá 30 ngày",
+      observation: "Căn hộ Thảo Điền có định giá gần nhất ngày 02/08/2026, cách ngày chốt 19/10/2026 là 78 ngày, quá ngưỡng tham chiếu 30 ngày.",
+      records: [rec("Căn hộ Thảo Điền · 7.500.000.000 ₫"), rec("Định giá gần nhất · 02/08/2026")],
+      action: "Có thể cập nhật định giá của Căn hộ Thảo Điền để làm mới Wealth Snapshot.",
+      note: "Giá trị cũ vẫn được hiển thị kèm ngày. Cập nhật tạo bản ghi mới, không ghi đè lịch sử.",
+      resolve: { label: "Thêm định giá mới 7.500.000.000 ₫ ngày 19/10/2026", result: "Tuổi định giá về 0 ngày, mục rời nhóm Cần chú ý." }
+    },
+    {
+      code: "S-FX", src: "snapshot", rule: "Tỷ giá USD/VND cũ", family: "freshness", tier: 5, dev: 640.0,
+      state: "attn", title: "Tỷ giá USD/VND cần được kiểm tra",
+      metric: "1 USD = 25.100 ₫ · 12/09/2026", threshold: "Quá 5 ngày",
+      observation: "Tỷ giá 1 USD = 25.100 ₫ được cập nhật ngày 12/09/2026, cách ngày chốt 19/10/2026 là 37 ngày, và đang quy đổi khoản tiền gửi 20.000 USD thành 502.000.000 ₫.",
+      records: [rec("Tỷ giá · 1 USD = 25.100 ₫ · 12/09/2026"), rec("Tiền gửi USD · 20.000 USD · 502.000.000 ₫")],
+      action: "Có thể kiểm tra và cập nhật tỷ giá trước khi dùng giá trị quy đổi cho một quyết định.",
+      note: "Tỷ giá là dữ liệu bạn nhập, không phải dữ liệu thị trường trực tiếp.",
+      resolve: { label: "Cập nhật tỷ giá ngày 19/10/2026", result: "Ngày tỷ giá về hôm nay, mục rời nhóm Cần chú ý." }
+    },
+    {
+      code: "H-CF1", src: "health", rule: "Chi vượt thu", family: "inperiod", tier: 2, dev: 294.6,
+      state: "attn", title: "Chi trong kỳ đang vượt thu",
+      metric: "Dòng tiền ròng −43.600.000 ₫", threshold: "Kích hoạt khi tổng chi trong kỳ lớn hơn tổng thu trong kỳ",
+      observation: "Tổng chi 58.400.000 ₫ lớn hơn tổng thu 14.800.000 ₫ trong kỳ 10/2026, dòng tiền ròng −43.600.000 ₫.",
+      records: [rec("Danh mục dòng tiền kỳ 10/2026 · 1 bản ghi thu · 4 bản ghi chi"), rec("Chuỗi Lương · đã kết thúc 30/09/2026")],
+      action: "Có thể xem lại các khoản chi lớn nhất trong kỳ và xác nhận các bản ghi định kỳ còn đúng với thực tế.",
+      note: "Hệ thống không xác nhận giao dịch đã được thực hiện. " + NOTE_REPORT
+    },
+    {
+      code: "H-CF2", src: "health", rule: "Dự báo dòng tiền chuyển âm", family: "liquidity-due", tier: 1, dev: 100.0,
+      state: "attn", title: "Dự báo cho thấy số dư tiền sẽ âm",
+      metric: "−91.785.000 ₫ · 01/2027", threshold: "Kích hoạt khi số dư tiền dự báo của bất kỳ tháng nào nhỏ hơn 0 ₫",
+      observation: "Theo dự báo ba tháng tính từ số dư 42.000.000 ₫ ngày 19/10/2026, số dư tiền thấp nhất là −91.785.000 ₫ vào 01/2027, dưới ngưỡng 0 ₫.",
+      records: [rec("11/2026 · −1.600.000 ₫"), rec("12/2026 · −48.185.000 ₫"), rec("01/2027 · −91.785.000 ₫")],
+      action: "Có thể xem lại các kỳ chi lớn trong ba tháng tới và đối chiếu với nguồn tiền sẵn có trước tháng 01/2027.",
+      note: "Dự báo chỉ dùng bản ghi định kỳ và lịch công nợ đang hiển thị. Đây là ước tính, không phải cam kết."
+    },
+    {
+      code: "H-RES", src: "health", rule: "Dự phòng dưới ngưỡng tham chiếu", family: "composition", tier: 3, dev: 77.3,
+      state: "attn", title: "Dự phòng đang dưới ngưỡng tham chiếu",
+      metric: "0,7 tháng", threshold: "Kích hoạt khi số tháng dự phòng nhỏ hơn 3 tháng",
+      observation: "Nhóm tài sản thanh khoản 42.000.000 ₫ chia chi phí thiết yếu định kỳ quy về tháng 61.600.000 ₫ bằng 0,7 tháng, dưới ngưỡng tham chiếu 3 tháng.",
+      records: [rec("Nhóm thanh khoản · 42.000.000 ₫"), rec("Chi phí thiết yếu định kỳ · 61.600.000 ₫ mỗi tháng")],
+      action: "Có thể đối chiếu nguồn tiền sẵn có với chi phí thiết yếu định kỳ và mức dự phòng bạn muốn giữ.",
+      note: "Ngưỡng 3 tháng là ngưỡng tham chiếu của hệ thống. " + NOTE_REPORT
+    },
+    {
+      code: "H-DEBT", src: "health", rule: "Gánh nặng trả nợ định kỳ", family: "inperiod", tier: 2, dev: 213.7,
+      state: "attn", title: "Khoản trả nợ định kỳ đang chiếm tỷ trọng cao",
+      metric: "109,8% thu nhập kỳ", threshold: "Kích hoạt khi khoản trả nợ định kỳ vượt 35% tổng thu nhập trong kỳ",
+      observation: "Khoản trả nợ định kỳ 16.250.000 ₫ chiếm 109,8% tổng thu nhập 14.800.000 ₫ trong kỳ 10/2026, trên ngưỡng tham chiếu 35%.",
+      records: [rec("Thanh toán gốc công nợ · 10.000.000 ₫"), rec("Thanh toán lãi · 6.250.000 ₫"), rec("Tổng thu nhập kỳ 10/2026 · 14.800.000 ₫")],
+      action: "Có thể đối chiếu lịch trả nợ với thu nhập dự kiến của các kỳ tới và xem lại thứ tự ưu tiên thanh toán.",
+      note: "Chỉ hai danh mục thanh toán nợ được cộng vào. Bản ghi Nhà ở cùng liên kết khoản vay không được cộng để tránh đếm hai lần."
+    },
+    {
+      code: "H-LIQ", src: "health", rule: "Tiền so với nghĩa vụ đến hạn", family: "liquidity-due", tier: 1, due: "20/10/2026", dev: 17.2,
+      state: "attn", title: "Tiền hiện có thấp hơn nghĩa vụ đến hạn trong 30 ngày",
+      metric: "Thiếu 8.750.000 ₫", threshold: "Kích hoạt khi tiền và tài khoản ngân hàng thấp hơn tổng nghĩa vụ đến hạn trong 30 ngày tới",
+      observation: "Tiền và tài khoản ngân hàng 42.000.000 ₫ thấp hơn tổng nghĩa vụ đến hạn trong 30 ngày 50.750.000 ₫, chênh lệch 8.750.000 ₫.",
+      records: [rec("Khoản vay mua căn hộ · kỳ 10/2026 · 18.750.000 ₫ · 20/10/2026"), rec("Thẻ tín dụng · dư nợ đến hạn · 32.000.000 ₫ · 25/10/2026", false)],
+      action: "Có thể kiểm tra nguồn tiền có thể chuyển sang trước ngày đến hạn gần nhất và xác nhận lịch thanh toán đã nhập.",
+      note: "Ngày và số tiền do bạn nhập thủ công. Hệ thống không xác nhận khoản nào đã được thanh toán."
+    },
+    {
+      code: "H-INC", src: "health", rule: "Thu nhập phụ thuộc một nguồn", family: "composition", tier: 3, dev: 66.7,
+      state: "attn", title: "Thu nhập đang phụ thuộc vào một nguồn",
+      metric: "Thu nhập cho thuê · 100,0% tổng thu", threshold: "Trên 60% tổng thu nhập trong kỳ",
+      observation: "Nguồn thu lớn nhất là Thu nhập cho thuê với 14.800.000 ₫, chiếm 100,0% tổng thu nhập 14.800.000 ₫ trong kỳ 10/2026, trên ngưỡng tham chiếu 60%.",
+      records: [rec("Thu nhập cho thuê · 14.800.000 ₫ · hàng tháng"), rec("Tổng thu nhập kỳ 10/2026 · 14.800.000 ₫")],
+      action: "Có thể xem lại mức phụ thuộc vào nguồn thu này và đối chiếu với các chuỗi thu nhập đã kết thúc.",
+      note: "Ngưỡng 60% là ngưỡng tham chiếu của hệ thống. " + NOTE_REPORT
+    }
+  ];
+
+  function unknownOf(f, missing, fix) {
+    var u = {};
+    for (var k in f) { if (Object.prototype.hasOwnProperty.call(f, k)) u[k] = f[k]; }
+    u.state = "unknown";
+    u.title = f.rule + " · chưa đánh giá được";
+    u.metric = "Chưa đánh giá được";
+    u.observation = missing;
+    u.records = [rec("Chưa có bản ghi làm đầu vào")];
+    u.action = fix;
+    u.note = "Hệ thống không coi dữ liệu chưa nhập là 0 ₫ và không tạo con số thay thế. " + NOTE_REPORT;
+    delete u.resolve;
+    delete u.due;
+    return u;
+  }
+
+  function byCode(list, code) { for (var i = 0; i < list.length; i++) { if (list[i].code === code) return list[i]; } return null; }
+
+  var NO_INCOME = "Chưa có bản ghi thu nhập nào trong kỳ 09/2026, nên chưa có mẫu số để đánh giá.";
+  var FIX_INCOME = "Nhập bản ghi thu nhập của kỳ 09/2026 rồi mở lại báo cáo.";
+
+  var PARTIAL = BASE.map(function (f) {
+    if (f.code === "H-CF1" || f.code === "H-DEBT" || f.code === "H-INC") return unknownOf(f, NO_INCOME, FIX_INCOME);
+    if (f.code === "H-CF2") return unknownOf(f, "Dự báo hiện chỉ gồm chi phí định kỳ vì chưa có chuỗi thu nhập định kỳ nào. Một chỉ số ở trạng thái Một phần không kích hoạt quy tắc, để tránh kết luận sai từ dữ liệu chưa đủ.", "Nhập các chuỗi thu nhập định kỳ rồi mở lại báo cáo.");
+    return f;
+  });
+
+  var EMPTY_CODES = [
+    ["S-CONC", "Tập trung theo nhóm tài sản"], ["S-DEBT", "Công nợ trên tổng tài sản"], ["S-LIQ", "Thanh khoản thấp"],
+    ["S-DUE", "Khoản trả hoặc đáo hạn sắp tới"], ["S-VAL", "Định giá cũ"], ["S-FX", "Tỷ giá USD/VND cũ"],
+    ["H-CF1", "Chi vượt thu"], ["H-CF2", "Dự báo dòng tiền chuyển âm"], ["H-RES", "Dự phòng dưới ngưỡng tham chiếu"],
+    ["H-DEBT", "Gánh nặng trả nợ định kỳ"], ["H-LIQ", "Tiền so với nghĩa vụ đến hạn"], ["H-INC", "Thu nhập phụ thuộc một nguồn"]
+  ];
+  var EMPTY = EMPTY_CODES.map(function (p) {
+    var src = p[0].charAt(0) === "S" ? "snapshot" : "health";
+    return unknownOf({ code: p[0], src: src, rule: p[1], family: "none", tier: 5, threshold: "Chưa áp dụng được" },
+      "Chưa có bản ghi tài sản, công nợ hay dòng tiền nào được nhập.",
+      "Thêm tài sản, công nợ hoặc bản ghi dòng tiền đầu tiên.");
+  });
+
+  var SCEN = {
+    base: { label: "Cơ sở · 09/2026", period: "09/2026", asof: "19/09/2026", findings: BASE.concat(BASE_GOALS),
+      note: "Fixture đã duyệt ở #66, #69, #81 và #84. Không thay đổi dữ liệu nào." },
+    stress: { label: "Áp lực · 10/2026", period: "10/2026", asof: "19/10/2026", findings: STRESS.concat(STRESS_GOALS),
+      note: "Biến thể có kiểm soát: chuỗi Lương kết thúc 30/09/2026 và một lần hoán đổi tài sản ngày 05/10/2026 giữ nguyên tổng tài sản. Dùng để duyệt trạng thái kích hoạt của cả sáu quy tắc và đúng một lần gộp trùng." },
+    partial: { label: "Một phần · 09/2026", period: "09/2026", asof: "19/09/2026", findings: PARTIAL.concat(BASE_GOALS),
+      note: "Biến thể có kiểm soát: người dùng đã nhập đủ tài sản, công nợ và chín bản ghi chi phí, nhưng chưa nhập bản ghi thu nhập nào cho kỳ 09/2026." },
+    empty: { label: "Chưa có dữ liệu", period: "09/2026", asof: "19/09/2026", findings: EMPTY, empty: true,
+      note: "Người dùng mới hoàn tất đăng ký, chưa nhập bản ghi nào và chưa tạo mục tiêu nào. Điểm đến vẫn hiển thị." }
+  };
+
+  // ---------- action family and affected-record keys drive deduplication ----------
+  var META = {
+    "S-CONC": { family: "allocation-review", keys: ["Căn hộ Thảo Điền"] },
+    "S-DEBT": { family: "debt-schedule", keys: ["Khoản vay mua căn hộ", "Thẻ tín dụng"] },
+    "S-LIQ": { family: "reserve-cover", keys: ["Tiền và ngân hàng", "Tiền gửi có kỳ hạn"] },
+    "S-DUE": { family: "obligation-cover", keys: ["Khoản vay mua căn hộ"] },
+    "S-VAL": { family: "freshness", keys: ["Căn hộ Thảo Điền"] },
+    "S-FX": { family: "freshness", keys: ["Tỷ giá USD/VND"] },
+    "H-CF1": { family: "spend-review", keys: ["Danh mục dòng tiền"] },
+    "H-CF2": { family: "obligation-cover", keys: ["Dự báo ba tháng"] },
+    "H-RES": { family: "reserve-cover", keys: ["Tiền và ngân hàng", "Tiền gửi có kỳ hạn"] },
+    "H-DEBT": { family: "debt-schedule", keys: ["Khoản vay mua căn hộ"] },
+    "H-LIQ": { family: "obligation-cover", keys: ["Khoản vay mua căn hộ", "Thẻ tín dụng"] },
+    "H-INC": { family: "income-mix", keys: ["Lương"] }
+  };
+  var FAMILY_TEXT = {
+    "allocation-review": "Xem lại phân bổ tài sản",
+    "debt-schedule": "Xem lại lịch và thứ tự trả nợ",
+    "reserve-cover": "Đối chiếu nguồn tiền với mức dự phòng",
+    "obligation-cover": "Đối chiếu nguồn tiền với nghĩa vụ sắp tới",
+    "freshness": "Làm mới dữ liệu đã cũ",
+    "spend-review": "Xem lại các khoản chi trong kỳ",
+    "income-mix": "Xem lại cơ cấu nguồn thu",
+    "goal-plan": "Xem lại giả định của mục tiêu"
+  };
+
+  Object.keys(SCEN).forEach(function (name) {
+    SCEN[name].findings.forEach(function (f) {
+      var m = META[f.code];
+      if (m) {
+        f.family = m.family;
+        f.keys = (f.code === "H-INC" && name === "stress") ? ["Thu nhập cho thuê"] : m.keys.slice();
+      } else {
+        f.family = "goal-plan";
+        f.keys = [f.title.split(" · ")[0]];
+      }
+      if (typeof f.dev !== "number") f.dev = 0;
+    });
+  });
+
+  // ---------- composition ----------
+  var state = { scen: "base", view: "report", item: null, record: 0, panel: "default", resolved: {}, showOk: true };
+
+  function applyResolved(f) {
+    if (!state.resolved[f.code] || !f.resolve) return f;
+    var c = {};
+    for (var k in f) { if (Object.prototype.hasOwnProperty.call(f, k)) c[k] = f[k]; }
+    c.state = "ok";
+    c.wasResolved = true;
+    c.title = f.title + " · đã cập nhật";
+    c.observation = f.resolve.result;
+    c.action = "Chưa cần hành động. Mục này đã rời nhóm Cần chú ý sau khi bạn cập nhật bản ghi.";
+    return c;
+  }
+
+  function shareKey(a, b) {
+    for (var i = 0; i < a.keys.length; i++) { if (b.keys.indexOf(a.keys[i]) !== -1) return a.keys[i]; }
+    return null;
+  }
+
+  function dueValue(s) {
+    if (!s) return Infinity;
+    var p = s.split("/");
+    return new Date(+p[2], +p[1] - 1, +p[0]).getTime();
+  }
+
+  function merge(attn) {
+    var used = [], out = [];
+    for (var i = 0; i < attn.length; i++) {
+      if (used[i]) continue;
+      var cluster = [attn[i]];
+      for (var j = i + 1; j < attn.length; j++) {
+        if (used[j] || attn[j].family !== attn[i].family) continue;
+        var hit = null;
+        for (var c = 0; c < cluster.length && !hit; c++) hit = shareKey(cluster[c], attn[j]);
+        if (hit) { cluster.push(attn[j]); used[j] = true; }
+      }
+      if (cluster.length === 1) {
+        out.push({ id: attn[i].code, members: cluster, lead: attn[i], tier: attn[i].tier, dev: attn[i].dev, due: attn[i].due || null, merged: false });
+      } else {
+        var lead = cluster.slice().sort(function (a, b) { return a.tier - b.tier || (a.code < b.code ? -1 : 1); })[0];
+        var tier = Math.min.apply(null, cluster.map(function (x) { return x.tier; }));
+        var dev = Math.max.apply(null, cluster.map(function (x) { return x.dev; }));
+        var due = cluster.map(function (x) { return x.due || null; }).filter(Boolean).sort(function (a, b) { return dueValue(a) - dueValue(b); })[0] || null;
+        out.push({ id: "m-" + lead.family, members: cluster, lead: lead, tier: tier, dev: dev, due: due, merged: true });
+      }
+    }
+    return out;
+  }
+
+  function rank(list) {
+    return list.slice().sort(function (a, b) {
+      if (a.tier !== b.tier) return a.tier - b.tier;
+      var da = dueValue(a.due), db = dueValue(b.due);
+      if (da !== db) return da - db;
+      if (a.dev !== b.dev) return b.dev - a.dev;
+      return a.lead.code < b.lead.code ? -1 : 1;
+    });
+  }
+
+  function compose() {
+    var scen = SCEN[state.scen];
+    var fs = scen.findings.map(applyResolved);
+    var ok = fs.filter(function (f) { return f.state === "ok"; });
+    var attn = fs.filter(function (f) { return f.state === "attn"; });
+    var unknown = fs.filter(function (f) { return f.state === "unknown"; });
+    return { scen: scen, all: fs, ok: ok, attn: attn, unknown: unknown, actions: rank(merge(attn)) };
+  }
+
+  // ---------- rendering helpers ----------
+  function srcBadge(f) { return '<span class="src ' + f.src + '">' + esc(SRC_LABEL[f.src]) + "</span>"; }
+  function statusOf(f) {
+    if (f.state === "ok") return '<p class="status ok">' + (f.wasResolved ? "Đã xử lý" : "Đang ổn") + "</p>";
+    if (f.state === "attn") return '<p class="status warn">Cần chú ý</p>';
+    return '<p class="status none">Chưa đánh giá được</p>';
+  }
+
+  function findingCard(f, tag) {
+    return '<button class="finding ' + f.state + '" type="button" data-item="' + esc(f.code) + '">' +
+      '<div class="finding-top">' + statusOf(f) + (tag || "") + "</div>" +
+      '<p class="finding-title">' + esc(f.title) + "</p>" +
+      '<p class="finding-metric">' + esc(f.metric) + "</p>" +
+      '<div class="tag-row">' + srcBadge(f) + '<span class="tag muted fig">' + esc(f.code) + "</span></div></button>";
+  }
+
+  function actionCard(s, index) {
+    var f = s.lead;
+    var tag = index < 3 ? '<span class="prio">Ưu tiên ' + (index + 1) + "</span>" : '<span class="rank fig">' + (index + 1) + "</span>";
+    var srcs = s.members.map(srcBadge).join("");
+    var codes = s.members.map(function (m) { return '<span class="tag muted fig">' + esc(m.code) + "</span>"; }).join("");
+    return '<button class="finding attn" type="button" data-item="' + esc(s.id) + '">' +
+      '<div class="finding-top">' + statusOf(f) + tag + "</div>" +
+      '<p class="finding-title">' + esc(f.title) + "</p>" +
+      '<p class="finding-metric">' + esc(f.metric) + "</p>" +
+      '<p class="finding-action">' + esc(f.action) + "</p>" +
+      (s.merged ? '<p class="finding-metric">Gộp từ ' + s.members.length + " nhận định cùng họ hành động.</p>" : "") +
+      '<div class="tag-row">' + srcs + codes + "</div></button>";
+  }
+
+  var R = null;
+
+  function renderReport() {
+    $("#report-period").textContent = "Kỳ " + R.scen.period;
+    $("#report-asof").textContent = R.scen.asof;
+    $("#scen-note").textContent = R.scen.label + " · " + R.scen.note;
+
+    var html = "";
+    if (R.scen.empty) {
+      html += '<div class="card"><p class="status none">Chưa có nhận định nào</p>' +
+        "<h3>Báo cáo sẽ xuất hiện sau bản ghi đầu tiên</h3>" +
+        "<p>Nhận định được dựng từ tài sản, công nợ, bản ghi dòng tiền và mục tiêu bạn đã nhập. Hiện chưa có bản ghi nào nên chưa có quy tắc nào đánh giá được.</p>" +
+        '<div class="completion"><p><strong>' + R.unknown.length + " quy tắc đang chờ dữ liệu.</strong> Hệ thống không coi dữ liệu chưa nhập là 0 ₫ và không tạo con số thay thế.</p>" +
+        "<p>Thêm tài sản, công nợ hoặc bản ghi dòng tiền đầu tiên để mở khoá báo cáo.</p></div>" +
+        '<div class="actions"><button class="primary" type="button" data-noop="1">Thêm bản ghi đầu tiên</button></div></div>';
+      $("#report-body").innerHTML = html;
+      return;
+    }
+
+    if (R.unknown.length) {
+      html += '<div class="completion"><p><strong>' + R.unknown.length + " nhận định chưa đánh giá được.</strong> " +
+        "Thiếu đầu vào bắt buộc nên các quy tắc này không kích hoạt và không sinh hành động. Hệ thống không tạo con số thay thế.</p>" +
+        "<p>" + esc(R.unknown[0].action) + "</p>" +
+        '<div class="tag-row">' + R.unknown.map(function (f) { return '<span class="tag muted fig">' + esc(f.code) + "</span>"; }).join("") + "</div></div>";
+    }
+
+    html += '<div class="group-head"><p class="group-title">Hành động có thể cân nhắc</p><p class="group-count fig">' + R.actions.length + " mục</p></div>";
+    if (!R.actions.length) {
+      html += '<div class="card"><p class="status ok">Không có mục nào cần chú ý</p><p>Mọi quy tắc đã đánh giá đều nằm trong ngưỡng tham chiếu của hệ thống, nên chưa có hành động nào được đề xuất cho kỳ ' + esc(R.scen.period) + ".</p></div>";
+    } else {
+      html += '<div class="group">' + R.actions.map(actionCard).join("") + "</div>";
+      html += '<p class="group-note">Ba mục đầu mang dấu Ưu tiên và khớp với tối đa ba điều kiện cần chú ý hiển thị trên Tổng quan.</p>';
+    }
+
+    html += '<div class="group-head" style="margin-top:var(--s6)"><p class="group-title">Cần chú ý</p><p class="group-count fig">' + R.attn.length + " mục</p></div>";
+    html += R.attn.length
+      ? '<div class="group">' + R.attn.map(function (f) { return findingCard(f); }).join("") + "</div>"
+      : '<div class="card"><p class="status ok">Không có mục nào</p><p class="meta">Mọi quy tắc đã đánh giá đều trong ngưỡng tham chiếu.</p></div>';
+
+    html += '<div class="group-head" style="margin-top:var(--s6)"><p class="group-title">Đang ổn</p>' +
+      '<button class="text-btn" type="button" id="toggle-ok" aria-expanded="' + (state.showOk ? "true" : "false") + '">' +
+      (state.showOk ? "Thu gọn" : "Mở rộng") + " · " + R.ok.length + " mục</button></div>";
+    if (state.showOk) {
+      html += R.ok.length
+        ? '<div class="group">' + R.ok.map(function (f) { return findingCard(f); }).join("") + "</div>"
+        : '<div class="card"><p class="status none">Chưa có mục nào</p><p class="meta">Chưa có quy tắc nào đánh giá xong mà không kích hoạt.</p></div>';
+    }
+    $("#report-body").innerHTML = html;
+  }
+
+  function findItem(id) {
+    for (var i = 0; i < R.actions.length; i++) { if (R.actions[i].id === id) return R.actions[i]; }
+    var f = R.all.filter(function (x) { return x.code === id; })[0];
+    return f ? { id: id, members: [f], lead: f, tier: f.tier, dev: f.dev, due: f.due || null, merged: false } : null;
+  }
+
+  function anatomy(f, s) {
+    var recs = s.members.reduce(function (acc, m) {
+      m.records.forEach(function (r) { if (!acc.some(function (x) { return x.label === r.label; })) acc.push(r); });
+      return acc;
+    }, []);
+    var html = '<dl class="anatomy">';
+    html += '<div class="anatomy-row"><dt>Quan sát</dt><dd>' + s.members.map(function (m) { return esc(m.observation); }).join(" ") + "</dd></div>";
+    html += '<div class="anatomy-row"><dt>Ngưỡng tham chiếu</dt><dd>' +
+      s.members.map(function (m) { return esc(m.rule) + " · " + esc(m.threshold) + "."; }).join(" ") +
+      ' <button class="text-btn" type="button" data-threshold="' + esc(s.id) + '">Xem ngưỡng</button></dd></div>';
+    html += '<div class="anatomy-row"><dt>Dữ liệu liên quan</dt><dd><div class="grid" style="gap:var(--s2)">' +
+      recs.map(function (r, i) {
+        return '<button class="record-row" type="button" data-record="' + i + '"><span class="record-main">' +
+          '<span>' + esc(r.label) + "</span>" +
+          '<span class="meta">' + (r.exists ? "Mở bản ghi" : "Không mở được") + "</span></span>" +
+          '<span class="record-amount">›</span></button>';
+      }).join("") + "</div></dd></div>";
+    html += '<div class="anatomy-row"><dt>Hành động đề xuất</dt><dd>' + esc(f.action) + "</dd></div>";
+    html += '<div class="anatomy-row"><dt>Lưu ý</dt><dd class="note-row">' +
+      s.members.map(function (m) { return esc(m.note); }).join(" ") +
+      " Báo cáo không bảo đảm bất kỳ kết quả nào.</dd></div>";
+    html += "</dl>";
+    return { html: html, recs: recs };
+  }
+
+  function renderDetail() {
+    var s = findItem(state.item);
+    if (!s) { go("report"); return; }
+    var f = s.lead;
+    $("#detail-heading").textContent = f.title;
+    var a = anatomy(f, s);
+    state.recs = a.recs;
+    var html = '<div class="card"><div class="finding-top">' + statusOf(f) +
+      '<span class="tag muted fig">' + esc(s.members.map(function (m) { return m.code; }).join(" + ")) + "</span></div>" +
+      '<p class="summary-sentence">' + esc(f.metric) + "</p>" +
+      '<div class="tag-row">' + s.members.map(srcBadge).join("") + "</div></div>";
+    if (s.merged) {
+      html += '<div class="merge-box"><p><strong>Hành động đã gộp.</strong> ' + s.members.length +
+        " nhận định cùng họ hành động “" + esc(FAMILY_TEXT[f.family]) + "” và trùng bản ghi " +
+        esc(shareKey(s.members[0], s.members[1])) + ". Cả " + s.members.length +
+        " nhận định vẫn hiển thị riêng trong nhóm Cần chú ý.</p></div>";
+    }
+    html += '<div class="card">' + a.html + "</div>";
+
+    var codes = s.members.map(function (m) { return m.code; });
+    var related = R.all.filter(function (x) {
+      return codes.indexOf(x.code) === -1 && x.keys && shareKey(f, x);
+    });
+    if (related.length) {
+      html += '<div class="card"><h3>Nhận định khác trên cùng bản ghi</h3>' +
+        '<p class="meta">Cùng bản ghi nhưng khác họ hành động, nên không gộp. Liên kết chéo giữ cả hai nhận định đọc được từ một chỗ.</p>' +
+        '<div class="grid" style="gap:var(--s2)">' + related.map(function (x) { return findingCard(x); }).join("") + "</div></div>";
+    }
+
+    if (f.resolve && !state.resolved[f.code]) {
+      html += '<div class="card"><h3>Cập nhật bản ghi</h3><p class="meta">Thao tác mô phỏng để duyệt trạng thái đã xử lý.</p>' +
+        '<button class="primary" type="button" data-resolve="' + esc(f.code) + '">' + esc(f.resolve.label) + "</button></div>";
+    }
+    $("#detail-body").innerHTML = html;
+  }
+
+  function renderRecord() {
+    var r = (state.recs || [])[state.record];
+    if (!r) { go("detail"); return; }
+    $("#record-body").innerHTML = '<div class="card"><p class="meta">Bản ghi nguồn của nhận định</p>' +
+      "<h3>" + esc(r.label) + "</h3>" +
+      '<p class="meta">Màn hình này mô phỏng điểm đến của liên kết. Trong sản phẩm, bản ghi mở tại chính điểm đến sở hữu nó, và nút quay lại đưa bạn về báo cáo nhận định.</p>' +
+      '<div class="actions"><button type="button" data-go="detail">Quay lại nhận định</button></div></div>';
+  }
+
+  function renderCompose() {
+    var counts = { snapshot: 0, health: 0, goal: 0 };
+    R.all.forEach(function (f) { counts[f.src]++; });
+    var html = '<div class="card"><h3>1 · Đầu vào</h3><p class="meta">Báo cáo nhận kết quả đã đánh giá, không tính lại.</p>' +
+      '<dl class="facts">' +
+      '<div class="fact"><dt>Wealth Snapshot</dt><dd class="fig">' + counts.snapshot + "</dd></div>" +
+      '<div class="fact"><dt>Sức khỏe tài chính</dt><dd class="fig">' + counts.health + "</dd></div>" +
+      '<div class="fact"><dt>Mục tiêu</dt><dd class="fig">' + counts.goal + "</dd></div>" +
+      '<div class="fact"><dt>Tổng đầu vào</dt><dd class="fig">' + R.all.length + "</dd></div></dl></div>";
+
+    html += '<div class="card"><h3>2 · Phân nhóm</h3><dl class="facts">' +
+      '<div class="fact"><dt>Đang ổn</dt><dd class="fig">' + R.ok.length + "</dd></div>" +
+      '<div class="fact"><dt>Cần chú ý</dt><dd class="fig">' + R.attn.length + "</dd></div>" +
+      '<div class="fact"><dt>Chưa đủ dữ liệu</dt><dd class="fig">' + R.unknown.length + "</dd></div></dl>" +
+      '<p class="meta">Tổng ba dòng luôn bằng tổng đầu vào. Không có mục nào bị bỏ rơi giữa các nhóm.</p></div>';
+
+    var merged = R.actions.filter(function (s) { return s.merged; });
+    html += '<div class="card"><h3>3 · Gộp trùng</h3><dl class="facts">' +
+      '<div class="fact"><dt>Mục cần chú ý</dt><dd class="fig">' + R.attn.length + "</dd></div>" +
+      '<div class="fact"><dt>Lần gộp</dt><dd class="fig">' + merged.length + "</dd></div>" +
+      '<div class="fact"><dt>Hành động</dt><dd class="fig">' + R.actions.length + "</dd></div></dl>";
+    html += merged.length
+      ? merged.map(function (s) {
+          return '<div class="merge-box"><p><strong>' + esc(FAMILY_TEXT[s.lead.family]) + "</strong></p><p>" +
+            esc(s.members.map(function (m) { return m.code; }).join(" + ")) + " · trùng bản ghi " +
+            esc(shareKey(s.members[0], s.members[1])) + "</p></div>";
+        }).join("")
+      : '<p class="meta">Kịch bản này không có cặp nào cùng họ hành động và trùng bản ghi, nên số hành động bằng số mục cần chú ý.</p>';
+    html += "</div>";
+
+    html += '<div class="card"><h3>4 · Xếp ưu tiên</h3><div class="table-wrap"><table>' +
+      "<thead><tr><th>#</th><th>Quy tắc</th><th>Bậc</th><th>Đến hạn</th><th class=\"fig\">Mức lệch</th></tr></thead><tbody>" +
+      R.actions.map(function (s, i) {
+        return "<tr><td class=\"fig\">" + (i + 1) + "</td><td>" + esc(s.members.map(function (m) { return m.code; }).join(" + ")) +
+          "</td><td class=\"fig\">" + s.tier + "</td><td>" + (s.due ? esc(s.due) : "—") + "</td><td class=\"fig\">" +
+          (s.dev ? s.dev.toFixed(1).replace(".", ",") + "%" : "—") + "</td></tr>";
+      }).join("") + "</tbody></table></div>" +
+      '<p class="meta">Cùng một bộ dữ liệu luôn cho cùng thứ tự này. Không có yếu tố ngẫu nhiên và không có thứ tự phụ thuộc thời điểm mở báo cáo.</p></div>';
+    $("#compose-body").innerHTML = html;
+  }
+
+  var PANELS = {
+    "default": function () {
+      return "<h3>Mặc định</h3><p class=\"meta\">Có ít nhất một mục cần chú ý. Khối hành động đứng trước, mỗi nhóm kèm số lượng.</p>" +
+        (R.actions[0] ? actionCard(R.actions[0], 0).replace("<button", "<div").replace(/<\/button>$/, "</div>") : "");
+    },
+    clear: function () {
+      return "<h3>Không có mục cần chú ý</h3>" +
+        "<div class=\"card\"><p class=\"status ok\">Không có mục nào cần chú ý</p>" +
+        "<p>Mọi quy tắc đã đánh giá đều nằm trong ngưỡng tham chiếu của hệ thống, nên chưa có hành động nào được đề xuất cho kỳ này.</p>" +
+        "<p class=\"meta\">Nhóm Đang ổn vẫn hiển thị đầy đủ để bạn kiểm tra hệ thống đã đánh giá những gì.</p></div>";
+    },
+    loading: function () {
+      return "<h3>Đang tải</h3><p class=\"meta\">Khung xương giữ đúng chỗ của ba nhóm. Lưu ý cấp báo cáo hiển thị ngay, không chờ dữ liệu.</p>" +
+        "<div class=\"disclaimer\"><p><strong>Lưu ý thông tin.</strong> " + esc(NOTE_REPORT) + "</p></div>" +
+        "<div class=\"skeleton\" aria-hidden=\"true\"><span style=\"width:45%\"></span><span style=\"height:4rem\"></span><span style=\"height:4rem\"></span><span style=\"width:35%\"></span><span style=\"height:4rem\"></span></div>" +
+        "<p class=\"meta\" role=\"status\">Đang dựng báo cáo nhận định.</p>";
+    },
+    empty: function () {
+      return "<h3>Trống</h3><div class=\"card\"><p class=\"status none\">Chưa có nhận định nào</p>" +
+        "<p>Nhận định được dựng từ bản ghi bạn đã nhập. Điểm đến vẫn hiển thị thay vì bị ẩn.</p>" +
+        "<div class=\"completion\"><p><strong>Bước tiếp theo.</strong> Thêm tài sản, công nợ hoặc bản ghi dòng tiền đầu tiên.</p></div></div>";
+    },
+    partial: function () {
+      return "<h3>Một phần</h3><div class=\"completion\"><p><strong>4 nhận định chưa đánh giá được.</strong> " +
+        "Chưa có bản ghi thu nhập nào trong kỳ, nên các quy tắc phụ thuộc thu nhập không có mẫu số.</p>" +
+        "<p>Nhập bản ghi thu nhập của kỳ rồi mở lại báo cáo.</p>" +
+        "<div class=\"tag-row\"><span class=\"tag muted fig\">H-CF1</span><span class=\"tag muted fig\">H-CF2</span><span class=\"tag muted fig\">H-DEBT</span><span class=\"tag muted fig\">H-INC</span></div></div>" +
+        "<p class=\"meta\">Khối này nằm trên ba nhóm và không trở thành nhóm thứ tư.</p>";
+    },
+    error: function () {
+      return "<h3>Lỗi tải</h3><div class=\"card\"><p class=\"status bad\">Chưa dựng được báo cáo</p>" +
+        "<p>Không tải được kết quả nhận định cho kỳ này. Dữ liệu bạn đã nhập không bị ảnh hưởng và không có bản ghi nào thay đổi.</p>" +
+        "<div class=\"actions\"><button class=\"primary\" type=\"button\" data-noop=\"1\">Thử lại</button>" +
+        "<button type=\"button\" data-noop=\"1\">Về Tổng quan</button></div></div>";
+    },
+    resolved: function () {
+      return "<h3>Đã xử lý</h3><div class=\"summary-box\"><strong>Đã thêm định giá mới cho Căn hộ Thảo Điền</strong>" +
+        "<p>Định giá ngày 19/09/2026 · 7.500.000.000 ₫. Lịch sử định giá được giữ nguyên, bản ghi cũ ngày 02/08/2026 vẫn còn.</p>" +
+        "<p class=\"meta\">S-VAL rời nhóm Cần chú ý và chuyển sang Đang ổn. Số lượng của cả hai nhóm cập nhật theo.</p></div>";
+    },
+    missing: function () {
+      return "<h3>Không mở được mục</h3><div class=\"card\"><p class=\"status none\">Không thể mở mục này</p>" +
+        "<p>Bạn có thể quay lại báo cáo nhận định và thử lại sau.</p>" +
+        "<p class=\"meta\">Thông điệp không liệt kê, không xác nhận bản ghi có tồn tại hay không, và không nêu quyền truy cập.</p></div>";
+    }
+  };
+
+  function renderStates() { $("#state-panel").innerHTML = PANELS[state.panel](); }
+
+  // ---------- navigation ----------
+  function go(view) {
+    state.view = view;
+    $$(".view").forEach(function (v) { v.classList.toggle("active", v.getAttribute("data-view") === view); });
+    if (view === "report") renderReport();
+    if (view === "detail") renderDetail();
+    if (view === "record") renderRecord();
+    if (view === "compose") renderCompose();
+    if (view === "states") renderStates();
+    var el = $("#view-" + view);
+    if (el) el.focus();
+  }
+
+  function rebuild(keepView) {
+    R = compose();
+    go(keepView || "report");
+  }
+
+  function toast(msg) {
+    var old = $(".toast");
+    if (old) old.remove();
+    var t = document.createElement("div");
+    t.className = "toast";
+    t.setAttribute("role", "status");
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.remove(); }, 4200);
+  }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+
+    if (b.hasAttribute("data-scen")) {
+      state.scen = b.getAttribute("data-scen");
+      state.resolved = {};
+      $$("[data-scen]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      rebuild("report");
+      return;
+    }
+    if (b.hasAttribute("data-w")) {
+      var w = b.getAttribute("data-w");
+      $("#device").setAttribute("data-mode", w);
+      $$("[data-w]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      return;
+    }
+    if (b.hasAttribute("data-panel")) {
+      state.panel = b.getAttribute("data-panel");
+      $$("[data-panel]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      renderStates();
+      return;
+    }
+    if (b.id === "toggle-ok") { state.showOk = !state.showOk; renderReport(); return; }
+    if (b.hasAttribute("data-go")) { go(b.getAttribute("data-go")); return; }
+    if (b.hasAttribute("data-item")) { state.item = b.getAttribute("data-item"); go("detail"); return; }
+    if (b.hasAttribute("data-record")) {
+      var i = +b.getAttribute("data-record");
+      var r = (state.recs || [])[i];
+      if (r && r.exists === false) { $("#missing-dialog").showModal(); return; }
+      state.record = i;
+      go("record");
+      return;
+    }
+    if (b.hasAttribute("data-threshold")) {
+      var s = findItem(b.getAttribute("data-threshold"));
+      if (!s) return;
+      $("#threshold-body").innerHTML = s.members.map(function (m) {
+        return '<div class="card"><p class="meta fig">' + esc(m.code) + "</p><h3>" + esc(m.rule) + "</h3>" +
+          "<p>" + esc(m.threshold) + "</p>" +
+          '<p class="meta">Đây là ngưỡng tham chiếu của hệ thống, không phải tiêu chuẩn phổ quát của ngành tài chính.</p></div>';
+      }).join("");
+      $("#threshold-dialog").showModal();
+      return;
+    }
+    if (b.hasAttribute("data-resolve")) {
+      var code = b.getAttribute("data-resolve");
+      state.resolved[code] = true;
+      rebuild("report");
+      toast("Đã cập nhật bản ghi. Mục " + code + " chuyển sang nhóm Đang ổn.");
+      return;
+    }
+    if (b.hasAttribute("data-close")) { document.getElementById(b.getAttribute("data-close")).close(); return; }
+    if (b.hasAttribute("data-noop")) { toast("Thao tác mô phỏng cho bản duyệt thiết kế."); return; }
+  });
+
+  // ---------- review gate ----------
+  var CHECKS = [
+    "Mỗi hành động đề xuất hiển thị đủ năm phần: quan sát, ngưỡng tham chiếu, dữ liệu liên quan, hành động, lưu ý.",
+    "Không có câu nào hứa kết quả, dự đoán lợi suất, nêu tên sản phẩm tài chính hay tạo cảm giác gấp gáp.",
+    "Lưu ý thông tin hiển thị ở cấp báo cáo và cấp mục, không tắt được.",
+    "Ba nhóm đúng như mục 7.5 design guidelines, mục chưa đánh giá được không thành nhóm thứ tư.",
+    "Đổi kịch bản dựng lại cả ba nhóm và thứ tự hành động không đổi giữa hai lần mở.",
+    "Mọi trạng thái có chữ và hình dạng riêng, không phân biệt chỉ bằng màu.",
+    "Bố cục 360px không cuộn ngang và mọi vùng chạm đạt tối thiểu 44px.",
+    "Không có avatar trợ lý, bong bóng hội thoại hay ô nhập câu hỏi."
+  ];
+  var REVIEWS = [
+    { id: "po-report", label: "Báo cáo nhận định và cách gộp ba nhóm" },
+    { id: "po-evidence", label: "Khối bằng chứng năm dòng và huy hiệu nguồn" },
+    { id: "po-language", label: "Hợp đồng ngôn ngữ và lưu ý thông tin" },
+    { id: "po-compose", label: "Gộp trùng và thứ tự ưu tiên" },
+    { id: "po-states", label: "Tám trạng thái và hành vi responsive" }
+  ];
+
+  $("#check-list").innerHTML = CHECKS.map(function (c, i) {
+    return '<label class="check-row"><input type="checkbox" data-check="1" id="chk-' + i + '"><span>' + esc(c) + "</span></label>";
+  }).join("");
+  $("#review-list").innerHTML = REVIEWS.map(function (r) {
+    return '<div class="review-row"><p><strong>' + esc(r.label) + "</strong></p><div class=\"review-options\">" +
+      ["Duyệt", "Cần sửa", "Từ chối"].map(function (o, i) {
+        return '<label class="review-choice"><input type="radio" name="' + r.id + '" value="' + esc(o) + '"' + (i === 0 ? "" : "") + "><span>" + esc(o) + "</span></label>";
+      }).join("") + "</div></div>";
+  }).join("");
+
+  function updateProgress() {
+    var done = $$("[data-check]").filter(function (c) { return c.checked; }).length;
+    $("#check-progress").textContent = "Đã xác nhận " + done + " trên " + CHECKS.length + " mục.";
+  }
+  document.addEventListener("change", function (e) { if (e.target.hasAttribute("data-check")) updateProgress(); });
+  updateProgress();
+
+  $("#summary-btn").addEventListener("click", function () {
+    var lines = REVIEWS.map(function (r) {
+      var picked = $('input[name="' + r.id + '"]:checked');
+      return r.label + ": " + (picked ? picked.value : "chưa chọn");
+    });
+    var done = $$("[data-check]").filter(function (c) { return c.checked; }).length;
+    var box = $("#summary-box");
+    box.innerHTML = "<strong>Tóm tắt quyết định · issue #90</strong>" +
+      "<p>" + lines.map(esc).join("<br>") + "</p>" +
+      '<p class="meta">Checklist: ' + done + " trên " + CHECKS.length + " mục đã xác nhận. Duyệt prototype chỉ chấp thuận hướng UX và UI.</p>";
+    box.classList.remove("hidden");
+    box.focus();
+  });
+  $("#reset-btn").addEventListener("click", function () {
+    $$('input[type="radio"]').forEach(function (i) { i.checked = false; });
+    $$("[data-check]").forEach(function (i) { i.checked = false; });
+    updateProgress();
+    $("#summary-box").classList.add("hidden");
+  });
+
+  rebuild("report");
+})();
+</script>
+</body>
+</html>

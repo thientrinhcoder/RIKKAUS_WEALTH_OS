@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F5EF">
+  <title>Rikkaus Wealth OS | Three-month cash-flow forecast review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
+      --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --line:1px solid var(--border); --control-line:1px solid var(--control);
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
+    body:has(dialog[open]){overflow:hidden}
+    button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
+    button{min-height:44px;border:var(--control-line);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--ink);cursor:pointer;transition:transform var(--motion) var(--ease),background-color var(--motion) var(--ease),color var(--motion) var(--ease),box-shadow var(--motion) var(--ease)}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    button:disabled{cursor:not-allowed;opacity:.58;background:var(--surface-subtle);transform:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    h1,h2,h3,h4,p{margin:0}
+    h1{color:var(--navy);font:600 clamp(2.5rem,5.5vw,4.5rem)/1.08 var(--display);letter-spacing:-.02em;text-wrap:balance;max-width:17ch}
+    h2{font-size:1.5rem;line-height:1.33;text-wrap:balance} h3{font-size:1.125rem;line-height:1.33;text-wrap:balance}
+    h4{font-size:1rem;line-height:1.5}
+    p,td,th,label,button,li{overflow-wrap:anywhere}
+    ul{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s1)}
+    .page{width:min(100%,var(--page));margin:auto;padding:var(--s4)}
+    .hidden{display:none !important}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+    .skip{position:absolute;top:-6rem;left:var(--s4);z-index:90;background:var(--surface);padding:var(--s3)}.skip:focus{top:var(--s4)}
+    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s8);border-bottom:2px solid var(--gold)}
+    .hero-copy{display:grid;gap:var(--s4)}
+    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container)}
+    .meta,.helper{color:var(--ink-secondary);font-size:.875rem}
+    .kicker{color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    section{padding:var(--s12) 0;border-bottom:var(--line)}
+    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s6)}
+    .section-mark{color:var(--gold);font-weight:600}
+    .grid{display:grid;gap:var(--s4)}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.four{grid-template-columns:repeat(4,minmax(0,1fr))}.split{grid-template-columns:1.5fr 1fr}
+    .card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);align-content:start}
+    .callout{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
+    .primary{border-color:var(--primary);background:var(--primary);color:var(--surface);font-weight:600}.primary:hover{background:var(--primary-pressed)}
+    .tonal{border-color:var(--primary-container);background:var(--primary-container);color:var(--primary);font-weight:600}
+    .danger{border-color:var(--error);color:var(--error)}
+    .text-btn{border-color:transparent;background:transparent;color:var(--primary)}
+    .fig{font-variant-numeric:tabular-nums}
+    .toolbar,.switches,.actions,.segments{display:flex;flex-wrap:wrap;gap:var(--s2)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{border-color:var(--primary);background:var(--primary);color:var(--surface)}
+    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.875rem;font-weight:600}
+    .status::before{content:"";width:.75rem;height:.75rem;border-radius:50%;background:currentColor;flex:none}
+    .status.ok{color:var(--success)}.status.warn{color:var(--warning)}.status.warn::before{border-radius:2px}
+    .status.bad{color:var(--error)}.status.bad::before{border-radius:2px;transform:rotate(45deg)}
+    .status.info{color:var(--info)}
+    .flow{display:grid;grid-template-columns:repeat(6,minmax(8rem,1fr));gap:var(--s2);overflow-x:auto;padding-bottom:var(--s2)}
+    .flow div{min-height:6rem;padding:var(--s3);border-top:2px solid var(--primary);background:var(--surface)}
+    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--s2)}
+    .token{min-height:6rem;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .swatch{display:block;height:2rem;border-radius:var(--r-input);margin-bottom:var(--s2)}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{text-align:left;padding:var(--s2) var(--s3);border-bottom:var(--line);vertical-align:top}
+    th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-secondary)}
+    td.fig,th.fig{text-align:right}
+    tbody tr:last-child td{border-bottom:0}
+    tr.muted td{color:var(--ink-secondary)}
+    .stage{display:grid;gap:var(--s4)}
+    .stage-bar{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:center}
+    .device-wrap{padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);overflow:hidden}
+    .device{width:100%;max-width:24rem;min-height:48rem;margin:auto;border:1px solid var(--control);border-radius:var(--r-card);background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
+    .device[data-mode="tablet"]{max-width:48rem}.device[data-mode="desktop"]{max-width:64rem}.device[data-mode="wide"]{max-width:100%}
+    .app{min-height:48rem;display:grid;grid-template-rows:auto 1fr auto}
+    .topbar{height:4rem;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);border-bottom:var(--line);background:var(--surface)}
+    .wordmark{font:600 1.25rem/1 var(--display);color:var(--navy)}
+    .avatar{width:44px;padding:0;border-radius:50%;font-weight:600}
+    .app-body{min-width:0}
+    .app-nav{order:3;border-top:var(--line);background:var(--surface)}
+    .nav-list{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none}
+    .nav-btn{width:100%;min-height:64px;border:0;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.68rem;color:var(--ink-secondary)}
+    .nav-btn.active{color:var(--primary);font-weight:600}
+    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .product-main{min-width:0;padding:var(--s4);padding-bottom:2rem}
+    .view{display:none}.view.active{display:grid;gap:var(--s4)}
+    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+    input,select,textarea{width:100%;min-height:48px;border:var(--control-line);border-radius:var(--r-input);background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem}
+    .field{display:grid;gap:var(--s1)}
+    .required{color:var(--error)}
+    .error-copy{color:var(--error);font-size:.8125rem;font-weight:500}
+    .summary-box{padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container);border-left:3px solid var(--primary);display:grid;gap:var(--s2)}
+    .summary-box strong{color:var(--primary)}
+    .summary-sentence{font-size:1.0625rem;line-height:1.45;font-weight:600;color:var(--ink)}
+
+    /* --- minimum-balance signal --- */
+    .signal{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-left-width:4px;border-radius:var(--r-card);background:var(--surface)}
+    .signal.ok{border-left-color:var(--success)}
+    .signal.warn{border-left-color:var(--warning)}
+    .signal.bad{border-left-color:var(--error)}
+    .signal.info{border-left-color:var(--info)}
+    .signal-amount{font-size:1.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+    .signal-amount.bad{color:var(--error)}
+    .gauge{display:grid;gap:var(--s1)}
+    .gauge-track{position:relative;height:.5rem;border-radius:999px;background:var(--surface-subtle);overflow:hidden}
+    .gauge-fill{position:absolute;inset:0 auto 0 0;background:var(--success)}
+    .gauge-fill.warn{background:var(--warning)}.gauge-fill.bad{background:var(--error)}
+    .gauge-mark{position:absolute;top:-.25rem;bottom:-.25rem;width:2px;background:var(--navy)}
+
+    /* --- balance line chart --- */
+    .chart-card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .chart-frame{overflow-x:auto;padding-bottom:var(--s1)}
+    .chart{display:block;width:100%;min-width:20rem;height:auto}
+    .chart .axis{stroke:var(--border);stroke-width:1}
+    .chart .threshold{stroke:var(--warning);stroke-width:1.5;stroke-dasharray:5 4}
+    .chart .zero{stroke:var(--error);stroke-width:1.5}
+    .chart .line{fill:none;stroke:var(--primary);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+    .chart .area{fill:var(--primary-container);opacity:.55}
+    .chart .month-band{fill:var(--surface-subtle);opacity:.55}
+    .chart .tick{fill:var(--ink-secondary);font-size:11px;font-family:var(--font);font-variant-numeric:tabular-nums}
+    .chart .band-label{fill:var(--ink-secondary);font-size:11px;font-weight:600;font-family:var(--font);letter-spacing:.04em}
+    .chart .pt{fill:var(--surface);stroke:var(--primary);stroke-width:2;cursor:pointer}
+    .chart .pt.low{fill:var(--gold);stroke:var(--gold)}
+    .chart .hit{fill:transparent;cursor:pointer}
+    .chart g.point:focus{outline:none}
+    .chart g.point:focus-visible .pt{stroke:var(--focus);stroke-width:4}
+    .chart g.point[aria-pressed="true"] .pt{fill:var(--primary)}
+    .low-flag{font-size:11px;font-weight:600;fill:var(--gold);font-family:var(--font)}
+    .chart-readout{display:grid;gap:var(--s1);padding:var(--s3);border-radius:var(--r-input);background:var(--surface-subtle);min-height:5.5rem}
+    .chart-readout strong{font-variant-numeric:tabular-nums}
+
+    /* --- month + source rows --- */
+    .month-row{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;text-align:left;border:var(--line);border-radius:var(--r-card);background:var(--surface);padding:var(--s3);min-height:4.5rem}
+    .month-row:hover{border-color:var(--primary)}
+    .month-row .m-main{display:grid;gap:var(--s1);min-width:0}
+    .month-name{font-weight:600}
+    .m-side{display:grid;gap:var(--s1);justify-items:end;text-align:right}
+    .net{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .net.in{color:var(--success)}.net.out{color:var(--error)}
+    .line-row{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;text-align:left;border:0;border-bottom:var(--line);border-radius:0;background:transparent;padding:var(--s3) var(--s2);min-height:3.5rem}
+    .line-row:hover{background:var(--surface-subtle)}
+    .line-row:last-child{border-bottom:0}
+    .line-main{display:grid;gap:var(--s1);min-width:0}
+    .line-amount{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .line-amount.in{color:var(--success)}.line-amount.out{color:var(--ink)}
+    .group{display:grid;border:var(--line);border-radius:var(--r-card);background:var(--surface);overflow:hidden}
+    .group-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:baseline;padding:var(--s3);background:var(--surface-subtle);font-weight:600}
+    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.75rem;color:var(--ink-secondary);white-space:nowrap}
+    .tag.warn{color:var(--warning);border-color:var(--warning)}
+    .tag.brand{color:var(--primary);border-color:var(--primary)}
+    .tag.gold{color:var(--gold);border-color:var(--gold)}
+    .tag-row{display:flex;flex-wrap:wrap;gap:var(--s1)}
+    .facts{display:grid;gap:var(--s2)}
+    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.9rem;padding-bottom:var(--s2);border-bottom:var(--line)}
+    .fact:last-child{border-bottom:0;padding-bottom:0}
+    .fact dt{color:var(--ink-secondary)}.fact dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+    .detail-amount{font-size:1.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+    .trace-chain{display:flex;flex-wrap:wrap;gap:var(--s1);align-items:center;font-size:.8125rem;color:var(--ink-secondary)}
+    .trace-chain span:not(:last-child)::after{content:" ›";color:var(--gold);font-weight:600}
+    .assume{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);padding:var(--s3) 0;border-bottom:var(--line);align-items:start}
+    .assume:last-child{border-bottom:0}
+    .assume-no{width:1.75rem;height:1.75rem;display:grid;place-items:center;border-radius:50%;background:var(--primary-container);color:var(--primary);font-size:.8125rem;font-weight:600;flex:none}
+    .assume-body{display:grid;gap:var(--s1);min-width:0}
+    .skeleton{display:grid;gap:var(--s2)}
+    .skeleton span{display:block;height:1rem;border-radius:.25rem;background:linear-gradient(90deg,var(--surface-subtle),#E4DFD4,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+    @keyframes shimmer{to{background-position:-200% 0}}
+    .state-panel{min-height:12rem}
+    .check-row,.review-choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s2) 0;min-height:44px;align-content:center}
+    .check-row input{width:1.25rem;min-height:1.25rem;margin-top:.1875rem}
+    .review-list{display:grid;gap:var(--s3)}
+    .review-row{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-radius:var(--r-card)}
+    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0}
+    .review-options{display:flex;gap:var(--s4);flex-wrap:wrap}
+    .review-choice input{width:1.25rem;min-height:1.25rem;margin:0}
+    dialog{width:min(100%,34rem);border:0;border-radius:var(--r-sheet);padding:var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal)}
+    dialog::backdrop{background:var(--scrim)}
+    .sheet{margin:auto auto 0;width:min(100%,34rem);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s3)}
+    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6)}
+    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.9rem}
+    .noscript{padding:var(--s3);border:2px solid var(--warning);border-radius:var(--r-card);background:var(--surface)}
+    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.875rem}
+    @media (max-width:60rem){
+      .hero,.section-head,.two,.three,.four,.split{grid-template-columns:1fr}
+      .hero{padding-top:var(--s8);gap:var(--s6)}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
+      html{scroll-behavior:auto}
+    }
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
+<div class="page">
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="kicker">MVP 1B · Issue #78 · Design review</p>
+      <h1>Dự báo dòng tiền ba tháng</h1>
+      <p class="meta">Bản thiết kế để Product Owner duyệt cách trình bày ba tháng tới, cách báo hiệu số dư thấp nhất, cách nêu rõ các giả định, và cách truy một số tiền dự báo ngược về bản ghi gốc mà người dùng đang nhìn thấy.</p>
+    </div>
+    <div class="hero-note">
+      <strong>Artifact thiết kế, dữ liệu mô phỏng</strong>
+      <p class="meta">Toàn bộ số liệu là dữ liệu hư cấu, lấy nguyên từ review #72 (bản ghi định kỳ) và review #60 (công nợ và lịch trả nợ). Phép chiếu trong trang này là minh họa thiết kế mang tính xác định, không phải dịch vụ dự báo production. Backend issue #80 sở hữu thuật toán, múi giờ và định danh kỳ.</p>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ 01 UX ============ -->
+    <section aria-labelledby="ux-title">
+      <div class="section-head">
+        <div><span class="section-mark">01</span><h2 id="ux-title">Cấu trúc UX và phạm vi</h2></div>
+        <p class="meta">Dự báo nằm trong đích đến <strong>Dòng tiền</strong>, sau phần tháng hiện tại. Nó không có dữ liệu riêng: mọi con số đều đến từ bản ghi định kỳ và lịch trả nợ mà người dùng đang thấy trong danh mục.</p>
+      </div>
+
+      <div class="flow" role="list" aria-label="Luồng chính của dự báo">
+        <div role="listitem"><p class="kicker">01</p><strong>Dòng tiền</strong><p class="helper">Tháng hiện tại, rồi tới dự báo.</p></div>
+        <div role="listitem"><p class="kicker">02</p><strong>Dự báo ba tháng</strong><p class="helper">Số dư thấp nhất trước, rồi đường số dư, rồi từng tháng.</p></div>
+        <div role="listitem"><p class="kicker">03</p><strong>Chi tiết tháng</strong><p class="helper">Tách thành các dòng thu và chi, mỗi dòng nêu tên bản ghi.</p></div>
+        <div role="listitem"><p class="kicker">04</p><strong>Chi tiết kỳ</strong><p class="helper">Vì sao có số này, rơi vào ngày nào, theo quy tắc nào.</p></div>
+        <div role="listitem"><p class="kicker">05</p><strong>Bản ghi gốc</strong><p class="helper">Mở đúng bản ghi định kỳ hoặc công nợ đã sinh ra số tiền.</p></div>
+        <div role="listitem"><p class="kicker">06</p><strong>Giả định và nguồn</strong><p class="helper">Danh sách giả định, nguồn đã dùng và bản ghi bị loại kèm lý do.</p></div>
+      </div>
+
+      <div class="grid three" style="margin-top:var(--s6)">
+        <div class="card"><h3>Trong issue #78</h3><p>Trục thời gian dự báo ba tháng, tín hiệu số dư thấp nhất, bề mặt giả định, và tương tác truy ngược từ số tiền dự báo về bản ghi nguồn.</p></div>
+        <div class="callout"><h3>Không thuộc phạm vi</h3><p>Danh mục và CRUD bản ghi thuộc #69. Quy tắc lặp và lịch kỳ thuộc #72. Lịch trả nợ và tài sản bảo đảm thuộc #60. Visualization production và trace drawer thuộc Frontend #79. Dịch vụ dự báo, test xác định và múi giờ thuộc Backend #80. Chỉ số sức khỏe tài chính và nhận định thuộc feature khác.</p></div>
+        <div class="callout"><h3>Contract không đổi</h3><p>Artifact này không định nghĩa API, schema, định danh kỳ, chính sách múi giờ, hay cách lưu số dư đầu kỳ. Những điểm chưa chốt được nêu thành câu hỏi cho Feature Contract #22 ở mục 06.</p></div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Luận điểm thiết kế: một đường số dư liên tục</h3>
+        <p>Ba thẻ tháng rời nhau trả lời được câu “tháng nào dư bao nhiêu”, nhưng không trả lời được câu mà người dùng thật sự hỏi: <strong>khi nào tôi thấp nhất, và vì sao</strong>. Vì vậy dự báo được trình bày như một đường số dư chạy liên tục qua ba tháng, điểm thấp nhất được đánh dấu bằng ngày tuyệt đối, và luôn cách bản ghi sinh ra nó đúng ba lần chạm.</p>
+        <p class="helper">Hệ quả trực tiếp: số dư thấp nhất được tính trên <strong>mọi ngày có tiền vào hoặc ra</strong>, không phải trên số dư cuối tháng. Trong fixture này điểm thấp nhất rơi vào ngày đầu horizon, trước khi lương tháng 10 về — một điểm mà báo cáo theo cuối tháng sẽ che mất hoàn toàn.</p>
+      </div>
+    </section>
+
+    <!-- ============ 02 DESIGN SYSTEM ============ -->
+    <section aria-labelledby="system-title">
+      <div class="section-head">
+        <div><span class="section-mark">02</span><h2 id="system-title">Design system và ngôn ngữ dự báo</h2></div>
+        <p class="meta">Không có token mới. Trang này chỉ dùng lại các vai trò ngữ nghĩa đã duyệt ở <code>docs/design-guidelines.md</code> mục 5, và bổ sung quy ước đọc cho riêng biểu đồ số dư.</p>
+      </div>
+
+      <div class="tokens" aria-label="Token màu đang dùng">
+        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><strong>canvas</strong><p class="helper">#F7F5EF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface);border:var(--line)"></span><strong>surface</strong><p class="helper">#FFFFFF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>primary</strong><p class="helper">#0F5C5A · đường số dư</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>primaryContainer</strong><p class="helper">#D9EFEC · vùng dưới đường</p></div>
+        <div class="token"><span class="swatch" style="background:var(--success)"></span><strong>success</strong><p class="helper">#1E6A45 · đủ đệm</p></div>
+        <div class="token"><span class="swatch" style="background:var(--warning)"></span><strong>warning</strong><p class="helper">#8A5A00 · ngưỡng tham chiếu</p></div>
+        <div class="token"><span class="swatch" style="background:var(--error)"></span><strong>error</strong><p class="helper">#B42318 · mốc 0 và số dư âm</p></div>
+        <div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>heritageGold</strong><p class="helper">#A87428 · chỉ đánh dấu điểm thấp nhất</p></div>
+      </div>
+
+      <div class="grid two" style="margin-top:var(--s6)">
+        <div class="card">
+          <h3>Thành phần dùng lại</h3>
+          <ul>
+            <li>Shell năm đích đến và top app bar của issue #36.</li>
+            <li>Thẻ KPI, hàng bản ghi, tag, status chip dạng chữ kèm hình.</li>
+            <li>Bottom sheet chọn nguồn, dialog xác nhận, toast thông báo nhẹ.</li>
+            <li>Bộ trạng thái chung: skeleton, rỗng, một phần, cũ, lỗi, thành công.</li>
+            <li>Ngôn ngữ trục kỳ và nhãn “đã dời ngày” kế thừa nguyên từ review #72.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Quy ước đọc biểu đồ số dư</h3>
+          <ul>
+            <li>Đường liền là số dư dự kiến sau mỗi lần tiền vào hoặc ra, không nội suy giữa hai điểm.</li>
+            <li>Mỗi điểm là một ngày có phát sinh; chạm hoặc focus để đọc số chính xác.</li>
+            <li>Điểm thấp nhất tô vàng cổ kèm nhãn chữ “Thấp nhất”, không dựa vào màu.</li>
+            <li>Đường gạch nét đứt là ngưỡng tham chiếu của hệ thống, chỉ vẽ khi nó nằm trong khoảng giá trị đang hiển thị; ngoài khoảng đó, thanh đo trong thẻ tín hiệu mang ngưỡng này.</li>
+            <li>Mốc 0 chỉ hiện khi đường số dư có thể chạm hoặc vượt xuống dưới.</li>
+            <li>Dải nền phân tháng thay cho lưới dày; nhãn tháng nằm trên dải.</li>
+            <li>Luôn có bảng tương đương cho trình đọc màn hình, bật bằng một nút.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03 PROTOTYPE ============ -->
+    <section aria-labelledby="prototype-title">
+      <div class="section-head">
+        <div><span class="section-mark">03</span><h2 id="prototype-title">Prototype clickable</h2></div>
+        <p class="meta">Mọi con số dưới đây được tính lại từ fixture khi trang tải, không có số nào viết cứng trong markup. Đổi khổ màn hình để xem hành vi responsive.</p>
+      </div>
+
+      <div class="stage">
+        <div class="stage-bar">
+          <div class="switches" role="group" aria-label="Khổ màn hình">
+            <button type="button" data-mode="phone" aria-pressed="true">360px</button>
+            <button type="button" data-mode="phone-lg" aria-pressed="false">375px</button>
+            <button type="button" data-mode="tablet" aria-pressed="false">768px</button>
+            <button type="button" data-mode="desktop" aria-pressed="false">1024px</button>
+            <button type="button" data-mode="wide" aria-pressed="false">1440px</button>
+          </div>
+          <div class="switches" role="group" aria-label="Màn hình trong prototype">
+            <button type="button" data-go="forecast" aria-pressed="true">Dự báo</button>
+            <button type="button" data-go="month" aria-pressed="false">Chi tiết tháng</button>
+            <button type="button" data-go="source" aria-pressed="false">Chi tiết kỳ</button>
+            <button type="button" data-go="assumptions" aria-pressed="false">Giả định</button>
+            <button type="button" data-go="states" aria-pressed="false">Trạng thái</button>
+          </div>
+        </div>
+
+        <noscript><p class="noscript"><strong>Prototype cần JavaScript.</strong> Phần mô tả UX, design system, quy tắc đối chiếu, ma trận trạng thái và bảng quyết định PO ở các mục 01, 02, 04, 05 và 06 vẫn đọc được đầy đủ khi tắt JavaScript.</p></noscript>
+
+        <div class="device-wrap">
+          <div class="device" id="device" data-mode="phone">
+            <div class="app">
+              <div class="topbar"><span class="wordmark">Rikkaus</span><button type="button" class="avatar" aria-label="Hồ sơ và cài đặt">TN</button></div>
+              <div class="app-body">
+                <main class="product-main" id="product-main">
+
+                  <!-- forecast -->
+                  <section class="view active" data-view="forecast" id="view-forecast" tabindex="-1" aria-labelledby="forecast-heading">
+                    <div class="screen-head">
+                      <div><p class="meta">Dòng tiền · Dự báo</p><h2 id="forecast-heading">Ba tháng tới</h2></div>
+                      <button type="button" class="text-btn" data-go="assumptions">Giả định</button>
+                    </div>
+                    <p class="meta" id="horizon-note">—</p>
+
+                    <div class="signal ok" id="signal" role="group" aria-labelledby="signal-title">
+                      <span class="status ok" id="signal-status">—</span>
+                      <div>
+                        <h3 id="signal-title">Số dư thấp nhất trong ba tháng</h3>
+                        <p class="signal-amount fig" id="signal-amount">—</p>
+                        <p class="meta" id="signal-when">—</p>
+                      </div>
+                      <div class="gauge">
+                        <div class="gauge-track" id="gauge-track" role="img" aria-labelledby="signal-gauge-text">
+                          <span class="gauge-fill" id="gauge-fill"></span>
+                          <span class="gauge-mark" id="gauge-mark"></span>
+                        </div>
+                        <p class="helper" id="signal-gauge-text">—</p>
+                      </div>
+                      <p id="signal-read">—</p>
+                      <div class="actions"><button type="button" class="tonal" id="signal-goto">Mở tháng thấp nhất</button></div>
+                    </div>
+
+                    <div class="chart-card">
+                      <div class="screen-head">
+                        <h3 id="chart-title">Đường số dư dự kiến</h3>
+                        <button type="button" class="text-btn" id="toggle-table" aria-expanded="false">Xem dạng bảng</button>
+                      </div>
+                      <p class="helper" id="chart-summary">—</p>
+                      <div class="chart-frame"><svg class="chart" id="chart" viewBox="0 0 720 260" role="group" aria-labelledby="chart-title" aria-describedby="chart-summary"></svg></div>
+                      <div class="chart-readout" id="chart-readout" aria-live="polite"><p class="helper">Chạm hoặc dùng phím Tab tới một điểm để đọc số dư chính xác của ngày đó.</p></div>
+                      <div class="table-wrap hidden" id="chart-table-wrap">
+                        <table id="chart-table"><caption class="sr-only">Số dư dự kiến sau từng ngày có phát sinh</caption><thead><tr><th>Ngày</th><th>Phát sinh</th><th class="fig">Thay đổi</th><th class="fig">Số dư sau đó</th></tr></thead><tbody></tbody></table>
+                      </div>
+                    </div>
+
+                    <div id="partial-banner" class="callout hidden">
+                      <span class="status warn" id="partial-title">Dữ liệu một phần</span>
+                      <p class="helper" id="partial-text">—</p>
+                      <div class="actions"><button type="button" class="tonal" data-go="assumptions">Xem bản ghi bị loại</button></div>
+                    </div>
+
+                    <div class="grid" id="month-list" style="gap:var(--s3)"></div>
+
+                    <p class="helper" id="source-count">—</p>
+                  </section>
+
+                  <!-- month -->
+                  <section class="view" data-view="month" id="view-month" tabindex="-1" aria-labelledby="month-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="forecast">Quay lại dự báo</button><h2 id="month-heading">—</h2></div>
+                    </div>
+                    <div class="summary-box">
+                      <p class="summary-sentence" id="month-net">—</p>
+                      <p class="helper" id="month-explain">—</p>
+                    </div>
+                    <dl class="facts card" id="month-facts"></dl>
+                    <div class="group">
+                      <div class="group-head"><span>Thu vào</span><span class="fig" id="month-income-total">—</span></div>
+                      <div id="month-income"></div>
+                    </div>
+                    <div class="group">
+                      <div class="group-head"><span>Chi ra</span><span class="fig" id="month-expense-total">—</span></div>
+                      <div id="month-expense"></div>
+                    </div>
+                    <p class="helper">Mỗi dòng là một kỳ dự kiến sinh ra từ đúng một bản ghi nguồn. Chạm một dòng để xem vì sao nó có mặt và mở bản ghi gốc.</p>
+                  </section>
+
+                  <!-- source -->
+                  <section class="view" data-view="source" id="view-source" tabindex="-1" aria-labelledby="source-heading">
+                    <div class="screen-head"><button class="text-btn" type="button" id="source-back">Quay lại tháng</button></div>
+                    <div class="card">
+                      <span class="status info">Kỳ dự kiến, chưa phát sinh</span>
+                      <p class="detail-amount fig" id="source-amount">—</p>
+                      <h2 id="source-heading">—</h2>
+                      <div class="tag-row" id="source-tags"></div>
+                    </div>
+                    <div class="summary-box">
+                      <h3>Vì sao có số này</h3>
+                      <p id="source-why">—</p>
+                    </div>
+                    <dl class="facts card" id="source-facts"></dl>
+                    <div class="card">
+                      <h3>Đường truy ngược</h3>
+                      <p class="trace-chain" id="source-chain"></p>
+                      <p class="meta" id="source-origin">—</p>
+                      <div class="actions"><button type="button" class="tonal" id="source-trace">Mở bản ghi gốc</button></div>
+                    </div>
+                  </section>
+
+                  <!-- assumptions -->
+                  <section class="view" data-view="assumptions" id="view-assumptions" tabindex="-1" aria-labelledby="assumptions-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="forecast">Quay lại dự báo</button><h2 id="assumptions-heading">Giả định và nguồn</h2></div>
+                    </div>
+                    <div class="callout">
+                      <span class="status info">Đây là phép chiếu, không phải cam kết</span>
+                      <p class="helper">Dự báo lấy nguyên các bản ghi đang hiển thị và lặp chúng theo quy tắc đã nhập. Nó không dự đoán thu nhập mới, không giả định lạm phát, không giả định tăng lương, và không thêm giao dịch một lần trong tương lai.</p>
+                    </div>
+                    <div class="card">
+                      <h3>Giả định đang áp dụng</h3>
+                      <div id="assumption-list"></div>
+                    </div>
+                    <div class="card">
+                      <h3>Nguồn đã đưa vào dự báo</h3>
+                      <p class="helper" id="included-note">—</p>
+                      <div class="table-wrap"><table id="included-table"><thead><tr><th>Bản ghi</th><th>Loại nguồn</th><th class="fig">Số kỳ</th><th class="fig">Tổng 3 tháng</th></tr></thead><tbody></tbody></table></div>
+                    </div>
+                    <div class="card">
+                      <h3>Bản ghi không đưa vào và lý do</h3>
+                      <p class="helper">Không nghĩa vụ nào biến mất im lặng. Mỗi bản ghi bị loại đều hiện ở đây kèm lý do và hành động tiếp theo nếu có.</p>
+                      <div class="table-wrap"><table id="excluded-table"><thead><tr><th>Bản ghi</th><th>Lý do không đưa vào</th><th>Hành động</th></tr></thead><tbody></tbody></table></div>
+                    </div>
+                  </section>
+
+                  <!-- states -->
+                  <section class="view" data-view="states" id="view-states" tabindex="-1" aria-labelledby="states-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="forecast">Quay lại dự báo</button><h2 id="states-heading">Mẫu trạng thái</h2></div>
+                    </div>
+                    <p class="helper">Fixture hiện tại là một hồ sơ lành mạnh, nên bốn biến thể của tín hiệu số dư thấp nhất được trình bày ở đây thay vì bịa dữ liệu âm trong luồng chính.</p>
+                    <div class="segments" role="group" aria-label="Chọn trạng thái">
+                      <button type="button" data-state="ok" aria-pressed="true">Đủ đệm</button>
+                      <button type="button" data-state="thin" aria-pressed="false">Đệm mỏng</button>
+                      <button type="button" data-state="negative" aria-pressed="false">Số dư âm</button>
+                      <button type="button" data-state="unknown" aria-pressed="false">Thiếu dữ liệu</button>
+                      <button type="button" data-state="loading" aria-pressed="false">Đang tải</button>
+                      <button type="button" data-state="empty" aria-pressed="false">Chưa có nguồn</button>
+                      <button type="button" data-state="partial" aria-pressed="false">Thiếu lịch trả nợ</button>
+                      <button type="button" data-state="stale" aria-pressed="false">Tỷ giá cũ</button>
+                      <button type="button" data-state="staleBalance" aria-pressed="false">Số dư đầu kỳ cũ</button>
+                      <button type="button" data-state="error" aria-pressed="false">Lỗi tải</button>
+                      <button type="button" data-state="unavailable" aria-pressed="false">Không mở được</button>
+                    </div>
+                    <div id="state-panel" class="card state-panel" aria-live="polite"></div>
+                    <p class="helper" id="state-anatomy">—</p>
+                  </section>
+
+                </main>
+              </div>
+              <nav class="app-nav" aria-label="Điều hướng chính">
+                <ul class="nav-list">
+                  <li><button type="button" class="nav-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tổng quan</button></li>
+                  <li><button type="button" class="nav-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Tài sản &amp; Nợ</button></li>
+                  <li><button type="button" class="nav-btn active" aria-current="page"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-6 4 4 7-8"/><path d="M4 21h16"/></svg>Dòng tiền</button></li>
+                  <li><button type="button" class="nav-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Mục tiêu</button></li>
+                  <li><button type="button" class="nav-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v8l5 3"/><circle cx="12" cy="12" r="9"/></svg>Nhận định</button></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+        <p id="viewport-note" class="helper" aria-live="polite">360px: một cột, điều hướng dưới, biểu đồ cuộn ngang trong khung riêng chứ không làm trang cuộn ngang, số tiền xuống dòng thay vì bị cắt.</p>
+      </div>
+    </section>
+
+    <!-- ============ 04 RULES ============ -->
+    <section aria-labelledby="rules-title">
+      <div class="section-head">
+        <div><span class="section-mark">04</span><h2 id="rules-title">Quy tắc đưa vào và đối chiếu</h2></div>
+        <p class="meta">Bảy quy tắc quyết định con số nào được phép xuất hiện trong dự báo. Các bảng bên dưới sinh ra từ cùng một phép tính với prototype, nên không thể lệch nhau.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>Bảy quy tắc đưa vào</h3>
+          <ol style="padding-left:1.2rem;margin:0">
+            <li>Chỉ bản ghi người dùng đang thấy mới được đóng góp. Một nghĩa vụ có thật nhưng chưa nhập lịch thì không được vào dự báo.</li>
+            <li>Lịch trả nợ của một công nợ <strong>không</strong> được cộng nếu công nợ đó đã có bản ghi định kỳ liên kết, để mỗi nghĩa vụ chỉ đếm đúng một lần.</li>
+            <li>Lịch bị chặn vẫn hiển thị kèm lý do và kèm phần chênh lệch nó sẽ tạo ra, thay vì biến mất im lặng.</li>
+            <li>Số dư thấp nhất tính trên mọi ngày có phát sinh, không phải trên số dư cuối tháng.</li>
+            <li>Công nợ đáo hạn trong horizon nhưng chưa có lịch thanh toán sinh ra tín hiệu dữ liệu một phần ở tháng đó, không sinh ra số tiền tự bịa.</li>
+            <li>Nguồn gốc ngoại tệ hiển thị số tiền gốc, tỷ giá đã dùng và ngày của tỷ giá.</li>
+            <li>Ngày kỳ kế thừa quy tắc dời ngày của #72: ngày neo không tồn tại trong tháng thì lùi về ngày cuối tháng và được gắn nhãn đã dời.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Chống trùng: ví dụ khoản vay mua căn hộ</h3>
+          <p class="helper">Cùng một nghĩa vụ xuất hiện ở hai nơi. Dự báo giữ bản ghi định kỳ vì chúng chi tiết hơn và truy được về thứ người dùng tự nhập, đồng thời nêu rõ phần chênh lệch thay vì giấu đi.</p>
+          <div class="table-wrap"><table id="dedup-table"><thead><tr><th>Nguồn</th><th class="fig">Mỗi tháng</th><th>Trạng thái</th></tr></thead><tbody></tbody></table></div>
+          <p class="helper" id="dedup-note">—</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Đối chiếu ba tháng dự báo</h3>
+        <p class="helper" id="recon-note">—</p>
+        <div class="table-wrap"><table id="recon-table"><thead><tr><th>Tháng</th><th class="fig">Thu</th><th class="fig">Chi</th><th class="fig">Ròng</th><th class="fig">Số dư cuối</th><th class="fig">Số kỳ</th></tr></thead><tbody></tbody><tfoot></tfoot></table></div>
+        <noscript><p class="noscript">Bảng đối chiếu được tính bằng JavaScript. Giá trị đã chốt: tháng 10/2026 thu 148.300.000 ₫, chi 65.400.000 ₫, ròng +82.900.000 ₫, số dư cuối 732.900.000 ₫. Tháng 11/2026 thu 146.800.000 ₫, chi 65.400.000 ₫, ròng +81.400.000 ₫, số dư cuối 814.300.000 ₫. Tháng 12/2026 thu 152.065.000 ₫, chi 73.650.000 ₫, ròng +78.415.000 ₫, số dư cuối 892.715.000 ₫. Số dư thấp nhất 650.000.000 ₫ ngày 01/10/2026.</p></noscript>
+      </div>
+    </section>
+
+    <!-- ============ 05 STATE MATRIX ============ -->
+    <section aria-labelledby="matrix-title">
+      <div class="section-head">
+        <div><span class="section-mark">05</span><h2 id="matrix-title">Ma trận trạng thái và responsive</h2></div>
+        <p class="meta">Mọi trạng thái giữ lại ngữ cảnh đang xem và đưa ra một đường phục hồi cụ thể. Không trạng thái nào chỉ dựa vào màu.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="sr-only">Ma trận trạng thái của màn hình dự báo</caption>
+          <thead><tr><th>Trạng thái</th><th>Người dùng thấy gì</th><th>Đường phục hồi</th></tr></thead>
+          <tbody>
+            <tr><td>Đủ đệm</td><td>Số dư thấp nhất kèm ngày tuyệt đối, bội số tháng chi phí, và câu diễn giải.</td><td>Không cần hành động; mở tháng thấp nhất để xem chi tiết.</td></tr>
+            <tr><td>Đệm mỏng</td><td>Số dư thấp nhất dưới ngưỡng tham chiếu, kèm chữ và hình vuông cảnh báo.</td><td>Mở tháng thấp nhất, xem các khoản chi lớn nhất trong tháng đó.</td></tr>
+            <tr><td>Số dư âm</td><td>Ngày số dư chạm dưới 0, số tiền thiếu hụt, và kỳ nào đẩy nó xuống.</td><td>Mở đúng kỳ gây thiếu hụt và bản ghi gốc của nó.</td></tr>
+            <tr><td>Thiếu dữ liệu</td><td>Không có số dư đầu kỳ nên chỉ hiện dòng tiền ròng, kèm giải thích vì sao thiếu.</td><td>Nhập số dư tiền và tương đương tiền.</td></tr>
+            <tr><td>Đang tải</td><td>Skeleton giữ đúng chiều cao của tín hiệu, biểu đồ và ba thẻ tháng.</td><td>Không có; không con số tài chính nào chạy animation.</td></tr>
+            <tr><td>Chưa có nguồn</td><td>Nêu rõ chưa có bản ghi định kỳ và chưa có lịch trả nợ nào.</td><td>Thêm bản ghi định kỳ hoặc thêm lịch cho công nợ.</td></tr>
+            <tr><td>Thiếu lịch trả nợ</td><td>Tháng bị ảnh hưởng gắn nhãn dữ liệu một phần, nêu tên công nợ thiếu lịch.</td><td>Mở công nợ đó và nhập lịch thanh toán.</td></tr>
+            <tr><td>Tỷ giá cũ</td><td>Chữ kèm hình, ngày tỷ giá tuyệt đối, và các dòng bị ảnh hưởng.</td><td>Cập nhật tỷ giá trong cài đặt.</td></tr>
+            <tr><td>Số dư đầu kỳ cũ</td><td>Ngày định giá gần nhất và khoảng thời gian đã trôi qua.</td><td>Cập nhật số dư tiền và tương đương tiền.</td></tr>
+            <tr><td>Lỗi tải</td><td>Nêu việc gì hỏng và phần nào vẫn giữ được.</td><td>Thử lại, hoặc quay về tháng hiện tại.</td></tr>
+            <tr><td>Không mở được</td><td>Thông điệp không liệt kê “Không thể mở mục này”.</td><td>Quay lại an toàn về dự báo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:var(--s6)">
+        <table>
+          <caption class="sr-only">Hành vi theo khổ màn hình</caption>
+          <thead><tr><th>Khổ</th><th>Điều hướng</th><th>Bố cục dự báo</th><th>Điểm cần soát</th></tr></thead>
+          <tbody>
+            <tr><td>360px</td><td>Thanh dưới, năm đích đến</td><td>Một cột; tín hiệu, biểu đồ, rồi ba thẻ tháng</td><td>Biểu đồ cuộn trong khung riêng; số tiền không bị cắt</td></tr>
+            <tr><td>375px</td><td>Thanh dưới</td><td>Như 360px, thêm khoảng thở ở thẻ tháng</td><td>Nút chính nằm trong vùng ngón cái</td></tr>
+            <tr><td>768px</td><td>Navigation rail</td><td>Hai cột: tín hiệu và biểu đồ trái, danh sách tháng phải</td><td>Thứ tự đọc của trình đọc màn hình giữ nguyên</td></tr>
+            <tr><td>1024px</td><td>Sidebar trái cố định</td><td>Hai cột, vùng nội dung giới hạn bề ngang</td><td>Biểu đồ không giãn quá rộng làm mất tỷ lệ</td></tr>
+            <tr><td>1440px</td><td>Sidebar trái cố định</td><td>Nội dung căn giữa, giữ nguyên thứ bậc</td><td>Không thêm chỉ số mới chỉ vì có chỗ trống</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 06 A11Y + PO ============ -->
+    <section aria-labelledby="review-title">
+      <div class="section-head">
+        <div><span class="section-mark">06</span><h2 id="review-title">Khả năng tiếp cận và duyệt PO</h2></div>
+        <p class="meta">Duyệt bản này chỉ chấp thuận hướng UX và UI. Nó không chứng nhận kiến trúc, phép tính production, hành vi API hay mức độ sẵn sàng triển khai.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>Checklist kiểm tra</h3>
+          <ul>
+            <li>Thao tác được toàn bộ bằng bàn phím, kể cả từng điểm trên biểu đồ số dư.</li>
+            <li>Focus luôn nhìn thấy; đổi màn hình thì focus nhảy tới tiêu đề mới.</li>
+            <li>Dialog và bottom sheet trả focus về đúng nút đã mở chúng.</li>
+            <li>Biểu đồ có bảng tương đương và tóm tắt bằng chữ cho trình đọc màn hình.</li>
+            <li>Mọi trạng thái mã hóa bằng chữ kèm hình, không bao giờ chỉ bằng màu.</li>
+            <li>Chạm tối thiểu 44px; số tiền dùng chữ số bảng.</li>
+            <li>Tôn trọng giảm chuyển động; không con số tài chính nào có animation.</li>
+            <li>Phóng to chữ thì hàng xuống dòng chứ không cắt chữ hay giấu số.</li>
+            <li>Tắt JavaScript vẫn đọc được phạm vi, quy tắc, ma trận trạng thái và số đã chốt.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Câu hỏi cần Feature Contract #22 chốt</h3>
+          <ol style="padding-left:1.2rem;margin:0">
+            <li>Horizon là ba tháng dương lịch đầy đủ kế tiếp, hay 90 ngày trượt kể từ hôm nay?</li>
+            <li>Số dư đầu kỳ lấy từ tiền và tương đương tiền, hay gồm cả tiền gửi có kỳ hạn?</li>
+            <li>Công nợ đáo hạn trong horizon nhưng chưa có lịch thì nêu cảnh báo như hiện tại, hay coi là một nghĩa vụ đến hạn toàn bộ?</li>
+            <li>Chênh lệch giữa lịch trả nợ và tổng các bản ghi định kỳ liên kết nên được đối chiếu ngay lúc nhập liệu, hay chỉ nêu trong dự báo?</li>
+            <li>Ngưỡng tham chiếu cho số dư thấp nhất nên là một tháng chi phí dự báo, hay một mức do người dùng tự đặt?</li>
+          </ol>
+          <p class="helper">Artifact này không tự quyết định năm điểm trên. Nó chỉ trình bày phương án mặc định để PO có thứ cụ thể mà phản hồi.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Quyết định Product Owner</h3>
+        <p class="helper">Ghi nhận theo từng màn hình và theo luồng. Lựa chọn chỉ lưu trong phiên xem này và không được gửi đi đâu.</p>
+        <div class="review-list" id="review-list"></div>
+        <div class="summary-box" style="margin-top:var(--s4)">
+          <p class="summary-sentence" id="review-summary">Chưa ghi nhận quyết định nào.</p>
+          <p class="helper">Chọn “Yêu cầu chỉnh” hoặc “Từ chối” ở bất kỳ mục nào thì tổng kết sẽ nêu rõ mục đó.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Rikkaus Wealth OS · Issue #78 · Thiết kế dự báo dòng tiền ba tháng · Dữ liệu mô phỏng, không phải hồ sơ tài chính thật.</p>
+    <p>Đối chiếu với <a href="recurring-cash-flow-schedule-expansion-review.html">review #72</a>, <a href="liability-catalog-schedules-collateral-review.html">review #60</a> và <a href="design-guidelines.md">design guidelines</a>.</p>
+  </footer>
+</div>
+
+<dialog id="trace-dialog" aria-labelledby="trace-title">
+  <div class="dialog-head"><div><p class="meta" id="trace-kind">Bản ghi gốc</p><h2 id="trace-title">—</h2></div><button type="button" data-close aria-label="Đóng">Đóng</button></div>
+  <dl class="facts" id="trace-facts"></dl>
+  <p class="helper" id="trace-note">—</p>
+  <div class="dialog-actions"><button type="button" data-close>Đóng</button><button type="button" class="primary" id="trace-open">Mở trong danh mục</button></div>
+</dialog>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= fixture ================= */
+  var TODAY = "2026-09-20";
+  var RATE = 25100, RATE_DATE = "2026-09-12";
+  var OPENING = 650000000, OPENING_DATE = "2026-09-20";
+  var HORIZON = [{y:2026,m:9},{y:2026,m:10},{y:2026,m:11}];
+  var STEP = {monthly:1, quarterly:3, yearly:12};
+  var CADENCE = {monthly:"Hàng tháng", quarterly:"Hàng quý", yearly:"Hàng năm"};
+  var PHRASE = {monthly:"hàng tháng", quarterly:"hàng quý", yearly:"hàng năm"};
+
+  /* recurring entries, carried unchanged from the issue #72 review */
+  var series = [
+    {id:"s1", name:"Lương", type:"income", category:"Lương", amount:132000000, cadence:"monthly", start:"2026-01-01", end:null, link:null},
+    {id:"s2", name:"Thu nhập cho thuê", type:"income", category:"Thu nhập cho thuê", amount:14800000, cadence:"monthly", start:"2026-03-03", end:"2027-02-03", link:"Căn hộ cho thuê Quận 2"},
+    {id:"s3", name:"Cổ tức", type:"income", category:"Cổ tức", amount:3765000, usd:150, cadence:"quarterly", start:"2026-03-15", end:null, link:"Danh mục cổ phiếu HOSE"},
+    {id:"s4", name:"Lãi tiền gửi", type:"income", category:"Lãi tiền gửi", amount:1500000, cadence:"monthly", start:"2025-10-20", end:"2026-10-20", link:"Tiền gửi kỳ hạn 12 tháng"},
+    {id:"s5", name:"Thu nhập trái phiếu hoặc quỹ", type:"income", category:"Thu nhập trái phiếu hoặc quỹ", amount:1500000, cadence:"quarterly", start:"2026-03-22", end:null, link:"Quỹ trái phiếu An Tâm"},
+    {id:"s6", name:"Chi phí sinh hoạt", type:"expense", category:"Chi phí sinh hoạt", amount:23400000, cadence:"monthly", start:"2026-01-01", end:null, link:null},
+    {id:"s7", name:"Nhà ở", type:"expense", category:"Nhà ở", amount:18750000, cadence:"monthly", start:"2024-06-20", end:null, link:null},
+    {id:"s8", name:"Bảo hiểm", type:"expense", category:"Bảo hiểm", amount:5400000, cadence:"yearly", start:"2024-09-12", end:null, link:null},
+    {id:"s9", name:"Thuế và phí", type:"expense", category:"Thuế và phí", amount:8250000, cadence:"quarterly", start:"2026-03-15", end:null, link:null},
+    {id:"s10", name:"Thanh toán gốc công nợ", type:"expense", category:"Thanh toán gốc công nợ", amount:10000000, cadence:"monthly", start:"2024-06-20", end:"2039-05-20", link:"Khoản vay mua căn hộ", liabilityId:"L1"},
+    {id:"s11", name:"Thanh toán lãi", type:"expense", category:"Thanh toán lãi", amount:6250000, cadence:"monthly", start:"2024-06-20", end:"2039-05-20", link:"Khoản vay mua căn hộ", liabilityId:"L1"}
+  ];
+
+  /* liabilities, carried unchanged from the issue #60 review */
+  var liabilities = [
+    {id:"L1", name:"Khoản vay mua căn hộ", category:"Vay ngân hàng", payment:18750000, day:20, start:"2023-06-20", maturity:"2038-06-20", collateral:"Căn hộ Thảo Điền", rate:"8,2%/năm"},
+    {id:"L2", name:"Khoản vay sửa nhà", category:"Vay cá nhân", payment:7000000, day:5, start:"2026-02-05", maturity:"2027-08-05", collateral:"Không liên kết", rate:"6,0%/năm"},
+    {id:"L3", name:"Dư nợ ký quỹ HOSE", category:"Vay ký quỹ", payment:null, day:null, start:"2026-09-01", maturity:"2026-11-30", collateral:"Danh mục cổ phiếu HOSE", rate:"11,5%/năm", reason:"noSchedule"},
+    {id:"L4", name:"Thẻ tín dụng An Tín", category:"Dư nợ thẻ tín dụng", payment:null, day:null, start:"2022-04-12", maturity:null, collateral:"Không liên kết", rate:"28,0%/năm", reason:"notApplicable"},
+    {id:"L5", name:"Bảo lãnh hợp đồng thiết bị", category:"Nghĩa vụ bảo lãnh", payment:null, day:null, start:"2025-09-30", maturity:"2026-09-30", collateral:"Tiền gửi 12 tháng", rate:"Không áp dụng", reason:"notApplicable"},
+    {id:"L6", name:"Khoản phải trả đối tác", category:"Công nợ khác", payment:65000000, day:1, start:"2026-06-01", maturity:"2026-09-01", collateral:"Không liên kết", rate:"Không áp dụng", oneTime:true}
+  ];
+
+  /* ================= date helpers ================= */
+  function pad(n){ return (n<10?"0":"")+n; }
+  function parts(iso){ var p=iso.split("-"); return {y:+p[0], m:+p[1]-1, d:+p[2]}; }
+  function ts(iso){ var p=parts(iso); return Date.UTC(p.y,p.m,p.d); }
+  function dim(y,m){ return new Date(Date.UTC(y,m+1,0)).getUTCDate(); }
+  function isoOf(y,m,d){ return y+"-"+pad(m+1)+"-"+pad(d); }
+  function viDate(iso){ var p=parts(iso); return pad(p.d)+"/"+pad(p.m+1)+"/"+p.y; }
+  function viMonth(y,m){ return pad(m+1)+"/"+y; }
+  function money(n){ return new Intl.NumberFormat("vi-VN").format(Math.round(n))+" ₫"; }
+  function signed(n){ return (n>0?"+":n<0?"−":"")+new Intl.NumberFormat("vi-VN").format(Math.abs(Math.round(n)))+" ₫"; }
+  function monthsBetween(a,b){ return Math.round((ts(b)-ts(a))/86400000/30.44*10)/10; }
+
+  var HSTART = isoOf(HORIZON[0].y, HORIZON[0].m, 1);
+  var HLAST = HORIZON[HORIZON.length-1];
+  var HEND = isoOf(HLAST.y, HLAST.m, dim(HLAST.y, HLAST.m));
+
+  /* ================= expansion ================= */
+  function expand(rule, fromIso, toIso){
+    var s = parts(rule.start), anchor = rule.day || s.d, step = STEP[rule.cadence] || 1;
+    var startTs = ts(rule.start), endTs = rule.end ? ts(rule.end) : null;
+    var fromTs = ts(fromIso), toTs = ts(toIso);
+    var out = [], k = 0, guard = 0;
+    while(guard < 2000){
+      var mi = s.m + k*step, y = s.y + Math.floor(mi/12), m = ((mi%12)+12)%12;
+      var maxDay = dim(y,m), day = Math.min(anchor, maxDay), t = Date.UTC(y,m,day);
+      k++; guard++;
+      if(t > toTs) break;
+      if(endTs !== null && t > endTs) break;
+      if(t >= startTs && t >= fromTs){ out.push({y:y, m:m, d:day, ts:t, iso:isoOf(y,m,day), clamped:day < anchor}); }
+    }
+    return out;
+  }
+
+  /* de-duplication: a liability schedule is suppressed when linked recurring entries exist */
+  var linkedByLiability = {};
+  series.forEach(function(s){ if(s.liabilityId){ (linkedByLiability[s.liabilityId] = linkedByLiability[s.liabilityId] || []).push(s); } });
+
+  /* ================= build movements ================= */
+  var movements = [];
+  series.forEach(function(s){
+    expand(s, HSTART, HEND).forEach(function(o){
+      movements.push({
+        iso:o.iso, ts:o.ts, clamped:o.clamped, sourceKind:"series", source:s,
+        name:s.name, type:s.type, amount:s.amount,
+        signAmount: s.type === "income" ? s.amount : -s.amount
+      });
+    });
+  });
+  var suppressed = [];
+  liabilities.forEach(function(l){
+    if(l.payment === null){ return; }
+    var linked = linkedByLiability[l.id] || [];
+    var rule = {start:l.start, end:l.maturity, cadence: l.oneTime ? "yearly" : "monthly", day:l.day};
+    var occ = l.oneTime ? (ts(l.maturity) >= ts(HSTART) && ts(l.maturity) <= ts(HEND) ? [{iso:l.maturity, ts:ts(l.maturity), clamped:false}] : []) : expand(rule, HSTART, HEND);
+    if(linked.length){
+      suppressed.push({liability:l, linked:linked, count:occ.length});
+      return;
+    }
+    occ.forEach(function(o){
+      movements.push({
+        iso:o.iso, ts:o.ts, clamped:o.clamped, sourceKind:"liability", source:l,
+        name:"Thanh toán " + l.name, type:"expense", amount:l.payment,
+        signAmount: -l.payment
+      });
+    });
+  });
+  movements.sort(function(a,b){ return a.ts - b.ts || (b.signAmount - a.signAmount); });
+  movements.forEach(function(mv, i){ mv.key = "mv" + i; });
+
+  /* ================= per-month roll-up ================= */
+  var months = HORIZON.map(function(h){
+    var list = movements.filter(function(mv){ var p = parts(mv.iso); return p.y === h.y && p.m === h.m; });
+    var income = list.filter(function(mv){ return mv.type === "income"; });
+    var expense = list.filter(function(mv){ return mv.type === "expense"; });
+    var inSum = income.reduce(function(a,b){ return a + b.amount; }, 0);
+    var outSum = expense.reduce(function(a,b){ return a + b.amount; }, 0);
+    return {y:h.y, m:h.m, label:viMonth(h.y,h.m), list:list, income:income, expense:expense, inSum:inSum, outSum:outSum, net:inSum-outSum};
+  });
+
+  /* running balance over every movement date */
+  var balancePoints = [{iso:HSTART, label:"Đầu kỳ", balance:OPENING, change:0, opening:true, items:[]}];
+  (function(){
+    var bal = OPENING, byDate = {};
+    movements.forEach(function(mv){ (byDate[mv.iso] = byDate[mv.iso] || []).push(mv); });
+    Object.keys(byDate).sort().forEach(function(iso){
+      var items = byDate[iso];
+      var change = items.reduce(function(a,b){ return a + b.signAmount; }, 0);
+      bal += change;
+      balancePoints.push({iso:iso, label:viDate(iso), balance:bal, change:change, items:items});
+    });
+  })();
+  months.forEach(function(mo){
+    var last = null;
+    balancePoints.forEach(function(p){ var pp = parts(p.iso); if(!p.opening && pp.y === mo.y && pp.m === mo.m){ last = p; } });
+    mo.closing = last ? last.balance : null;
+  });
+
+  var lowest = balancePoints.reduce(function(a,b){ return b.balance < a.balance ? b : a; }, balancePoints[0]);
+  var avgExpense = months.reduce(function(a,b){ return a + b.outSum; }, 0) / months.length;
+  var coverMonths = avgExpense > 0 ? lowest.balance / avgExpense : null;
+
+  /* ================= DOM helpers ================= */
+  var $ = function(sel){ return document.querySelector(sel); };
+  var $$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+  var device = $("#device");
+  var state = {month:null, movement:null, from:"forecast", lastTrigger:null};
+
+  function toast(message){
+    var el = $("#toast");
+    el.textContent = message;
+    el.classList.remove("hidden");
+    window.clearTimeout(el._t);
+    el._t = window.setTimeout(function(){ el.classList.add("hidden"); }, 4000);
+  }
+  function show(view){
+    $$("[data-view]").forEach(function(s){ s.classList.toggle("active", s.dataset.view === view); });
+    $$("[data-go]").forEach(function(b){ if(b.getAttribute("aria-pressed") !== null){ b.setAttribute("aria-pressed", String(b.dataset.go === view)); } });
+    var active = $('[data-view="' + view + '"]');
+    if(active){ active.focus(); }
+  }
+
+  /* ================= signal ================= */
+  function renderSignal(){
+    var low = lowest, tone, statusText, read;
+    if(low.balance < 0){
+      tone = "bad"; statusText = "Số dư dự kiến xuống dưới 0";
+      read = "Theo các bản ghi đang hiển thị, số dư chạm mức âm vào " + viDate(low.iso) + ". Mở tháng đó để xem kỳ nào đẩy số dư xuống.";
+    } else if(coverMonths !== null && low.balance < avgExpense){
+      tone = "warn"; statusText = "Đệm mỏng hơn ngưỡng tham chiếu";
+      read = "Điểm thấp nhất chưa đủ một tháng chi phí dự báo. Ngưỡng tham chiếu của hệ thống là một tháng chi phí, ở đây là " + money(avgExpense) + ".";
+    } else {
+      tone = "ok"; statusText = "Đủ đệm so với ngưỡng tham chiếu";
+      read = "Điểm thấp nhất tương đương " + (Math.round(coverMonths*10)/10).toString().replace(".", ",") + " tháng chi phí dự báo. Ngưỡng tham chiếu của hệ thống là một tháng chi phí, ở đây là " + money(avgExpense) + ". Đây là phép chiếu từ bản ghi đang hiển thị, không phải cam kết.";
+    }
+    var signal = $("#signal");
+    signal.className = "signal " + tone;
+    $("#signal-status").className = "status " + tone;
+    $("#signal-status").textContent = statusText;
+    $("#signal-amount").textContent = money(low.balance);
+    $("#signal-amount").classList.toggle("bad", low.balance < 0);
+    $("#signal-when").textContent = low.opening
+      ? "Vào " + viDate(low.iso) + ", là số dư đầu kỳ trước khi khoản thu đầu tiên của tháng 10 về."
+      : "Vào " + viDate(low.iso) + ", ngay sau các khoản phát sinh trong ngày đó.";
+    $("#signal-read").textContent = read;
+
+    var ceiling = Math.max(low.balance, avgExpense) * 1.25 || 1;
+    var fillPct = Math.max(0, Math.min(100, (low.balance / ceiling) * 100));
+    var markPct = Math.max(0, Math.min(100, (avgExpense / ceiling) * 100));
+    var fill = $("#gauge-fill");
+    fill.className = "gauge-fill" + (tone === "ok" ? "" : tone === "warn" ? " warn" : " bad");
+    fill.style.width = fillPct + "%";
+    $("#gauge-mark").style.left = markPct + "%";
+    $("#signal-gauge-text").textContent = "Cột đánh dấu là ngưỡng tham chiếu " + money(avgExpense) + ", bằng một tháng chi phí dự báo trung bình. Phần tô là số dư thấp nhất " + money(low.balance) + ".";
+
+    $("#horizon-note").textContent = "Tính đến " + viDate(TODAY) + " · Ba tháng dương lịch đầy đủ kế tiếp, " + months[0].label + " đến " + months[months.length-1].label + " · Tháng 09/2026 đang dở nên không thuộc dự báo.";
+    $("#source-count").textContent = "Dự báo dùng " + countSources() + " bản ghi đang hiển thị và không dùng nguồn nào khác. Xem chi tiết ở màn hình Giả định.";
+  }
+
+  function countSources(){
+    var ids = {};
+    movements.forEach(function(mv){ ids[mv.sourceKind + ":" + mv.source.id] = true; });
+    return Object.keys(ids).length;
+  }
+
+  /* ================= chart ================= */
+  var W = 720, H = 260, PL = 62, PR = 16, PT = 26, PB = 42;
+  var selectedPoint = null;
+
+  function renderChart(){
+    var pts = balancePoints;
+    var lo = Math.min.apply(null, pts.map(function(p){ return p.balance; }));
+    var hi = Math.max.apply(null, pts.map(function(p){ return p.balance; }));
+    var showZero = lo < 0;
+    var yMin = showZero ? Math.min(lo, 0) : lo - (hi-lo)*0.35;
+    var yMax = hi + (hi-lo)*0.12;
+    if(yMax === yMin){ yMax = yMin + 1; }
+    var x = function(i){ return PL + (W-PL-PR) * (pts.length === 1 ? 0 : i/(pts.length-1)); };
+    var y = function(v){ return PT + (H-PT-PB) * (1 - (v-yMin)/(yMax-yMin)); };
+
+    var svg = "";
+    /* month bands */
+    months.forEach(function(mo, idx){
+      var first = null, last = null;
+      pts.forEach(function(p,i){ var pp = parts(p.iso); if(pp.y===mo.y && pp.m===mo.m && !p.opening){ if(first===null){first=i;} last=i; } });
+      if(first === null){ return; }
+      var x0 = x(first) - 14, x1 = x(last) + 14;
+      if(idx % 2 === 0){ svg += '<rect class="month-band" x="'+x0.toFixed(1)+'" y="'+PT+'" width="'+(x1-x0).toFixed(1)+'" height="'+(H-PT-PB)+'"/>'; }
+      svg += '<text class="band-label" x="'+((x0+x1)/2).toFixed(1)+'" y="'+(PT-10)+'" text-anchor="middle">'+mo.label+'</text>';
+    });
+    /* axes */
+    svg += '<line class="axis" x1="'+PL+'" y1="'+(H-PB)+'" x2="'+(W-PR)+'" y2="'+(H-PB)+'"/>';
+    /* threshold */
+    if(avgExpense >= yMin && avgExpense <= yMax){
+      svg += '<line class="threshold" x1="'+PL+'" y1="'+y(avgExpense).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+y(avgExpense).toFixed(1)+'"/>';
+      svg += '<text class="tick" x="'+(PL-6)+'" y="'+(y(avgExpense)+4).toFixed(1)+'" text-anchor="end">Ngưỡng</text>';
+    }
+    if(showZero){
+      svg += '<line class="zero" x1="'+PL+'" y1="'+y(0).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+y(0).toFixed(1)+'"/>';
+      svg += '<text class="tick" x="'+(PL-6)+'" y="'+(y(0)+4).toFixed(1)+'" text-anchor="end">0 ₫</text>';
+    }
+    /* y ticks */
+    [yMax, (yMax+yMin)/2, yMin].forEach(function(v){
+      svg += '<text class="tick" x="'+(PL-6)+'" y="'+(y(v)+4).toFixed(1)+'" text-anchor="end">'+Math.round(v/1000000)+'tr</text>';
+    });
+    /* area + line */
+    var d = pts.map(function(p,i){ return (i?"L":"M") + x(i).toFixed(1) + " " + y(p.balance).toFixed(1); }).join(" ");
+    var base = y(Math.max(yMin, showZero ? 0 : yMin));
+    svg += '<path class="area" d="'+d+' L '+x(pts.length-1).toFixed(1)+' '+base.toFixed(1)+' L '+x(0).toFixed(1)+' '+base.toFixed(1)+' Z"/>';
+    svg += '<path class="line" d="'+d+'"/>';
+    /* points */
+    pts.forEach(function(p,i){
+      var isLow = p === lowest;
+      var cx = x(i).toFixed(1), cy = y(p.balance).toFixed(1);
+      var label = (p.opening ? viDate(p.iso) + ", số dư đầu kỳ " + money(p.balance) : viDate(p.iso) + ", số dư " + money(p.balance)) + (isLow ? ", thấp nhất trong ba tháng" : "");
+      svg += '<g class="point" role="button" tabindex="0" data-i="'+i+'" aria-pressed="false" aria-label="'+label+'">';
+      svg += '<rect class="hit" x="'+(x(i)-16).toFixed(1)+'" y="'+PT+'" width="32" height="'+(H-PT-PB)+'"/>';
+      svg += '<circle class="pt'+(isLow?" low":"")+'" cx="'+cx+'" cy="'+cy+'" r="'+(isLow?6:4.5)+'"/>';
+      if(isLow){ svg += '<text class="low-flag" x="'+cx+'" y="'+(y(p.balance)-14).toFixed(1)+'" text-anchor="'+(i===0?"start":"middle")+'">▲ Thấp nhất</text>'; }
+      svg += '</g>';
+    });
+    /* x labels: first, each month first point, last */
+    pts.forEach(function(p,i){
+      var show = i === 0 || i === pts.length-1 || (i>0 && parts(p.iso).m !== parts(pts[i-1].iso).m);
+      if(!show){ return; }
+      svg += '<text class="tick" x="'+x(i).toFixed(1)+'" y="'+(H-PB+18)+'" text-anchor="'+(i===0?"start":i===pts.length-1?"end":"middle")+'">'+(p.opening?"01/10":viDate(p.iso).slice(0,5))+'</text>';
+    });
+    $("#chart").innerHTML = svg;
+
+    $("#chart-summary").textContent = "Số dư đi từ " + money(OPENING) + " ngày " + viDate(HSTART) + " tới " + money(pts[pts.length-1].balance) + " ngày " + viDate(pts[pts.length-1].iso) + ", qua " + (pts.length-1) + " ngày có phát sinh. Điểm thấp nhất là " + money(lowest.balance) + " ngày " + viDate(lowest.iso) + ".";
+
+    var rows = pts.map(function(p){
+      return "<tr><td class=\"fig\">"+(p.opening ? viDate(p.iso)+" (đầu kỳ)" : viDate(p.iso))+"</td><td>"+(p.opening ? "Số dư mang sang" : p.items.map(function(m){ return m.name; }).join(", "))+"</td><td class=\"fig\">"+(p.opening?"—":signed(p.change))+"</td><td class=\"fig\">"+money(p.balance)+(p===lowest?" · thấp nhất":"")+"</td></tr>";
+    }).join("");
+    $("#chart-table tbody").innerHTML = rows;
+
+    $$("#chart .point").forEach(function(g){
+      var i = +g.dataset.i;
+      var act = function(){ selectPoint(i); };
+      g.addEventListener("click", act);
+      g.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); act(); } });
+      g.addEventListener("focus", act);
+    });
+  }
+
+  function selectPoint(i){
+    var p = balancePoints[i];
+    selectedPoint = i;
+    $$("#chart .point").forEach(function(g){ g.setAttribute("aria-pressed", String(+g.dataset.i === i)); });
+    var html = "<p><strong class=\"fig\">"+(p.opening ? viDate(p.iso) + " · số dư đầu kỳ" : viDate(p.iso))+"</strong></p>";
+    html += "<p class=\"fig\"><strong>"+money(p.balance)+"</strong>"+(p===lowest ? " · thấp nhất trong ba tháng" : "")+"</p>";
+    if(p.opening){
+      html += "<p class=\"helper\">Số dư tiền và tương đương tiền mang sang, định giá "+viDate(OPENING_DATE)+". Chưa có khoản thu chi nào của horizon phát sinh.</p>";
+    } else {
+      html += "<p class=\"helper\">Thay đổi trong ngày: <strong class=\"fig\">"+signed(p.change)+"</strong> từ "+p.items.length+" kỳ.</p>";
+      html += "<ul class=\"helper\">"+p.items.map(function(m){ return "<li>"+m.name+": <span class=\"fig\">"+(m.type==="income"?"+":"−")+money(m.amount)+"</span></li>"; }).join("")+"</ul>";
+    }
+    $("#chart-readout").innerHTML = html;
+  }
+
+  /* ================= months ================= */
+  function renderMonths(){
+    var host = $("#month-list");
+    host.innerHTML = "";
+    months.forEach(function(mo){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "month-row";
+      var partial = partialFor(mo);
+      b.innerHTML = '<span class="m-main"><span class="month-name">Tháng '+mo.label+'</span>'
+        + '<span class="meta">Thu '+money(mo.inSum)+' · Chi '+money(mo.outSum)+'</span>'
+        + '<span class="tag-row"><span class="tag">'+mo.list.length+' kỳ dự kiến</span>'
+        + (partial ? '<span class="tag warn">Dữ liệu một phần</span>' : '')
+        + (mo === lowestMonth() ? '<span class="tag gold">Chứa điểm thấp nhất</span>' : '')
+        + '</span></span>'
+        + '<span class="m-side"><span class="net '+(mo.net>=0?"in":"out")+' fig">'+signed(mo.net)+'</span>'
+        + '<span class="helper fig">Số dư cuối '+money(mo.closing)+'</span></span>';
+      b.addEventListener("click", function(){ openMonth(mo, b); });
+      host.appendChild(b);
+    });
+
+    var partials = months.filter(partialFor);
+    var banner = $("#partial-banner");
+    if(partials.length){
+      var names = {};
+      partials.forEach(function(mo){ partialFor(mo).forEach(function(l){ names[l.name] = true; }); });
+      $("#partial-text").textContent = "Tháng " + partials.map(function(m){ return m.label; }).join(", ") + " có nghĩa vụ chưa thể đưa vào dự báo: " + Object.keys(names).join(", ") + " đáo hạn trong khoảng này nhưng chưa nhập lịch thanh toán. Dự báo không tự suy ra số tiền, nên con số thực tế có thể thấp hơn.";
+      banner.classList.remove("hidden");
+    } else {
+      banner.classList.add("hidden");
+    }
+  }
+  function lowestMonth(){
+    var p = parts(lowest.iso);
+    return months.filter(function(mo){ return mo.y === p.y && mo.m === p.m; })[0] || months[0];
+  }
+  function partialFor(mo){
+    var hit = liabilities.filter(function(l){
+      if(l.reason !== "noSchedule" || !l.maturity){ return false; }
+      var p = parts(l.maturity);
+      return p.y === mo.y && p.m === mo.m;
+    });
+    return hit.length ? hit : null;
+  }
+
+  function openMonth(mo, trigger){
+    state.month = mo; state.lastTrigger = trigger || null;
+    $("#month-heading").textContent = "Tháng " + mo.label;
+    $("#month-net").textContent = (mo.net >= 0 ? "Dự kiến dư " : "Dự kiến thiếu ") + money(Math.abs(mo.net)) + " trong tháng " + mo.label + ".";
+    $("#month-explain").textContent = "Con số này là " + money(mo.inSum) + " thu vào trừ " + money(mo.outSum) + " chi ra, sinh ra từ " + mo.list.length + " kỳ của các bản ghi đang hiển thị. Không có khoản nào được ước lượng thêm.";
+    var facts = [
+      ["Số dư đầu tháng", money((mo.closing || 0) - mo.net)],
+      ["Số dư cuối tháng", money(mo.closing)],
+      ["Số kỳ thu", mo.income.length + " kỳ"],
+      ["Số kỳ chi", mo.expense.length + " kỳ"]
+    ];
+    var partial = partialFor(mo);
+    if(partial){ facts.push(["Chưa tính được", partial.map(function(l){ return l.name; }).join(", ")]); }
+    $("#month-facts").innerHTML = facts.map(function(f){ return '<div class="fact"><dt>'+f[0]+'</dt><dd class="fig">'+f[1]+'</dd></div>'; }).join("");
+    $("#month-income-total").textContent = money(mo.inSum);
+    $("#month-expense-total").textContent = money(mo.outSum);
+    renderLines($("#month-income"), mo.income);
+    renderLines($("#month-expense"), mo.expense);
+    show("month");
+  }
+
+  function renderLines(host, list){
+    host.innerHTML = "";
+    if(!list.length){
+      host.innerHTML = '<p class="helper" style="padding:var(--s3)">Không có kỳ nào trong tháng này.</p>';
+      return;
+    }
+    list.slice().sort(function(a,b){ return a.ts - b.ts; }).forEach(function(mv){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "line-row";
+      b.innerHTML = '<span class="line-main"><strong>'+mv.name+'</strong>'
+        + '<span class="meta">'+viDate(mv.iso)+' · '+(mv.sourceKind === "series" ? CADENCE[mv.source.cadence] + " · bản ghi định kỳ" : "Lịch trả nợ · công nợ")+'</span>'
+        + (mv.clamped || mv.source.usd ? '<span class="tag-row">'
+            + (mv.clamped ? '<span class="tag warn">Đã dời về cuối tháng</span>' : '')
+            + (mv.source.usd ? '<span class="tag">Gốc '+mv.source.usd+' USD</span>' : '')
+            + '</span>' : '')
+        + '</span>'
+        + '<span class="line-amount '+(mv.type==="income"?"in":"out")+' fig">'+(mv.type==="income"?"+":"−")+money(mv.amount)+'</span>';
+      b.addEventListener("click", function(){ openSource(mv, b); });
+      host.appendChild(b);
+    });
+  }
+
+  /* ================= source detail ================= */
+  function openSource(mv, trigger){
+    state.movement = mv; state.lastTrigger = trigger || null;
+    $("#source-heading").textContent = mv.name;
+    $("#source-amount").textContent = (mv.type === "income" ? "+" : "−") + money(mv.amount);
+    var tags = [];
+    tags.push('<span class="tag brand">'+(mv.type === "income" ? "Thu nhập" : "Chi phí")+'</span>');
+    tags.push('<span class="tag">'+(mv.sourceKind === "series" ? CADENCE[mv.source.cadence] : "Theo lịch trả nợ")+'</span>');
+    if(mv.clamped){ tags.push('<span class="tag warn">Đã dời về cuối tháng</span>'); }
+    if(mv.source.usd){ tags.push('<span class="tag">'+mv.source.usd+' USD</span>'); }
+    $("#source-tags").innerHTML = tags.join("");
+
+    var why;
+    if(mv.sourceKind === "series"){
+      why = "Bản ghi định kỳ “" + mv.source.name + "” lặp " + PHRASE[mv.source.cadence] + " vào ngày " + parts(mv.source.start).d
+          + ", bắt đầu từ " + viDate(mv.source.start)
+          + (mv.source.end ? " và kết thúc vào " + viDate(mv.source.end) + "." : " và chưa có ngày kết thúc.")
+          + " Kỳ này rơi vào " + viDate(mv.iso) + " nên nằm trong tháng " + viMonth(parts(mv.iso).y, parts(mv.iso).m) + ".";
+      if(mv.clamped){ why += " Ngày neo không tồn tại trong tháng này nên kỳ được dời về ngày cuối tháng."; }
+    } else {
+      why = "Công nợ “" + mv.source.name + "” có lịch thanh toán " + money(mv.source.payment) + " vào ngày " + mv.source.day + " hằng tháng, đáo hạn " + viDate(mv.source.maturity)
+          + ". Công nợ này chưa có bản ghi định kỳ liên kết, nên lịch trả nợ là nguồn duy nhất và được đưa vào dự báo.";
+    }
+    $("#source-why").textContent = why;
+
+    var facts = [
+      ["Ngày dự kiến", viDate(mv.iso)],
+      ["Số tiền", money(mv.amount)],
+      ["Loại nguồn", mv.sourceKind === "series" ? "Bản ghi định kỳ" : "Lịch trả nợ của công nợ"]
+    ];
+    if(mv.sourceKind === "series"){
+      facts.push(["Chu kỳ", CADENCE[mv.source.cadence]]);
+      facts.push(["Bắt đầu", viDate(mv.source.start)]);
+      facts.push(["Kết thúc", mv.source.end ? viDate(mv.source.end) : "Chưa có"]);
+      facts.push(["Liên kết", mv.source.link || "Không liên kết"]);
+    } else {
+      facts.push(["Kỳ thanh toán", "Hằng tháng, ngày " + mv.source.day]);
+      facts.push(["Đáo hạn", viDate(mv.source.maturity)]);
+      facts.push(["Tài sản bảo đảm", mv.source.collateral]);
+      facts.push(["Lãi suất", mv.source.rate]);
+    }
+    if(mv.source.usd){
+      facts.push(["Số tiền gốc", mv.source.usd + " USD"]);
+      facts.push(["Tỷ giá đã dùng", new Intl.NumberFormat("vi-VN").format(RATE) + " ₫/USD, nhập " + viDate(RATE_DATE)]);
+    }
+    $("#source-facts").innerHTML = facts.map(function(f){ return '<div class="fact"><dt>'+f[0]+'</dt><dd class="fig">'+f[1]+'</dd></div>'; }).join("");
+
+    var monthLabel = state.month ? state.month.label : viMonth(parts(mv.iso).y, parts(mv.iso).m);
+    $("#source-chain").innerHTML = ['<span>Dự báo ba tháng</span>','<span>Tháng '+monthLabel+'</span>','<span>'+mv.name+' '+viDate(mv.iso)+'</span>','<span>'+(mv.sourceKind==="series"?"Bản ghi định kỳ":"Công nợ")+' “'+mv.source.name+'”</span>'].join("");
+    $("#source-origin").textContent = mv.sourceKind === "series"
+      ? "Bản ghi gốc nằm trong danh mục Dòng tiền, thuộc loại " + mv.source.category + "."
+      : "Bản ghi gốc nằm trong danh mục Công nợ, thuộc loại " + mv.source.category + ".";
+    show("source");
+  }
+
+  /* ================= assumptions ================= */
+  function renderAssumptions(){
+    var list = [
+      ["Số dư đầu kỳ", money(OPENING) + " là số dư tiền và tương đương tiền, định giá " + viDate(OPENING_DATE) + ". Đây là điểm xuất phát của đường số dư, không phải một khoản thu."],
+      ["Chỉ dùng bản ghi đang hiển thị", "Dự báo đọc " + countSources() + " bản ghi: các bản ghi định kỳ trong danh mục Dòng tiền và các lịch trả nợ trong danh mục Công nợ. Không có nguồn nào khác."],
+      ["Không ước lượng thêm", "Không lạm phát, không tăng lương, không lợi suất giả định, và không giao dịch một lần nào trong tương lai."],
+      ["Tỷ giá", "1 USD = " + new Intl.NumberFormat("vi-VN").format(RATE) + " ₫, do người dùng nhập ngày " + viDate(RATE_DATE) + ". Áp dụng cho các nguồn ghi bằng USD và không tự cập nhật."],
+      ["Chống trùng nghĩa vụ", "Công nợ đã có bản ghi định kỳ liên kết thì lịch trả nợ của nó không được cộng thêm, để nghĩa vụ chỉ đếm một lần."],
+      ["Ngưỡng tham chiếu", money(avgExpense) + ", bằng một tháng chi phí dự báo trung bình. Đây là ngưỡng tham chiếu của hệ thống, không phải chuẩn mực tài chính phổ quát."],
+      ["Horizon", "Ba tháng dương lịch đầy đủ kế tiếp, " + months[0].label + " đến " + months[months.length-1].label + ". Tháng " + viMonth(parts(TODAY).y, parts(TODAY).m) + " đang dở nên không thuộc dự báo."],
+      ["Ngày kỳ", "Ngày neo không tồn tại trong một tháng thì kỳ lùi về ngày cuối tháng và được gắn nhãn đã dời, theo đúng quy tắc đã duyệt ở issue #72."],
+      ["Bản ghi “Nhà ở”", "Bản ghi định kỳ “Nhà ở” không liên kết công nợ nào, nên nó không thuộc nhóm chống trùng và được cộng như một chi phí độc lập."]
+    ];
+    $("#assumption-list").innerHTML = list.map(function(a,i){
+      return '<div class="assume"><span class="assume-no fig">'+(i+1)+'</span><span class="assume-body"><strong>'+a[0]+'</strong><span class="helper">'+a[1]+'</span></span></div>';
+    }).join("");
+
+    var agg = {};
+    movements.forEach(function(mv){
+      var k = mv.sourceKind + ":" + mv.source.id;
+      agg[k] = agg[k] || {name:mv.name, kind:mv.sourceKind, count:0, total:0, type:mv.type};
+      agg[k].count++; agg[k].total += mv.amount;
+    });
+    $("#included-table tbody").innerHTML = Object.keys(agg).map(function(k){
+      var a = agg[k];
+      return '<tr><td>'+a.name+'</td><td>'+(a.kind === "series" ? "Bản ghi định kỳ · " + (a.type === "income" ? "thu" : "chi") : "Lịch trả nợ · chi")+'</td><td class="fig">'+a.count+'</td><td class="fig">'+(a.type==="income"?"+":"−")+money(a.total)+'</td></tr>';
+    }).join("");
+    $("#included-note").textContent = Object.keys(agg).length + " bản ghi sinh ra " + movements.length + " kỳ trong ba tháng dự báo.";
+
+    var rows = [];
+    suppressed.forEach(function(s){
+      rows.push([s.liability.name + " · lịch trả nợ", "Đã có " + s.linked.length + " bản ghi định kỳ liên kết (" + s.linked.map(function(x){ return x.name; }).join(", ") + "). Cộng thêm lịch sẽ đếm nghĩa vụ hai lần.", "Đối chiếu chênh lệch ở mục 04"]);
+    });
+    liabilities.forEach(function(l){
+      if(l.reason === "noSchedule"){
+        rows.push([l.name, "Đáo hạn " + viDate(l.maturity) + " nằm trong horizon nhưng chưa nhập lịch thanh toán. Dự báo không tự suy ra số tiền.", "Nhập lịch thanh toán cho công nợ này"]);
+      } else if(l.reason === "notApplicable"){
+        rows.push([l.name, "Loại công nợ này không áp dụng lịch thanh toán định kỳ" + (l.maturity ? ", đáo hạn " + viDate(l.maturity) + (ts(l.maturity) < ts(HSTART) ? " nằm trước horizon" : "") : "") + ".", "Không có; theo dõi trong danh mục Công nợ"]);
+      } else if(l.payment !== null && !linkedByLiability[l.id]){
+        var occ = l.oneTime ? (ts(l.maturity) >= ts(HSTART) && ts(l.maturity) <= ts(HEND)) : true;
+        if(!occ){ rows.push([l.name, "Đến hạn " + viDate(l.maturity) + ", nằm ngoài horizon " + viDate(HSTART) + " – " + viDate(HEND) + ".", "Xử lý trong tháng hiện tại"]); }
+      }
+    });
+    series.forEach(function(s){
+      if(expand(s, HSTART, HEND).length === 0){
+        var next = expand(s, TODAY, "2030-12-31")[0];
+        rows.push(["Bản ghi định kỳ “" + s.name + "”", "Không có kỳ nào rơi vào horizon" + (next ? "; kỳ kế tiếp là " + viDate(next.iso) : "") + ".", "Không có"]);
+      }
+    });
+    $("#excluded-table tbody").innerHTML = rows.map(function(r){ return '<tr class="muted"><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'; }).join("");
+  }
+
+  /* ================= section 04 tables ================= */
+  function renderRules(){
+    var s = suppressed[0];
+    if(s){
+      var linkedTotal = s.linked.reduce(function(a,b){ return a + b.amount; }, 0);
+      var rows = [['Lịch trả nợ của công nợ “'+s.liability.name+'”', money(s.liability.payment), '<span class="status warn">Không cộng · đã có bản ghi định kỳ liên kết</span>']];
+      s.linked.forEach(function(x){ rows.push(['Bản ghi định kỳ “'+x.name+'”', money(x.amount), '<span class="status ok">Đã cộng vào dự báo</span>']); });
+      $("#dedup-table tbody").innerHTML = rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td class="fig">'+r[1]+'</td><td>'+r[2]+'</td></tr>'; }).join("");
+      var diff = s.liability.payment - linkedTotal;
+      $("#dedup-note").textContent = "Lịch trả nợ ghi " + money(s.liability.payment) + " mỗi tháng, trong khi hai bản ghi định kỳ liên kết cộng lại là " + money(linkedTotal) + ". Chênh lệch " + money(Math.abs(diff)) + " mỗi tháng được nêu ra ở đây thay vì giấu đi, và là câu hỏi số 4 cho Feature Contract #22.";
+    }
+
+    $("#recon-table tbody").innerHTML = months.map(function(mo){
+      return '<tr><td>Tháng '+mo.label+'</td><td class="fig">'+money(mo.inSum)+'</td><td class="fig">'+money(mo.outSum)+'</td><td class="fig">'+signed(mo.net)+'</td><td class="fig">'+money(mo.closing)+'</td><td class="fig">'+mo.list.length+'</td></tr>';
+    }).join("");
+    var tIn = months.reduce(function(a,b){ return a+b.inSum; },0), tOut = months.reduce(function(a,b){ return a+b.outSum; },0);
+    $("#recon-table tfoot").innerHTML = '<tr><th>Tổng ba tháng</th><th class="fig">'+money(tIn)+'</th><th class="fig">'+money(tOut)+'</th><th class="fig">'+signed(tIn-tOut)+'</th><th class="fig">'+money(months[months.length-1].closing)+'</th><th class="fig">'+movements.length+'</th></tr>';
+    $("#recon-note").textContent = "Số dư đầu kỳ " + money(OPENING) + " ngày " + viDate(OPENING_DATE) + ". Điểm thấp nhất " + money(lowest.balance) + " rơi vào " + viDate(lowest.iso) + ", không trùng với bất kỳ số dư cuối tháng nào, nên báo cáo theo cuối tháng sẽ che mất nó.";
+  }
+
+  /* ================= state gallery ================= */
+  var STATES = {
+    ok: {
+      anatomy:"Đủ đệm: nêu số tiền, ngày tuyệt đối, bội số tháng chi phí, và một câu diễn giải. Không thúc giục hành động nào.",
+      html:function(){ return '<span class="status ok">Đủ đệm so với ngưỡng tham chiếu</span>'
+        + '<p class="signal-amount fig">'+money(lowest.balance)+'</p>'
+        + '<p class="meta">Thấp nhất vào '+viDate(lowest.iso)+', là số dư đầu kỳ trước khi lương tháng 10 về.</p>'
+        + '<p>Tương đương '+(Math.round(coverMonths*10)/10).toString().replace(".",",")+' tháng chi phí dự báo. Ngưỡng tham chiếu của hệ thống là một tháng chi phí, ở đây là '+money(avgExpense)+'.</p>'
+        + '<div class="actions"><button type="button" class="tonal">Mở tháng thấp nhất</button></div>'; }
+    },
+    thin: {
+      anatomy:"Đệm mỏng: cùng cấu trúc, nhưng thêm hình vuông cảnh báo, nêu khoảng cách còn lại tới ngưỡng, và đưa ra hành động cụ thể.",
+      html:function(){ return '<span class="status warn">Đệm mỏng hơn ngưỡng tham chiếu</span>'
+        + '<p class="signal-amount fig">42.150.000 ₫</p>'
+        + '<p class="meta">Thấp nhất vào 20/11/2026, ngay sau kỳ trả nợ của tháng 11.</p>'
+        + '<p>Thấp hơn ngưỡng tham chiếu '+money(avgExpense)+' khoảng 26.000.000 ₫. Ba khoản chi lớn nhất trong tháng đó là Nhà ở, Thanh toán gốc công nợ và Chi phí sinh hoạt.</p>'
+        + '<div class="actions"><button type="button" class="tonal">Xem các khoản chi tháng 11</button></div>'; }
+    },
+    negative: {
+      anatomy:"Số dư âm: nêu ngày chạm dưới 0, mức thiếu hụt, và chỉ đúng kỳ đẩy số dư xuống. Dùng chữ, hình thoi và màu cùng lúc.",
+      html:function(){ return '<span class="status bad">Số dư dự kiến xuống dưới 0</span>'
+        + '<p class="signal-amount fig bad">−18.600.000 ₫</p>'
+        + '<p class="meta">Chạm mức âm vào 20/12/2026, sau khi kỳ trả nợ và thuế quý cùng rơi vào tháng 12.</p>'
+        + '<p>Kỳ đẩy số dư xuống dưới 0 là “Thanh toán gốc công nợ” ngày 20/12/2026. Đây là phép chiếu từ bản ghi đang hiển thị, không phải cam kết.</p>'
+        + '<div class="actions"><button type="button" class="tonal">Mở kỳ gây thiếu hụt</button><button type="button">Xem tháng 12</button></div>'; }
+    },
+    unknown: {
+      anatomy:"Thiếu dữ liệu: không bịa số dư. Nêu rõ thiếu gì, vẫn hiện phần tính được, và đưa ra đường bổ sung dữ liệu.",
+      html:function(){ return '<span class="status info">Chưa đủ dữ liệu để tính số dư thấp nhất</span>'
+        + '<p class="signal-amount fig">Không khả dụng</p>'
+        + '<p class="meta">Chưa có số dư tiền và tương đương tiền nên không có điểm xuất phát cho đường số dư.</p>'
+        + '<p>Phần dòng tiền ròng vẫn tính được: '+signed(months.reduce(function(a,b){return a+b.net;},0))+' trong ba tháng. Nhập số dư tiền mặt và ngân hàng để thấy điểm thấp nhất.</p>'
+        + '<div class="actions"><button type="button" class="primary">Nhập số dư tiền</button></div>'; }
+    },
+    loading: {
+      anatomy:"Đang tải: skeleton giữ đúng chiều cao của tín hiệu, biểu đồ và ba thẻ tháng, nên bố cục không nhảy khi dữ liệu về.",
+      html:function(){ return '<p class="meta">Đang tính dự báo từ bản ghi đang hiển thị</p>'
+        + '<div class="skeleton"><span style="width:40%"></span><span style="width:62%;height:2rem"></span><span style="width:80%"></span><span style="height:5rem"></span><span style="width:70%"></span><span style="width:55%"></span></div>'; }
+    },
+    empty: {
+      anatomy:"Chưa có nguồn: không giấu đích đến. Nêu rõ thiếu loại bản ghi nào và đưa ra đúng hai hành động tiếp theo.",
+      html:function(){ return '<span class="status info">Chưa có nguồn nào để dự báo</span>'
+        + '<p>Chưa có bản ghi định kỳ nào và chưa có công nợ nào có lịch thanh toán, nên chưa thể chiếu ba tháng tới.</p>'
+        + '<p class="helper">Dự báo chỉ dùng bản ghi bạn đã nhập. Thêm một nguồn là đủ để thấy tháng đầu tiên.</p>'
+        + '<div class="actions"><button type="button" class="primary">Thêm bản ghi định kỳ</button><button type="button">Thêm lịch cho công nợ</button></div>'; }
+    },
+    partial: {
+      anatomy:"Dữ liệu một phần: nêu thông tin đang có, thông tin còn thiếu, ảnh hưởng tới cách đọc, và đường hoàn thiện.",
+      html:function(){ return '<span class="status warn">Dữ liệu một phần ở tháng 11/2026</span>'
+        + '<p>“Dư nợ ký quỹ HOSE” đáo hạn 30/11/2026 nhưng chưa nhập lịch thanh toán, nên dự báo không đưa khoản này vào.</p>'
+        + '<p class="helper">Ba tháng vẫn tính được từ các nguồn còn lại. Con số thực tế của tháng 11 có thể thấp hơn con số đang hiển thị.</p>'
+        + '<div class="actions"><button type="button" class="tonal">Nhập lịch thanh toán</button><button type="button">Xem bản ghi bị loại</button></div>'; }
+    },
+    stale: {
+      anatomy:"Tỷ giá cũ: chữ kèm hình, ngày tuyệt đối, nêu đúng dòng nào bị ảnh hưởng, và đường cập nhật.",
+      html:function(){ return '<span class="status warn">Tỷ giá đã nhập cách đây một thời gian</span>'
+        + '<p>Tỷ giá đang dùng là 25.100 ₫/USD, nhập ngày '+viDate(RATE_DATE)+'.</p>'
+        + '<p class="helper">Ảnh hưởng tới một dòng dự báo: “Cổ tức” 150 USD trong tháng 12/2026, hiện quy đổi thành '+money(150*RATE)+'. Các dòng VND không bị ảnh hưởng.</p>'
+        + '<div class="actions"><button type="button" class="tonal">Cập nhật tỷ giá</button></div>'; }
+    },
+    staleBalance: {
+      anatomy:"Số dư đầu kỳ cũ: nêu ngày định giá gần nhất, khoảng thời gian đã trôi qua, và hệ quả với điểm thấp nhất.",
+      html:function(){ return '<span class="status warn">Số dư đầu kỳ chưa được cập nhật gần đây</span>'
+        + '<p>Số dư tiền và tương đương tiền '+money(OPENING)+' được định giá ngày '+viDate(OPENING_DATE)+'.</p>'
+        + '<p class="helper">Toàn bộ đường số dư dịch lên hoặc xuống theo con số này, nên điểm thấp nhất cũng dịch theo. Dòng tiền ròng từng tháng thì không đổi.</p>'
+        + '<div class="actions"><button type="button" class="tonal">Cập nhật số dư tiền</button></div>'; }
+    },
+    error: {
+      anatomy:"Lỗi tải: nêu việc gì hỏng, phần nào vẫn giữ được, và hai đường ra — thử lại hoặc quay về nơi an toàn.",
+      html:function(){ return '<span class="status bad">Không tải được dự báo</span>'
+        + '<p>Không lấy được dữ liệu dự báo. Các bản ghi trong danh mục Dòng tiền vẫn nguyên vẹn và không có thay đổi nào bị mất.</p>'
+        + '<div class="actions"><button type="button" class="primary">Thử lại</button><button type="button">Về tháng hiện tại</button></div>'; }
+    },
+    unavailable: {
+      anatomy:"Không mở được: thông điệp không liệt kê, không xác nhận bản ghi có tồn tại hay không, kèm đường quay lại an toàn.",
+      html:function(){ return '<span class="status bad">Không thể mở mục này</span>'
+        + '<p>Bạn có thể quay lại dự báo và thử lại sau.</p>'
+        + '<div class="actions"><button type="button" class="tonal">Quay lại dự báo</button></div>'; }
+    }
+  };
+  function renderState(key){
+    $("#state-panel").innerHTML = STATES[key].html();
+    $("#state-anatomy").textContent = STATES[key].anatomy;
+    $$("[data-state]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.state === key)); });
+  }
+
+  /* ================= PO review ================= */
+  var REVIEW = [
+    ["screen-forecast","Màn hình: Dự báo ba tháng"],
+    ["screen-month","Màn hình: Chi tiết tháng"],
+    ["screen-source","Màn hình: Chi tiết kỳ và truy ngược"],
+    ["screen-assumptions","Màn hình: Giả định và nguồn"],
+    ["flow-trace","Luồng: từ số dư thấp nhất tới bản ghi gốc"],
+    ["flow-dedup","Quy tắc: chống trùng giữa lịch trả nợ và bản ghi định kỳ"],
+    ["flow-signal","Quy tắc: ngưỡng tham chiếu của tín hiệu số dư thấp nhất"],
+    ["flow-states","Bộ trạng thái và hành vi responsive"]
+  ];
+  function renderReview(){
+    $("#review-list").innerHTML = REVIEW.map(function(r){
+      return '<div class="review-row"><strong>'+r[1]+'</strong><div class="review-options">'
+        + ['approve|Duyệt','changes|Yêu cầu chỉnh','reject|Từ chối'].map(function(o){
+            var v = o.split("|");
+            return '<label class="review-choice"><input type="radio" name="'+r[0]+'" value="'+v[0]+'"><span>'+v[1]+'</span></label>';
+          }).join("")
+        + '</div></div>';
+    }).join("");
+    $("#review-list").addEventListener("change", summarizeReview);
+  }
+  function summarizeReview(){
+    var approved = [], changes = [], rejected = [];
+    REVIEW.forEach(function(r){
+      var picked = $('input[name="'+r[0]+'"]:checked');
+      if(!picked){ return; }
+      if(picked.value === "approve"){ approved.push(r[1]); }
+      else if(picked.value === "changes"){ changes.push(r[1]); }
+      else { rejected.push(r[1]); }
+    });
+    var total = approved.length + changes.length + rejected.length;
+    if(!total){ $("#review-summary").textContent = "Chưa ghi nhận quyết định nào."; return; }
+    var text = "Đã ghi nhận " + total + "/" + REVIEW.length + " mục. Duyệt " + approved.length + ", yêu cầu chỉnh " + changes.length + ", từ chối " + rejected.length + ".";
+    if(changes.length){ text += " Cần chỉnh: " + changes.join("; ") + "."; }
+    if(rejected.length){ text += " Từ chối: " + rejected.join("; ") + "."; }
+    $("#review-summary").textContent = text;
+  }
+
+  /* ================= wiring ================= */
+  $$("[data-mode]").forEach(function(b){
+    b.addEventListener("click", function(){
+      $$("[data-mode]").forEach(function(x){ x.setAttribute("aria-pressed", String(x === b)); });
+      var mode = b.dataset.mode;
+      device.dataset.mode = mode === "phone-lg" ? "phone" : mode;
+      device.style.maxWidth = mode === "phone" ? "22.5rem" : mode === "phone-lg" ? "23.4375rem" : "";
+      var notes = {
+        "phone":"360px: một cột, điều hướng dưới, biểu đồ cuộn trong khung riêng chứ không làm trang cuộn ngang, số tiền xuống dòng thay vì bị cắt.",
+        "phone-lg":"375px: như 360px, thêm khoảng thở ở thẻ tháng; nút chính vẫn nằm trong vùng ngón cái.",
+        "tablet":"768px: chuyển sang navigation rail, tín hiệu và biểu đồ ở cột trái, danh sách tháng ở cột phải; thứ tự đọc giữ nguyên.",
+        "desktop":"1024px: sidebar trái cố định, vùng nội dung giới hạn bề ngang để biểu đồ không giãn mất tỷ lệ.",
+        "wide":"1440px: nội dung căn giữa, giữ nguyên thứ bậc; không thêm chỉ số mới chỉ vì có chỗ trống."
+      };
+      $("#viewport-note").textContent = notes[mode];
+    });
+  });
+  $$("[data-go]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var v = b.dataset.go;
+      if(v === "month" && !state.month){ openMonth(lowestMonth(), b); return; }
+      if(v === "source" && !state.movement){
+        var mo = state.month || lowestMonth();
+        if(!state.month){ openMonth(mo, b); }
+        openSource(mo.expense[0] || mo.income[0], b);
+        return;
+      }
+      show(v);
+    });
+  });
+  $("#signal-goto").addEventListener("click", function(){ openMonth(lowestMonth(), this); });
+  $("#source-back").addEventListener("click", function(){ if(state.month){ openMonth(state.month, null); } else { show("forecast"); } });
+  $("#toggle-table").addEventListener("click", function(){
+    var wrap = $("#chart-table-wrap"), open = wrap.classList.toggle("hidden") === false;
+    this.setAttribute("aria-expanded", String(open));
+    this.textContent = open ? "Ẩn bảng" : "Xem dạng bảng";
+  });
+  $$("[data-state]").forEach(function(b){ b.addEventListener("click", function(){ renderState(b.dataset.state); }); });
+
+  var traceDialog = $("#trace-dialog");
+  $("#source-trace").addEventListener("click", function(){
+    var mv = state.movement;
+    if(!mv){ return; }
+    state.lastTrigger = this;
+    $("#trace-kind").textContent = mv.sourceKind === "series" ? "Bản ghi định kỳ trong danh mục Dòng tiền" : "Công nợ trong danh mục Tài sản & Nợ";
+    $("#trace-title").textContent = mv.source.name;
+    var facts = mv.sourceKind === "series"
+      ? [["Loại", mv.source.category],["Số tiền", money(mv.source.amount)],["Chu kỳ", CADENCE[mv.source.cadence]],["Bắt đầu", viDate(mv.source.start)],["Kết thúc", mv.source.end ? viDate(mv.source.end) : "Chưa có"],["Liên kết", mv.source.link || "Không liên kết"]]
+      : [["Loại", mv.source.category],["Thanh toán", money(mv.source.payment) + " hằng tháng, ngày " + mv.source.day],["Đáo hạn", viDate(mv.source.maturity)],["Lãi suất", mv.source.rate],["Tài sản bảo đảm", mv.source.collateral]];
+    $("#trace-facts").innerHTML = facts.map(function(f){ return '<div class="fact"><dt>'+f[0]+'</dt><dd class="fig">'+f[1]+'</dd></div>'; }).join("");
+    $("#trace-note").textContent = "Kỳ ngày " + viDate(mv.iso) + " sinh ra từ đúng bản ghi này. Sửa bản ghi gốc sẽ làm dự báo tính lại; dự báo không lưu giá trị riêng.";
+    traceDialog.showModal();
+  });
+  $("#trace-open").addEventListener("click", function(){
+    traceDialog.close();
+    toast("Trong bản production, thao tác này mở bản ghi gốc trong danh mục.");
+  });
+  $$("[data-close]").forEach(function(b){ b.addEventListener("click", function(){ b.closest("dialog").close(); }); });
+  traceDialog.addEventListener("close", function(){ if(state.lastTrigger){ state.lastTrigger.focus(); } });
+
+  /* ================= init ================= */
+  renderSignal();
+  renderChart();
+  renderMonths();
+  renderAssumptions();
+  renderRules();
+  renderState("ok");
+  renderReview();
+})();
+</script>
+</body>
+</html>

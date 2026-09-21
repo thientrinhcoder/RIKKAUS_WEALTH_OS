@@ -1,0 +1,1762 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F5EF">
+  <title>Rikkaus Wealth OS | Monthly cash-flow reports review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
+      --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --line:1px solid var(--border); --control-line:1px solid var(--control);
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
+    body:has(dialog[open]){overflow:hidden}
+    button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
+    button{min-height:44px;border:var(--control-line);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--ink);cursor:pointer;transition:transform var(--motion) var(--ease),background-color var(--motion) var(--ease),color var(--motion) var(--ease),box-shadow var(--motion) var(--ease)}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    button:disabled{cursor:not-allowed;opacity:.58;background:var(--surface-subtle);transform:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    h1,h2,h3,h4,p{margin:0}
+    h1{color:var(--navy);font:600 clamp(2.5rem,5.5vw,4.5rem)/1.08 var(--display);letter-spacing:-.02em;text-wrap:balance;max-width:17ch}
+    h2{font-size:1.5rem;line-height:1.33;text-wrap:balance} h3{font-size:1.125rem;line-height:1.33;text-wrap:balance}
+    h4{font-size:1rem;line-height:1.5}
+    p,td,th,label,button,li{overflow-wrap:anywhere}
+    ul{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s1)}
+    .page{width:min(100%,var(--page));margin:auto;padding:var(--s4)}
+    .hidden{display:none !important}
+    .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+    .skip{position:absolute;top:-6rem;left:var(--s4);z-index:90;background:var(--surface);padding:var(--s3)}.skip:focus{top:var(--s4)}
+    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s8);border-bottom:2px solid var(--gold)}
+    .hero-copy{display:grid;gap:var(--s4)}
+    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container)}
+    .meta,.helper{color:var(--ink-secondary);font-size:.875rem}
+    .kicker{color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    section{padding:var(--s12) 0;border-bottom:var(--line)}
+    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s6)}
+    .section-mark{color:var(--gold);font-weight:600}
+    .grid{display:grid;gap:var(--s4)}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.split{grid-template-columns:1.5fr 1fr}
+    .card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);align-content:start}
+    .callout{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
+    .primary{border-color:var(--primary);background:var(--primary);color:var(--surface);font-weight:600}.primary:hover{background:var(--primary-pressed)}
+    .tonal{border-color:var(--primary-container);background:var(--primary-container);color:var(--primary);font-weight:600}
+    .danger{border-color:var(--error);color:var(--error)}
+    .text-btn{border-color:transparent;background:transparent;color:var(--primary)}
+    .fig{font-variant-numeric:tabular-nums}
+    .toolbar,.switches,.actions,.segments{display:flex;flex-wrap:wrap;gap:var(--s2)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{border-color:var(--primary);background:var(--primary);color:var(--surface)}
+    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.875rem;font-weight:600}
+    .status::before{content:"";width:.75rem;height:.75rem;border-radius:50%;background:currentColor;flex:none}
+    .status.ok{color:var(--success)}.status.warn{color:var(--warning)}.status.warn::before{border-radius:2px}
+    .status.bad{color:var(--error)}.status.bad::before{border-radius:2px;transform:rotate(45deg)}
+    .status.info{color:var(--info)}
+    .flow{display:grid;grid-template-columns:repeat(6,minmax(8rem,1fr));gap:var(--s2);overflow-x:auto;padding-bottom:var(--s2)}
+    .flow div{min-height:6rem;padding:var(--s3);border-top:2px solid var(--primary);background:var(--surface)}
+    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--s2)}
+    .token{min-height:6rem;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .swatch{display:block;height:2rem;border-radius:var(--r-input);margin-bottom:var(--s2)}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{text-align:left;padding:var(--s2) var(--s3);border-bottom:var(--line);vertical-align:top}
+    th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-secondary)}
+    td.fig,th.fig{text-align:right}
+    tbody tr:last-child td{border-bottom:0}
+    tfoot td{font-weight:600;border-top:2px solid var(--ink);border-bottom:0}
+    .stage{display:grid;gap:var(--s4)}
+    .stage-bar{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:center}
+    .device-wrap{padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);overflow:hidden}
+    .device{width:100%;max-width:22.5rem;min-height:48rem;margin:auto;border:1px solid var(--control);border-radius:var(--r-card);background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
+    .device[data-mode="p375"]{max-width:23.4375rem}
+    .device[data-mode="tablet"]{max-width:48rem}.device[data-mode="desktop"]{max-width:64rem}.device[data-mode="wide"]{max-width:90rem}
+    .app{min-height:48rem;display:grid;grid-template-rows:auto 1fr auto}
+    .topbar{min-height:4rem;display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:var(--s2) var(--s4);border-bottom:var(--line);background:var(--surface);grid-column:1/-1}
+    .wordmark{font:600 1.25rem/1 var(--display);color:var(--navy)}
+    .avatar{width:44px;padding:0;border-radius:50%;font-weight:600}
+    .app-body{min-width:0}
+    .app-nav{order:3;border-top:var(--line);background:var(--surface)}
+    .nav-list{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none}
+    .nav-btn{width:100%;min-height:64px;border:0;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.68rem;color:var(--ink-secondary);text-align:center;line-height:1.2}
+    .nav-btn.active{color:var(--primary);font-weight:600;box-shadow:inset 0 2px 0 var(--primary)}
+    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .product-main{min-width:0;padding:var(--s4);padding-bottom:2rem}
+    .view{display:none}.view.active{display:grid;gap:var(--s4)}
+    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+    input,select,textarea{width:100%;min-height:48px;border:var(--control-line);border-radius:var(--r-input);background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem}
+    .field{display:grid;gap:var(--s1)}
+    legend{padding:0 var(--s2);font-size:.875rem}
+    .error-copy{color:var(--error);font-size:.8125rem;font-weight:500}
+    .summary-box{padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container);border-left:3px solid var(--primary);display:grid;gap:var(--s2)}
+    .summary-box strong{color:var(--primary)}
+    .summary-sentence{font-size:1.0625rem;line-height:1.45;font-weight:600;color:var(--ink)}
+    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.75rem;color:var(--ink-secondary);white-space:nowrap}
+    .tag.warn{color:var(--warning);border-color:var(--warning)}
+    .tag.brand{color:var(--primary);border-color:var(--primary)}
+    .tag.gold{color:var(--gold);border-color:var(--gold)}
+    .tag-row{display:flex;flex-wrap:wrap;gap:var(--s1)}
+    .facts{display:grid;gap:var(--s2)}
+    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.9rem;padding-bottom:var(--s2);border-bottom:var(--line)}
+    .fact:last-child{border-bottom:0;padding-bottom:0}
+    .fact dt{color:var(--ink-secondary)}.fact dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+    .skeleton{display:grid;gap:var(--s2)}
+    .skeleton span{display:block;height:1rem;border-radius:.25rem;background:linear-gradient(90deg,var(--surface-subtle),#E4DFD4,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+    @keyframes shimmer{to{background-position:-200% 0}}
+    .check-row,.review-choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s2) 0;min-height:44px;align-content:center}
+    .check-row input{width:1.25rem;min-height:1.25rem;margin-top:.1875rem}
+    .review-list{display:grid;gap:var(--s3)}
+    .review-row{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-radius:var(--r-card)}
+    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0}
+    .review-options{display:flex;gap:var(--s4);flex-wrap:wrap}
+    .review-choice input{width:1.25rem;min-height:1.25rem;margin:0}
+    dialog{width:min(100%,34rem);border:0;border-radius:var(--r-sheet);padding:var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal)}
+    dialog::backdrop{background:var(--scrim)}
+    .sheet{margin:auto auto 0;width:min(100%,34rem);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s3)}
+    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6)}
+    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.9rem}
+    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.875rem}
+
+    /* ---- Report specific ---- */
+    .period-btn{display:flex;align-items:center;gap:var(--s2);font-weight:600;border-color:var(--primary);color:var(--primary)}
+    .banner{display:grid;gap:var(--s2);padding:var(--s3);border-radius:var(--r-card);border-left:3px solid var(--warning);background:var(--surface);border-top:var(--line);border-right:var(--line);border-bottom:var(--line)}
+    .banner.err{border-left-color:var(--error)}
+    .banner.inf{border-left-color:var(--info)}
+    .banner-actions{display:flex;gap:var(--s2);flex-wrap:wrap}
+    .banner-actions button{min-height:44px;font-size:.875rem}
+    .kpis{display:grid;gap:var(--s3)}
+    .kpi{display:grid;gap:var(--s1);width:100%;text-align:left;padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);min-height:auto}
+    .kpi:hover{border-color:var(--primary)}
+    .kpi-label{color:var(--ink-secondary);font-size:.875rem;font-weight:400}
+    .kpi-value{font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+    .kpi-sub{color:var(--ink-secondary);font-size:.8125rem;font-weight:400}
+    .kpi.hero-kpi{background:var(--primary-container);border-color:var(--primary)}
+    .kpi.hero-kpi .kpi-value{font-size:2rem;color:var(--primary)}
+    .kpi.hero-kpi.neg .kpi-value{color:var(--error)}
+    .kpi.inflow .kpi-value{color:var(--success)}
+    .chart-card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .chart-head{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:flex-start}
+    .cmp{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:var(--s1);align-items:end;padding-top:var(--s2)}
+    .cmp-col{display:grid;grid-template-rows:9rem auto;gap:var(--s2);padding:var(--s1);border:1px solid transparent;border-radius:var(--r-input);background:transparent;min-height:auto;align-content:end}
+    .cmp-col:hover{border-color:var(--primary);background:var(--surface-subtle)}
+    .cmp-col[aria-pressed="true"]{border-color:var(--primary);background:var(--primary-container)}
+    .cmp-bars{display:flex;align-items:flex-end;justify-content:center;gap:.1875rem;height:9rem}
+    .cmp-bar{width:.75rem;border-radius:.1875rem .1875rem 0 0;min-height:2px}
+    .cmp-bar.in{background:var(--primary)}
+    .cmp-bar.out{background:var(--gold)}
+    .cmp-gap{width:100%;align-self:end;height:2px;background:repeating-linear-gradient(90deg,var(--border) 0 4px,transparent 4px 8px)}
+    .cmp-foot{display:grid;gap:.125rem;text-align:center;font-size:.6875rem;line-height:1.25;color:var(--ink-secondary)}
+    .cmp-foot span{white-space:nowrap;overflow-wrap:normal}
+    .cmp-net{font-size:.625rem;font-weight:600;font-variant-numeric:tabular-nums;color:var(--success)}
+    .cmp-net.neg{color:var(--error)}
+    .legend{display:flex;flex-wrap:wrap;gap:var(--s3);font-size:.8125rem;color:var(--ink-secondary)}
+    .legend span{display:inline-flex;align-items:center;gap:var(--s2)}
+    .legend i{width:.75rem;height:.75rem;border-radius:2px;display:block}
+    .comp-list{display:grid;gap:var(--s2)}
+    .comp-row{display:grid;gap:var(--s1);width:100%;text-align:left;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface);min-height:44px}
+    .comp-row:hover{border-color:var(--primary)}
+    .comp-top{display:flex;justify-content:space-between;gap:var(--s3);align-items:baseline}
+    .comp-name{font-weight:600}
+    .comp-amt{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .comp-track{height:.5rem;border-radius:999px;background:var(--surface-subtle);overflow:hidden}
+    .comp-fill{display:block;height:100%;border-radius:999px;background:var(--primary)}
+    .comp-row.out .comp-fill{background:var(--gold)}
+    .comp-row.rest .comp-fill{background:var(--control)}
+    .comp-meta{display:flex;justify-content:space-between;gap:var(--s3);font-size:.8125rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .donut-wrap{display:grid;grid-template-columns:auto 1fr;gap:var(--s4);align-items:center}
+    .donut{width:9rem;height:9rem;flex:none}
+    .donut circle{fill:none;stroke-width:14}
+    .entry-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;width:100%;text-align:left;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface);min-height:4rem}
+    .entry-row:hover{border-color:var(--primary)}
+    .entry-main{display:grid;gap:var(--s1);min-width:0}
+    .entry-date{font-size:.8125rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
+    .entry-amt{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+    .entry-amt.in{color:var(--success)}
+    .detail-amount{font-size:1.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+    .detail-amount.in{color:var(--success)}
+    .detail-amount.neg{color:var(--error)}
+    .recon{display:block;padding:var(--s3);border-radius:var(--r-card);background:var(--surface-subtle);font-size:.875rem;line-height:1.6}
+    .recon strong{font-variant-numeric:tabular-nums}
+    .asset-row{display:grid;gap:var(--s2);width:100%;text-align:left;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface);min-height:44px}
+    .asset-row:hover{border-color:var(--primary)}
+    .asset-top{display:flex;justify-content:space-between;gap:var(--s3);align-items:baseline}
+    .empty-state{display:grid;gap:var(--s3);justify-items:center;text-align:center;padding:var(--s8) var(--s4);border:1px dashed var(--control);border-radius:var(--r-card);background:var(--surface)}
+    .state-panel{min-height:12rem}
+    .gallery{display:grid;gap:var(--s4)}
+    .mini{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--canvas)}
+
+    /* ---- Simulated responsive shell inside the device ---- */
+    .device[data-mode="tablet"] .app,
+    .device[data-mode="desktop"] .app,
+    .device[data-mode="wide"] .app{grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto 1fr}
+    .device[data-mode="tablet"] .app-nav,
+    .device[data-mode="desktop"] .app-nav,
+    .device[data-mode="wide"] .app-nav{order:0;grid-column:1;grid-row:2;border-top:0;border-right:var(--line)}
+    .device[data-mode="tablet"] .app-body,
+    .device[data-mode="desktop"] .app-body,
+    .device[data-mode="wide"] .app-body{grid-column:2;grid-row:2}
+    .device[data-mode="tablet"] .nav-list,
+    .device[data-mode="desktop"] .nav-list,
+    .device[data-mode="wide"] .nav-list{grid-template-columns:1fr;align-content:start;gap:var(--s1);padding:var(--s2)}
+    .device[data-mode="tablet"] .nav-btn{width:5.5rem;border-radius:var(--r-input)}
+    .device[data-mode="desktop"] .nav-btn,
+    .device[data-mode="wide"] .nav-btn{width:12rem;grid-template-columns:auto 1fr;display:grid;justify-items:start;align-items:center;gap:var(--s3);padding:var(--s3);font-size:.875rem;border-radius:var(--r-input);min-height:48px}
+    .device[data-mode="tablet"] .nav-btn.active,
+    .device[data-mode="desktop"] .nav-btn.active,
+    .device[data-mode="wide"] .nav-btn.active{box-shadow:none;background:var(--primary-container)}
+    .device[data-mode="tablet"] .product-main{padding:var(--s6)}
+    .device[data-mode="desktop"] .product-main,
+    .device[data-mode="wide"] .product-main{padding:var(--s8);max-width:64rem;margin-inline:auto;width:100%}
+    .device[data-mode="tablet"] .kpis,
+    .device[data-mode="desktop"] .kpis,
+    .device[data-mode="wide"] .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .device[data-mode="tablet"] .kpi.hero-kpi,
+    .device[data-mode="desktop"] .kpi.hero-kpi,
+    .device[data-mode="wide"] .kpi.hero-kpi{grid-column:1/-1}
+    .device[data-mode="tablet"] .kpi-value,
+    .device[data-mode="desktop"] .kpi-value,
+    .device[data-mode="wide"] .kpi-value{white-space:nowrap}
+    .device[data-mode="tablet"] .two-up,
+    .device[data-mode="desktop"] .two-up,
+    .device[data-mode="wide"] .two-up{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4);align-items:start}
+    .device[data-mode="tablet"] .cmp-col,
+    .device[data-mode="desktop"] .cmp-col,
+    .device[data-mode="wide"] .cmp-col{grid-template-rows:12rem auto}
+    .device[data-mode="tablet"] .cmp-bars,
+    .device[data-mode="desktop"] .cmp-bars,
+    .device[data-mode="wide"] .cmp-bars{height:12rem;gap:var(--s1)}
+    .device[data-mode="tablet"] .cmp-bar,
+    .device[data-mode="desktop"] .cmp-bar,
+    .device[data-mode="wide"] .cmp-bar{width:1.5rem}
+    .device[data-mode="tablet"] .cmp-foot,
+    .device[data-mode="desktop"] .cmp-foot,
+    .device[data-mode="wide"] .cmp-foot{font-size:.8125rem}
+    .device[data-mode="tablet"] .cmp-net,
+    .device[data-mode="desktop"] .cmp-net,
+    .device[data-mode="wide"] .cmp-net{font-size:.8125rem}
+
+    @media (max-width:60rem){
+      .hero,.section-head,.two,.three,.split{grid-template-columns:1fr}
+      .hero{padding-top:var(--s8);gap:var(--s6)}
+      .donut-wrap{grid-template-columns:1fr;justify-items:center}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
+      html{scroll-behavior:auto}
+    }
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
+<div class="page">
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="kicker">MVP 1B · Issue #75 · Design review</p>
+      <h1>Báo cáo dòng tiền theo tháng</h1>
+      <p class="meta">Bản thiết kế để Product Owner duyệt cách chọn kỳ báo cáo, so sánh thu nhập với chi phí, đọc cơ cấu thu chi, nhóm thu nhập thụ động theo đúng tài sản, và truy ngược mọi con số về bản ghi gốc.</p>
+    </div>
+    <div class="hero-note">
+      <strong>Artifact thiết kế, dữ liệu mô phỏng</strong>
+      <p class="meta">Toàn bộ số liệu là dữ liệu hư cấu, đối chiếu với review #69 và #72. Mọi tổng hiển thị trong trang này được cộng trực tiếp từ danh sách bản ghi mẫu, nên tổng không thể lệch khỏi bản ghi. Đây không phải dịch vụ tổng hợp production; Backend issue #77 sở hữu thuật toán, ranh giới kỳ và múi giờ.</p>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section aria-labelledby="ux-title">
+      <div class="section-head">
+        <div><span class="section-mark">01</span><h2 id="ux-title">Cấu trúc UX và phạm vi</h2></div>
+        <p class="meta">Một chuỗi đối chiếu duy nhất: bản ghi → nhóm → tổng tháng → dòng tiền ròng. Người duyệt đọc được chuỗi này theo cả hai chiều.</p>
+      </div>
+      <div class="flow" aria-label="Luồng chính của review">
+        <div><strong>Chọn kỳ</strong><p class="meta">Tháng báo cáo và dải so sánh</p></div>
+        <div><strong>Đọc kết quả</strong><p class="meta">Thu nhập, chi phí, dòng tiền ròng</p></div>
+        <div><strong>So sánh tháng</strong><p class="meta">Sáu tháng đã ghi nhận</p></div>
+        <div><strong>Cơ cấu</strong><p class="meta">Nhóm thu và nhóm chi đã xếp hạng</p></div>
+        <div><strong>Chi tiết nhóm</strong><p class="meta">Các bản ghi tạo nên nhóm</p></div>
+        <div><strong>Truy nguồn</strong><p class="meta">Một bản ghi và nguồn gốc của nó</p></div>
+      </div>
+      <div class="grid three" style="margin-top:var(--s4)">
+        <div class="card"><h3>Trong issue #75</h3><p>Bộ chọn kỳ báo cáo, biểu đồ so sánh thu chi theo tháng, cơ cấu thu nhập và cơ cấu chi phí, thu nhập thụ động theo tài sản, đường truy ngược từ mọi con số về bản ghi gốc, cùng các trạng thái rỗng và thiếu dữ liệu.</p></div>
+        <div class="callout"><h3>Không thuộc phạm vi</h3><p>Danh mục và CRUD bản ghi thuộc #69. Lịch kỳ định kỳ thuộc #72. Màn hình báo cáo production và biểu đồ thật thuộc Frontend #76. API tổng hợp, nhóm thu nhập thụ động và test đối chiếu thuộc Backend #77. Dự báo ba tháng và chỉ số sức khỏe tài chính thuộc feature khác.</p></div>
+        <div class="callout"><h3>Contract không đổi</h3><p>Artifact này không định nghĩa API, schema, ranh giới múi giờ của kỳ báo cáo, hay quy tắc phân loại thụ động ở tầng dữ liệu. Những điểm chưa chốt được nêu thành câu hỏi cho Feature Contract #21.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="system-title">
+      <div class="section-head">
+        <div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div>
+        <p class="meta">Quiet Ledger cho toàn bộ tác vụ; Modern Heritage chỉ xuất hiện ở wordmark, tiêu đề lớn và đường vàng. Vàng heritage dùng làm màu chuỗi dữ liệu chi phí, không dùng làm màu trạng thái.</p>
+      </div>
+      <div class="tokens" aria-label="Token màu được sử dụng">
+        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><strong>canvas</strong><p class="meta">#F7F5EF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface);border:var(--line)"></span><strong>surface</strong><p class="meta">#FFFFFF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface-subtle)"></span><strong>surfaceSubtle</strong><p class="meta">#EFEBE2</p></div>
+        <div class="token"><span class="swatch" style="background:var(--ink)"></span><strong>ink</strong><p class="meta">#17212B</p></div>
+        <div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>brandNavy</strong><p class="meta">#182B45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>primary</strong><p class="meta">#0F5C5A · chuỗi thu nhập</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>primaryContainer</strong><p class="meta">#D9EFEC</p></div>
+        <div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>heritageGold</strong><p class="meta">#A87428 · chuỗi chi phí</p></div>
+        <div class="token"><span class="swatch" style="background:var(--success)"></span><strong>success</strong><p class="meta">#1E6A45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--warning)"></span><strong>warning</strong><p class="meta">#8A5A00</p></div>
+        <div class="token"><span class="swatch" style="background:var(--error)"></span><strong>error</strong><p class="meta">#B42318</p></div>
+        <div class="token"><span class="swatch" style="background:var(--focus)"></span><strong>focus</strong><p class="meta">#147D79</p></div>
+      </div>
+      <div class="grid three" style="margin-top:var(--s4)">
+        <div class="card">
+          <h3>Thành phần tái sử dụng trong màn hình này</h3>
+          <ul class="meta">
+            <li>Nút chọn kỳ báo cáo mở bottom sheet.</li>
+            <li>Thẻ KPI có thể bấm, dẫn thẳng vào chi tiết.</li>
+            <li>Biểu đồ cột so sánh, mỗi cột là một nút chọn tháng.</li>
+            <li>Hàng cơ cấu có thanh tỉ lệ, nhãn trực tiếp và số tuyệt đối.</li>
+            <li>Hàng bản ghi với ngày, ghi chú, thẻ đánh dấu và số tiền.</li>
+            <li>Banner cảnh báo, trạng thái rỗng, skeleton, dialog và toast.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Quy tắc biểu đồ đang áp dụng</h3>
+          <ul class="meta">
+            <li>So sánh thu chi dùng cột kép, không dùng đường.</li>
+            <li>Cơ cấu mặc định là thanh xếp hạng có nhãn trực tiếp.</li>
+            <li>Biểu đồ vòng chỉ bật khi còn tối đa năm nhóm hiển thị.</li>
+            <li>Mỗi biểu đồ có câu tóm tắt và bảng số liệu tương đương.</li>
+            <li>Phân biệt chuỗi bằng nhãn và vị trí, không chỉ bằng màu.</li>
+            <li>Mỗi cột và mỗi hàng có vùng chạm tối thiểu 44px.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h3>Ranh giới chữ số</h3>
+          <p class="meta">Mọi số tiền dùng chữ số cách đều, đơn vị ₫ và cách nhóm theo locale Việt Nam. Tỉ lệ phần trăm làm tròn một chữ số thập phân và luôn đi kèm số tuyệt đối. Khi không tính được tỉ lệ, hiển thị “Không khả dụng”, không hiển thị 0.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="prototype-title">
+      <div class="section-head">
+        <div><span class="section-mark">03</span><h2 id="prototype-title">Prototype clickable</h2></div>
+        <p class="meta">Dùng bàn phím hoặc chuột. Mọi KPI, cột biểu đồ, nhóm cơ cấu và bản ghi đều bấm được và đều dẫn về nguồn. Đổi bề rộng để xem shell chuyển từ thanh điều hướng dưới sang rail rồi sang sidebar.</p>
+      </div>
+
+      <noscript>
+        <div class="banner inf" style="margin-bottom:var(--s4)">
+          <strong>JavaScript đang tắt</strong>
+          <p class="meta">Prototype tương tác cần JavaScript. Các phần 01, 02, 04, 05 và 06 vẫn đọc được đầy đủ như một bản đặc tả thiết kế, gồm quy tắc tính, bảng đối chiếu, ma trận trạng thái và danh sách kiểm tra duyệt.</p>
+        </div>
+      </noscript>
+
+      <div class="stage">
+        <div class="stage-bar">
+          <div class="switches" role="group" aria-label="Bề rộng xem thử">
+            <button type="button" data-width="phone" aria-pressed="true">360px</button>
+            <button type="button" data-width="p375" aria-pressed="false">375px</button>
+            <button type="button" data-width="tablet" aria-pressed="false">768px</button>
+            <button type="button" data-width="desktop" aria-pressed="false">1024px</button>
+            <button type="button" data-width="wide" aria-pressed="false">1440px</button>
+          </div>
+          <div class="actions">
+            <button type="button" class="text-btn" data-go="states">Mở thư viện trạng thái</button>
+            <button type="button" class="tonal" data-reset>Đặt lại prototype</button>
+          </div>
+        </div>
+        <p class="meta" id="width-note">Đang xem ở 360px: một cột nội dung, thanh điều hướng dưới với năm đích, hành động chính nằm trong vùng ngón cái.</p>
+
+        <div class="device-wrap">
+          <div class="device" data-mode="phone" id="device">
+            <div class="app">
+              <div class="topbar">
+                <span class="wordmark">Rikkaus</span>
+                <div class="actions">
+                  <button type="button" class="text-btn" data-dialog="rate" aria-label="Tỷ giá quy đổi đang dùng">1 USD = 25.100 ₫</button>
+                  <button type="button" class="avatar" aria-label="Hồ sơ và cài đặt">TN</button>
+                </div>
+              </div>
+
+              <div class="app-body">
+                <main class="product-main" id="product-main" tabindex="-1">
+
+                  <!-- ===== Báo cáo tháng ===== -->
+                  <div class="view active" id="view-report" role="region" aria-labelledby="report-heading">
+                    <div class="screen-head">
+                      <div>
+                        <p class="meta">Dòng tiền · Báo cáo</p>
+                        <h2 id="report-heading">Báo cáo dòng tiền</h2>
+                      </div>
+                      <button type="button" class="period-btn" data-dialog="period" id="period-btn" aria-haspopup="dialog">
+                        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                        <span id="period-label">Tháng 09/2026</span>
+                      </button>
+                    </div>
+
+                    <div id="report-banners"></div>
+
+                    <div class="kpis" id="report-kpis"></div>
+
+                    <div class="recon" id="report-recon"></div>
+
+                    <div class="chart-card">
+                      <div class="chart-head">
+                        <div>
+                          <h3 id="cmp-title">So sánh sáu tháng đã ghi nhận</h3>
+                          <p class="meta" id="cmp-summary">—</p>
+                        </div>
+                        <button type="button" class="text-btn" data-dialog="cmp-table">Xem dạng bảng</button>
+                      </div>
+                      <div class="cmp" id="cmp-chart" role="group" aria-labelledby="cmp-title"></div>
+                      <div class="legend">
+                        <span><i style="background:var(--primary)"></i>Thu nhập</span>
+                        <span><i style="background:var(--gold)"></i>Chi phí</span>
+                        <span><i style="background:var(--border)"></i>Tháng chưa ghi nhận</span>
+                      </div>
+                      <p class="meta">Nhãn dưới mỗi cột là dòng tiền ròng rút gọn theo đơn vị triệu đồng (tr). Số chính xác có ở nhãn trợ năng của từng cột, ở bảng số liệu và ở thẻ KPI. Chỉ hiển thị các tháng đã có bản ghi; tháng chưa ghi nhận thể hiện bằng vạch đứt và nhãn riêng, không vẽ cột giá trị 0.</p>
+                    </div>
+
+                    <div class="two-up">
+                      <div class="chart-card">
+                        <div class="chart-head">
+                          <div><h3>Cơ cấu chi phí</h3><p class="meta" id="mini-out-sum">—</p></div>
+                          <button type="button" class="text-btn" data-go="composition" data-type="out">Xem đầy đủ</button>
+                        </div>
+                        <div class="comp-list" id="mini-out"></div>
+                      </div>
+                      <div class="chart-card">
+                        <div class="chart-head">
+                          <div><h3>Cơ cấu thu nhập</h3><p class="meta" id="mini-in-sum">—</p></div>
+                          <button type="button" class="text-btn" data-go="composition" data-type="in">Xem đầy đủ</button>
+                        </div>
+                        <div class="comp-list" id="mini-in"></div>
+                      </div>
+                    </div>
+
+                    <button type="button" class="asset-row" data-go="passive" id="passive-teaser"></button>
+
+                    <div class="card">
+                      <h3>Đối chiếu với danh mục bản ghi</h3>
+                      <p class="meta" id="report-count">—</p>
+                      <div class="actions">
+                        <button type="button" class="tonal" data-toast="Danh mục bản ghi thuộc issue #69; prototype này chỉ minh họa đường dẫn sang màn hình đó.">Mở danh mục bản ghi</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ===== Cơ cấu ===== -->
+                  <div class="view" id="view-composition" role="region" aria-labelledby="comp-heading">
+                    <div class="screen-head">
+                      <div>
+                        <button type="button" class="text-btn" data-go="report">Quay lại báo cáo</button>
+                        <h2 id="comp-heading">Cơ cấu chi phí</h2>
+                        <p class="meta" id="comp-period">—</p>
+                      </div>
+                    </div>
+
+                    <div class="segments" role="group" aria-label="Loại cơ cấu">
+                      <button type="button" data-comp-type="out" aria-pressed="true">Chi phí</button>
+                      <button type="button" data-comp-type="in" aria-pressed="false">Thu nhập</button>
+                    </div>
+
+                    <div class="chart-card">
+                      <div class="chart-head">
+                        <div>
+                          <h3 id="comp-chart-title">Nhóm đã xếp hạng</h3>
+                          <p class="meta" id="comp-summary">—</p>
+                        </div>
+                        <button type="button" class="text-btn" data-dialog="comp-table">Xem dạng bảng</button>
+                      </div>
+
+                      <div class="toolbar">
+                        <div class="switches" role="group" aria-label="Kiểu biểu đồ">
+                          <button type="button" data-chart="bar" aria-pressed="true">Thanh xếp hạng</button>
+                          <button type="button" data-chart="donut" aria-pressed="false" id="donut-btn">Biểu đồ vòng</button>
+                        </div>
+                        <div class="check-row" style="padding:0">
+                          <input type="checkbox" id="small-toggle">
+                          <label for="small-toggle">Gộp nhóm nhỏ dưới 5% thành “Khác”</label>
+                        </div>
+                      </div>
+                      <p class="meta" id="donut-reason"></p>
+
+                      <div id="donut-area" class="hidden">
+                        <div class="donut-wrap">
+                          <svg class="donut" viewBox="0 0 42 42" role="img" aria-labelledby="donut-alt"><title id="donut-alt">Biểu đồ vòng cơ cấu</title><g id="donut-g"></g></svg>
+                          <div class="comp-list" id="donut-legend"></div>
+                        </div>
+                      </div>
+
+                      <div class="comp-list" id="comp-list"></div>
+                      <div class="recon" id="comp-recon"></div>
+                    </div>
+                  </div>
+
+                  <!-- ===== Chi tiết nhóm ===== -->
+                  <div class="view" id="view-category" role="region" aria-labelledby="cat-heading">
+                    <div class="screen-head">
+                      <div>
+                        <button type="button" class="text-btn" data-go="composition">Quay lại cơ cấu</button>
+                        <h2 id="cat-heading">—</h2>
+                        <p class="meta" id="cat-period">—</p>
+                      </div>
+                    </div>
+                    <div class="card" id="cat-summary"></div>
+                    <h3 id="cat-list-title">Bản ghi trong nhóm</h3>
+                    <div class="comp-list" id="cat-entries"></div>
+                    <div class="recon" id="cat-recon"></div>
+                  </div>
+
+                  <!-- ===== Truy nguồn bản ghi ===== -->
+                  <div class="view" id="view-entry" role="region" aria-labelledby="entry-heading">
+                    <div class="screen-head">
+                      <div>
+                        <button type="button" class="text-btn" data-go="category">Quay lại nhóm</button>
+                        <h2 id="entry-heading">—</h2>
+                      </div>
+                    </div>
+                    <div class="card" id="entry-card"></div>
+                    <div class="summary-box" id="entry-trace"></div>
+                    <div class="actions" id="entry-actions"></div>
+                  </div>
+
+                  <!-- ===== Thu nhập thụ động ===== -->
+                  <div class="view" id="view-passive" role="region" aria-labelledby="passive-heading">
+                    <div class="screen-head">
+                      <div>
+                        <button type="button" class="text-btn" data-go="report">Quay lại báo cáo</button>
+                        <h2 id="passive-heading">Thu nhập thụ động theo tài sản</h2>
+                        <p class="meta" id="passive-period">—</p>
+                      </div>
+                    </div>
+                    <div class="summary-box" id="passive-summary"></div>
+                    <h3>Theo tài sản tạo ra dòng tiền</h3>
+                    <div class="comp-list" id="passive-list"></div>
+                    <div class="card" id="passive-active"></div>
+                    <div class="recon" id="passive-recon"></div>
+                    <div class="callout">
+                      <h4>Quy tắc phân nhóm</h4>
+                      <p class="meta">Một khoản thu được xếp là thụ động khi bản ghi có liên kết tới một tài sản do người dùng nhập. Hệ thống không tự suy đoán theo tên nhóm. Khoản thu chưa liên kết tài sản không bị bỏ qua: nó xuất hiện trong nhóm “Chưa gán tài sản” kèm đường dẫn gán, xem trạng thái số 08.</p>
+                    </div>
+                  </div>
+
+                  <!-- ===== Thư viện trạng thái ===== -->
+                  <div class="view" id="view-states" role="region" aria-labelledby="states-heading">
+                    <div class="screen-head">
+                      <div>
+                        <button type="button" class="text-btn" data-go="report">Quay lại báo cáo</button>
+                        <h2 id="states-heading">Thư viện trạng thái</h2>
+                        <p class="meta">Mười trạng thái bắt buộc, dựng từ cùng bộ dữ liệu mẫu nên không lệch khỏi luồng chính.</p>
+                      </div>
+                    </div>
+                    <div class="gallery" id="state-gallery"></div>
+                  </div>
+
+                </main>
+              </div>
+
+              <nav class="app-nav" aria-label="Điều hướng chính">
+                <ul class="nav-list">
+                  <li><button type="button" class="nav-btn" data-toast="Tổng quan thuộc issue #63; prototype này chỉ minh họa vị trí của đích đến.">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Tổng quan</span></button></li>
+                  <li><button type="button" class="nav-btn" data-toast="Tài sản và Công nợ thuộc issue #51 và #60.">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5h8v2"/></svg><span>Tài sản &amp; Nợ</span></button></li>
+                  <li><button type="button" class="nav-btn active" aria-current="page" data-go="report">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-6M22 19H2"/></svg><span>Dòng tiền</span></button></li>
+                  <li><button type="button" class="nav-btn" data-toast="Mục tiêu thuộc MVP 1C.">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg><span>Mục tiêu</span></button></li>
+                  <li><button type="button" class="nav-btn" data-toast="Nhận định thuộc issue #66.">
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 1 3 11v3H9v-3a6 6 0 0 1 3-11z"/><path d="M10 21h4"/></svg><span>Nhận định</span></button></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="rules-title">
+      <div class="section-head">
+        <div><span class="section-mark">04</span><h2 id="rules-title">Quy tắc tính và bảng đối chiếu</h2></div>
+        <p class="meta">Sáu quy tắc dưới đây là thứ Product Owner cần duyệt. Chúng mô tả cách trình bày kết quả, không thay thế thuật toán của Backend issue #77.</p>
+      </div>
+
+      <div class="grid three">
+        <div class="card"><h3>01 · Thuộc kỳ nào</h3><p>Một bản ghi thuộc đúng tháng dương lịch chứa ngày của nó. Không bản ghi nào được tính vào hai tháng, kể cả bản ghi sinh ra từ chuỗi định kỳ của issue #72.</p></div>
+        <div class="card"><h3>02 · Dòng tiền ròng</h3><p>Dòng tiền ròng bằng tổng thu nhập trừ tổng chi phí của đúng tháng đang chọn. Không cộng thêm khoản điều chỉnh nào khác, không san đều, không loại trừ khoản bất thường.</p></div>
+        <div class="card"><h3>03 · Tổng nhóm</h3><p>Tổng của một nhóm là tổng các bản ghi thuộc nhóm đó trong tháng. Tổng của các nhóm hiển thị phải cộng lại đúng bằng tổng tháng; nhóm “Khác” chỉ gộp hiển thị, không làm mất bản ghi.</p></div>
+        <div class="card"><h3>04 · Thu nhập thụ động</h3><p>Thu nhập thụ động là khoản thu có liên kết tới một tài sản. Khoản thu không có liên kết không bị loại khỏi báo cáo; nó nằm trong nhóm “Chưa gán tài sản” kèm đường dẫn gán tài sản.</p></div>
+        <div class="card"><h3>05 · Thiếu tỷ giá</h3><p>Bản ghi USD không có tỷ giá khả dụng hiển thị nguyên tệ và trạng thái “Không khả dụng”, không quy về 0. Tổng chứa bản ghi đó được đánh dấu là dữ liệu một phần và nêu tên bản ghi bị ảnh hưởng.</p></div>
+        <div class="card"><h3>06 · Kỳ rỗng</h3><p>Tháng không có bản ghi vẫn mở được và vẫn hiển thị bộ chọn kỳ, kèm trạng thái rỗng và hành động thêm bản ghi. Không ẩn đích đến và không hiển thị 0 như thể đó là kết quả đã ghi nhận.</p></div>
+      </div>
+
+      <h3 style="margin-top:var(--s8)">Đối chiếu sáu tháng đã ghi nhận</h3>
+      <p class="meta" style="margin-bottom:var(--s3)">Mọi con số trong prototype được cộng trực tiếp từ danh sách bản ghi mẫu. Bảng này là bản in của cùng dữ liệu đó.</p>
+      <div class="table-wrap">
+        <table>
+          <caption class="sr">Thu nhập, chi phí và dòng tiền ròng của sáu tháng đã ghi nhận</caption>
+          <thead><tr><th scope="col">Kỳ báo cáo</th><th scope="col" class="fig">Thu nhập</th><th scope="col" class="fig">Chi phí</th><th scope="col" class="fig">Dòng tiền ròng</th><th scope="col" class="fig">Số bản ghi</th><th scope="col">Ghi chú duyệt</th></tr></thead>
+          <tbody>
+            <tr><td>04/2026</td><td class="fig">148.300.000 ₫</td><td class="fig">149.650.000 ₫</td><td class="fig">−1.350.000 ₫</td><td class="fig">10</td><td>Tháng âm do viện phí và quyết toán thuế; dùng để duyệt cách trình bày dòng tiền ròng âm.</td></tr>
+            <tr><td>05/2026</td><td class="fig">157.500.000 ₫</td><td class="fig">70.800.000 ₫</td><td class="fig">86.700.000 ₫</td><td class="fig">11</td><td>Tháng chuẩn, không có khoản theo quý.</td></tr>
+            <tr><td>06/2026</td><td class="fig">169.465.000 ₫</td><td class="fig">81.050.000 ₫</td><td class="fig">88.415.000 ₫</td><td class="fig">13</td><td>Tháng chốt quý: có cổ tức USD và lãi trái phiếu.</td></tr>
+            <tr><td>07/2026</td><td class="fig">174.900.000 ₫</td><td class="fig">73.900.000 ₫</td><td class="fig">101.000.000 ₫</td><td class="fig">11</td><td>Có khoản thu khác một lần.</td></tr>
+            <tr><td>08/2026</td><td class="fig">166.700.000 ₫</td><td class="fig">63.650.000 ₫</td><td class="fig">103.050.000 ₫</td><td class="fig">11</td><td>Tháng chi phí thấp nhất trong dải.</td></tr>
+            <tr><td>09/2026</td><td class="fig">180.000.000 ₫</td><td class="fig">92.000.000 ₫</td><td class="fig">88.000.000 ₫</td><td class="fig">16</td><td>Khớp đúng danh mục đã duyệt ở review #69.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="recon" id="verify-line" style="margin-top:var(--s3)">Đang kiểm chứng dữ liệu…</div>
+
+      <h3 style="margin-top:var(--s8)">Đối chiếu tháng 09/2026 xuống từng nhóm</h3>
+      <div class="grid two">
+        <div class="table-wrap">
+          <table>
+            <caption class="sr">Cơ cấu thu nhập tháng 09/2026</caption>
+            <thead><tr><th scope="col">Nhóm thu nhập</th><th scope="col" class="fig">Số tiền</th><th scope="col" class="fig">Tỉ lệ</th></tr></thead>
+            <tbody id="tbl-in"></tbody>
+            <tfoot><tr><td>Tổng thu nhập</td><td class="fig">180.000.000 ₫</td><td class="fig">100,0%</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="sr">Cơ cấu chi phí tháng 09/2026</caption>
+            <thead><tr><th scope="col">Nhóm chi phí</th><th scope="col" class="fig">Số tiền</th><th scope="col" class="fig">Tỉ lệ</th></tr></thead>
+            <tbody id="tbl-out"></tbody>
+            <tfoot><tr><td>Tổng chi phí</td><td class="fig">92.000.000 ₫</td><td class="fig">100,0%</td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+      <p class="meta" style="margin-top:var(--s3)">Dòng tiền ròng tháng 09/2026 bằng 180.000.000 ₫ trừ 92.000.000 ₫, tức 88.000.000 ₫. Thu nhập thụ động 21.565.000 ₫ chiếm 12,0% tổng thu nhập; phần còn lại 158.435.000 ₫ là thu nhập chủ động, cộng lại đúng 180.000.000 ₫.</p>
+
+      <div class="callout" style="margin-top:var(--s4)">
+        <h3>Câu hỏi để Feature Contract #21 quyết định</h3>
+        <ul>
+          <li>Kỳ báo cáo lấy theo múi giờ nào khi người dùng nhập bản ghi ở múi giờ khác: giờ Việt Nam cố định hay giờ thiết bị?</li>
+          <li>Ngưỡng gộp nhóm nhỏ nên cố định ở 5% hay để người dùng chọn?</li>
+          <li>Thu nhập thụ động có cần nhãn riêng ở tầng dữ liệu, hay tiếp tục suy ra từ liên kết tài sản như thiết kế này đề xuất?</li>
+          <li>Dải so sánh nên cố định sáu tháng hay cho phép chọn ba, sáu và mười hai tháng?</li>
+          <li>Khi thiếu tỷ giá, báo cáo nên dùng tỷ giá gần nhất đã lưu hay giữ trạng thái không khả dụng như thiết kế này đề xuất?</li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="matrix-title">
+      <div class="section-head">
+        <div><span class="section-mark">05</span><h2 id="matrix-title">Ma trận trạng thái và responsive</h2></div>
+        <p class="meta">Mỗi trạng thái nêu rõ điều gì đang thiếu, phần nào của kết quả bị ảnh hưởng, và lối đi tiếp theo.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption class="sr">Ma trận trạng thái của báo cáo dòng tiền</caption>
+          <thead><tr><th scope="col">Mã</th><th scope="col">Trạng thái</th><th scope="col">Hiển thị</th><th scope="col">Lối đi tiếp theo</th></tr></thead>
+          <tbody>
+            <tr><td>01</td><td>Đang tải</td><td>Skeleton giữ đúng chỗ của KPI và biểu đồ, không nhảy bố cục, không hoạt hình số tiền.</td><td>Tự chuyển sang kết quả; không có hành động bắt buộc.</td></tr>
+            <tr><td>02</td><td>Kỳ chưa có bản ghi</td><td>Trạng thái rỗng nêu rõ tháng nào rỗng, giữ nguyên bộ chọn kỳ và thanh điều hướng.</td><td>Thêm bản ghi, hoặc quay lại tháng gần nhất có dữ liệu.</td></tr>
+            <tr><td>03</td><td>Dữ liệu một phần</td><td>Banner nêu tên bản ghi thiếu tỷ giá, số tiền nguyên tệ, và phần tổng bị ảnh hưởng. Ô quy đổi ghi “Không khả dụng”.</td><td>Cập nhật tỷ giá, hoặc xem báo cáo ở trạng thái đã đánh dấu một phần.</td></tr>
+            <tr><td>04</td><td>Tỷ giá cũ</td><td>Chữ, biểu tượng hình vuông và màu cảnh báo, kèm ngày cập nhật tuyệt đối.</td><td>Cập nhật tỷ giá trong Hồ sơ và cài đặt.</td></tr>
+            <tr><td>05</td><td>Dòng tiền ròng âm</td><td>Dấu trừ, nhãn chữ “Âm”, biểu tượng hình thoi và màu lỗi cùng lúc.</td><td>Mở nhóm chi phí lớn nhất của tháng đó.</td></tr>
+            <tr><td>06</td><td>Lỗi tải báo cáo</td><td>Nêu việc gì hỏng, dữ liệu đã chọn được giữ lại, và kỳ báo cáo không bị đặt lại.</td><td>Thử lại, hoặc quay về tháng đã tải thành công.</td></tr>
+            <tr><td>07</td><td>Biểu đồ vòng không khả dụng</td><td>Nút bị vô hiệu kèm lý do đặt ngay cạnh: còn nhiều hơn năm nhóm hiển thị.</td><td>Bật gộp nhóm nhỏ để còn tối đa năm nhóm.</td></tr>
+            <tr><td>08</td><td>Thu nhập chưa gán tài sản</td><td>Nhóm riêng nêu số tiền và số bản ghi, kèm ảnh hưởng tới tỉ lệ thu nhập thụ động.</td><td>Gán tài sản cho bản ghi, hoặc xác nhận đây là thu nhập chủ động.</td></tr>
+            <tr><td>09</td><td>Không mở được mục</td><td>Thông báo không liệt kê: “Không thể mở mục này”, không xác nhận sự tồn tại của bản ghi.</td><td>Quay lại báo cáo tháng một cách an toàn.</td></tr>
+            <tr><td>10</td><td>Nhóm rỗng trong kỳ</td><td>Nhóm hợp lệ nhưng không có bản ghi trong tháng: nêu rõ, không hiển thị 0 như một kết quả.</td><td>Đổi kỳ báo cáo, hoặc thêm bản ghi vào nhóm.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:var(--s8)">Hành vi theo bề rộng</h3>
+      <div class="table-wrap">
+        <table>
+          <caption class="sr">Hành vi responsive theo bề rộng</caption>
+          <thead><tr><th scope="col">Bề rộng</th><th scope="col">Điều hướng</th><th scope="col">Bố cục báo cáo</th><th scope="col">Biểu đồ</th></tr></thead>
+          <tbody>
+            <tr><td>360px</td><td>Thanh điều hướng dưới, năm đích có nhãn chữ.</td><td>Một cột. KPI xếp dọc, dòng tiền ròng đứng đầu.</td><td>Cột kép hẹp 0,75rem, nhãn tháng hai dòng, chạm để chọn tháng.</td></tr>
+            <tr><td>375px</td><td>Như 360px.</td><td>Một cột, khoảng thở rộng hơn ở nhãn nhóm.</td><td>Như 360px; không cắt nhãn số tiền.</td></tr>
+            <tr><td>768px</td><td>Rail dọc bên trái, giữ nguyên thứ tự và nhãn.</td><td>KPI ba cột; cơ cấu chi và cơ cấu thu nằm cạnh nhau.</td><td>Cột dày 1,5rem, vùng biểu đồ cao 12rem.</td></tr>
+            <tr><td>1024px</td><td>Sidebar cố định có nhãn chữ đầy đủ.</td><td>Vùng nội dung giới hạn 64rem và canh giữa.</td><td>Như 768px; bảng số liệu mở trong dialog.</td></tr>
+            <tr><td>1440px</td><td>Như 1024px.</td><td>Nội dung không giãn quá 64rem để giữ độ dài dòng đọc.</td><td>Như 1024px; không thêm chuỗi dữ liệu mới.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="review-title">
+      <div class="section-head">
+        <div><span class="section-mark">06</span><h2 id="review-title">Khả năng tiếp cận và duyệt PO</h2></div>
+        <p class="meta">Danh sách kiểm tra bám theo mục 12 và mục 16.4 của design guidelines.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h3>Đã xử lý trong artifact</h3>
+          <ul class="meta">
+            <li>Thứ tự đọc trùng thứ tự nhìn; đổi màn hình đưa tiêu điểm về vùng nội dung chính.</li>
+            <li>Mọi cột biểu đồ và hàng cơ cấu là nút thật, thao tác được bằng bàn phím, có vùng chạm tối thiểu 44px.</li>
+            <li>Mỗi biểu đồ có câu tóm tắt bằng chữ và một bảng số liệu tương đương mở trong dialog.</li>
+            <li>Trạng thái dùng chữ kèm hình dạng, không chỉ dùng màu; dòng tiền ròng âm có dấu trừ và nhãn chữ.</li>
+            <li>Dialog và bottom sheet có lối đóng rõ ràng và trả tiêu điểm về nút đã mở nó.</li>
+            <li>Toast không cướp tiêu điểm và được thông báo ở mức lịch sự.</li>
+            <li>Tôn trọng thiết lập giảm chuyển động; không có luồng nào phụ thuộc hoạt hình.</li>
+            <li>Số tiền dùng chữ số cách đều; chữ phóng to làm nội dung xuống dòng thay vì bị cắt.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Cần kiểm tra ở bản production</h3>
+          <ul class="meta">
+            <li>Độ tương phản thực tế của chuỗi dữ liệu trên nền biểu đồ ở từng nền tảng.</li>
+            <li>Hành vi của trình đọc màn hình với biểu đồ trên iOS, Android và web.</li>
+            <li>Phông IBM Plex Sans với dấu tiếng Việt ở mọi độ đậm được dùng.</li>
+            <li>Hiệu năng khi một tháng có số lượng bản ghi lớn hơn nhiều so với dữ liệu mẫu.</li>
+            <li>Khoảng an toàn của thiết bị khi thanh điều hướng dưới cùng tồn tại với bàn phím.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top:var(--s8)">Quyết định của Product Owner</h3>
+      <p class="meta" style="margin-bottom:var(--s3)">Ghi nhận theo từng màn hình và từng luồng. Lựa chọn chỉ lưu trong phiên xem này và không được gửi đi đâu.</p>
+      <div class="review-list" id="po-list"></div>
+      <div class="actions" style="margin-top:var(--s4)">
+        <button type="button" class="primary" id="po-submit">Tổng hợp quyết định</button>
+        <button type="button" class="text-btn" id="po-reset">Xóa lựa chọn</button>
+      </div>
+      <div class="recon hidden" id="po-result" role="status"></div>
+
+      <div class="callout" style="margin-top:var(--s6)">
+        <h3>Phê duyệt này xác nhận điều gì</h3>
+        <p class="meta">Duyệt artifact này chỉ xác nhận hướng UX/UI: cách chọn kỳ, cách trình bày so sánh và cơ cấu, cách nhóm thu nhập thụ động, đường truy ngược và bộ trạng thái. Nó không xác nhận kiến trúc production, thuật toán tổng hợp, hợp đồng API, ranh giới múi giờ, bảo mật hay mức sẵn sàng triển khai. Những nội dung đó thuộc Feature Contract #21, Frontend issue #76 và Backend issue #77.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Rikkaus Wealth OS · Design review artifact cho issue #75 · Cập nhật 20/09/2026</p>
+    <p class="meta">Tài liệu tham chiếu: <code>docs/design-guidelines.md</code>, <code>docs/cash-flow-entry-catalog-crud-review.html</code> (#69), <code>docs/recurring-cash-flow-schedule-expansion-review.html</code> (#72). Dữ liệu trong trang là dữ liệu hư cấu phục vụ duyệt thiết kế.</p>
+  </footer>
+</div>
+
+<dialog id="dlg-period" class="sheet" aria-labelledby="period-title">
+  <div class="dialog-head">
+    <div><p class="meta">Báo cáo dòng tiền</p><h2 id="period-title">Chọn kỳ báo cáo</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <div class="comp-list" id="period-options"></div>
+  <p class="meta" style="margin-top:var(--s3)">Kỳ báo cáo là tháng dương lịch. Tháng chưa có bản ghi vẫn mở được và hiển thị trạng thái rỗng.</p>
+</dialog>
+
+<dialog id="dlg-net" aria-labelledby="net-title">
+  <div class="dialog-head">
+    <div><p class="meta">Cách tính</p><h2 id="net-title">Dòng tiền ròng được tính thế nào</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <div id="net-body"></div>
+  <div class="dialog-actions"><button type="button" class="primary" data-close>Đã hiểu</button></div>
+</dialog>
+
+<dialog id="dlg-cmp-table" aria-labelledby="cmp-table-title">
+  <div class="dialog-head">
+    <div><p class="meta">Bảng tương đương của biểu đồ</p><h2 id="cmp-table-title">So sánh theo tháng</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <div class="table-wrap" id="cmp-table-body"></div>
+  <div class="dialog-actions"><button type="button" class="primary" data-close>Đóng</button></div>
+</dialog>
+
+<dialog id="dlg-comp-table" aria-labelledby="comp-table-title">
+  <div class="dialog-head">
+    <div><p class="meta">Bảng tương đương của biểu đồ</p><h2 id="comp-table-title">Cơ cấu theo nhóm</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <div class="table-wrap" id="comp-table-body"></div>
+  <div class="dialog-actions"><button type="button" class="primary" data-close>Đóng</button></div>
+</dialog>
+
+<dialog id="dlg-rate" aria-labelledby="rate-title">
+  <div class="dialog-head">
+    <div><p class="meta">Tỷ giá do người dùng nhập</p><h2 id="rate-title">1 USD = 25.100 ₫</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <p>Cập nhật ngày 12/09/2026. Tỷ giá này áp dụng cho mọi bản ghi USD trong báo cáo và được hiển thị kèm số tiền nguyên tệ ở màn hình truy nguồn.</p>
+  <p class="meta" style="margin-top:var(--s2)">Cài đặt tỷ giá thuộc issue #48. Prototype này chỉ đọc lại giá trị đã nhập.</p>
+  <div class="dialog-actions"><button type="button" class="primary" data-close>Đóng</button></div>
+</dialog>
+
+<dialog id="dlg-unavailable" aria-labelledby="unavailable-title">
+  <div class="dialog-head">
+    <div><p class="meta">Không mở được</p><h2 id="unavailable-title">Không thể mở mục này</h2></div>
+    <button type="button" data-close aria-label="Đóng">Đóng</button>
+  </div>
+  <p>Kỳ báo cáo và các lựa chọn hiện tại được giữ nguyên.</p>
+  <div class="dialog-actions"><button type="button" class="primary" data-close>Quay lại báo cáo</button></div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- Dữ liệu mẫu ---------------- */
+
+  var RATE = { usd: 25100, date: "12/09/2026", ageDays: 8 };
+  var TODAY = "20/09/2026";
+
+  var CAT = {
+    salary:    { n: "Lương",                 t: "in" },
+    business:  { n: "Thu nhập kinh doanh",   t: "in" },
+    rent:      { n: "Cho thuê",              t: "in" },
+    dividend:  { n: "Cổ tức",                t: "in" },
+    deposit:   { n: "Lãi tiền gửi",          t: "in" },
+    bond:      { n: "Trái phiếu và quỹ",     t: "in" },
+    otherIn:   { n: "Thu nhập khác",         t: "in" },
+    living:    { n: "Sinh hoạt",             t: "out" },
+    housing:   { n: "Nhà ở",                 t: "out" },
+    edu:       { n: "Giáo dục",              t: "out" },
+    health:    { n: "Y tế",                  t: "out" },
+    insurance: { n: "Bảo hiểm",              t: "out" },
+    tax:       { n: "Thuế và phí",           t: "out" },
+    principal: { n: "Trả gốc vay",           t: "out" },
+    interest:  { n: "Lãi vay",               t: "out" },
+    otherOut:  { n: "Chi khác",              t: "out" }
+  };
+
+  var ASSET = {
+    apt:     { n: "Căn hộ cho thuê Quận 7",          k: "Bất động sản" },
+    etf:     { n: "Quỹ ETF VN30",                    k: "Chứng khoán niêm yết" },
+    td:      { n: "Tiền gửi có kỳ hạn 12 tháng",     k: "Tiền gửi" },
+    bondvnm: { n: "Trái phiếu doanh nghiệp 2028",    k: "Trái phiếu" }
+  };
+
+  var LIAB = { home: { n: "Vay mua nhà" } };
+
+  var REC = { monthly: "Hằng tháng", quarterly: "Hằng quý", yearly: "Hằng năm" };
+
+  function e(id, m, d, c, a, note, rec, asset, liab, usd) {
+    return { id: id, m: m, d: d, c: c, a: a, note: note, rec: rec || null,
+             asset: asset || null, liab: liab || null, usd: usd || null };
+  }
+
+  var ENTRIES = [
+    /* 09/2026 — khớp danh mục đã duyệt ở review #69 */
+    e("e0901", "2026-09",  5, "salary",    132000000, "Lương tháng 09/2026", "monthly"),
+    e("e0902", "2026-09", 28, "business",   26200000, "Doanh thu tư vấn quý 3"),
+    e("e0903", "2026-09", 10, "rent",       14800000, "Tiền thuê căn hộ Quận 7", "monthly", "apt"),
+    e("e0904", "2026-09", 30, "dividend",    3765000, "Cổ tức quỹ ETF VN30 quý 3", "quarterly", "etf", null, 150),
+    e("e0905", "2026-09", 15, "deposit",     1500000, "Lãi tiền gửi có kỳ hạn", "monthly", "td"),
+    e("e0906", "2026-09", 20, "bond",        1500000, "Lãi trái phiếu doanh nghiệp quý 3", "quarterly", "bondvnm"),
+    e("e0907", "2026-09", 12, "otherIn",      235000, "Hoàn phí dịch vụ ngân hàng"),
+    e("e0908", "2026-09",  3, "living",     23400000, "Chi phí sinh hoạt gia đình"),
+    e("e0909", "2026-09",  5, "housing",    18750000, "Điện nước, phí quản lý, internet"),
+    e("e0910", "2026-09",  8, "edu",        12800000, "Học phí học kỳ 1"),
+    e("e0911", "2026-09", 18, "health",      4650000, "Khám sức khỏe định kỳ"),
+    e("e0912", "2026-09", 15, "insurance",   5400000, "Phí bảo hiểm sức khỏe gia đình", "yearly"),
+    e("e0913", "2026-09", 25, "tax",         8250000, "Thuế thu nhập cá nhân tạm nộp"),
+    e("e0914", "2026-09", 28, "principal",  10000000, "Trả gốc vay mua nhà", "monthly", null, "home"),
+    e("e0915", "2026-09", 28, "interest",    6250000, "Lãi vay mua nhà", "monthly", null, "home"),
+    e("e0916", "2026-09", 22, "otherOut",    2500000, "Chi khác"),
+
+    /* 08/2026 */
+    e("e0801", "2026-08",  5, "salary",    132000000, "Lương tháng 08/2026", "monthly"),
+    e("e0802", "2026-08", 27, "business",   18400000, "Doanh thu tư vấn"),
+    e("e0803", "2026-08", 10, "rent",       14800000, "Tiền thuê căn hộ Quận 7", "monthly", "apt"),
+    e("e0804", "2026-08", 15, "deposit",     1500000, "Lãi tiền gửi có kỳ hạn", "monthly", "td"),
+    e("e0805", "2026-08",  3, "living",     21850000, "Chi phí sinh hoạt gia đình"),
+    e("e0806", "2026-08",  5, "housing",    18750000, "Điện nước, phí quản lý, internet"),
+    e("e0807", "2026-08", 19, "health",      1200000, "Thuốc và khám ngoại trú"),
+    e("e0808", "2026-08", 25, "tax",         2400000, "Phí dịch vụ và lệ phí"),
+    e("e0809", "2026-08", 28, "principal",  10000000, "Trả gốc vay mua nhà", "monthly", null, "home"),
+    e("e0810", "2026-08", 28, "interest",    6300000, "Lãi vay mua nhà", "monthly", null, "home"),
+    e("e0811", "2026-08", 21, "otherOut",    3150000, "Chi khác"),
+
+    /* 07/2026 */
+    e("e0701", "2026-07",  5, "salary",    132000000, "Lương tháng 07/2026", "monthly"),
+    e("e0702", "2026-07", 29, "business",   22600000, "Doanh thu tư vấn"),
+    e("e0703", "2026-07", 10, "rent",       14800000, "Tiền thuê căn hộ Quận 7", "monthly", "apt"),
+    e("e0704", "2026-07", 15, "deposit",     1500000, "Lãi tiền gửi có kỳ hạn", "monthly", "td"),
+    e("e0705", "2026-07",  8, "otherIn",     4000000, "Bán thiết bị cũ"),
+    e("e0706", "2026-07",  3, "living",     24700000, "Chi phí sinh hoạt gia đình"),
+    e("e0707", "2026-07",  5, "housing",    18750000, "Điện nước, phí quản lý, internet"),
+    e("e0708", "2026-07", 12, "health",      8900000, "Điều trị nha khoa"),
+    e("e0709", "2026-07", 28, "principal",  10000000, "Trả gốc vay mua nhà", "monthly", null, "home"),
+    e("e0710", "2026-07", 28, "interest",    6350000, "Lãi vay mua nhà", "monthly", null, "home"),
+    e("e0711", "2026-07", 20, "otherOut",    5200000, "Chi khác"),
+
+    /* 06/2026 — tháng chốt quý */
+    e("e0601", "2026-06",  5, "salary",    132000000, "Lương tháng 06/2026", "monthly"),
+    e("e0602", "2026-06", 26, "business",   15900000, "Doanh thu tư vấn"),
+    e("e0603", "2026-06", 10, "rent",       14800000, "Tiền thuê căn hộ Quận 7", "monthly", "apt"),
+    e("e0604", "2026-06", 30, "dividend",    3765000, "Cổ tức quỹ ETF VN30 quý 2", "quarterly", "etf", null, 150),
+    e("e0605", "2026-06", 15, "deposit",     1500000, "Lãi tiền gửi có kỳ hạn", "monthly", "td"),
+    e("e0606", "2026-06", 20, "bond",        1500000, "Lãi trái phiếu doanh nghiệp quý 2", "quarterly", "bondvnm"),
+    e("e0607", "2026-06",  3, "living",     22300000, "Chi phí sinh hoạt gia đình"),
+    e("e0608", "2026-06",  5, "housing",    18750000, "Điện nước, phí quản lý, internet"),
+    e("e0609", "2026-06",  8, "edu",        12800000, "Học phí hè"),
+    e("e0610", "2026-06", 25, "tax",         7900000, "Thuế thu nhập cá nhân tạm nộp"),
+    e("e0611", "2026-06", 28, "principal",  10000000, "Trả gốc vay mua nhà", "monthly", null, "home"),
+    e("e0612", "2026-06", 28, "interest",    6400000, "Lãi vay mua nhà", "monthly", null, "home"),
+    e("e0613", "2026-06", 22, "otherOut",    2900000, "Chi khác"),
+
+    /* 05/2026 */
+    e("e0501", "2026-05",  5, "salary",    132000000, "Lương tháng 05/2026", "monthly"),
+    e("e0502", "2026-05", 28, "business",    9200000, "Doanh thu tư vấn"),
+    e("e0503", "2026-05", 10, "rent",       14800000, "Tiền thuê căn hộ Quận 7", "monthly", "apt"),
+    e("e0504", "2026-05", 15, "deposit",     1500000, "Lãi tiền gửi có kỳ hạn", "monthly", "td"),
+    e("e0505", "2026-05",  3, "living",     26400000, "Chi phí sinh hoạt gia đình"),
+    e("e0506", "2026-05",  5, "housing",    18750000, "Điện nước, phí quản lý, internet"),
+    e("e0507", "2026-05", 14, "health",      3300000, "Khám và thuốc"),
+    e("e0508", "2026-05", 30, "tax",         1800000, "Phí dịch vụ và lệ phí"),
+    e("e0509", "2026-05", 28, "principal",  10000000, "Trả gốc vay mua nhà", "monthly", null, "home"),
+    e("e0510", "2026-05", 28, "interest",    6450000, "Lãi vay mua nhà", "monthly", null, "home"),
+    e("e0511", "2026-05", 18, "otherOut",    4100000, "Chi khác"),
+
+    /* 04/2026 — tháng có dòng tiền ròng âm */
+    e("e0401", "2026-04",  5, "salary",    132000000, "Lương tháng 04/2026", "monthly"),
+    e("e0402", "2026-04", 10, "rent",       14800000, "Tiền thuê căn hộ Quận 7", "monthly", "apt"),
+    e("e0403", "2026-04", 15, "deposit",     1500000, "Lãi tiền gửi có kỳ hạn", "monthly", "td"),
+    e("e0404", "2026-04",  3, "living",     25900000, "Chi phí sinh hoạt gia đình"),
+    e("e0405", "2026-04",  5, "housing",    18750000, "Điện nước, phí quản lý, internet"),
+    e("e0406", "2026-04", 11, "health",     46500000, "Phẫu thuật và điều trị nội trú"),
+    e("e0407", "2026-04", 20, "tax",        38400000, "Quyết toán thuế thu nhập năm 2025"),
+    e("e0408", "2026-04", 28, "principal",  10000000, "Trả gốc vay mua nhà", "monthly", null, "home"),
+    e("e0409", "2026-04", 28, "interest",    6500000, "Lãi vay mua nhà", "monthly", null, "home"),
+    e("e0410", "2026-04", 24, "otherOut",    3600000, "Chi khác")
+  ];
+
+  var MONTHS = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"];
+
+  /* ---------------- Định dạng ---------------- */
+
+  var NF = new Intl.NumberFormat("vi-VN");
+  function money(n) { return NF.format(n) + " ₫"; }
+  function signed(n) { return (n < 0 ? "−" : "") + NF.format(Math.abs(n)) + " ₫"; }
+  function pc(a, b) {
+    if (!b) { return "Không khả dụng"; }
+    return (Math.round((a / b) * 1000) / 10).toFixed(1).replace(".", ",") + "%";
+  }
+  function mLabel(m) { return "Tháng " + m.slice(5) + "/" + m.slice(0, 4); }
+  /* Nhãn rút gọn chỉ dùng trên trục biểu đồ; số chính xác luôn có ở nhãn trợ năng,
+     ở bảng số liệu tương đương và ở thẻ KPI. */
+  function compact(n) {
+    var a = Math.abs(n), sign = n < 0 ? "−" : "+";
+    if (a >= 1e9) { return sign + (a / 1e9).toFixed(1).replace(".", ",") + " tỷ"; }
+    return sign + (a / 1e6).toFixed(1).replace(".", ",") + " tr";
+  }
+  function dLabel(en) { return String(en.d).padStart(2, "0") + "/" + en.m.slice(5) + "/" + en.m.slice(0, 4); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
+  /* ---------------- Tổng hợp ---------------- */
+
+  function entriesOf(m) {
+    return ENTRIES.filter(function (x) { return x.m === m; })
+                  .sort(function (a, b) { return a.d - b.d; });
+  }
+  function totals(m) {
+    var list = entriesOf(m), inc = 0, out = 0;
+    list.forEach(function (x) { if (CAT[x.c].t === "in") { inc += x.a; } else { out += x.a; } });
+    return { inc: inc, out: out, net: inc - out, n: list.length };
+  }
+  function groups(m, type) {
+    var by = {};
+    entriesOf(m).forEach(function (x) {
+      if (CAT[x.c].t !== type) { return; }
+      if (!by[x.c]) { by[x.c] = { key: x.c, name: CAT[x.c].n, amount: 0, count: 0 }; }
+      by[x.c].amount += x.a; by[x.c].count += 1;
+    });
+    return Object.keys(by).map(function (k) { return by[k]; })
+      .sort(function (a, b) { return b.amount - a.amount; });
+  }
+  /* Gộp nhóm nhỏ dưới 5% thành "Khác"; luôn giữ đủ tổng. */
+  function collapse(list, total) {
+    var keep = [], rest = { key: "rest", name: "Khác", amount: 0, count: 0, members: [] };
+    list.forEach(function (g) {
+      if (total && g.amount / total < 0.05) {
+        rest.amount += g.amount; rest.count += g.count; rest.members.push(g.name);
+      } else { keep.push(g); }
+    });
+    if (rest.count > 0) { keep.push(rest); }
+    return keep;
+  }
+  function passiveOf(m) {
+    var by = {}, total = 0;
+    entriesOf(m).forEach(function (x) {
+      if (CAT[x.c].t !== "in" || !x.asset) { return; }
+      if (!by[x.asset]) { by[x.asset] = { key: x.asset, name: ASSET[x.asset].n, kind: ASSET[x.asset].k, amount: 0, count: 0 }; }
+      by[x.asset].amount += x.a; by[x.asset].count += 1; total += x.a;
+    });
+    return {
+      list: Object.keys(by).map(function (k) { return by[k]; })
+             .sort(function (a, b) { return b.amount - a.amount; }),
+      total: total
+    };
+  }
+
+  /* ---------------- Trạng thái xem ---------------- */
+
+  var S = { month: "2026-09", view: "report", compType: "out", chart: "bar", small: false, cat: null, entry: null };
+  var opener = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  /* ---------------- Thành phần dùng lại ---------------- */
+
+  function compRow(g, total, type, clickable) {
+    var share = pc(g.amount, total);
+    var cls = "comp-row" + (type === "out" ? " out" : "") + (g.key === "rest" ? " rest" : "");
+    var w = total ? Math.max(1, (g.amount / total) * 100) : 0;
+    var label = g.name + ", " + money(g.amount) + ", chiếm " + share + " của kỳ, gồm " + g.count + " bản ghi";
+    return '<button type="button" class="' + cls + '" data-cat="' + esc(g.key) + '"' +
+      (clickable ? "" : " disabled") + ' aria-label="' + esc(label) + '">' +
+      '<span class="comp-top"><span class="comp-name">' + esc(g.name) + '</span>' +
+      '<span class="comp-amt fig">' + money(g.amount) + '</span></span>' +
+      '<span class="comp-track"><span class="comp-fill" style="width:' + w.toFixed(1) + '%"></span></span>' +
+      '<span class="comp-meta"><span>' + share + "</span><span>" + g.count + " bản ghi</span></span>" +
+      (g.key === "rest" ? '<span class="comp-meta"><span>Gồm: ' + esc(g.members.join(", ")) + "</span></span>" : "") +
+      "</button>";
+  }
+
+  function entryRow(x) {
+    var isIn = CAT[x.c].t === "in";
+    var tags = [];
+    if (x.rec) { tags.push('<span class="tag brand">' + REC[x.rec] + "</span>"); }
+    if (x.usd) { tags.push('<span class="tag gold">' + x.usd + " USD</span>"); }
+    if (x.asset) { tags.push('<span class="tag">' + esc(ASSET[x.asset].n) + "</span>"); }
+    if (x.liab) { tags.push('<span class="tag">' + esc(LIAB[x.liab].n) + "</span>"); }
+    return '<button type="button" class="entry-row" data-entry="' + x.id + '">' +
+      '<span class="entry-main"><span class="entry-date fig">' + dLabel(x) + "</span>" +
+      "<strong>" + esc(x.note) + "</strong>" +
+      (tags.length ? '<span class="tag-row">' + tags.join("") + "</span>" : "") +
+      '</span><span class="entry-amt fig ' + (isIn ? "in" : "") + '">' +
+      (isIn ? "+" : "−") + money(x.a) + "</span></button>";
+  }
+
+  function emptyState(title, body, actionLabel, actionAttr) {
+    return '<div class="empty-state"><strong>' + esc(title) + "</strong>" +
+      '<p class="meta">' + esc(body) + "</p>" +
+      (actionLabel ? '<button type="button" class="primary" ' + actionAttr + ">" + esc(actionLabel) + "</button>" : "") +
+      "</div>";
+  }
+
+  /* ---------------- Màn hình: Báo cáo tháng ---------------- */
+
+  function renderReport() {
+    var m = S.month, t = totals(m), list = entriesOf(m);
+    $("period-label").textContent = mLabel(m);
+
+    var banners = "";
+    if (list.length === 0) {
+      banners += '<div class="banner inf"><span class="status info">Kỳ chưa có bản ghi</span>' +
+        '<p class="meta">' + mLabel(m) + " chưa có bản ghi thu chi nào. Kỳ báo cáo và điều hướng vẫn giữ nguyên để bạn chuyển sang tháng khác.</p></div>";
+    }
+    if (list.some(function (x) { return x.usd; })) {
+      banners += '<div class="banner"><span class="status warn">Tỷ giá đã dùng cập nhật ' + RATE.date + "</span>" +
+        '<p class="meta">Kỳ này có bản ghi nguyên tệ USD được quy đổi ở mức 1 USD = ' + NF.format(RATE.usd) +
+        " ₫, cập nhật cách đây " + RATE.ageDays + " ngày tính tới " + TODAY + ". Giá trị quy đổi chỉ chính xác tới mức tỷ giá bạn đã nhập.</p>" +
+        '<div class="banner-actions"><button type="button" class="tonal" data-toast="Cập nhật tỷ giá thuộc màn hình Hồ sơ và cài đặt của issue #48.">Cập nhật tỷ giá</button>' +
+        '<button type="button" class="text-btn" data-dialog="rate">Xem tỷ giá đang dùng</button></div></div>';
+    }
+    if (t.net < 0) {
+      banners += '<div class="banner err"><span class="status bad">Dòng tiền ròng âm</span>' +
+        '<p class="meta">Chi phí ' + money(t.out) + " vượt thu nhập " + money(t.inc) + " trong " + mLabel(m).toLowerCase() +
+        ", chênh lệch " + money(Math.abs(t.net)) + ". Mở nhóm chi phí lớn nhất để xem bản ghi tạo ra chênh lệch.</p>" +
+        '<div class="banner-actions"><button type="button" class="tonal" data-go="composition" data-type="out">Xem cơ cấu chi phí</button></div></div>';
+    }
+    $("report-banners").innerHTML = banners;
+
+    if (list.length === 0) {
+      $("report-kpis").innerHTML = emptyState(
+        "Chưa có bản ghi trong " + mLabel(m).toLowerCase(),
+        "Thêm khoản thu hoặc khoản chi để báo cáo tháng này có kết quả. Các tháng đã ghi nhận vẫn xem được từ bộ chọn kỳ.",
+        "Thêm bản ghi", 'data-toast="Biểu mẫu thêm bản ghi thuộc issue #69."');
+      $("report-recon").innerHTML = "Không có bản ghi nào trong kỳ này, nên báo cáo không hiển thị số 0 như một kết quả đã ghi nhận.";
+    } else {
+      $("report-kpis").innerHTML =
+        '<button type="button" class="kpi hero-kpi' + (t.net < 0 ? " neg" : "") + '" data-dialog="net">' +
+          '<span class="kpi-label">Dòng tiền ròng ' + mLabel(m).toLowerCase() + "</span>" +
+          '<span class="kpi-value fig">' + signed(t.net) + "</span>" +
+          '<span class="kpi-sub">' + (t.net < 0 ? "Âm · " : "Dương · ") + "Thu nhập trừ chi phí · chạm để xem cách tính</span>" +
+        "</button>" +
+        '<button type="button" class="kpi inflow" data-go="composition" data-type="in">' +
+          '<span class="kpi-label">Thu nhập</span><span class="kpi-value fig">' + money(t.inc) + "</span>" +
+          '<span class="kpi-sub">' + groups(m, "in").length + " nhóm · " + entriesOf(m).filter(function (x) { return CAT[x.c].t === "in"; }).length + " bản ghi</span>" +
+        "</button>" +
+        '<button type="button" class="kpi" data-go="composition" data-type="out">' +
+          '<span class="kpi-label">Chi phí</span><span class="kpi-value fig">' + money(t.out) + "</span>" +
+          '<span class="kpi-sub">' + groups(m, "out").length + " nhóm · " + entriesOf(m).filter(function (x) { return CAT[x.c].t === "out"; }).length + " bản ghi</span>" +
+        "</button>";
+      $("report-recon").innerHTML = "Đối chiếu: <strong>" + money(t.inc) + "</strong> thu nhập trừ <strong>" +
+        money(t.out) + "</strong> chi phí bằng <strong>" + signed(t.net) +
+        "</strong> dòng tiền ròng, cộng từ đúng " + t.n + " bản ghi của " + mLabel(m).toLowerCase() + ".";
+    }
+
+    renderCompare();
+    renderMini("in");
+    renderMini("out");
+    renderPassiveTeaser();
+
+    $("report-count").textContent = list.length
+      ? "Báo cáo này cộng từ " + list.length + " bản ghi trong " + mLabel(m).toLowerCase() +
+        ". Mỗi con số đều mở được xuống danh sách bản ghi tạo ra nó."
+      : "Không có bản ghi nào trong kỳ này.";
+  }
+
+  function windowMonths() {
+    var i = MONTHS.indexOf(S.month), out = [];
+    for (var k = i - 5; k <= i; k++) { out.push(k >= 0 ? MONTHS[k] : null); }
+    return out;
+  }
+
+  function renderCompare() {
+    var win = windowMonths(), max = 0, rows = [];
+    win.forEach(function (m) {
+      if (!m) { return; }
+      var t = totals(m);
+      if (t.n === 0) { return; }
+      max = Math.max(max, t.inc, t.out);
+      rows.push({ m: m, t: t });
+    });
+    var html = win.map(function (m) {
+      if (!m || totals(m).n === 0) {
+        var lab = m ? "T" + m.slice(5) : "—";
+        return '<div class="cmp-col"><div class="cmp-bars"><span class="cmp-gap"></span></div>' +
+          '<span class="cmp-foot"><span>' + lab + '</span><span class="meta">Chưa ghi</span></span></div>';
+      }
+      var t = totals(m), sel = m === S.month;
+      var hi = Math.max(2, (t.inc / max) * 100), ho = Math.max(2, (t.out / max) * 100);
+      var label = mLabel(m) + ": thu nhập " + money(t.inc) + ", chi phí " + money(t.out) +
+                  ", dòng tiền ròng " + signed(t.net) + ". Chọn để xem báo cáo tháng này.";
+      return '<button type="button" class="cmp-col" data-month="' + m + '" aria-pressed="' + (sel ? "true" : "false") +
+        '" aria-label="' + esc(label) + '">' +
+        '<span class="cmp-bars"><span class="cmp-bar in" style="height:' + hi.toFixed(1) + '%"></span>' +
+        '<span class="cmp-bar out" style="height:' + ho.toFixed(1) + '%"></span></span>' +
+        '<span class="cmp-foot"><span>T' + m.slice(5) + "</span>" +
+        '<span class="cmp-net fig' + (t.net < 0 ? " neg" : "") + '">' + compact(t.net) + "</span></span></button>";
+    }).join("");
+    $("cmp-chart").innerHTML = html;
+
+    if (rows.length === 0) {
+      $("cmp-summary").textContent = "Chưa có tháng nào trong dải này được ghi nhận.";
+    } else {
+      var best = rows.slice().sort(function (a, b) { return b.t.net - a.t.net; })[0];
+      var worst = rows.slice().sort(function (a, b) { return a.t.net - b.t.net; })[0];
+      $("cmp-summary").textContent = "Trong " + rows.length + " tháng đã ghi nhận, dòng tiền ròng cao nhất là " +
+        signed(best.t.net) + " ở " + mLabel(best.m).toLowerCase() + " và thấp nhất là " +
+        signed(worst.t.net) + " ở " + mLabel(worst.m).toLowerCase() + ".";
+    }
+
+    $("cmp-table-body").innerHTML =
+      '<table><caption class="sr">So sánh thu nhập, chi phí và dòng tiền ròng theo tháng</caption>' +
+      '<thead><tr><th scope="col">Kỳ</th><th scope="col" class="fig">Thu nhập</th><th scope="col" class="fig">Chi phí</th><th scope="col" class="fig">Ròng</th><th scope="col" class="fig">Bản ghi</th></tr></thead><tbody>' +
+      win.map(function (m) {
+        if (!m) { return ""; }
+        var t = totals(m);
+        if (t.n === 0) { return "<tr><td>" + mLabel(m) + '</td><td colspan="4" class="meta">Chưa ghi nhận bản ghi nào</td></tr>'; }
+        return "<tr><td>" + mLabel(m) + '</td><td class="fig">' + money(t.inc) + '</td><td class="fig">' +
+          money(t.out) + '</td><td class="fig">' + signed(t.net) + '</td><td class="fig">' + t.n + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  function renderMini(type) {
+    var m = S.month, t = totals(m);
+    var total = type === "in" ? t.inc : t.out;
+    var g = groups(m, type).slice(0, 3);
+    var box = $(type === "in" ? "mini-in" : "mini-out");
+    if (!g.length) {
+      box.innerHTML = '<p class="meta">Không có bản ghi ' + (type === "in" ? "thu nhập" : "chi phí") + " trong kỳ này.</p>";
+      $(type === "in" ? "mini-in-sum" : "mini-out-sum").textContent = "Không khả dụng cho kỳ rỗng";
+      return;
+    }
+    box.innerHTML = g.map(function (x) { return compRow(x, total, type, true); }).join("");
+    $(type === "in" ? "mini-in-sum" : "mini-out-sum").textContent =
+      "Ba nhóm lớn nhất chiếm " + pc(g.reduce(function (s, x) { return s + x.amount; }, 0), total) +
+      " của " + money(total) + ".";
+  }
+
+  function renderPassiveTeaser() {
+    var m = S.month, t = totals(m), p = passiveOf(m);
+    var el = $("passive-teaser");
+    if (t.inc === 0) {
+      el.innerHTML = '<span class="asset-top"><strong>Thu nhập thụ động</strong><span class="meta">Không khả dụng</span></span>' +
+        '<span class="meta">Kỳ này chưa có thu nhập nào để phân nhóm.</span>';
+      return;
+    }
+    el.innerHTML = '<span class="asset-top"><strong>Thu nhập thụ động theo tài sản</strong>' +
+      '<span class="comp-amt fig">' + money(p.total) + "</span></span>" +
+      '<span class="comp-track"><span class="comp-fill" style="width:' + ((p.total / t.inc) * 100).toFixed(1) + '%"></span></span>' +
+      '<span class="comp-meta"><span>' + pc(p.total, t.inc) + " tổng thu nhập</span><span>" +
+      p.list.length + " tài sản · xem chi tiết</span></span>";
+  }
+
+  /* ---------------- Màn hình: Cơ cấu ---------------- */
+
+  function currentGroups() {
+    var m = S.month, t = totals(m);
+    var total = S.compType === "in" ? t.inc : t.out;
+    var list = groups(m, S.compType);
+    if (S.small) { list = collapse(list, total); }
+    return { list: list, total: total };
+  }
+
+  function renderComposition() {
+    var m = S.month, isIn = S.compType === "in";
+    var g = currentGroups();
+    $("comp-heading").textContent = isIn ? "Cơ cấu thu nhập" : "Cơ cấu chi phí";
+    $("comp-period").textContent = mLabel(m) + " · tổng " + (g.total ? money(g.total) : "không khả dụng");
+    $$("[data-comp-type]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-comp-type") === S.compType ? "true" : "false");
+    });
+
+    var donutOk = g.list.length > 0 && g.list.length <= 5;
+    $("donut-btn").disabled = !donutOk;
+    if (!donutOk && S.chart === "donut") { S.chart = "bar"; }
+    $$("[data-chart]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-chart") === S.chart ? "true" : "false");
+    });
+    $("donut-reason").textContent = donutOk
+      ? "Biểu đồ vòng khả dụng vì cơ cấu đang còn " + g.list.length + " nhóm hiển thị."
+      : (g.list.length === 0
+          ? "Không có nhóm nào trong kỳ này nên không vẽ được biểu đồ."
+          : "Biểu đồ vòng chỉ dùng khi còn tối đa năm nhóm hiển thị. Cơ cấu này đang có " +
+            g.list.length + " nhóm, nên thanh xếp hạng là cách đọc chính xác hơn.");
+
+    if (g.list.length === 0) {
+      $("comp-list").innerHTML = emptyState(
+        "Không có bản ghi " + (isIn ? "thu nhập" : "chi phí") + " trong " + mLabel(m).toLowerCase(),
+        "Nhóm vẫn tồn tại trong hệ thống nhưng chưa có bản ghi nào thuộc kỳ này, nên báo cáo không hiển thị 0 như một kết quả.",
+        "Đổi kỳ báo cáo", 'data-dialog="period"');
+      $("comp-recon").textContent = "Không có gì để đối chiếu trong kỳ này.";
+      $("donut-area").classList.add("hidden");
+      $("comp-summary").textContent = "Không khả dụng cho kỳ rỗng.";
+      $("comp-table-body").innerHTML = '<p class="meta">Không có dữ liệu cho kỳ này.</p>';
+      return;
+    }
+
+    $("comp-list").innerHTML = g.list.map(function (x) { return compRow(x, g.total, S.compType, true); }).join("");
+
+    var top = g.list[0];
+    $("comp-summary").textContent = "Nhóm lớn nhất là " + top.name + " với " + money(top.amount) +
+      ", chiếm " + pc(top.amount, g.total) + " của " + money(g.total) + " trong " + mLabel(m).toLowerCase() +
+      ". Tổng " + g.list.length + " nhóm hiển thị.";
+
+    var sum = g.list.reduce(function (s, x) { return s + x.amount; }, 0);
+    $("comp-recon").innerHTML = "Đối chiếu: tổng các nhóm hiển thị bằng <strong>" + money(sum) +
+      "</strong>, đúng bằng tổng " + (isIn ? "thu nhập" : "chi phí") + " <strong>" + money(g.total) +
+      "</strong> của kỳ." + (S.small ? " Nhóm “Khác” chỉ gộp cách hiển thị, không loại bỏ bản ghi nào." : "");
+
+    if (S.chart === "donut" && donutOk) {
+      $("donut-area").classList.remove("hidden");
+      renderDonut(g);
+    } else {
+      $("donut-area").classList.add("hidden");
+    }
+
+    $("comp-table-body").innerHTML =
+      '<table><caption class="sr">Cơ cấu theo nhóm của kỳ đang chọn</caption>' +
+      '<thead><tr><th scope="col">Nhóm</th><th scope="col" class="fig">Số tiền</th><th scope="col" class="fig">Tỉ lệ</th><th scope="col" class="fig">Bản ghi</th></tr></thead><tbody>' +
+      g.list.map(function (x) {
+        return "<tr><td>" + esc(x.name) + '</td><td class="fig">' + money(x.amount) +
+          '</td><td class="fig">' + pc(x.amount, g.total) + '</td><td class="fig">' + x.count + "</td></tr>";
+      }).join("") +
+      '</tbody><tfoot><tr><td>Tổng</td><td class="fig">' + money(sum) + '</td><td class="fig">100,0%</td><td class="fig">' +
+      g.list.reduce(function (s, x) { return s + x.count; }, 0) + "</td></tr></tfoot></table>";
+  }
+
+  var DONUT_COLORS = ["var(--primary)", "var(--gold)", "var(--navy)", "var(--info)", "var(--control)"];
+
+  function renderDonut(g) {
+    var C = 2 * Math.PI * 15.9155, off = 0, segs = "", legend = "";
+    g.list.forEach(function (x, i) {
+      var frac = x.amount / g.total, len = frac * C;
+      segs += '<circle cx="21" cy="21" r="15.9155" stroke="' + DONUT_COLORS[i % DONUT_COLORS.length] +
+        '" stroke-dasharray="' + len.toFixed(3) + " " + (C - len).toFixed(3) +
+        '" stroke-dashoffset="' + (-off).toFixed(3) + '" transform="rotate(-90 21 21)"></circle>';
+      off += len;
+      legend += compRow(x, g.total, S.compType, true);
+    });
+    $("donut-g").innerHTML = segs;
+    $("donut-legend").innerHTML = legend;
+    $("donut-alt").textContent = "Biểu đồ vòng cơ cấu " + (S.compType === "in" ? "thu nhập" : "chi phí") +
+      " của " + mLabel(S.month).toLowerCase() + ", " + g.list.length + " nhóm. Danh sách kèm số liệu nằm ngay bên cạnh.";
+  }
+
+  /* ---------------- Màn hình: Chi tiết nhóm ---------------- */
+
+  function renderCategory() {
+    var m = S.month, isIn = S.compType === "in", t = totals(m);
+    var total = isIn ? t.inc : t.out;
+    var key = S.cat, list, name, amount;
+
+    if (key === "rest") {
+      var collapsed = collapse(groups(m, S.compType), total).filter(function (x) { return x.key === "rest"; })[0];
+      var members = collapsed ? collapsed.members : [];
+      list = entriesOf(m).filter(function (x) {
+        return CAT[x.c].t === S.compType && members.indexOf(CAT[x.c].n) >= 0;
+      });
+      name = "Khác";
+      amount = list.reduce(function (s, x) { return s + x.a; }, 0);
+    } else {
+      list = entriesOf(m).filter(function (x) { return x.c === key; });
+      name = CAT[key] ? CAT[key].n : "Nhóm";
+      amount = list.reduce(function (s, x) { return s + x.a; }, 0);
+    }
+
+    $("cat-heading").textContent = name;
+    $("cat-period").textContent = mLabel(m) + " · " + (isIn ? "nhóm thu nhập" : "nhóm chi phí");
+
+    $("cat-summary").innerHTML =
+      '<span class="kpi-label">Tổng nhóm trong kỳ</span>' +
+      '<span class="detail-amount fig' + (isIn ? " in" : "") + '">' + money(amount) + "</span>" +
+      '<dl class="facts">' +
+        '<div class="fact"><dt>Tỉ lệ trong kỳ</dt><dd>' + pc(amount, total) + " của " + money(total) + "</dd></div>" +
+        '<div class="fact"><dt>Số bản ghi</dt><dd>' + list.length + "</dd></div>" +
+        '<div class="fact"><dt>Kỳ báo cáo</dt><dd>' + mLabel(m) + "</dd></div>" +
+        (key === "rest" ? '<div class="fact"><dt>Gồm nhóm</dt><dd>' + esc((collapse(groups(m, S.compType), total).filter(function (x) { return x.key === "rest"; })[0] || { members: [] }).members.join(", ")) + "</dd></div>" : "") +
+      "</dl>";
+
+    $("cat-list-title").textContent = "Bản ghi trong nhóm (" + list.length + ")";
+    $("cat-entries").innerHTML = list.length
+      ? list.map(entryRow).join("")
+      : emptyState("Nhóm này chưa có bản ghi trong kỳ",
+          "Nhóm vẫn hợp lệ nhưng không có bản ghi nào thuộc " + mLabel(m).toLowerCase() + ".",
+          "Đổi kỳ báo cáo", 'data-dialog="period"');
+
+    $("cat-recon").innerHTML = list.length
+      ? "Đối chiếu: " + list.length + " bản ghi cộng lại bằng <strong>" + money(amount) +
+        "</strong>, đúng bằng con số của nhóm trên biểu đồ cơ cấu."
+      : "Không có bản ghi nào để đối chiếu.";
+  }
+
+  /* ---------------- Màn hình: Truy nguồn bản ghi ---------------- */
+
+  function renderEntry() {
+    var x = ENTRIES.filter(function (y) { return y.id === S.entry; })[0];
+    if (!x) { return; }
+    var isIn = CAT[x.c].t === "in", t = totals(x.m);
+    var total = isIn ? t.inc : t.out;
+    var catTotal = entriesOf(x.m).reduce(function (s2, y) { return y.c === x.c ? s2 + y.a : s2; }, 0);
+
+    $("entry-heading").textContent = x.note;
+
+    var facts = "";
+    facts += '<div class="fact"><dt>Ngày ghi nhận</dt><dd>' + dLabel(x) + "</dd></div>";
+    facts += '<div class="fact"><dt>Loại</dt><dd>' + (isIn ? "Thu nhập" : "Chi phí") + "</dd></div>";
+    facts += '<div class="fact"><dt>Nhóm</dt><dd>' + esc(CAT[x.c].n) + "</dd></div>";
+    facts += '<div class="fact"><dt>Kỳ báo cáo</dt><dd>' + mLabel(x.m) + "</dd></div>";
+    if (x.usd) {
+      facts += '<div class="fact"><dt>Nguyên tệ</dt><dd>' + NF.format(x.usd) + " USD</dd></div>";
+      facts += '<div class="fact"><dt>Tỷ giá áp dụng</dt><dd>1 USD = ' + NF.format(RATE.usd) + ' ₫</dd></div>';
+    }
+    facts += '<div class="fact"><dt>Tính chất</dt><dd>' + (x.rec ? REC[x.rec] + " (bản ghi định kỳ)" : "Một lần") + "</dd></div>";
+    if (x.asset) { facts += '<div class="fact"><dt>Tài sản liên kết</dt><dd>' + esc(ASSET[x.asset].n) + "</dd></div>"; }
+    if (x.liab) { facts += '<div class="fact"><dt>Công nợ liên kết</dt><dd>' + esc(LIAB[x.liab].n) + "</dd></div>"; }
+
+    $("entry-card").innerHTML =
+      '<span class="kpi-label">Số tiền ghi nhận</span>' +
+      '<span class="detail-amount fig' + (isIn ? " in" : "") + '">' + (isIn ? "+" : "−") + money(x.a) + "</span>" +
+      (x.usd ? '<p class="meta">Quy đổi từ ' + NF.format(x.usd) + " USD theo tỷ giá cập nhật " + RATE.date + ".</p>" : "") +
+      '<dl class="facts">' + facts + "</dl>";
+
+    $("entry-trace").innerHTML =
+      '<strong>Vì sao bản ghi này nằm trong báo cáo ' + mLabel(x.m).toLowerCase() + "</strong>" +
+      '<p class="summary-sentence">Bản ghi có ngày ' + dLabel(x) + ", nằm trong " + mLabel(x.m).toLowerCase() +
+      ", nên được cộng vào nhóm " + esc(CAT[x.c].n) + " và vào tổng " + (isIn ? "thu nhập" : "chi phí") + " của kỳ.</p>" +
+      '<p class="meta">Khoản này chiếm ' + pc(x.a, total) + " tổng " + (isIn ? "thu nhập" : "chi phí") +
+      " của kỳ (" + money(total) + ") và " + pc(x.a, catTotal) + " của nhóm " + esc(CAT[x.c].n) +
+      " (" + money(catTotal) + ")." +
+      (x.rec ? " Bản ghi sinh ra từ chuỗi định kỳ " + REC[x.rec].toLowerCase() + "; quy tắc sinh kỳ thuộc issue #72." : "") +
+      (x.asset ? " Vì có liên kết tài sản, khoản thu này được xếp vào thu nhập thụ động của " + esc(ASSET[x.asset].n) + "." : "") +
+      "</p>";
+
+    var acts = '<button type="button" class="tonal" data-toast="Bản ghi gốc nằm trong danh mục của issue #69; prototype này chỉ minh họa đường dẫn.">Mở bản ghi trong danh mục</button>';
+    if (x.asset) { acts += '<button type="button" class="text-btn" data-toast="Chi tiết tài sản thuộc issue #51 và #54.">Mở tài sản liên kết</button>'; }
+    if (x.liab) { acts += '<button type="button" class="text-btn" data-toast="Chi tiết công nợ thuộc issue #60.">Mở công nợ liên kết</button>'; }
+    acts += '<button type="button" class="text-btn" data-dialog="unavailable">Mở mục không khả dụng</button>';
+    $("entry-actions").innerHTML = acts;
+  }
+
+  /* ---------------- Màn hình: Thu nhập thụ động ---------------- */
+
+  function renderPassive() {
+    var m = S.month, t = totals(m), p = passiveOf(m);
+    $("passive-period").textContent = mLabel(m);
+
+    if (t.inc === 0) {
+      $("passive-summary").innerHTML = "<strong>Không khả dụng</strong>" +
+        '<p class="meta">Kỳ này chưa có thu nhập nào nên không tính được tỉ lệ thu nhập thụ động.</p>';
+      $("passive-list").innerHTML = "";
+      $("passive-active").innerHTML = "";
+      $("passive-recon").textContent = "Không có gì để đối chiếu trong kỳ này.";
+      return;
+    }
+
+    var active = t.inc - p.total;
+    $("passive-summary").innerHTML =
+      "<strong>Thu nhập thụ động trong " + mLabel(m).toLowerCase() + "</strong>" +
+      '<p class="summary-sentence">' + money(p.total) + " trên tổng thu nhập " + money(t.inc) +
+      ", tương đương " + pc(p.total, t.inc) + ", đến từ " + p.list.length + " tài sản.</p>" +
+      '<p class="meta">Tỉ lệ này chỉ phản ánh các bản ghi bạn đã liên kết với tài sản. Hệ thống không tự suy đoán một khoản thu là thụ động.</p>';
+
+    $("passive-list").innerHTML = p.list.length
+      ? p.list.map(function (g) {
+          var w = ((g.amount / t.inc) * 100).toFixed(1);
+          return '<button type="button" class="asset-row" data-asset="' + esc(g.key) + '" aria-label="' +
+            esc(g.name + ", " + money(g.amount) + ", chiếm " + pc(g.amount, t.inc) + " tổng thu nhập, " + g.count + " bản ghi") + '">' +
+            '<span class="asset-top"><strong>' + esc(g.name) + '</strong><span class="comp-amt fig">' + money(g.amount) + "</span></span>" +
+            '<span class="meta">' + esc(g.kind) + "</span>" +
+            '<span class="comp-track"><span class="comp-fill" style="width:' + w + '%"></span></span>' +
+            '<span class="comp-meta"><span>' + pc(g.amount, t.inc) + " tổng thu nhập</span><span>" + g.count + " bản ghi</span></span>" +
+            "</button>";
+        }).join("")
+      : emptyState("Chưa có thu nhập gắn với tài sản nào",
+          "Kỳ này có thu nhập nhưng chưa bản ghi nào được liên kết tới tài sản, nên chưa xác định được thu nhập thụ động.",
+          "Xem bản ghi thu nhập", 'data-go="composition" data-type="in"');
+
+    $("passive-active").innerHTML =
+      "<h4>Thu nhập chủ động</h4>" +
+      '<span class="comp-top"><span class="comp-name">Không gắn với tài sản</span><span class="comp-amt fig">' + money(active) + "</span></span>" +
+      '<span class="comp-meta"><span>' + pc(active, t.inc) + " tổng thu nhập</span><span>Lương, kinh doanh và khoản thu một lần</span></span>";
+
+    $("passive-recon").innerHTML = "Đối chiếu: <strong>" + money(p.total) + "</strong> thụ động cộng <strong>" +
+      money(active) + "</strong> chủ động bằng <strong>" + money(t.inc) + "</strong>, đúng bằng tổng thu nhập của kỳ.";
+  }
+
+  /* ---------------- Thư viện trạng thái ---------------- */
+
+  function mini(code, title, body) {
+    return '<div class="mini"><span class="kicker">Trạng thái ' + code + "</span><h3>" + esc(title) + "</h3>" + body + "</div>";
+  }
+
+  function renderStates() {
+    var g = [];
+
+    g.push(mini("01", "Đang tải báo cáo",
+      '<div class="state-panel"><div class="skeleton"><span style="width:45%"></span><span style="height:3rem"></span>' +
+      '<span style="width:70%"></span><span style="height:6rem"></span><span style="width:55%"></span></div>' +
+      '<p class="meta" style="margin-top:var(--s3)">Khung giữ đúng chỗ của KPI và biểu đồ nên bố cục không nhảy khi dữ liệu về. Không hoạt hình số tiền.</p></div>'));
+
+    g.push(mini("02", "Kỳ chưa có bản ghi",
+      emptyState("Chưa có bản ghi trong tháng 03/2026",
+        "Thêm khoản thu hoặc khoản chi để báo cáo tháng này có kết quả. Bộ chọn kỳ và điều hướng vẫn giữ nguyên.",
+        "Thêm bản ghi", 'data-toast="Biểu mẫu thêm bản ghi thuộc issue #69."')));
+
+    g.push(mini("03", "Dữ liệu một phần vì thiếu tỷ giá",
+      '<div class="banner"><span class="status warn">Tổng đang là dữ liệu một phần</span>' +
+      '<p class="meta">Bản ghi “Cổ tức quỹ ETF VN30 quý 3” có nguyên tệ 150 USD nhưng chưa có tỷ giá khả dụng, nên chưa cộng được vào tổng thu nhập.</p>' +
+      '<div class="banner-actions"><button type="button" class="tonal" data-toast="Cập nhật tỷ giá thuộc issue #48.">Cập nhật tỷ giá</button></div></div>' +
+      '<dl class="facts" style="margin-top:var(--s3)">' +
+      '<div class="fact"><dt>Nguyên tệ</dt><dd>150 USD</dd></div>' +
+      '<div class="fact"><dt>Quy đổi</dt><dd>Không khả dụng</dd></div>' +
+      '<div class="fact"><dt>Thu nhập đã xác định</dt><dd>176.235.000 ₫</dd></div>' +
+      '<div class="fact"><dt>Dòng tiền ròng</dt><dd>Một phần · tối thiểu 84.235.000 ₫</dd></div></dl>' +
+      '<p class="meta" style="margin-top:var(--s2)">Tổng không quy khoản thiếu về 0 và không ẩn bản ghi; con số được nêu rõ là chưa đầy đủ.</p>'));
+
+    g.push(mini("04", "Tỷ giá cũ",
+      '<div class="banner"><span class="status warn">Tỷ giá cập nhật ' + RATE.date + "</span>" +
+      '<p class="meta">Đã ' + RATE.ageDays + " ngày kể từ lần cập nhật gần nhất tính tới " + TODAY +
+      ". Giá trị quy đổi chỉ chính xác tới mức tỷ giá bạn đã nhập.</p>" +
+      '<div class="banner-actions"><button type="button" class="tonal" data-toast="Cập nhật tỷ giá thuộc issue #48.">Cập nhật tỷ giá</button>' +
+      '<button type="button" class="text-btn" data-dialog="rate">Xem tỷ giá đang dùng</button></div></div>'));
+
+    var t4 = totals("2026-04");
+    g.push(mini("05", "Dòng tiền ròng âm",
+      '<button type="button" class="kpi hero-kpi neg" data-month-go="2026-04">' +
+      '<span class="kpi-label">Dòng tiền ròng tháng 04/2026</span>' +
+      '<span class="kpi-value fig">' + signed(t4.net) + "</span>" +
+      '<span class="kpi-sub">Âm · chi phí vượt thu nhập ' + money(Math.abs(t4.net)) + " · chạm để mở tháng này</span></button>" +
+      '<p class="meta" style="margin-top:var(--s3)">Trạng thái âm dùng đồng thời dấu trừ, nhãn chữ “Âm”, biểu tượng hình thoi ở banner và màu lỗi, nên không phụ thuộc màu sắc.</p>'));
+
+    g.push(mini("06", "Lỗi tải báo cáo",
+      '<div class="banner err"><span class="status bad">Không tải được báo cáo</span>' +
+      '<p class="meta">Không lấy được dữ liệu tổng hợp cho kỳ đang chọn. Kỳ báo cáo, bộ lọc và vị trí cuộn của bạn được giữ nguyên.</p>' +
+      '<div class="banner-actions"><button type="button" class="primary" data-toast="Thử lại thành công trong prototype: báo cáo tháng 09/2026 đã tải.">Thử lại</button>' +
+      '<button type="button" class="text-btn" data-month-go="2026-08">Quay về tháng đã tải được</button></div></div>'));
+
+    g.push(mini("07", "Biểu đồ vòng không khả dụng",
+      '<div class="switches" role="group" aria-label="Kiểu biểu đồ, ví dụ trạng thái vô hiệu">' +
+      '<button type="button" aria-pressed="true">Thanh xếp hạng</button>' +
+      '<button type="button" disabled>Biểu đồ vòng</button></div>' +
+      '<p class="meta" style="margin-top:var(--s2)">Biểu đồ vòng chỉ dùng khi còn tối đa năm nhóm hiển thị. Cơ cấu chi phí tháng 09/2026 đang có 9 nhóm, nên thanh xếp hạng là cách đọc chính xác hơn. Lý do đặt ngay cạnh nút, không ẩn trong tooltip.</p>'));
+
+    g.push(mini("08", "Thu nhập chưa gán tài sản",
+      '<div class="banner inf"><span class="status info">Có khoản thu chưa gán tài sản</span>' +
+      '<p class="meta">1 bản ghi trị giá 1.500.000 ₫ trong nhóm Lãi tiền gửi chưa liên kết tài sản nào, nên chưa được tính vào thu nhập thụ động.</p>' +
+      '<div class="banner-actions"><button type="button" class="tonal" data-toast="Gán tài sản cho bản ghi thuộc biểu mẫu của issue #69.">Gán tài sản</button>' +
+      '<button type="button" class="text-btn" data-toast="Đã xác nhận đây là thu nhập chủ động trong prototype.">Đây là thu nhập chủ động</button></div></div>' +
+      '<dl class="facts" style="margin-top:var(--s3)">' +
+      '<div class="fact"><dt>Thụ động đã xác định</dt><dd>20.065.000 ₫ · 11,1%</dd></div>' +
+      '<div class="fact"><dt>Nếu gán tài sản</dt><dd>21.565.000 ₫ · 12,0%</dd></div></dl>'));
+
+    g.push(mini("09", "Không mở được mục",
+      '<p>Thông báo dùng câu không liệt kê: “Không thể mở mục này”. Không xác nhận bản ghi có tồn tại hay không, không nêu quyền truy cập.</p>' +
+      '<div class="actions" style="margin-top:var(--s3)"><button type="button" class="tonal" data-dialog="unavailable">Xem dialog</button></div>'));
+
+    g.push(mini("10", "Nhóm rỗng trong kỳ",
+      '<div class="comp-list">' + compRow({ key: "edu", name: "Giáo dục", amount: 0, count: 0 }, 92000000, "out", false) + "</div>" +
+      '<p class="meta" style="margin-top:var(--s2)">Nhóm Giáo dục không có bản ghi trong tháng 08/2026. Hàng nhóm bị vô hiệu và nêu rõ là không có bản ghi, thay vì hiển thị 0 như một kết quả đã ghi nhận.</p>'));
+
+    $("state-gallery").innerHTML = g.join("");
+  }
+
+  /* ---------------- Quyết định của Product Owner ---------------- */
+
+  var PO_ITEMS = [
+    { id: "po1", t: "Màn hình · Báo cáo tháng", d: "Bộ chọn kỳ, thứ tự KPI với dòng tiền ròng đứng đầu, và dòng đối chiếu thu trừ chi." },
+    { id: "po2", t: "Màn hình · So sánh sáu tháng", d: "Cột kép thu chi, nhãn dòng tiền ròng dưới mỗi cột, cách thể hiện tháng chưa ghi nhận." },
+    { id: "po3", t: "Màn hình · Cơ cấu thu chi", d: "Thanh xếp hạng có nhãn trực tiếp, quy tắc gộp nhóm nhỏ, điều kiện bật biểu đồ vòng." },
+    { id: "po4", t: "Màn hình · Thu nhập thụ động", d: "Phân nhóm theo tài sản, tỉ lệ trên tổng thu nhập, và cách xử lý khoản chưa gán tài sản." },
+    { id: "po5", t: "Luồng · Truy ngược về bản ghi", d: "Từ KPI hoặc biểu đồ xuống nhóm, xuống bản ghi, rồi sang bản ghi gốc và tài sản liên kết." },
+    { id: "po6", t: "Luồng · Trạng thái rỗng và thiếu dữ liệu", d: "Kỳ rỗng, thiếu tỷ giá, tỷ giá cũ, dòng tiền ròng âm, lỗi tải và mục không mở được." }
+  ];
+
+  function renderPO() {
+    $("po-list").innerHTML = PO_ITEMS.map(function (it) {
+      return '<div class="review-row"><strong>' + esc(it.t) + "</strong>" +
+        '<p class="meta">' + esc(it.d) + "</p>" +
+        '<div class="review-options" role="radiogroup" aria-label="Quyết định cho ' + esc(it.t) + '">' +
+        ["Duyệt", "Cần chỉnh", "Từ chối"].map(function (opt, i) {
+          return '<label class="review-choice"><input type="radio" name="' + it.id + '" value="' + opt + '"' +
+            (i === 0 ? "" : "") + "><span>" + opt + "</span></label>";
+        }).join("") + "</div></div>";
+    }).join("");
+  }
+
+  /* ---------------- Điều hướng và sự kiện ---------------- */
+
+  var VIEWS = ["report", "composition", "category", "entry", "passive", "states"];
+
+  function render() {
+    if (S.view === "report") { renderReport(); }
+    if (S.view === "composition") { renderComposition(); }
+    if (S.view === "category") { renderCategory(); }
+    if (S.view === "entry") { renderEntry(); }
+    if (S.view === "passive") { renderPassive(); }
+    if (S.view === "states") { renderStates(); }
+  }
+
+  function go(view, focus) {
+    S.view = view;
+    VIEWS.forEach(function (v) { $("view-" + v).classList.toggle("active", v === view); });
+    render();
+    if (focus !== false) { $("product-main").focus(); }
+  }
+
+  function setMonth(m) {
+    S.month = m;
+    renderPeriodOptions();
+    render();
+    if (S.view !== "report") { renderReport(); }
+  }
+
+  function renderPeriodOptions() {
+    $("period-options").innerHTML = MONTHS.slice().reverse().map(function (m) {
+      var t = totals(m), sel = m === S.month;
+      var right = t.n ? signed(t.net) : "Chưa ghi nhận";
+      return '<button type="button" class="comp-row" data-month="' + m + '" aria-pressed="' + (sel ? "true" : "false") + '">' +
+        '<span class="comp-top"><span class="comp-name">' + mLabel(m) + (sel ? " · đang chọn" : "") + "</span>" +
+        '<span class="comp-amt fig">' + right + "</span></span>" +
+        '<span class="comp-meta"><span>' + (t.n ? money(t.inc) + " thu · " + money(t.out) + " chi" : "Không có bản ghi") +
+        "</span><span>" + (t.n ? t.n + " bản ghi" : "—") + "</span></span></button>";
+    }).join("");
+  }
+
+  function openDialog(name, from) {
+    var d = $("dlg-" + name);
+    if (!d) { return; }
+    opener = from || null;
+    if (name === "net") { renderNetDialog(); }
+    if (name === "period") { renderPeriodOptions(); }
+    d.showModal();
+  }
+
+  function renderNetDialog() {
+    var t = totals(S.month);
+    $("net-body").innerHTML = t.n
+      ? '<dl class="facts">' +
+        '<div class="fact"><dt>Kỳ báo cáo</dt><dd>' + mLabel(S.month) + "</dd></div>" +
+        '<div class="fact"><dt>Tổng thu nhập</dt><dd>' + money(t.inc) + "</dd></div>" +
+        '<div class="fact"><dt>Trừ tổng chi phí</dt><dd>' + money(t.out) + '</dd></div>' +
+        '<div class="fact"><dt>Dòng tiền ròng</dt><dd>' + signed(t.net) + "</dd></div>" +
+        '<div class="fact"><dt>Số bản ghi đã cộng</dt><dd>' + t.n + "</dd></div></dl>" +
+        '<p class="meta" style="margin-top:var(--s3)">Chỉ lấy bản ghi có ngày nằm trong ' + mLabel(S.month).toLowerCase() +
+        ". Không cộng thêm khoản điều chỉnh, không san đều giữa các tháng, không loại trừ khoản bất thường.</p>"
+      : '<p>Kỳ này chưa có bản ghi nên chưa tính được dòng tiền ròng.</p>';
+  }
+
+  function toast(msg) {
+    var old = document.querySelector(".toast");
+    if (old) { old.remove(); }
+    var el = document.createElement("div");
+    el.className = "toast";
+    el.setAttribute("role", "status");
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function () { if (el.parentNode) { el.remove(); } }, 4200);
+  }
+
+  document.addEventListener("click", function (ev) {
+    var el = ev.target.closest("button, [data-close]");
+    if (!el) { return; }
+
+    if (el.hasAttribute("data-close")) {
+      var dlg = el.closest("dialog");
+      if (dlg) { dlg.close(); }
+      return;
+    }
+    if (el.hasAttribute("data-dialog")) { openDialog(el.getAttribute("data-dialog"), el); return; }
+    if (el.hasAttribute("data-toast")) { toast(el.getAttribute("data-toast")); return; }
+
+    if (el.hasAttribute("data-width")) {
+      var mode = el.getAttribute("data-width");
+      $("device").setAttribute("data-mode", mode);
+      $$("[data-width]").forEach(function (b) { b.setAttribute("aria-pressed", b === el ? "true" : "false"); });
+      var notes = {
+        phone: "Đang xem ở 360px: một cột nội dung, thanh điều hướng dưới với năm đích, hành động chính nằm trong vùng ngón cái.",
+        p375: "Đang xem ở 375px: bố cục như 360px, nhãn nhóm có thêm khoảng thở và không bị cắt.",
+        tablet: "Đang xem ở 768px: điều hướng chuyển thành rail dọc, KPI xếp ba cột, hai khối cơ cấu nằm cạnh nhau.",
+        desktop: "Đang xem ở 1024px: sidebar cố định có nhãn chữ, vùng nội dung giới hạn 64rem và canh giữa.",
+        wide: "Đang xem ở 1440px: giữ nguyên bố cục 1024px, nội dung không giãn thêm để giữ độ dài dòng đọc."
+      };
+      $("width-note").textContent = notes[mode];
+      return;
+    }
+
+    if (el.hasAttribute("data-month")) {
+      var d2 = el.closest("dialog");
+      if (d2) { d2.close(); }
+      setMonth(el.getAttribute("data-month"));
+      if (S.view !== "report") { go("report"); }
+      return;
+    }
+    if (el.hasAttribute("data-month-go")) { setMonth(el.getAttribute("data-month-go")); go("report"); return; }
+
+    if (el.hasAttribute("data-go")) {
+      var v = el.getAttribute("data-go");
+      if (el.hasAttribute("data-type")) { S.compType = el.getAttribute("data-type"); }
+      go(v);
+      return;
+    }
+
+    if (el.hasAttribute("data-comp-type")) { S.compType = el.getAttribute("data-comp-type"); renderComposition(); return; }
+    if (el.hasAttribute("data-chart")) { S.chart = el.getAttribute("data-chart"); renderComposition(); return; }
+
+    if (el.hasAttribute("data-cat")) {
+      var k = el.getAttribute("data-cat");
+      if (k === "rest" && S.small) {
+        S.small = false;
+        $("small-toggle").checked = false;
+        renderComposition();
+        toast("Đã bỏ gộp nhóm nhỏ để xem đủ từng nhóm.");
+        return;
+      }
+      S.cat = k;
+      go("category");
+      return;
+    }
+
+    if (el.hasAttribute("data-entry")) { S.entry = el.getAttribute("data-entry"); go("entry"); return; }
+
+    if (el.hasAttribute("data-asset")) {
+      var a = el.getAttribute("data-asset");
+      var first = entriesOf(S.month).filter(function (x) { return x.asset === a; })[0];
+      if (first) { S.entry = first.id; S.compType = "in"; S.cat = first.c; go("entry"); }
+      return;
+    }
+
+    if (el.hasAttribute("data-reset")) {
+      S = { month: "2026-09", view: "report", compType: "out", chart: "bar", small: false, cat: null, entry: null };
+      $("small-toggle").checked = false;
+      go("report");
+      toast("Đã đặt lại prototype về tháng 09/2026.");
+      return;
+    }
+  });
+
+  document.addEventListener("change", function (ev) {
+    if (ev.target.id === "small-toggle") { S.small = ev.target.checked; renderComposition(); }
+  });
+
+  $$("dialog").forEach(function (d) {
+    d.addEventListener("close", function () {
+      if (opener && document.contains(opener)) { opener.focus(); }
+      opener = null;
+    });
+  });
+
+  $("po-submit").addEventListener("click", function () {
+    var done = 0, out = [];
+    PO_ITEMS.forEach(function (it) {
+      var c = document.querySelector('input[name="' + it.id + '"]:checked');
+      if (c) { done++; out.push(it.t + ": " + c.value); }
+    });
+    var box = $("po-result");
+    box.classList.remove("hidden");
+    box.innerHTML = done === 0
+      ? "Chưa có mục nào được ghi nhận. Chọn Duyệt, Cần chỉnh hoặc Từ chối cho từng mục."
+      : "Đã ghi nhận <strong>" + done + "/" + PO_ITEMS.length + "</strong> mục trong phiên xem này.<br>" +
+        out.map(esc).join("<br>") +
+        (done < PO_ITEMS.length ? "<br><em>Còn " + (PO_ITEMS.length - done) + " mục chưa chọn.</em>" : "");
+  });
+
+  $("po-reset").addEventListener("click", function () {
+    $$('#po-list input[type="radio"]').forEach(function (r) { r.checked = false; });
+    $("po-result").classList.add("hidden");
+  });
+
+  /* ---------------- Bảng đối chiếu tĩnh và kiểm chứng ---------------- */
+
+  function renderStaticTables() {
+    ["in", "out"].forEach(function (type) {
+      var t = totals("2026-09");
+      var total = type === "in" ? t.inc : t.out;
+      $("tbl-" + type).innerHTML = groups("2026-09", type).map(function (g) {
+        return "<tr><td>" + esc(g.name) + '</td><td class="fig">' + money(g.amount) +
+          '</td><td class="fig">' + pc(g.amount, total) + "</td></tr>";
+      }).join("");
+    });
+  }
+
+  var EXPECTED = {
+    "2026-04": [148300000, 149650000, 10],
+    "2026-05": [157500000, 70800000, 11],
+    "2026-06": [169465000, 81050000, 13],
+    "2026-07": [174900000, 73900000, 11],
+    "2026-08": [166700000, 63650000, 11],
+    "2026-09": [180000000, 92000000, 16]
+  };
+
+  function verify() {
+    var ok = 0, bad = [];
+    Object.keys(EXPECTED).forEach(function (m) {
+      var t = totals(m), x = EXPECTED[m];
+      if (t.inc === x[0] && t.out === x[1] && t.n === x[2] && t.net === x[0] - x[1]) { ok++; }
+      else { bad.push(mLabel(m)); }
+    });
+    var p = passiveOf("2026-09"), t9 = totals("2026-09");
+    var pOk = p.total === 21565000 && t9.inc - p.total === 158435000;
+    $("verify-line").innerHTML = bad.length === 0
+      ? "Kiểm chứng khi tải trang: <strong>" + ok + "/6</strong> tháng có tổng cộng từ bản ghi khớp đúng bảng trên, " +
+        "dòng tiền ròng bằng thu trừ chi ở cả sáu tháng, và thu nhập thụ động tháng 09/2026 " +
+        (pOk ? "bằng 21.565.000 ₫ cộng 158.435.000 ₫ chủ động thành 180.000.000 ₫." : "chưa khớp, cần xem lại dữ liệu mẫu.")
+      : "Cảnh báo: các tháng sau không khớp bảng đối chiếu: " + bad.join(", ") + ".";
+  }
+
+  /* ---------------- Khởi tạo ---------------- */
+
+  renderPO();
+  renderStaticTables();
+  renderPeriodOptions();
+  verify();
+  go("report", false);
+})();
+</script>
+</body>
+</html>

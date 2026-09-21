@@ -1,0 +1,1194 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F7F5EF">
+  <title>Rikkaus Wealth OS | Recurring schedule expansion review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
+      --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --line:1px solid var(--border); --control-line:1px solid var(--control);
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
+    body:has(dialog[open]){overflow:hidden}
+    button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
+    button{min-height:44px;border:var(--control-line);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--ink);cursor:pointer;transition:transform var(--motion) var(--ease),background-color var(--motion) var(--ease),color var(--motion) var(--ease),box-shadow var(--motion) var(--ease)}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    button:disabled{cursor:not-allowed;opacity:.58;background:var(--surface-subtle);transform:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+    h1,h2,h3,h4,p{margin:0}
+    h1{color:var(--navy);font:600 clamp(2.5rem,5.5vw,4.5rem)/1.08 var(--display);letter-spacing:-.02em;text-wrap:balance;max-width:17ch}
+    h2{font-size:1.5rem;line-height:1.33;text-wrap:balance} h3{font-size:1.125rem;line-height:1.33;text-wrap:balance}
+    h4{font-size:1rem;line-height:1.5}
+    p,td,th,label,button,li{overflow-wrap:anywhere}
+    ul{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s1)}
+    .page{width:min(100%,var(--page));margin:auto;padding:var(--s4)}
+    .hidden{display:none !important}
+    .skip{position:absolute;top:-6rem;left:var(--s4);z-index:90;background:var(--surface);padding:var(--s3)}.skip:focus{top:var(--s4)}
+    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s8);border-bottom:2px solid var(--gold)}
+    .hero-copy{display:grid;gap:var(--s4)}
+    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container)}
+    .meta,.helper{color:var(--ink-secondary);font-size:.875rem}
+    .kicker{color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    section{padding:var(--s12) 0;border-bottom:var(--line)}
+    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s6)}
+    .section-mark{color:var(--gold);font-weight:600}
+    .grid{display:grid;gap:var(--s4)}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.split{grid-template-columns:1.5fr 1fr}
+    .card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);align-content:start}
+    .callout{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
+    .primary{border-color:var(--primary);background:var(--primary);color:var(--surface);font-weight:600}.primary:hover{background:var(--primary-pressed)}
+    .tonal{border-color:var(--primary-container);background:var(--primary-container);color:var(--primary);font-weight:600}
+    .danger{border-color:var(--error);color:var(--error)}
+    .text-btn{border-color:transparent;background:transparent;color:var(--primary)}
+    .fig{font-variant-numeric:tabular-nums}
+    .toolbar,.switches,.actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{border-color:var(--primary);background:var(--primary);color:var(--surface)}
+    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.875rem;font-weight:600}
+    .status::before{content:"";width:.75rem;height:.75rem;border-radius:50%;background:currentColor;flex:none}
+    .status.ok{color:var(--success)}.status.warn{color:var(--warning)}.status.warn::before{border-radius:2px}
+    .status.bad{color:var(--error)}.status.bad::before{border-radius:2px;transform:rotate(45deg)}
+    .status.info{color:var(--info)}
+    .flow{display:grid;grid-template-columns:repeat(6,minmax(8rem,1fr));gap:var(--s2);overflow-x:auto;padding-bottom:var(--s2)}
+    .flow div{min-height:6rem;padding:var(--s3);border-top:2px solid var(--primary);background:var(--surface)}
+    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--s2)}
+    .token{min-height:6rem;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .swatch{display:block;height:2rem;border-radius:var(--r-input);margin-bottom:var(--s2)}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{text-align:left;padding:var(--s2) var(--s3);border-bottom:var(--line);vertical-align:top}
+    th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-secondary)}
+    td.fig,th.fig{text-align:right}
+    tbody tr:last-child td{border-bottom:0}
+    .stage{display:grid;gap:var(--s4)}
+    .stage-bar{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:center}
+    .device-wrap{padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);overflow:hidden}
+    .device{width:100%;max-width:24rem;min-height:48rem;margin:auto;border:1px solid var(--control);border-radius:var(--r-card);background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
+    .device[data-mode="tablet"]{max-width:48rem}.device[data-mode="desktop"]{max-width:64rem}.device[data-mode="wide"]{max-width:100%}
+    .app{min-height:48rem;display:grid;grid-template-rows:auto 1fr auto}
+    .topbar{height:4rem;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);border-bottom:var(--line);background:var(--surface)}
+    .wordmark{font:600 1.25rem/1 var(--display);color:var(--navy)}
+    .avatar{width:44px;padding:0;border-radius:50%;font-weight:600}
+    .app-body{min-width:0}
+    .app-nav{order:3;border-top:var(--line);background:var(--surface)}
+    .nav-list{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none}
+    .nav-btn{width:100%;min-height:64px;border:0;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.68rem;color:var(--ink-secondary)}
+    .nav-btn.active{color:var(--primary);font-weight:600}
+    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .product-main{min-width:0;padding:var(--s4);padding-bottom:2rem}
+    .view{display:none}.view.active{display:grid;gap:var(--s4)}
+    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+    input,select,textarea{width:100%;min-height:48px;border:var(--control-line);border-radius:var(--r-input);background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem}
+    .field{display:grid;gap:var(--s1)}
+    .field-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s3)}
+    .form-section{display:grid;gap:var(--s3);margin:0;padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    legend{padding:0 var(--s2);font-size:.875rem}
+    .required{color:var(--error)}
+    .error-copy{color:var(--error);font-size:.8125rem;font-weight:500}
+    .error-summary{padding:var(--s3);border:2px solid var(--error);border-radius:var(--r-card);background:var(--surface);display:grid;gap:var(--s1)}
+    .summary-box{padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container);border-left:3px solid var(--primary);display:grid;gap:var(--s2)}
+    .summary-box strong{color:var(--primary)}
+    .summary-sentence{font-size:1.0625rem;line-height:1.45;font-weight:600;color:var(--ink)}
+    .spine{position:relative;display:grid;gap:var(--s2);padding-left:1.75rem;margin:0}
+    .spine::before{content:"";position:absolute;left:.375rem;top:1rem;bottom:1rem;width:2px;background:var(--border)}
+    .occ{position:relative;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;text-align:left;border:var(--line);border-radius:var(--r-card);background:var(--surface);padding:var(--s3);min-height:4.5rem}
+    .occ:hover{border-color:var(--primary)}
+    .occ::before{content:"";position:absolute;left:-1.5rem;top:1.5rem;width:.8125rem;height:.8125rem;border-radius:50%;background:var(--surface);border:2px solid var(--primary)}
+    .occ.clamped::before{border-color:var(--warning);border-radius:2px;transform:rotate(45deg)}
+    .occ.is-first::before{background:var(--primary)}
+    .occ.is-last::before{background:var(--gold);border-color:var(--gold)}
+    .occ-main{display:grid;gap:var(--s1);min-width:0}
+    .occ-date{font-weight:600;font-variant-numeric:tabular-nums}
+    .occ-amount{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .occ-amount.in{color:var(--success)}.occ-amount.out{color:var(--ink)}
+    .mark{position:relative;padding:var(--s2) 0;font-size:.8125rem;font-weight:600;color:var(--ink-secondary)}
+    .mark::before{content:"";position:absolute;left:-1.5rem;top:calc(50% - 1px);width:.8125rem;height:2px;background:var(--gold)}
+    .mark.split{color:var(--primary)}.mark.split::before{background:var(--primary)}
+    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.75rem;color:var(--ink-secondary);white-space:nowrap}
+    .tag.warn{color:var(--warning);border-color:var(--warning)}
+    .tag.brand{color:var(--primary);border-color:var(--primary)}
+    .tag-row{display:flex;flex-wrap:wrap;gap:var(--s1)}
+    .facts{display:grid;gap:var(--s2)}
+    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.9rem;padding-bottom:var(--s2);border-bottom:var(--line)}
+    .fact:last-child{border-bottom:0;padding-bottom:0}
+    .fact dt{color:var(--ink-secondary)}.fact dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+    .choice-row{display:grid;gap:var(--s2)}
+    .choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s3);border:var(--control-line);border-radius:var(--r-input);background:var(--surface);cursor:pointer;min-height:44px}
+    .choice input{width:1.25rem;min-height:1.25rem;margin-top:.125rem}
+    .choice:has(input:checked){border-color:var(--primary);background:var(--primary-container)}
+    .choice:has(input:disabled){cursor:not-allowed;background:var(--surface-subtle);color:var(--ink-secondary)}
+    .choice span{display:block}
+    .detail-amount{font-size:1.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+    .sticky-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;padding-top:var(--s2)}
+    .sticky-actions button{flex:1 1 9rem}
+    .skeleton{display:grid;gap:var(--s2)}
+    .skeleton span{display:block;height:1rem;border-radius:.25rem;background:linear-gradient(90deg,var(--surface-subtle),#E4DFD4,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+    @keyframes shimmer{to{background-position:-200% 0}}
+    .state-panel{min-height:11rem}
+    .check-row,.review-choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s2) 0;min-height:44px;align-content:center}
+    .check-row input{width:1.25rem;min-height:1.25rem;margin-top:.1875rem}
+    .review-list{display:grid;gap:var(--s3)}
+    .review-row{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-radius:var(--r-card)}
+    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0}
+    .review-options{display:flex;gap:var(--s4);flex-wrap:wrap}
+    .review-choice input{width:1.25rem;min-height:1.25rem;margin:0}
+    dialog{width:min(100%,34rem);border:0;border-radius:var(--r-sheet);padding:var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal)}
+    dialog::backdrop{background:var(--scrim)}
+    .sheet{margin:auto auto 0;width:min(100%,34rem);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s3)}
+    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6)}
+    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.9rem}
+    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.875rem}
+    @media (max-width:60rem){
+      .hero,.section-head,.two,.three,.split{grid-template-columns:1fr}
+      .hero{padding-top:var(--s8);gap:var(--s6)}
+      .field-row{grid-template-columns:1fr}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
+      html{scroll-behavior:auto}
+    }
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
+<div class="page">
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="kicker">MVP 1B · Issue #72 · Design review</p>
+      <h1>Lịch kỳ của dòng tiền định kỳ</h1>
+      <p class="meta">Bản thiết kế để Product Owner duyệt cách mô tả quy tắc lặp, giới hạn bằng ngày bắt đầu và ngày kết thúc, sinh ra các kỳ kèm giải thích, truy ngược kỳ về bản ghi gốc và sửa cả chuỗi.</p>
+    </div>
+    <div class="hero-note">
+      <strong>Artifact thiết kế, dữ liệu mô phỏng</strong>
+      <p class="meta">Toàn bộ số liệu là dữ liệu hư cấu đã đối chiếu với review #69. Phần mở rộng lịch trong trang này là minh họa thiết kế mang tính xác định, không phải dịch vụ tính toán production. Backend issue #74 sở hữu thuật toán, múi giờ và định danh kỳ.</p>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section aria-labelledby="ux-title">
+      <div class="section-head">
+        <div><span class="section-mark">01</span><h2 id="ux-title">Cấu trúc UX và phạm vi</h2></div>
+        <p class="meta">Một luồng duy nhất: đọc quy tắc, xem lịch kỳ, mở một kỳ, quay về bản ghi gốc, rồi sửa chuỗi.</p>
+      </div>
+      <div class="flow" aria-label="Luồng chính của review">
+        <div><strong>Quy tắc lặp</strong><p class="meta">Chu kỳ, ngày neo, bắt đầu và kết thúc</p></div>
+        <div><strong>Diễn giải</strong><p class="meta">Câu tóm tắt cập nhật theo quy tắc</p></div>
+        <div><strong>Lịch kỳ</strong><p class="meta">Các kỳ sinh ra theo tầm nhìn đã chọn</p></div>
+        <div><strong>Chi tiết kỳ</strong><p class="meta">Vì sao có kỳ này, thuộc kỳ báo cáo nào</p></div>
+        <div><strong>Truy nguồn</strong><p class="meta">Quay về bản ghi định kỳ gốc</p></div>
+        <div><strong>Sửa chuỗi</strong><p class="meta">Phạm vi áp dụng và ranh giới tách</p></div>
+      </div>
+      <div class="grid three" style="margin-top:var(--s4)">
+        <div class="card"><h3>Trong issue #72</h3><p>Câu tóm tắt quy tắc lặp, ngày bắt đầu và ngày kết thúc tùy chọn, danh sách kỳ sinh ra kèm giải thích từng kỳ, đường truy ngược về bản ghi gốc, và hành vi sửa cả chuỗi.</p></div>
+        <div class="callout"><h3>Không thuộc phạm vi</h3><p>Danh mục và CRUD bản ghi thuộc #69. Input và preview production thuộc Frontend #73. Dịch vụ mở rộng lịch, test biên và múi giờ thuộc Backend #74. Báo cáo tháng, composition và dự báo ba tháng thuộc feature khác.</p></div>
+        <div class="callout"><h3>Contract không đổi</h3><p>Artifact này không định nghĩa API, schema, định danh kỳ, chính sách múi giờ hay cách lưu trữ khi tách chuỗi. Những điểm chưa chốt được nêu thành câu hỏi cho Feature Contract #20.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="system-title">
+      <div class="section-head">
+        <div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div>
+        <p class="meta">Quiet Ledger cho toàn bộ tác vụ; Modern Heritage chỉ xuất hiện ở wordmark, tiêu đề lớn và đường vàng.</p>
+      </div>
+      <div class="tokens" aria-label="Token màu được sử dụng">
+        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><strong>canvas</strong><p class="meta">#F7F5EF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface);border:var(--line)"></span><strong>surface</strong><p class="meta">#FFFFFF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>primary</strong><p class="meta">#0F5C5A</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>primaryContainer</strong><p class="meta">#D9EFEC</p></div>
+        <div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>brandNavy</strong><p class="meta">#182B45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>heritageGold</strong><p class="meta">#A87428 · chỉ trang trí</p></div>
+        <div class="token"><span class="swatch" style="background:var(--success)"></span><strong>success</strong><p class="meta">#1E6A45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--warning)"></span><strong>warning</strong><p class="meta">#8A5A00 · kỳ được dời</p></div>
+        <div class="token"><span class="swatch" style="background:var(--error)"></span><strong>error</strong><p class="meta">#B42318</p></div>
+      </div>
+      <div class="grid two" style="margin-top:var(--s4)">
+        <div class="card">
+          <h3>Thành phần dùng lại</h3>
+          <p>Button (primary, tonal, text, destructive), select và date input, radio nhóm phạm vi sửa, câu tóm tắt quy tắc, trục lịch kỳ, thẻ kỳ, tag trạng thái, dialog xác nhận, bottom sheet, skeleton, banner lỗi và toast.</p>
+        </div>
+        <div class="card">
+          <h3>Ngôn ngữ của trục lịch kỳ</h3>
+          <p class="meta">Mỗi ký hiệu dùng hình dạng kèm chữ, không dựa riêng vào màu.</p>
+          <ul class="spine" style="list-style:none;padding-left:1.75rem">
+            <li class="occ is-first"><span class="occ-main"><span class="occ-date">Chấm đặc</span><span class="meta">Kỳ đầu tiên, trùng ngày bắt đầu</span></span></li>
+            <li class="occ"><span class="occ-main"><span class="occ-date">Chấm rỗng</span><span class="meta">Kỳ thường theo đúng ngày neo</span></span></li>
+            <li class="occ clamped"><span class="occ-main"><span class="occ-date">Hình thoi</span><span class="meta">Kỳ được dời về ngày cuối tháng</span></span></li>
+            <li class="occ is-last"><span class="occ-main"><span class="occ-date">Chấm vàng</span><span class="meta">Kỳ cuối cùng, trùng ngày kết thúc</span></span></li>
+            <li class="mark split">Gạch ngang · ranh giới tách chuỗi</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="prototype-title">
+      <div class="section-head">
+        <div><span class="section-mark">03</span><h2 id="prototype-title">Prototype clickable</h2></div>
+        <p class="meta">Chọn chiều rộng và màn hình. Mọi tương tác đều là mô phỏng xác định, không gọi mạng và không lưu dữ liệu.</p>
+      </div>
+      <div class="stage">
+        <div class="stage-bar">
+          <div class="switches" role="group" aria-label="Chọn chiều rộng mô phỏng">
+            <button type="button" data-width="360" aria-pressed="true">360</button>
+            <button type="button" data-width="375" aria-pressed="false">375</button>
+            <button type="button" data-width="768" aria-pressed="false">768</button>
+            <button type="button" data-width="1024" aria-pressed="false">1024</button>
+            <button type="button" data-width="1440" aria-pressed="false">1440</button>
+          </div>
+          <div class="switches" role="group" aria-label="Chọn màn hình">
+            <button type="button" data-go="rule" aria-pressed="true">Quy tắc</button>
+            <button type="button" data-go="schedule" aria-pressed="false">Lịch kỳ</button>
+            <button type="button" data-go="occurrence" aria-pressed="false">Chi tiết kỳ</button>
+            <button type="button" data-go="edit" aria-pressed="false">Sửa chuỗi</button>
+            <button type="button" data-go="states" aria-pressed="false">Trạng thái</button>
+          </div>
+        </div>
+        <div class="device-wrap">
+          <div class="device" id="device" data-mode="phone">
+            <div class="app">
+              <header class="topbar"><span class="wordmark">Rikkaus</span><button class="avatar" type="button" aria-label="Mở hồ sơ và cài đặt">RT</button></header>
+              <div class="app-body">
+                <main class="product-main" id="product-main">
+
+                  <section class="view active" data-view="rule" id="view-rule" tabindex="-1" aria-labelledby="rule-heading">
+                    <div class="screen-head">
+                      <div><p class="meta">Dòng tiền · Bản ghi định kỳ</p><h2 id="rule-heading">Quy tắc lặp</h2></div>
+                      <button type="button" class="text-btn" id="pick-series">Đổi bản ghi</button>
+                    </div>
+                    <p id="trace-banner" class="callout hidden" tabindex="-1"><strong>Đã mở từ một kỳ</strong><span class="meta" id="trace-banner-text"></span></p>
+                    <div class="card">
+                      <p class="meta" id="series-kind">Chi phí · Bản ghi định kỳ</p>
+                      <h3 id="series-name">Lương</h3>
+                      <p class="detail-amount fig" id="series-amount">132.000.000 ₫</p>
+                      <div class="tag-row" id="series-tags"></div>
+                    </div>
+                    <div class="summary-box" aria-live="polite">
+                      <strong>Diễn giải quy tắc</strong>
+                      <p class="summary-sentence" id="rule-summary">—</p>
+                      <p class="helper" id="rule-summary-extra">—</p>
+                    </div>
+                    <div id="rule-errors" class="error-summary hidden" tabindex="-1" role="alert">
+                      <strong>Kiểm tra lại khoảng thời gian</strong>
+                      <p class="error-copy" id="rule-errors-text">Sửa trường được đánh dấu rồi xem lại lịch kỳ.</p>
+                    </div>
+                    <fieldset class="form-section">
+                      <legend><strong>Chu kỳ lặp</strong></legend>
+                      <div class="field">
+                        <label for="cadence">Chu kỳ <span class="required">*</span></label>
+                        <select id="cadence"><option value="monthly">Hàng tháng</option><option value="quarterly">Hàng quý</option><option value="yearly">Hàng năm</option></select>
+                        <span class="helper">MVP hỗ trợ ba chu kỳ này. Không có chu kỳ tuần hoặc bước lặp tùy chỉnh.</span>
+                      </div>
+                      <div class="field">
+                        <label for="anchor">Ngày neo trong kỳ <span class="required">*</span></label>
+                        <select id="anchor"></select>
+                        <span class="helper" id="anchor-help">Ngày neo lấy từ ngày bắt đầu. Đổi thử sang 29, 30 hoặc 31 để xem quy tắc dời ngày cuối tháng.</span>
+                      </div>
+                    </fieldset>
+                    <fieldset class="form-section">
+                      <legend><strong>Khoảng hiệu lực</strong></legend>
+                      <div class="field-row">
+                        <div class="field">
+                          <label for="start-date">Ngày bắt đầu <span class="required">*</span></label>
+                          <input type="date" id="start-date" value="2026-01-01" aria-describedby="start-help start-error">
+                          <span class="helper" id="start-help">Bao gồm ngày bắt đầu. Kỳ đầu tiên rơi đúng vào ngày này.</span>
+                          <span class="error-copy hidden" id="start-error">Chọn ngày bắt đầu.</span>
+                        </div>
+                        <div class="field">
+                          <label for="end-date">Ngày kết thúc</label>
+                          <input type="date" id="end-date" value="" aria-describedby="end-help end-error">
+                          <span class="helper" id="end-help">Để trống nếu chuỗi chưa có điểm dừng. Nếu có, ngày kết thúc được tính bao gồm.</span>
+                          <span class="error-copy hidden" id="end-error">Ngày kết thúc phải từ ngày bắt đầu trở đi.</span>
+                        </div>
+                      </div>
+                      <div class="actions">
+                        <button type="button" id="clear-end">Xóa ngày kết thúc</button>
+                        <button type="button" id="preset-bounded">Thử chuỗi có hạn</button>
+                      </div>
+                    </fieldset>
+                    <div class="sticky-actions">
+                      <button type="button" id="go-schedule" class="primary">Xem lịch kỳ</button>
+                    </div>
+                  </section>
+
+                  <section class="view" data-view="schedule" id="view-schedule" tabindex="-1" aria-labelledby="schedule-heading">
+                    <div class="screen-head">
+                      <div><button class="text-btn" type="button" data-go="rule">Quay lại quy tắc</button><h2 id="schedule-heading">Lịch kỳ sinh ra</h2></div>
+                    </div>
+                    <p class="meta" id="schedule-rule">—</p>
+                    <div class="switches" role="group" aria-label="Chọn tầm nhìn">
+                      <button type="button" data-horizon="6" aria-pressed="true">6 kỳ</button>
+                      <button type="button" data-horizon="12" aria-pressed="false">12 kỳ</button>
+                      <button type="button" data-horizon="24" aria-pressed="false">24 kỳ</button>
+                    </div>
+                    <p id="schedule-count" class="meta" aria-live="polite">—</p>
+                    <div id="schedule-list"></div>
+                    <div class="callout">
+                      <strong>Cách đọc lịch kỳ</strong>
+                      <p class="meta">Mỗi kỳ thuộc đúng một kỳ báo cáo là tháng chứa ngày diễn ra. Kỳ được dời về cuối tháng vẫn nằm trong tháng gốc nên không lấn sang tháng kế tiếp.</p>
+                    </div>
+                    <div class="actions"><button type="button" class="tonal" id="open-edit">Sửa chuỗi</button></div>
+                  </section>
+
+                  <section class="view" data-view="occurrence" id="view-occurrence" tabindex="-1" aria-labelledby="occurrence-heading">
+                    <div class="screen-head"><button class="text-btn" type="button" data-go="schedule">Quay lại lịch kỳ</button></div>
+                    <div>
+                      <span class="status info" id="occ-kind">Kỳ dự kiến</span>
+                      <p class="detail-amount fig" id="occ-amount">—</p>
+                      <h2 id="occurrence-heading">—</h2>
+                    </div>
+                    <div class="card">
+                      <h3>Vì sao có kỳ này</h3>
+                      <p id="occ-why">—</p>
+                      <dl class="facts" id="occ-facts"></dl>
+                    </div>
+                    <div class="callout">
+                      <strong>Nguồn của kỳ</strong>
+                      <p class="meta" id="occ-source">—</p>
+                      <div class="actions"><button type="button" class="tonal" id="occ-trace">Mở bản ghi định kỳ gốc</button></div>
+                    </div>
+                    <p class="helper">Kỳ là kết quả hiển thị của bản ghi gốc. Kỳ không phải một bản ghi nhập tay riêng và không được đếm thêm lần nữa trong kỳ báo cáo.</p>
+                  </section>
+
+                  <section class="view" data-view="edit" id="view-edit" tabindex="-1" aria-labelledby="edit-heading">
+                    <div class="screen-head"><button class="text-btn" type="button" data-leave-edit>Quay lại</button><h2 id="edit-heading">Sửa chuỗi</h2></div>
+                    <p class="meta" id="edit-context">—</p>
+                    <fieldset class="form-section">
+                      <legend><strong>Phạm vi áp dụng</strong></legend>
+                      <div class="choice-row">
+                        <label class="choice"><input type="radio" name="scope" value="all" checked><span><strong>Toàn bộ chuỗi</strong><span class="meta">Áp dụng cho mọi kỳ, kể cả các kỳ đã qua. Lịch sử hiển thị được tính lại theo quy tắc mới.</span></span></label>
+                        <label class="choice"><input type="radio" name="scope" value="forward"><span><strong>Từ kỳ này trở đi</strong><span class="meta">Chuỗi hiện tại kết thúc trước kỳ được chọn, một chuỗi mới bắt đầu từ kỳ đó. Các kỳ đã qua giữ nguyên.</span></span></label>
+                        <label class="choice"><input type="radio" name="scope" value="single" disabled><span><strong>Chỉ kỳ này</strong><span class="meta">Chưa có trong Feature Contract #20. Cần Product Owner quyết định trước khi thiết kế tiếp.</span></span></label>
+                      </div>
+                    </fieldset>
+                    <fieldset class="form-section">
+                      <legend><strong>Thay đổi</strong></legend>
+                      <div class="field">
+                        <label for="new-amount">Số tiền mới</label>
+                        <input id="new-amount" inputmode="numeric" value="145.000.000" aria-describedby="new-amount-help new-amount-error">
+                        <span class="helper" id="new-amount-help">Nhập số dương. Loại bản ghi quyết định chiều tiền.</span>
+                        <span class="error-copy hidden" id="new-amount-error">Nhập số tiền lớn hơn 0.</span>
+                      </div>
+                    </fieldset>
+                    <div class="card" aria-live="polite">
+                      <h3>Ảnh hưởng trước khi xác nhận</h3>
+                      <dl class="facts" id="impact-facts"></dl>
+                      <p class="helper" id="impact-note">—</p>
+                    </div>
+                    <div class="sticky-actions">
+                      <button type="button" id="end-series">Kết thúc chuỗi</button>
+                      <button type="button" class="danger" id="delete-series">Xóa chuỗi</button>
+                      <button type="button" class="primary" id="confirm-edit">Xác nhận thay đổi</button>
+                    </div>
+                  </section>
+
+                  <section class="view" data-view="states" id="view-states" tabindex="-1" aria-labelledby="states-heading">
+                    <div class="screen-head"><button class="text-btn" type="button" data-go="schedule">Quay lại</button><h2 id="states-heading">Mẫu trạng thái</h2></div>
+                    <div class="switches" role="group" aria-label="Chọn trạng thái">
+                      <button type="button" data-state="loading">Đang tải</button>
+                      <button type="button" data-state="empty">Hết kỳ</button>
+                      <button type="button" data-state="partial">Thiếu tỷ giá</button>
+                      <button type="button" data-state="stale">Tỷ giá cũ</button>
+                      <button type="button" data-state="validation">Lỗi nhập</button>
+                      <button type="button" data-state="request">Lỗi yêu cầu</button>
+                      <button type="button" data-state="success">Thành công</button>
+                      <button type="button" data-state="unavailable">Không thể mở</button>
+                    </div>
+                    <div id="state-panel" class="card state-panel" aria-live="polite">
+                      <span class="status info">Chọn một trạng thái</span>
+                      <p>Mỗi trạng thái nêu điều đã xảy ra, dữ liệu được giữ lại và hành động phục hồi tiếp theo.</p>
+                    </div>
+                  </section>
+
+                </main>
+              </div>
+              <nav class="app-nav" aria-label="Điều hướng chính mô phỏng">
+                <ul class="nav-list">
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg>Tổng quan</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 8h18M5 8V5h14v3M5 8v11h14V8M9 12h6"/></svg>Tài sản &amp; Nợ</button></li>
+                  <li><button class="nav-btn active" type="button" aria-current="page"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h13M14 4l3 3-3 3M20 17H7M10 14l-3 3 3 3"/></svg>Dòng tiền</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Mục tiêu</button></li>
+                  <li><button class="nav-btn" type="button"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 2 5-7"/></svg>Nhận định</button></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+        <noscript>
+          <p class="callout"><strong>JavaScript đang tắt.</strong> Màn hình Quy tắc lặp vẫn hiển thị, và toàn bộ phần diễn giải, quy tắc biên, bảng đối chiếu, ma trận trạng thái cùng phiếu duyệt bên dưới vẫn đọc được. Bật JavaScript để dùng phần lịch kỳ tương tác.</p>
+        </noscript>
+        <p id="viewport-note" class="helper" aria-live="polite">360px: một cột, điều hướng dưới, trục lịch kỳ giữ nguyên thứ tự thời gian, số tiền xuống dòng thay vì bị cắt.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="rules-title">
+      <div class="section-head">
+        <div><span class="section-mark">04</span><h2 id="rules-title">Quy tắc biên và đối chiếu</h2></div>
+        <p class="meta">Năm quy tắc dưới đây là nội dung chính cần Product Owner duyệt, vì chúng quyết định một kỳ có bị đếm hai lần hay không.</p>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h3>Năm quy tắc biên</h3>
+          <ol>
+            <li><strong>Ngày bắt đầu được tính vào.</strong> Kỳ đầu tiên rơi đúng ngày bắt đầu.</li>
+            <li><strong>Ngày kết thúc được tính vào.</strong> Kỳ rơi đúng ngày kết thúc vẫn được sinh ra.</li>
+            <li><strong>Ngày neo không tồn tại thì dời về cuối tháng.</strong> Kỳ được đánh dấu là đã dời và không bao giờ nhảy sang tháng khác.</li>
+            <li><strong>Mỗi kỳ thuộc đúng một kỳ báo cáo.</strong> Kỳ báo cáo là tháng chứa ngày diễn ra.</li>
+            <li><strong>Tách chuỗi loại trừ lẫn nhau.</strong> Chuỗi gốc kết thúc vào ngày liền trước ngày bắt đầu của chuỗi mới.</li>
+          </ol>
+          <p class="helper">Quy tắc 3 chỉ dời ngày trong phạm vi tháng, nên nó không tạo thêm hay làm mất một kỳ báo cáo nào.</p>
+        </div>
+        <div class="card">
+          <h3>Minh họa dời ngày cuối tháng</h3>
+          <p class="meta">Chuỗi hàng tháng neo ngày 31, bắt đầu 31/01/2026.</p>
+          <div class="table-wrap">
+            <table>
+              <caption class="helper" style="text-align:left;margin-bottom:var(--s2)">Ví dụ minh họa quy tắc, không phải bản ghi trong danh mục.</caption>
+              <thead><tr><th>Kỳ</th><th>Ngày sinh ra</th><th>Kỳ báo cáo</th><th>Ghi chú</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td class="fig">31/01/2026</td><td>01/2026</td><td>Đúng ngày neo</td></tr>
+                <tr><td>2</td><td class="fig">28/02/2026</td><td>02/2026</td><td>Đã dời về cuối tháng</td></tr>
+                <tr><td>3</td><td class="fig">31/03/2026</td><td>03/2026</td><td>Đúng ngày neo</td></tr>
+                <tr><td>4</td><td class="fig">30/04/2026</td><td>04/2026</td><td>Đã dời về cuối tháng</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="helper">Ngày neo được giữ nguyên là 31 trong quy tắc; việc dời chỉ xảy ra khi sinh kỳ, nên tháng 3 quay lại đúng ngày 31.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Không đếm hai lần khi tách chuỗi</h3>
+        <p class="meta">Chuỗi <strong>Lương</strong> được sửa từ kỳ 01/11/2026 trở đi. Bảng đếm số kỳ theo từng tháng, tính trực tiếp từ dữ liệu của prototype.</p>
+        <div class="switches" role="group" aria-label="Chọn thời điểm so sánh" style="margin-top:var(--s2)">
+          <button type="button" data-boundary="before" aria-pressed="true">Trước khi tách</button>
+          <button type="button" data-boundary="after" aria-pressed="false">Sau khi tách</button>
+        </div>
+        <div class="table-wrap"><table id="boundary-table"><thead><tr><th>Kỳ báo cáo</th><th class="fig">Chuỗi gốc</th><th class="fig">Chuỗi mới</th><th class="fig">Tổng số kỳ</th></tr></thead><tbody></tbody></table></div>
+        <p class="helper" id="boundary-note" aria-live="polite">—</p>
+      </div>
+
+      <div class="card" style="margin-top:var(--s4)">
+        <h3>Fixture định kỳ và đối chiếu tháng 09/2026</h3>
+        <p class="meta">Mười một chuỗi định kỳ lấy từ danh mục đã duyệt ở review #69. Cột cuối là số tiền của kỳ tháng 09/2026.</p>
+        <div class="table-wrap"><table id="fixture-table"><thead><tr><th>Chuỗi</th><th>Loại</th><th>Chu kỳ</th><th>Ngày neo</th><th>Bắt đầu</th><th>Kết thúc</th><th class="fig">Kỳ 09/2026</th></tr></thead><tbody></tbody></table></div>
+        <div class="grid two" style="margin-top:var(--s4)">
+          <div class="callout">
+            <strong>Đối chiếu với review #69</strong>
+            <div class="table-wrap"><table><tbody>
+              <tr><td>Thu nhập định kỳ tháng 09/2026</td><td class="fig" id="rec-income">—</td></tr>
+              <tr><td>Thu nhập một lần tháng 09/2026</td><td class="fig">26.435.000</td></tr>
+              <tr><td><strong>Tổng thu nhập</strong></td><td class="fig"><strong>180.000.000</strong></td></tr>
+              <tr><td>Chi phí định kỳ tháng 09/2026</td><td class="fig" id="rec-expense">—</td></tr>
+              <tr><td>Chi phí một lần tháng 09/2026</td><td class="fig">19.950.000</td></tr>
+              <tr><td><strong>Tổng chi phí</strong></td><td class="fig"><strong>92.000.000</strong></td></tr>
+              <tr><td><strong>Dòng tiền ròng</strong></td><td class="fig"><strong>88.000.000</strong></td></tr>
+            </tbody></table></div>
+          </div>
+          <div class="callout">
+            <strong>Quy ước hiển thị</strong>
+            <ul>
+              <li>Cổ tức nhập bằng 150 USD, hiển thị 3.765.000 ₫ theo tỷ giá 25.100 người dùng nhập ngày 12/09/2026.</li>
+              <li>Kỳ tương lai của bản ghi USD dùng đúng tỷ giá hiện hành và ghi rõ ngày cập nhật; artifact không dự báo tỷ giá.</li>
+              <li>Số tiền luôn dương; loại bản ghi quyết định chiều tiền.</li>
+              <li>Kỳ là kết quả hiển thị, không phải bản ghi nhập tay mới.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="matrix-title">
+      <div class="section-head">
+        <div><span class="section-mark">05</span><h2 id="matrix-title">Ma trận trạng thái và responsive</h2></div>
+        <p class="meta">Mỗi trạng thái giữ lại phần dữ liệu hợp lệ và nêu rõ đường phục hồi.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Trạng thái</th><th>Điều đã xảy ra</th><th>Dữ liệu được giữ</th><th>Hành động phục hồi</th></tr></thead>
+          <tbody>
+            <tr><td>Đang tải</td><td>Lịch kỳ đang được dựng lại sau khi đổi quy tắc.</td><td>Quy tắc vừa nhập và tầm nhìn đã chọn.</td><td>Chờ; khung skeleton giữ đúng chiều cao nên nội dung không nhảy.</td></tr>
+            <tr><td>Hết kỳ</td><td>Chuỗi đã kết thúc nên không còn kỳ nào trong tầm nhìn.</td><td>Quy tắc và toàn bộ kỳ đã qua.</td><td>Mở rộng tầm nhìn hoặc bỏ ngày kết thúc.</td></tr>
+            <tr><td>Thiếu tỷ giá</td><td>Bản ghi USD chưa có tỷ giá cho kỳ đang xem.</td><td>Số tiền nguyên tệ và toàn bộ lịch kỳ.</td><td>Cập nhật tỷ giá trong Hồ sơ &amp; cài đặt.</td></tr>
+            <tr><td>Tỷ giá cũ</td><td>Tỷ giá cập nhật lần cuối 12/09/2026.</td><td>Giá trị quy đổi hiện tại kèm ngày cập nhật.</td><td>Cập nhật tỷ giá; giá trị quy đổi được tính lại.</td></tr>
+            <tr><td>Lỗi nhập</td><td>Ngày kết thúc nằm trước ngày bắt đầu hoặc trước kỳ đầu tiên.</td><td>Toàn bộ trường đã nhập.</td><td>Thông báo gắn với trường, focus về trường sai đầu tiên.</td></tr>
+            <tr><td>Lỗi yêu cầu</td><td>Không dựng được lịch kỳ trong phiên mô phỏng.</td><td>Quy tắc đã nhập, không mất thay đổi nào.</td><td>Thử lại, hoặc quay về quy tắc một cách an toàn.</td></tr>
+            <tr><td>Đang gửi</td><td>Thay đổi chuỗi đang được áp dụng.</td><td>Phạm vi và giá trị đã chọn.</td><td>Nút xác nhận bị vô hiệu kèm lý do hiển thị cạnh nút.</td></tr>
+            <tr><td>Thành công</td><td>Chuỗi đã được tách từ kỳ được chọn.</td><td>Các kỳ đã qua giữ nguyên.</td><td>Xem lịch kỳ mới, hoặc hoàn tác trong phiên xem.</td></tr>
+            <tr><td>Chưa lưu</td><td>Rời màn hình sửa chuỗi khi còn thay đổi.</td><td>Thay đổi vẫn còn cho tới khi người dùng chọn bỏ.</td><td>Tiếp tục sửa, hoặc bỏ thay đổi một cách có chủ đích.</td></tr>
+            <tr><td>Không thể mở</td><td>Bản ghi gốc không mở được từ kỳ này.</td><td>Ngữ cảnh lịch kỳ hiện tại.</td><td>Thông báo không liệt kê thông tin và có đường quay lại an toàn.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap" style="margin-top:var(--s6)">
+        <table>
+          <thead><tr><th>Chiều rộng</th><th>Bố cục</th><th>Điều cần kiểm tra</th></tr></thead>
+          <tbody>
+            <tr><td class="fig">360 / 375</td><td>Một cột, điều hướng dưới, trục lịch kỳ dọc, hành động chính nằm trong tầm ngón cái.</td><td>Không cuộn ngang, số tiền không bị cắt, bàn phím không che nút xác nhận.</td></tr>
+            <tr><td class="fig">768</td><td>Quy tắc và lịch kỳ chia hai cột; ngày bắt đầu và ngày kết thúc nằm cùng hàng.</td><td>Thứ tự đọc vẫn theo thời gian, vùng chạm cách nhau tối thiểu 8px.</td></tr>
+            <tr><td class="fig">1024 / 1440</td><td>Nội dung dạng chữ giới hạn 640–720px; bảng đối chiếu mở rộng theo chiều ngang.</td><td>Dòng chữ không quá dài, bảng cuộn trong khung riêng thay vì đẩy trang.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="review-title">
+      <div class="section-head">
+        <div><span class="section-mark">06</span><h2 id="review-title">Khả năng tiếp cận và duyệt PO</h2></div>
+        <p class="meta">Lựa chọn duyệt chỉ tồn tại trong phiên xem này, không được lưu và không được gửi đi đâu.</p>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h3>Checklist kiểm tra</h3>
+          <label class="check-row"><input type="checkbox"><span>Vùng chạm từ 44px, viền focus 3px, thứ tự bàn phím theo thứ tự đọc.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Nhãn trường luôn hiển thị; lỗi gắn với trường và focus về lỗi đầu tiên.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Dialog đóng bằng Escape hoặc Hủy rồi trả focus về nút đã mở nó.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Kỳ được dời và kỳ cuối dùng chữ kèm hình dạng, không chỉ dựa vào màu.</span></label>
+          <label class="check-row"><input type="checkbox"><span>360, 375, 768, 1024, 1440 và cỡ chữ lớn đều không cuộn ngang.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Reduced motion được tôn trọng; không giá trị tiền nào bị làm chuyển động.</span></label>
+          <label class="check-row"><input type="checkbox"><span>Lịch kỳ tính lại được thông báo lịch sự mà không cướp focus.</span></label>
+        </div>
+        <div class="card">
+          <h3>Quyết định Product Owner</h3>
+          <div class="review-list">
+            <div class="review-row"><strong>Diễn giải quy tắc lặp</strong><div class="review-options"><label class="review-choice"><input type="radio" name="po-summary">Duyệt</label><label class="review-choice"><input type="radio" name="po-summary">Sửa</label><label class="review-choice"><input type="radio" name="po-summary">Từ chối</label></div></div>
+            <div class="review-row"><strong>Ngày bắt đầu và ngày kết thúc</strong><div class="review-options"><label class="review-choice"><input type="radio" name="po-dates">Duyệt</label><label class="review-choice"><input type="radio" name="po-dates">Sửa</label><label class="review-choice"><input type="radio" name="po-dates">Từ chối</label></div></div>
+            <div class="review-row"><strong>Lịch kỳ và giải thích từng kỳ</strong><div class="review-options"><label class="review-choice"><input type="radio" name="po-schedule">Duyệt</label><label class="review-choice"><input type="radio" name="po-schedule">Sửa</label><label class="review-choice"><input type="radio" name="po-schedule">Từ chối</label></div></div>
+            <div class="review-row"><strong>Truy ngược kỳ về bản ghi gốc</strong><div class="review-options"><label class="review-choice"><input type="radio" name="po-trace">Duyệt</label><label class="review-choice"><input type="radio" name="po-trace">Sửa</label><label class="review-choice"><input type="radio" name="po-trace">Từ chối</label></div></div>
+            <div class="review-row"><strong>Hành vi sửa chuỗi và ranh giới tách</strong><div class="review-options"><label class="review-choice"><input type="radio" name="po-edit">Duyệt</label><label class="review-choice"><input type="radio" name="po-edit">Sửa</label><label class="review-choice"><input type="radio" name="po-edit">Từ chối</label></div></div>
+            <div class="review-row"><strong>Trạng thái và responsive</strong><div class="review-options"><label class="review-choice"><input type="radio" name="po-states">Duyệt</label><label class="review-choice"><input type="radio" name="po-states">Sửa</label><label class="review-choice"><input type="radio" name="po-states">Từ chối</label></div></div>
+          </div>
+          <p class="helper">Duyệt thiết kế chỉ xác nhận hướng UX/UI. Nó không chứng nhận API, phép tính, múi giờ, bảo mật hay mức độ sẵn sàng triển khai.</p>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:var(--s4)">
+        <strong>Câu hỏi cần Feature Contract #20 trả lời</strong>
+        <ol>
+          <li>Có cho phép sửa riêng một kỳ mà không tách chuỗi hay không? Thiết kế đang để tùy chọn này ở trạng thái vô hiệu kèm lý do.</li>
+          <li>Khi sửa toàn bộ chuỗi, lịch sử hiển thị của các kỳ đã qua được tính lại hay giữ nguyên giá trị cũ?</li>
+          <li>Xóa chuỗi thì các kỳ đã qua biến mất khỏi báo cáo, hay chuỗi chỉ được kết thúc tại ngày hiện tại?</li>
+          <li>Kỳ có định danh ổn định để báo cáo và nhận định tham chiếu lại sau khi chuỗi bị tách hay không?</li>
+          <li>Ngày neo và ranh giới tháng dùng múi giờ nào làm chuẩn?</li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Artifact thiết kế cho issue #72 thuộc Feature #20. Dữ liệu hư cấu, hành vi mô phỏng, không kết nối máy chủ. Tham chiếu: <code>docs/design-guidelines.md</code> và <code>docs/cash-flow-entry-catalog-crud-review.html</code>.</p>
+  </footer>
+</div>
+
+<dialog id="series-sheet" class="sheet" aria-labelledby="series-sheet-title">
+  <div class="dialog-head"><div><p class="meta">Bản ghi định kỳ trong danh mục</p><h2 id="series-sheet-title">Chọn chuỗi để xem</h2></div><button type="button" data-close aria-label="Đóng">Đóng</button></div>
+  <div id="series-options" class="grid" style="gap:var(--s2)"></div>
+</dialog>
+
+<dialog id="split-dialog" aria-labelledby="split-title">
+  <h2 id="split-title">Xác nhận tách chuỗi</h2>
+  <p id="split-body">—</p>
+  <div class="dialog-actions"><button type="button" data-close>Hủy</button><button type="button" class="primary" id="split-confirm">Tách chuỗi</button></div>
+</dialog>
+
+<dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
+  <h2 id="unsaved-title">Bỏ thay đổi chưa lưu?</h2>
+  <p>Phạm vi và số tiền vừa nhập sẽ không còn trong phiên mô phỏng này.</p>
+  <div class="dialog-actions"><button type="button" data-close>Tiếp tục sửa</button><button type="button" class="danger" id="discard-edit">Bỏ thay đổi</button></div>
+</dialog>
+
+<dialog id="delete-dialog" aria-labelledby="delete-title">
+  <h2 id="delete-title">Xóa chuỗi định kỳ?</h2>
+  <p>Chuỗi và toàn bộ kỳ chưa diễn ra sẽ bị ẩn khỏi phiên xem này. Cách xử lý các kỳ đã qua do Feature Contract #20 quyết định và chưa được khẳng định trong artifact thiết kế.</p>
+  <div class="dialog-actions"><button type="button" data-close>Hủy</button><button type="button" class="danger" id="delete-confirm">Xóa chuỗi</button></div>
+</dialog>
+
+<dialog id="end-dialog" aria-labelledby="end-title">
+  <h2 id="end-title">Kết thúc chuỗi từ hôm nay?</h2>
+  <p id="end-body">—</p>
+  <div class="dialog-actions"><button type="button" data-close>Hủy</button><button type="button" class="primary" id="end-confirm">Kết thúc chuỗi</button></div>
+</dialog>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  "use strict";
+  var TODAY = "2026-09-20";
+  var RATE_NOTE = "Tỷ giá 25.100 người dùng nhập ngày 12/09/2026";
+  var STEP = {monthly:1, quarterly:3, yearly:12};
+  var CADENCE_LABEL = {monthly:"Hàng tháng", quarterly:"Hàng quý", yearly:"Hàng năm"};
+  var CADENCE_PHRASE = {monthly:"hàng tháng", quarterly:"hàng quý", yearly:"hàng năm"};
+
+  var series = [
+    {id:"s1", name:"Lương", type:"income", category:"Lương", amount:132000000, cadence:"monthly", start:"2026-01-01", end:null, link:"Không liên kết"},
+    {id:"s2", name:"Thu nhập cho thuê", type:"income", category:"Thu nhập cho thuê", amount:14800000, cadence:"monthly", start:"2026-03-03", end:"2027-02-03", link:"Căn hộ cho thuê Quận 2"},
+    {id:"s3", name:"Cổ tức", type:"income", category:"Cổ tức", amount:3765000, usd:150, cadence:"quarterly", start:"2026-03-15", end:null, link:"Danh mục cổ phiếu HOSE"},
+    {id:"s4", name:"Lãi tiền gửi", type:"income", category:"Lãi tiền gửi", amount:1500000, cadence:"monthly", start:"2025-10-20", end:"2026-10-20", link:"Tiền gửi kỳ hạn 12 tháng"},
+    {id:"s5", name:"Thu nhập trái phiếu hoặc quỹ", type:"income", category:"Thu nhập trái phiếu hoặc quỹ", amount:1500000, cadence:"quarterly", start:"2026-03-22", end:null, link:"Quỹ trái phiếu An Tâm"},
+    {id:"s6", name:"Chi phí sinh hoạt", type:"expense", category:"Chi phí sinh hoạt", amount:23400000, cadence:"monthly", start:"2026-01-01", end:null, link:"Không liên kết"},
+    {id:"s7", name:"Nhà ở", type:"expense", category:"Nhà ở", amount:18750000, cadence:"monthly", start:"2024-06-20", end:null, link:"Khoản vay mua căn hộ"},
+    {id:"s8", name:"Bảo hiểm", type:"expense", category:"Bảo hiểm", amount:5400000, cadence:"yearly", start:"2024-09-12", end:null, link:"Không liên kết"},
+    {id:"s9", name:"Thuế và phí", type:"expense", category:"Thuế và phí", amount:8250000, cadence:"quarterly", start:"2026-03-15", end:null, link:"Không liên kết"},
+    {id:"s10", name:"Thanh toán gốc công nợ", type:"expense", category:"Thanh toán gốc công nợ", amount:10000000, cadence:"monthly", start:"2024-06-20", end:"2039-05-20", link:"Khoản vay mua căn hộ"},
+    {id:"s11", name:"Thanh toán lãi", type:"expense", category:"Thanh toán lãi", amount:6250000, cadence:"monthly", start:"2024-06-20", end:"2039-05-20", link:"Khoản vay mua căn hộ"}
+  ];
+
+  function pad(n){ return (n<10?"0":"")+n; }
+  function parts(iso){ var p=iso.split("-"); return {y:+p[0], m:+p[1]-1, d:+p[2]}; }
+  function ts(iso){ var p=parts(iso); return Date.UTC(p.y,p.m,p.d); }
+  function dim(y,m){ return new Date(Date.UTC(y,m+1,0)).getUTCDate(); }
+  function isoOf(y,m,d){ return y+"-"+pad(m+1)+"-"+pad(d); }
+  function viDate(iso){ var p=parts(iso); return pad(p.d)+"/"+pad(p.m+1)+"/"+p.y; }
+  function viMonth(y,m){ return pad(m+1)+"/"+y; }
+  function money(n){ return new Intl.NumberFormat("vi-VN").format(n)+" ₫"; }
+  function dayBefore(iso){ var d=new Date(ts(iso)-86400000); return isoOf(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
+
+  function anchorOf(rule){ return rule.anchor || parts(rule.start).d; }
+
+  function occurrences(rule, cap){
+    cap = cap || 600;
+    var s = parts(rule.start), anchor = anchorOf(rule), step = STEP[rule.cadence];
+    var startTs = ts(rule.start), endTs = rule.end ? ts(rule.end) : null;
+    var out = [], k = 0, guard = 0;
+    while(out.length < cap && guard < 4000){
+      var mi = s.m + k*step, y = s.y + Math.floor(mi/12), m = mi%12;
+      var maxDay = dim(y,m), day = Math.min(anchor, maxDay), t = Date.UTC(y,m,day);
+      if(endTs !== null && t > endTs) break;
+      if(t >= startTs){ out.push({y:y, m:m, d:day, ts:t, iso:isoOf(y,m,day), clamped:day < anchor}); }
+      k++; guard++;
+      if(endTs === null && out.length >= cap) break;
+    }
+    out.forEach(function(o,i){ o.index = i+1; o.isFirst = i===0; o.isLast = (endTs !== null && i === out.length-1); });
+    return out;
+  }
+
+  function countIn(rule, y, m){
+    var list = occurrences(rule, 400), n = 0;
+    list.forEach(function(o){ if(o.y===y && o.m===m){ n++; } });
+    return n;
+  }
+
+  function summarize(rule){
+    var anchor = anchorOf(rule), s = parts(rule.start);
+    var head;
+    if(rule.cadence === "yearly"){
+      head = "Lặp hàng năm vào ngày " + anchor + " tháng " + pad(s.m+1);
+    } else {
+      head = "Lặp " + CADENCE_PHRASE[rule.cadence] + " vào ngày " + anchor;
+    }
+    head += ", bắt đầu từ " + viDate(rule.start);
+    var first = occurrences(rule, 1)[0];
+    if(first && first.iso !== rule.start){
+      head += " (kỳ đầu tiên rơi vào " + viDate(first.iso) + ")";
+    }
+    head += rule.end ? ", kết thúc vào " + viDate(rule.end) + " và tính cả ngày này." : ", chưa có ngày kết thúc.";
+    return head;
+  }
+
+  function summaryExtra(rule){
+    var anchor = anchorOf(rule), notes = [];
+    if(anchor > 28){
+      notes.push("Ngày " + anchor + " không tồn tại ở mọi tháng nên những tháng ngắn hơn dùng ngày cuối tháng và được đánh dấu là đã dời.");
+    } else {
+      notes.push("Ngày neo tồn tại ở mọi tháng nên không có kỳ nào bị dời.");
+    }
+    if(anchor < parts(rule.start).d){
+      notes.push("Ngày neo sớm hơn ngày bắt đầu nên kỳ đầu tiên rơi vào chu kỳ kế tiếp.");
+    }
+    var upcoming = occurrences(rule, 400).filter(function(o){ return o.ts >= ts(TODAY) && o.ts < Date.UTC(2027,8,20); });
+    notes.push("Trong 12 tháng tới có " + upcoming.length + " kỳ.");
+    return notes.join(" ");
+  }
+
+  /* ---------- prototype state ---------- */
+  var current = JSON.parse(JSON.stringify(series[0]));
+  var horizon = 6, selectedOcc = null, lastTrigger = null, editDirty = false, boundaryMode = "before";
+
+  var $ = function(sel){ return document.querySelector(sel); };
+  var $$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+  var device = $("#device");
+
+  function toast(message){
+    var el = $("#toast");
+    el.textContent = message;
+    el.classList.remove("hidden");
+    window.clearTimeout(el._t);
+    el._t = window.setTimeout(function(){ el.classList.add("hidden"); }, 4000);
+  }
+
+  function show(view){
+    $$("[data-view]").forEach(function(section){ section.classList.toggle("active", section.dataset.view === view); });
+    $$("[data-go]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.go === view)); });
+    var active = $('[data-view="' + view + '"]');
+    if(active){ active.focus(); }
+  }
+
+  /* ---------- rule screen ---------- */
+  function validate(){
+    var ok = true, messages = [];
+    var startOk = !!current.start;
+    $("#start-error").classList.toggle("hidden", startOk);
+    if(!startOk){ ok = false; messages.push("Chọn ngày bắt đầu."); }
+    var endBad = false, endMsg = "";
+    if(startOk && current.end){
+      if(ts(current.end) < ts(current.start)){
+        endBad = true; endMsg = "Ngày kết thúc phải từ ngày bắt đầu trở đi.";
+      } else if(occurrences(current, 10).length === 0){
+        endBad = true; endMsg = "Khoảng đã chọn không sinh ra kỳ nào. Lùi ngày kết thúc về sau kỳ đầu tiên.";
+      }
+    }
+    $("#end-error").textContent = endMsg;
+    $("#end-error").classList.toggle("hidden", !endBad);
+    if(endBad){ ok = false; messages.push(endMsg); }
+    $("#rule-errors").classList.toggle("hidden", ok);
+    if(!ok){ $("#rule-errors-text").textContent = messages.join(" "); }
+    $("#go-schedule").disabled = !ok;
+    return ok;
+  }
+
+  function renderRule(){
+    $("#series-kind").textContent = (current.type === "income" ? "Thu nhập" : "Chi phí") + " · " + current.category;
+    $("#series-name").textContent = current.name;
+    $("#series-amount").textContent = current.usd ? (current.usd + " USD · " + money(current.amount)) : money(current.amount);
+    var tags = [
+      '<span class="tag brand">' + CADENCE_LABEL[current.cadence] + '</span>',
+      '<span class="tag">Ngày neo ' + anchorOf(current) + '</span>',
+      '<span class="tag">' + (current.end ? "Có ngày kết thúc" : "Chưa có ngày kết thúc") + '</span>',
+      '<span class="tag">' + current.link + '</span>'
+    ];
+    if(current.usd){ tags.push('<span class="tag warn">' + RATE_NOTE + '</span>'); }
+    $("#series-tags").innerHTML = tags.join("");
+    $("#cadence").value = current.cadence;
+    $("#anchor").value = String(anchorOf(current));
+    $("#start-date").value = current.start;
+    $("#end-date").value = current.end || "";
+    $("#rule-summary").textContent = summarize(current);
+    $("#rule-summary-extra").textContent = summaryExtra(current);
+    validate();
+  }
+
+  /* ---------- schedule screen ---------- */
+  function occExplain(o){
+    var anchor = anchorOf(current), lines = [];
+    if(o.isFirst){
+      lines.push("Đây là kỳ đầu tiên và trùng ngày bắt đầu " + viDate(current.start) + ". Ngày bắt đầu được tính vào chuỗi.");
+    } else {
+      lines.push("Đây là kỳ thứ " + o.index + " của chuỗi, sinh ra bằng cách cộng " + STEP[current.cadence] + " tháng " + (o.index - 1) + " lần kể từ ngày bắt đầu " + viDate(current.start) + ".");
+    }
+    if(o.clamped){
+      lines.push("Ngày neo " + anchor + " không tồn tại trong tháng " + viMonth(o.y, o.m) + " nên kỳ được dời về " + viDate(o.iso) + " và vẫn nằm trong tháng đó.");
+    }
+    if(o.isLast){
+      lines.push("Đây là kỳ cuối cùng vì nó trùng ngày kết thúc " + viDate(current.end) + ", và ngày kết thúc được tính vào chuỗi.");
+    }
+    lines.push("Kỳ này thuộc kỳ báo cáo tháng " + viMonth(o.y, o.m) + " và chỉ được tính một lần trong kỳ đó.");
+    return lines.join(" ");
+  }
+
+  function renderSchedule(){
+    $("#schedule-rule").textContent = current.name + " · " + summarize(current);
+    var all = occurrences(current, 400);
+    var view = all.filter(function(o){ return o.ts >= Date.UTC(2026,8,1); }).slice(0, horizon);
+    var list = $("#schedule-list");
+    if(!view.length){
+      list.innerHTML = '<div class="card"><span class="status warn">Không còn kỳ nào</span>' +
+        '<p>Chuỗi đã kết thúc vào ' + (current.end ? viDate(current.end) : "—") + ' nên không có kỳ nào trong tầm nhìn đang chọn.</p>' +
+        '<p class="helper">Các kỳ đã qua vẫn được giữ. Mở rộng tầm nhìn hoặc bỏ ngày kết thúc để xem tiếp.</p>' +
+        '<div class="actions"><button type="button" id="empty-clear-end">Bỏ ngày kết thúc</button></div></div>';
+      $("#schedule-count").textContent = "0 kỳ trong tầm nhìn đã chọn";
+      var clear = $("#empty-clear-end");
+      if(clear){ clear.addEventListener("click", function(){ current.end = null; renderRule(); renderSchedule(); toast("Đã bỏ ngày kết thúc trong phiên mô phỏng."); }); }
+      return;
+    }
+    var html = '<ul class="spine" style="list-style:none;padding-left:1.75rem">';
+    html += '<li class="mark">Bắt đầu ' + viDate(current.start) + ' · tính cả ngày này</li>';
+    view.forEach(function(o){
+      var cls = "occ" + (o.clamped ? " clamped" : "") + (o.isFirst ? " is-first" : "") + (o.isLast ? " is-last" : "");
+      html += '<li><button type="button" class="' + cls + '" data-occ="' + o.iso + '">' +
+        '<span class="occ-main">' +
+          '<span class="occ-date">' + viDate(o.iso) + '</span>' +
+          '<span class="meta">Kỳ ' + o.index + ' · kỳ báo cáo ' + viMonth(o.y, o.m) + '</span>' +
+          '<span class="tag-row">' +
+            (o.isFirst ? '<span class="tag brand">Kỳ đầu tiên</span>' : '') +
+            (o.clamped ? '<span class="tag warn">Đã dời về cuối tháng</span>' : '') +
+            (o.isLast ? '<span class="tag">Kỳ cuối cùng</span>' : '') +
+          '</span>' +
+        '</span>' +
+        '<span class="occ-amount ' + (current.type === "income" ? "in" : "out") + '">' + (current.type === "income" ? "+" : "−") + " " + money(current.amount) + '</span>' +
+      '</button></li>';
+    });
+    if(current.end){ html += '<li class="mark">Kết thúc ' + viDate(current.end) + ' · tính cả ngày này</li>'; }
+    else { html += '<li class="mark">Chuỗi tiếp tục · chưa có ngày kết thúc</li>'; }
+    if(current.splitTo){
+      html += '<li class="mark split">Tách chuỗi · chuỗi mới ' + money(current.splitTo.amount) + ' bắt đầu ' + viDate(current.splitTo.start) + '</li>';
+      html += '<li><button type="button" class="tonal" id="open-split-series">Xem chuỗi mới từ ' + viDate(current.splitTo.start) + '</button></li>';
+    }
+    if(current.splitFrom){
+      html += '<li class="mark split">Chuỗi này tiếp nối chuỗi gốc đã kết thúc ' + viDate(current.splitFrom.end) + '</li>';
+      html += '<li><button type="button" class="tonal" id="open-origin-series">Xem chuỗi gốc</button></li>';
+    }
+    html += '</ul>';
+    list.innerHTML = html;
+    $("#schedule-count").textContent = view.length + " kỳ đang hiển thị · " + (current.end ? "chuỗi có hạn" : "chuỗi chưa có điểm dừng");
+    list.querySelectorAll("[data-occ]").forEach(function(button){
+      button.addEventListener("click", function(){ openOccurrence(button.dataset.occ); });
+    });
+    var toNew = $("#open-split-series");
+    if(toNew){
+      toNew.addEventListener("click", function(){
+        var origin = JSON.parse(JSON.stringify(current));
+        var next = JSON.parse(JSON.stringify(current));
+        next.amount = current.splitTo.amount;
+        next.start = current.splitTo.start;
+        next.anchor = parts(current.splitTo.start).d;
+        next.end = null;
+        delete next.splitTo;
+        delete origin.splitTo;
+        next.splitFrom = {end: current.end, origin: origin};
+        current = next;
+        selectedOcc = null;
+        renderRule(); renderSchedule();
+        toast("Đang xem chuỗi mới bắt đầu " + viDate(next.start) + ".");
+      });
+    }
+    var toOrigin = $("#open-origin-series");
+    if(toOrigin){
+      toOrigin.addEventListener("click", function(){
+        var origin = JSON.parse(JSON.stringify(current.splitFrom.origin));
+        origin.splitTo = {amount: current.amount, start: current.start};
+        current = origin;
+        selectedOcc = null;
+        renderRule(); renderSchedule();
+        toast("Đang xem chuỗi gốc đã kết thúc " + viDate(origin.end) + ".");
+      });
+    }
+  }
+
+  /* ---------- occurrence screen ---------- */
+  function openOccurrence(iso){
+    var all = occurrences(current, 400), found = null;
+    all.forEach(function(o){ if(o.iso === iso){ found = o; } });
+    if(!found){ return; }
+    selectedOcc = found;
+    $("#occ-kind").textContent = found.ts >= ts(TODAY) ? "Kỳ dự kiến" : "Kỳ đã qua";
+    $("#occ-amount").textContent = (current.type === "income" ? "+" : "−") + " " + money(current.amount);
+    $("#occurrence-heading").textContent = current.name + " · " + viDate(found.iso);
+    $("#occ-why").textContent = occExplain(found);
+    var facts = [
+      ["Ngày diễn ra", viDate(found.iso)],
+      ["Kỳ báo cáo", "Tháng " + viMonth(found.y, found.m)],
+      ["Thứ tự kỳ", "Kỳ " + found.index + " của chuỗi"],
+      ["Chu kỳ", CADENCE_LABEL[current.cadence] + " · ngày neo " + anchorOf(current)],
+      ["Khoảng hiệu lực", viDate(current.start) + " → " + (current.end ? viDate(current.end) : "chưa có điểm dừng")],
+      ["Số tiền", current.usd ? (current.usd + " USD · " + money(current.amount) + " · " + RATE_NOTE) : money(current.amount)]
+    ];
+    $("#occ-facts").innerHTML = facts.map(function(f){
+      return '<div class="fact"><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>';
+    }).join("");
+    var label = current.category && current.category !== current.name ? current.name + " (" + current.category + ")" : current.name;
+    $("#occ-source").textContent = "Kỳ này được sinh ra từ bản ghi định kỳ " + label + ", liên kết: " + current.link + ".";
+    show("occurrence");
+  }
+
+  /* ---------- edit screen ---------- */
+  function scope(){ var el = document.querySelector('input[name="scope"]:checked'); return el ? el.value : "all"; }
+
+  function renderImpact(){
+    var all = occurrences(current, 400);
+    var stillInSeries = selectedOcc && all.some(function(o){ return o.iso === selectedOcc.iso; });
+    if(!stillInSeries){ selectedOcc = null; }
+    var occ = selectedOcc || all.filter(function(o){ return o.ts >= ts(TODAY); })[0] || all[0];
+    var forwardRadio = document.querySelector('input[name="scope"][value="forward"]');
+    var confirmButton = $("#confirm-edit");
+    if(!occ){
+      selectedOcc = null;
+      forwardRadio.checked = false;
+      forwardRadio.disabled = true;
+      document.querySelector('input[name="scope"][value="all"]').checked = true;
+      confirmButton.disabled = true;
+      $("#edit-context").textContent = "Chuỗi " + current.name + " · khoảng hiệu lực hiện tại không sinh ra kỳ nào.";
+      $("#impact-facts").innerHTML = '<div class="fact"><dt>Trạng thái</dt><dd>Chưa có kỳ nào để sửa</dd></div>' +
+        '<div class="fact"><dt>Nguyên nhân</dt><dd>' + (current.end ? "Ngày kết thúc " + viDate(current.end) + " nằm trước kỳ đầu tiên của chuỗi" : "Quy tắc hiện tại chưa sinh ra kỳ nào") + '</dd></div>' +
+        '<div class="fact"><dt>Dữ liệu được giữ</dt><dd>Toàn bộ quy tắc đã nhập</dd></div>';
+      $("#impact-note").textContent = "Sửa ngày bắt đầu hoặc ngày kết thúc ở màn hình Quy tắc lặp, rồi quay lại đây để chọn phạm vi áp dụng.";
+      return;
+    }
+    forwardRadio.disabled = false;
+    confirmButton.disabled = false;
+    selectedOcc = occ;
+    $("#edit-context").textContent = "Chuỗi " + current.name + " · kỳ được chọn " + viDate(occ.iso);
+    var rows, note;
+    if(scope() === "all"){
+      var total = occurrences(current, 400).length;
+      rows = [
+        ["Phạm vi", "Toàn bộ chuỗi"],
+        ["Kỳ bị ảnh hưởng", current.end ? (total + " kỳ, gồm cả kỳ đã qua") : "Mọi kỳ, gồm cả kỳ đã qua"],
+        ["Chuỗi mới", "Không tạo chuỗi mới"],
+        ["Ranh giới", "Không có ranh giới tách"]
+      ];
+      note = "Quy tắc cũ được thay thế hoàn toàn, nên số kỳ mỗi tháng không đổi và không có tháng nào bị đếm hai lần.";
+    } else {
+      var cut = dayBefore(occ.iso);
+      rows = [
+        ["Phạm vi", "Từ kỳ này trở đi"],
+        ["Chuỗi gốc kết thúc", viDate(cut)],
+        ["Chuỗi mới bắt đầu", viDate(occ.iso)],
+        ["Kỳ đã qua", "Giữ nguyên, không tính lại"],
+        ["Tháng " + viMonth(occ.y, occ.m), "1 kỳ, chỉ do chuỗi mới sinh ra"]
+      ];
+      note = "Chuỗi gốc kết thúc vào " + viDate(cut) + ", tức ngày liền trước kỳ được chọn, nên hai chuỗi không cùng sinh kỳ cho tháng " + viMonth(occ.y, occ.m) + ".";
+    }
+    $("#impact-facts").innerHTML = rows.map(function(r){
+      return '<div class="fact"><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>';
+    }).join("");
+    $("#impact-note").textContent = note;
+  }
+
+  /* ---------- boundary table ---------- */
+  function renderBoundary(){
+    var base = {cadence:"monthly", start:"2026-01-01", end:null};
+    var body = $("#boundary-table").querySelector("tbody");
+    var origin = boundaryMode === "before" ? base : {cadence:"monthly", start:"2026-01-01", end:"2026-10-31"};
+    var fresh = boundaryMode === "before" ? null : {cadence:"monthly", start:"2026-11-01", end:null};
+    var months = [[2026,8],[2026,9],[2026,10],[2026,11],[2027,0],[2027,1]];
+    var maxTotal = 0;
+    body.innerHTML = months.map(function(pair){
+      var a = countIn(origin, pair[0], pair[1]);
+      var b = fresh ? countIn(fresh, pair[0], pair[1]) : 0;
+      var total = a + b;
+      if(total > maxTotal){ maxTotal = total; }
+      return '<tr><td>' + viMonth(pair[0], pair[1]) + '</td><td class="fig">' + a + '</td><td class="fig">' + (fresh ? b : "—") + '</td><td class="fig"><strong>' + total + '</strong></td></tr>';
+    }).join("");
+    $("#boundary-note").textContent = boundaryMode === "before"
+      ? "Trước khi tách, chuỗi Lương sinh đúng một kỳ mỗi tháng. Số lớn nhất trong cột tổng là " + maxTotal + "."
+      : "Sau khi tách tại 01/11/2026, chuỗi gốc kết thúc 31/10/2026 và chuỗi mới bắt đầu 01/11/2026. Số lớn nhất trong cột tổng vẫn là " + maxTotal + ", nên không tháng nào bị đếm hai lần.";
+  }
+
+  /* ---------- fixture table ---------- */
+  function renderFixture(){
+    var body = $("#fixture-table").querySelector("tbody");
+    var income = 0, expense = 0;
+    body.innerHTML = series.map(function(rule){
+      var sep = occurrences(rule, 400).filter(function(o){ return o.y === 2026 && o.m === 8; });
+      var cell = "—";
+      if(sep.length){
+        cell = viDate(sep[0].iso) + " · " + new Intl.NumberFormat("vi-VN").format(rule.amount);
+        if(rule.type === "income"){ income += rule.amount; } else { expense += rule.amount; }
+      }
+      return '<tr><td>' + rule.name + '</td><td>' + (rule.type === "income" ? "Thu nhập" : "Chi phí") + '</td><td>' + CADENCE_LABEL[rule.cadence] + '</td><td class="fig">' + anchorOf(rule) + '</td><td class="fig">' + viDate(rule.start) + '</td><td class="fig">' + (rule.end ? viDate(rule.end) : "—") + '</td><td class="fig">' + cell + '</td></tr>';
+    }).join("");
+    $("#rec-income").textContent = new Intl.NumberFormat("vi-VN").format(income);
+    $("#rec-expense").textContent = new Intl.NumberFormat("vi-VN").format(expense);
+  }
+
+  /* ---------- state gallery ---------- */
+  var STATES = {
+    loading: {cls:"info", title:"Đang dựng lại lịch kỳ", body:"Quy tắc vừa đổi nên lịch kỳ đang được tính lại. Khung chờ giữ đúng chiều cao để nội dung không nhảy.", action:"Quy tắc và tầm nhìn đã chọn được giữ nguyên.", skeleton:true},
+    empty: {cls:"warn", title:"Không còn kỳ nào trong tầm nhìn", body:"Chuỗi đã kết thúc vào 20/10/2026 nên không có kỳ nào sau mốc đó.", action:"Mở rộng tầm nhìn, hoặc bỏ ngày kết thúc nếu chuỗi vẫn tiếp tục."},
+    partial: {cls:"warn", title:"Chưa có tỷ giá cho kỳ đang xem", body:"Bản ghi nhập bằng USD. Số tiền nguyên tệ 150 USD vẫn hiển thị, giá trị quy đổi VND tạm thời chưa có.", action:"Cập nhật tỷ giá trong Hồ sơ và cài đặt; lịch kỳ không bị ảnh hưởng."},
+    stale: {cls:"warn", title:"Tỷ giá cập nhật lần cuối 12/09/2026", body:"Giá trị quy đổi 3.765.000 ₫ đang dùng tỷ giá 25.100 của ngày 12/09/2026.", action:"Cập nhật tỷ giá để tính lại giá trị quy đổi của các kỳ."},
+    validation: {cls:"bad", title:"Ngày kết thúc nằm trước ngày bắt đầu", body:"Không có kỳ nào được sinh ra trong khoảng đã chọn.", action:"Thông báo gắn với trường Ngày kết thúc và focus chuyển về trường đó. Toàn bộ trường khác được giữ nguyên."},
+    request: {cls:"bad", title:"Không dựng được lịch kỳ", body:"Yêu cầu mô phỏng không hoàn tất. Không có thay đổi nào bị mất.", action:"Thử lại, hoặc quay về màn hình quy tắc một cách an toàn."},
+    success: {cls:"ok", title:"Đã tách chuỗi từ 01/11/2026", body:"Chuỗi gốc kết thúc 31/10/2026. Chuỗi mới 145.000.000 ₫ bắt đầu từ 01/11/2026.", action:"Xem lịch kỳ mới, hoặc hoàn tác trong phiên xem này."},
+    unavailable: {cls:"bad", title:"Không thể mở mục này", body:"Bản ghi gốc không mở được từ kỳ này.", action:"Quay lại lịch kỳ. Thông báo không xác nhận sự tồn tại của bản ghi hay quyền truy cập."}
+  };
+
+  function renderState(key){
+    var state = STATES[key];
+    if(!state){ return; }
+    var html = '<span class="status ' + state.cls + '">' + state.title + '</span><p>' + state.body + '</p>';
+    if(state.skeleton){
+      html += '<div class="skeleton" aria-hidden="true"><span style="width:70%"></span><span style="width:90%"></span><span style="width:55%"></span></div>';
+    }
+    html += '<p class="helper">' + state.action + '</p>';
+    $("#state-panel").innerHTML = html;
+  }
+
+  /* ---------- dialogs ---------- */
+  function openDialog(id, trigger){
+    lastTrigger = trigger || document.activeElement;
+    var dialog = document.getElementById(id);
+    if(dialog && typeof dialog.showModal === "function"){ dialog.showModal(); }
+  }
+  $$("dialog").forEach(function(dialog){
+    dialog.addEventListener("close", function(){ if(lastTrigger && lastTrigger.focus){ lastTrigger.focus(); } });
+    dialog.querySelectorAll("[data-close]").forEach(function(button){
+      button.addEventListener("click", function(){ dialog.close(); });
+    });
+  });
+
+  /* ---------- wiring ---------- */
+  var anchorSelect = $("#anchor");
+  var anchorHtml = "";
+  for(var day = 1; day <= 31; day++){ anchorHtml += '<option value="' + day + '">Ngày ' + day + '</option>'; }
+  anchorSelect.innerHTML = anchorHtml;
+
+  $("#cadence").addEventListener("change", function(){ current.cadence = this.value; renderRule(); renderSchedule(); });
+  anchorSelect.addEventListener("change", function(){ current.anchor = +this.value; renderRule(); renderSchedule(); });
+  $("#start-date").addEventListener("change", function(){
+    if(!this.value){ current.start = ""; validate(); return; }
+    current.start = this.value; current.anchor = parts(this.value).d;
+    renderRule(); renderSchedule();
+  });
+  $("#end-date").addEventListener("change", function(){ current.end = this.value || null; renderRule(); renderSchedule(); });
+  $("#clear-end").addEventListener("click", function(){ current.end = null; renderRule(); renderSchedule(); toast("Chuỗi không còn ngày kết thúc."); });
+  $("#preset-bounded").addEventListener("click", function(){
+    current.end = "2027-03-01"; renderRule(); renderSchedule(); toast("Đã đặt ngày kết thúc 01/03/2027 để xem kỳ cuối cùng.");
+  });
+  $("#go-schedule").addEventListener("click", function(){ if(validate()){ renderSchedule(); show("schedule"); } });
+
+  $("#pick-series").addEventListener("click", function(){
+    $("#series-options").innerHTML = series.map(function(rule){
+      return '<button type="button" data-series="' + rule.id + '">' + rule.name + ' · ' + CADENCE_LABEL[rule.cadence] + ' · ' + (rule.end ? "đến " + viDate(rule.end) : "chưa có điểm dừng") + '</button>';
+    }).join("");
+    $("#series-options").querySelectorAll("[data-series]").forEach(function(button){
+      button.addEventListener("click", function(){
+        series.forEach(function(rule){ if(rule.id === button.dataset.series){ current = JSON.parse(JSON.stringify(rule)); } });
+        selectedOcc = null;
+        $("#series-sheet").close();
+        $("#trace-banner").classList.add("hidden");
+        renderRule(); renderSchedule();
+      });
+    });
+    openDialog("series-sheet", this);
+  });
+
+  $$("[data-horizon]").forEach(function(button){
+    button.addEventListener("click", function(){
+      horizon = +button.dataset.horizon;
+      $$("[data-horizon]").forEach(function(b){ b.setAttribute("aria-pressed", String(b === button)); });
+      renderSchedule();
+    });
+  });
+
+  $$("[data-go]").forEach(function(button){
+    button.addEventListener("click", function(){
+      var target = button.dataset.go;
+      try{
+        if(target === "schedule"){ renderSchedule(); }
+        if(target === "edit"){ renderImpact(); }
+      } finally {
+        show(target);
+      }
+    });
+  });
+
+  $("#occ-trace").addEventListener("click", function(){
+    $("#trace-banner").classList.remove("hidden");
+    $("#trace-banner-text").textContent = "Bạn đang xem bản ghi gốc của kỳ " + viDate(selectedOcc.iso) + ". Kỳ đó không phải bản ghi riêng và không được đếm thêm lần nữa.";
+    show("rule");
+    $("#trace-banner").focus();
+  });
+
+  $("#open-edit").addEventListener("click", function(){ try{ renderImpact(); } finally { show("edit"); } });
+  $$('input[name="scope"]').forEach(function(radio){ radio.addEventListener("change", function(){ editDirty = true; renderImpact(); }); });
+  $("#new-amount").addEventListener("input", function(){ editDirty = true; });
+
+  $$("[data-leave-edit]").forEach(function(button){
+    button.addEventListener("click", function(){
+      if(editDirty){ openDialog("unsaved-dialog", button); } else { show("schedule"); }
+    });
+  });
+  $("#discard-edit").addEventListener("click", function(){ editDirty = false; $("#unsaved-dialog").close(); show("schedule"); });
+
+  $("#confirm-edit").addEventListener("click", function(){
+    var raw = $("#new-amount").value.replace(/[^\d]/g, "");
+    var bad = !raw || +raw <= 0;
+    $("#new-amount-error").classList.toggle("hidden", !bad);
+    if(bad){ $("#new-amount").focus(); return; }
+    if(!selectedOcc){ renderImpact(); return; }
+    if(scope() === "forward"){
+      $("#split-body").textContent = "Chuỗi " + current.name + " sẽ kết thúc vào " + viDate(dayBefore(selectedOcc.iso)) + ". Một chuỗi mới " + money(+raw) + " bắt đầu từ " + viDate(selectedOcc.iso) + ". Tháng " + viMonth(selectedOcc.y, selectedOcc.m) + " chỉ có một kỳ.";
+      openDialog("split-dialog", this);
+    } else {
+      editDirty = false;
+      toast("Đã áp dụng " + money(+raw) + " cho toàn bộ chuỗi trong phiên mô phỏng.");
+      show("schedule");
+    }
+  });
+
+  $("#split-confirm").addEventListener("click", function(){
+    var raw = $("#new-amount").value.replace(/[^\d]/g, "");
+    current.end = dayBefore(selectedOcc.iso);
+    current.splitTo = {amount: +raw, start: selectedOcc.iso};
+    editDirty = false;
+    $("#split-dialog").close();
+    renderRule(); renderSchedule(); show("schedule");
+    boundaryMode = "after";
+    $$("[data-boundary]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.boundary === "after")); });
+    renderBoundary();
+    toast("Đã tách chuỗi. Chuỗi gốc kết thúc " + viDate(current.end) + "; chuỗi mới " + money(+raw) + " bắt đầu " + viDate(selectedOcc.iso) + ".");
+  });
+
+  $("#end-series").addEventListener("click", function(){
+    $("#end-body").textContent = "Chuỗi " + current.name + " sẽ nhận ngày kết thúc " + viDate(TODAY) + " và được tính cả ngày này. Các kỳ đã qua được giữ nguyên.";
+    openDialog("end-dialog", this);
+  });
+  $("#end-confirm").addEventListener("click", function(){
+    current.end = TODAY; editDirty = false;
+    $("#end-dialog").close();
+    renderRule(); renderSchedule(); show("schedule");
+    toast("Chuỗi đã được đặt ngày kết thúc " + viDate(TODAY) + ".");
+  });
+
+  $("#delete-series").addEventListener("click", function(){ openDialog("delete-dialog", this); });
+  $("#delete-confirm").addEventListener("click", function(){
+    $("#delete-dialog").close();
+    show("states"); renderState("unavailable");
+    toast("Chuỗi đã được ẩn khỏi phiên xem. Cách xử lý kỳ đã qua do Feature Contract quyết định.");
+  });
+
+  $$("[data-state]").forEach(function(button){
+    button.addEventListener("click", function(){
+      $$("[data-state]").forEach(function(b){ b.setAttribute("aria-pressed", String(b === button)); });
+      renderState(button.dataset.state);
+    });
+  });
+
+  $$("[data-boundary]").forEach(function(button){
+    button.addEventListener("click", function(){
+      boundaryMode = button.dataset.boundary;
+      $$("[data-boundary]").forEach(function(b){ b.setAttribute("aria-pressed", String(b === button)); });
+      renderBoundary();
+    });
+  });
+
+  var NOTES = {
+    "360": "360px: một cột, điều hướng dưới, trục lịch kỳ giữ thứ tự thời gian, số tiền xuống dòng thay vì bị cắt.",
+    "375": "375px: bố cục như 360px với vùng đọc rộng hơn; hành động chính vẫn nằm trong tầm ngón cái.",
+    "768": "768px: ngày bắt đầu và ngày kết thúc nằm cùng hàng; thẻ kỳ có thêm chỗ cho tag giải thích.",
+    "1024": "1024px: nội dung dạng chữ giới hạn khoảng 640–720px; bảng đối chiếu hiển thị đủ cột.",
+    "1440": "1440px: khung nội dung không giãn quá rộng; khoảng trắng tăng thay vì kéo dài dòng chữ."
+  };
+  $$("[data-width]").forEach(function(button){
+    button.addEventListener("click", function(){
+      var width = +button.dataset.width;
+      $$("[data-width]").forEach(function(b){ b.setAttribute("aria-pressed", String(b === button)); });
+      device.style.maxWidth = width + "px";
+      device.dataset.mode = width <= 480 ? "phone" : width <= 800 ? "tablet" : width <= 1100 ? "desktop" : "wide";
+      $("#viewport-note").textContent = NOTES[button.dataset.width];
+    });
+  });
+
+  renderRule();
+  renderSchedule();
+  renderFixture();
+  renderBoundary();
+  renderState("loading");
+})();
+</script>
+</body>
+</html>
