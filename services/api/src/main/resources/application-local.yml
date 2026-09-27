@@ -1,0 +1,9 @@
+# Local development profile. Activate with --spring.profiles.active=local.
+#
+# The base configuration permits no origin at all, so cross-origin development needs this profile
+# or an explicit API_ALLOWED_ORIGINS value. The origin below was read from a running
+# `npx expo start --web`, which reported "Waiting on http://localhost:8081", rather than assumed
+# from Expo's documented default; apps/mobile pins no port in its web script.
+rikkaus:
+  api:
+    allowed-origins: http://localhost:8081

@@ -27,6 +27,14 @@ when you need machine-specific overrides; real `.env` files are ignored by Git.
 cp .env.example .env
 ```
 
+Backend environment variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | see `.env.example` | Local PostgreSQL container credentials and port. |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/rikkaus` | JDBC URL the API connects with. |
+| `API_ALLOWED_ORIGINS` | empty | Comma-separated browser origins allowed to call `/api/v1/**` and `/actuator/health`. **Empty permits nothing** and registers no CORS mapping at all, which is the intended default outside local development. The `local` Spring profile sets `http://localhost:8081`, the origin Expo web serves on. |
+
 ## Start PostgreSQL
 
 ```bash

@@ -121,6 +121,15 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <!-- Writes META-INF/build-info.properties, without which BuildProperties is
+                         absent and GET /api/v1/meta can only report an unknown build version. -->
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!--
                 Surefire's default includes (Test*, *Test, *Tests, *TestCase) do not match *IT,
