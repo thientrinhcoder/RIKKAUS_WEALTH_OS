@@ -138,7 +138,18 @@ export function ActionButton({
       icon={resolvedIcon}
       loading={loading}
       mode={PAPER_MODE[variant]}
-      onPress={inactive ? undefined : onPress}
+      /**
+       * Called with no arguments. Paper forwards its press event, and passing that through
+       * would hand every caller an argument the declared `() => void` says they will not get,
+       * which is how a handler ends up receiving an event where it expected a value.
+       */
+      onPress={
+        inactive || onPress === undefined
+          ? undefined
+          : () => {
+              onPress();
+            }
+      }
       style={style}
       testID={testID}
       textColor={variant === 'destructive' ? theme.colors.onError : undefined}
