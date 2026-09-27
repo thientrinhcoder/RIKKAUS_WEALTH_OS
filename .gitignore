@@ -73,6 +73,10 @@ plans/**/*
 !plans/260913-issue-34-frontend-foundation/**
 !plans/260913-0421-issue-36-design-system-responsive-shell/
 !plans/260913-0421-issue-36-design-system-responsive-shell/**
+!plans/260927-0742-issue-39-api-contract-errors-foundation/
+!plans/260927-0742-issue-39-api-contract-errors-foundation/**
+!plans/reports/
+!plans/reports/pm-260927-issue-39-acceptance.md
 screenshots/*
 docs/screenshots/*
 logs.txt

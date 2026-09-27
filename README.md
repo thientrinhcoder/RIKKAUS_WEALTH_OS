@@ -161,11 +161,54 @@ local database and should only be done intentionally.
 
 ## Current scope limits
 
-This foundation deliberately contains no domain endpoints or tables, authentication, ownership
-logic, full OpenAPI/RFC 9457 conventions, CI/CD pipeline, domain UI, or Phase 2 behavior. Those
-are owned by their dedicated delivery tasks.
+The backend now has a versioned `/api/v1` surface, a build-published OpenAPI contract, RFC 9457
+error responses, correlation identifiers, and a two-tier test harness. See
+[`docs/api-contract-conventions.md`](docs/api-contract-conventions.md) for what that means for a
+client.
 
-To favor time-to-market, the backend slice contains no unit, integration, Testcontainers, or
-ArchUnit tests. Therefore, issue #35's original automated-test acceptance criterion remains
-intentionally unsatisfied; backend validation for that slice is limited to build and live-runtime
-checks. The frontend foundation has its own unit and component test harness.
+It still deliberately contains no domain endpoints or tables, no authentication, no ownership
+enforcement, no CI/CD pipeline and no domain UI. Those are owned by their dedicated delivery tasks.
+Because authentication is absent, this API must not be exposed beyond local development yet.
+
+The backend slice now has unit, integration, Testcontainers and ArchUnit tests, so issue #35's
+original automated-test acceptance criterion is satisfiable: it was intentionally unsatisfied because
+no harness existed, and the harness is what this foundation added. The frontend foundation has its own
+unit and component test harness.
+
+### Flyway was repaired, not merely configured
+
+Until this foundation, **Flyway had never run in this service.** `FlywayAutoConfiguration` lives in
+`org.springframework.boot:spring-boot-flyway`, a module Spring Boot 4 split out and which no declared
+starter brings in, so every `spring.flyway.*` setting in `application.yml` was inert. `V1__baseline.sql`
+was silently skipped and startup still succeeded, because with no `@Entity` in the codebase
+`ddl-auto: validate` had nothing to check. Issue #35's unchecked "Flyway applied `V1`" acceptance box
+was accurate.
+
+Adding that module makes migrations actually run. On a database volume predating the change the
+migration simply applies now; the baseline only creates a schema, so there is no destructive step.
+Before-and-after evidence is recorded in
+[`plans/reports/pm-260927-issue-39-acceptance.md`](plans/reports/pm-260927-issue-39-acceptance.md).
+
+## Verify the backend
+
+```bash
+./services/api/mvnw -f services/api/pom.xml test
+```
+
+Fast tier: unit and `@WebMvcTest` slice tests. Needs neither Docker nor PostgreSQL.
+
+```bash
+./services/api/mvnw -f services/api/pom.xml verify
+```
+
+Full tier: additionally runs `*IT` classes against a Testcontainers PostgreSQL, and fails the build if
+the committed OpenAPI contract no longer matches the application. **This requires a running Docker
+daemon.** Do not work around that with `-DskipITs`, which also disables the contract drift gate.
+
+```bash
+./services/api/mvnw -f services/api/pom.xml verify -Dopenapi.update=true
+```
+
+Regenerates `services/api/openapi/openapi.json` after an intended API change. Review the resulting diff
+and notify affected sibling tasks before merging. **This flag is a deliberate local action and must
+never appear in a CI command**, because it converts the drift check into a silent rewrite.
