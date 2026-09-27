@@ -1,10 +1,11 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { isApiBaseUrlConfigured } from '@/features/health/health-client';
 import { useHealthQuery } from '@/features/health/use-health-query';
 import { CONTENT_MAX_WIDTH, useResponsiveLayout } from '@/ui/responsive';
+import { useAppTheme } from '@/ui/theme';
 
 function HealthStatus() {
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -74,7 +75,7 @@ function HealthStatus() {
 }
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const { horizontalPadding } = useResponsiveLayout();
 
   return (
