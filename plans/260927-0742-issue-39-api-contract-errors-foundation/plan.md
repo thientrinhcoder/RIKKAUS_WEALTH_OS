@@ -165,7 +165,7 @@ assumed.
       that fail on violation, each observed failing on a deliberate violation.
 - [x] The published contract contains exactly the production paths, asserted by an allow-list so a test
       controller cannot leak into it.
-- [ ] Contract conventions are documented for sibling teams, and #38 is notified with the contract
+- [x] Contract conventions are documented for sibling teams, and #38 is notified with the contract
       path and the error taxonomy before merge.
 - [x] No Phase 2 behavior and no fabricated data were added to satisfy any check above.
 

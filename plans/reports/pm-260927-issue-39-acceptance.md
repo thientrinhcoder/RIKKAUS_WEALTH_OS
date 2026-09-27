@@ -129,6 +129,24 @@ A related finding, also only discoverable by building: `spring-boot-resttestclie
 carrying `@AutoConfigureTestRestTemplate` failed to refresh with `NoClassDefFoundError:
 org/springframework/boot/restclient/RestTemplateBuilder`.
 
+## Sibling notification
+
+Posted to issue #38 on the Product Owner's explicit go-ahead, having been held back initially because it
+is a public comment on another task's issue:
+https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/38#issuecomment-5856688886
+
+It carries the contract path, the regeneration command with the CI prohibitions, the full taxonomy table
+including the two reserved codes, the `ProblemDetail` shape with both extension members, the observed
+correlation-header behaviour, and `API_ALLOWED_ORIGINS`. The three limitations are stated up front rather
+than buried: the contract omits `/actuator/health`, it has no request-accepting endpoint and therefore no
+validation example, and `apps/mobile` has no codegen so the contract is documentation rather than a
+generation input. It asks #38 directly whether it wants a codegen step, and records that the answer
+belongs to #38's scope. It also states that the ownership limb of "API Ready" is unmet, so #38 is
+unblocked but #41 is not.
+
+Per this issue's own coordination rule, any later change to the published contract must be accompanied by
+updated examples and a further comment on that issue before merge.
+
 ## Criteria not fully satisfied
 
 ### Structured logging — partial

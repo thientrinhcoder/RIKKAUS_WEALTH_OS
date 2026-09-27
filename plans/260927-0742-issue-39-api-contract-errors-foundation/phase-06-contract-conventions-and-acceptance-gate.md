@@ -64,7 +64,7 @@ silently dropped.
       how to run both test tiers and regenerate the contract.
 - [x] Every #39 acceptance criterion is recorded in
       `plans/reports/pm-260927-issue-39-acceptance.md` with the command run and its real result.
-- [ ] #38 is notified on the issue with the contract path, the error schema and the header name.
+- [x] #38 is notified on the issue with the contract path, the error schema and the header name.
 - [x] Criteria this task does not fully satisfy are stated as unsatisfied, not omitted.
 
 ### Non-functional
@@ -251,7 +251,7 @@ the report.
 - [x] Record the Flyway finding as its own entry.
 - [x] Verify cross-origin access and header readability in a browser for **both** `/api/v1/meta` and
       `/actuator/health`.
-- [ ] Post the notification comment on #38 including the three stated limitations.
+- [x] Post the notification comment on #38 including the three stated limitations.
 - [x] Reconcile `plan.md` and all phase files with what actually shipped.
 - [x] Answer or re-raise the open questions.
 
@@ -317,10 +317,16 @@ formatting and JSON log encoding into CI.
 ## Implementation notes — 2026-09-27
 
 All documentation, the `.gitignore` allow-list, the full acceptance pass and the browser verification are
-done. **The one outstanding item is the notification comment on #38**, which is a public post on someone
-else's issue and needs the Product Owner's go-ahead rather than being posted unilaterally. Both its
-checkboxes are deliberately left unticked, and the matching acceptance criterion on the plan index is
-left unticked too, so the gap is visible rather than implied. The comment is drafted and ready to post.
+done.
+
+The notification comment on #38 was held back initially rather than posted unilaterally, since it is a
+public post on another task's issue, and was posted on the Product Owner's explicit go-ahead:
+https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/38#issuecomment-5856688886
+
+It leads with the three limitations rather than burying them, carries the taxonomy table, the real
+response bodies and the observed correlation-header behaviour, asks #38 directly whether it wants an
+OpenAPI codegen step, and states that the ownership limb of "API Ready" is unmet so #41 is not unblocked
+even though #38 is.
 
 ### Both README paragraphs were corrected, and the second one mattered most
 
