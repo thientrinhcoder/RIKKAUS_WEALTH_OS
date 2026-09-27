@@ -18,12 +18,59 @@ spring:
   sql:
     init:
       mode: never
+  jackson:
+    datatype:
+      datetime:
+        # Set explicitly rather than relying on the default, so Instant fields serialize as ISO-8601
+        # strings and never as epoch numbers; the frontend's runtime schema depends on the string
+        # form. Jackson 3 moved WRITE_DATES_AS_TIMESTAMPS from SerializationFeature to
+        # DateTimeFeature, so the Boot 3 key spring.jackson.serialization.write-dates-as-timestamps
+        # no longer binds and fails context startup outright.
+        write-dates-as-timestamps: false
+
+springdoc:
+  api-docs:
+    # The contract endpoint itself is gated, not only the browsable UI. Leaving /v3/api-docs
+    # anonymously readable would publish every route, every schema and the whole error taxonomy —
+    # including the codes reserved for authentication — on a service that has no authentication yet.
+    # The committed openapi.json is what siblings consume, so nothing needs the live endpoint outside
+    # local development and the build.
+    enabled: false
+    path: /v3/api-docs
+  # Keeps /actuator/** and any future version out of the v1 contract without annotating anything.
+  paths-to-match: /api/v1/**
+  swagger-ui:
+    enabled: false
+  show-actuator: false
+
+logging:
+  pattern:
+    # The :-no-correlation-id default makes a missing identifier visible rather than rendering an
+    # empty bracket, which distinguishes "outside a request" from "the filter did not run".
+    # This is a readable console pattern, not JSON. A structured encoder for log shipping is a
+    # deployment concern and belongs with the CI/CD task, so the structured-logging requirement is
+    # only partly met here and the acceptance report says so.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%X{correlationId:-no-correlation-id}] %logger{40} - %msg%n"
+
+rikkaus:
+  api:
+    # Fails closed. An unset or empty value registers no CORS mapping at all rather than guessing
+    # an origin, as an explicit environment-specific allowlist requires. Comma-separated.
+    allowed-origins: ${API_ALLOWED_ORIGINS:}
 
 management:
   endpoints:
     web:
       exposure:
         include: health
+      cors:
+        # Actuator endpoints are served by their own handler mapping, which a WebMvcConfigurer's
+        # addCorsMappings never reaches, so the API's CORS configuration cannot cover them. This is
+        # the supported mechanism. It reads the same allowlist so one variable drives both surfaces,
+        # and Boot registers no actuator CORS configuration at all when the list is empty.
+        allowed-origins: ${rikkaus.api.allowed-origins}
+        # Narrower than the API surface on purpose: no custom request headers, no exposed headers.
+        allowed-methods: GET
   endpoint:
     health:
       probes:

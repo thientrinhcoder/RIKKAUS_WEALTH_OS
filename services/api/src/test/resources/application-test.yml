@@ -1,0 +1,18 @@
+# Test profile. Deliberately fails closed.
+#
+# application.yml supplies datasource defaults whose credentials match docker-compose.yml byte for
+# byte. If @ServiceConnection ever silently stops contributing, Spring would resolve those defaults
+# and the suite would run Flyway and Hibernate against the developer's persistent Compose volume.
+# Pointing at an unresolvable host turns that regression into an immediate connection error instead
+# of silent corruption of real data. @ServiceConnection overrides all three datasource properties
+# when it applies, so this URL is never used by a healthy run.
+spring:
+  datasource:
+    url: jdbc:postgresql://service-connection-did-not-apply.invalid:5432/none
+    username: no-credential-in-test-resources
+    password: no-credential-in-test-resources
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
