@@ -1,11 +1,23 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Text } from 'react-native-paper';
+import { Card, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { EmptyState } from '@/components/feedback/empty-state';
+import { ErrorState } from '@/components/feedback/error-state';
+import { LoadingState } from '@/components/feedback/loading-state';
+import { SuccessState } from '@/components/feedback/success-state';
 import { isApiBaseUrlConfigured } from '@/features/health/health-client';
 import { useHealthQuery } from '@/features/health/use-health-query';
 import { CONTENT_MAX_WIDTH, useResponsiveLayout } from '@/ui/responsive';
+import { spacing } from '@/ui/tokens';
 import { useAppTheme } from '@/ui/theme';
+
+/**
+ * The foundation diagnostic screen. It is deliberately the first consumer of the shared
+ * feedback kit: if these four states cannot be expressed with the primitives, the kit is not
+ * finished.
+ */
+const HEALTH_CARD_HEIGHT = 184;
 
 function HealthStatus() {
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -14,24 +26,26 @@ function HealthStatus() {
 
   if (!configured) {
     return (
-      <View testID="health-state-empty" style={styles.stateContainer}>
-        <Text accessibilityLiveRegion="polite" variant="titleMedium">
-          API endpoint is not configured.
-        </Text>
-        <Text variant="bodyMedium">
-          Set EXPO_PUBLIC_API_BASE_URL and restart Expo.
-        </Text>
+      <View testID="health-state-empty">
+        <EmptyState
+          actionLabel="Xem hướng dẫn cấu hình"
+          detail="Đặt EXPO_PUBLIC_API_BASE_URL rồi khởi động lại Expo."
+          message="Chưa cấu hình địa chỉ API."
+          onAction={() => {}}
+          testID="health-empty"
+        />
       </View>
     );
   }
 
   if (healthQuery.isPending) {
     return (
-      <View testID="health-state-loading" style={styles.stateContainer}>
-        <ActivityIndicator accessibilityLabel="Checking API health" />
-        <Text accessibilityLiveRegion="polite" variant="titleMedium">
-          Checking API health…
-        </Text>
+      <View testID="health-state-loading">
+        <LoadingState
+          accessibilityLabel="Đang kiểm tra tình trạng API"
+          reservedHeight={HEALTH_CARD_HEIGHT}
+          testID="health-loading"
+        />
       </View>
     );
   }
@@ -40,41 +54,39 @@ function HealthStatus() {
     const reason =
       healthQuery.error instanceof Error
         ? healthQuery.error.message
-        : 'The health check could not be completed.';
+        : 'Không hoàn tất được lượt kiểm tra.';
 
     return (
-      <View testID="health-state-error" style={styles.stateContainer}>
-        <Text accessibilityLiveRegion="assertive" variant="titleMedium">
-          API health check failed.
-        </Text>
-        <Text variant="bodyMedium">{reason}</Text>
-        <Button
-          accessibilityLabel="Try API health check again"
-          contentStyle={styles.retryButtonContent}
-          disabled={healthQuery.isFetching}
-          loading={healthQuery.isFetching}
-          mode="contained"
-          onPress={() => {
+      <View testID="health-state-error">
+        <ErrorState
+          message="Kiểm tra tình trạng API thất bại."
+          onRetry={() => {
             void healthQuery.refetch();
           }}
-        >
-          Try again
-        </Button>
+          preserved={reason}
+          retryLabel="Thử lại"
+          testID="health-error"
+          variant="request"
+        />
       </View>
     );
   }
 
   return (
-    <View testID="health-state-success" style={styles.stateContainer}>
-      <Text accessibilityLiveRegion="polite" variant="titleMedium">
-        API is reachable.
-      </Text>
-      <Text variant="bodyLarge">Status: {healthQuery.data.status}</Text>
+    <View testID="health-state-success">
+      <SuccessState
+        message={`API phản hồi bình thường. Trạng thái: ${healthQuery.data.status}`}
+        nextActionLabel="Kiểm tra lại"
+        onNextAction={() => {
+          void healthQuery.refetch();
+        }}
+        testID="health-success"
+      />
     </View>
   );
 }
 
-export default function HomeScreen() {
+export default function DiagnosticsScreen() {
   const { colors } = useAppTheme();
   const { horizontalPadding } = useResponsiveLayout();
 
@@ -88,13 +100,11 @@ export default function HomeScreen() {
           <Text accessibilityRole="header" variant="headlineSmall">
             Rikkaus Wealth OS
           </Text>
-          <Text variant="bodyLarge">
-            Frontend foundation for local web and mobile development.
-          </Text>
+          <Text variant="bodyLarge">Chẩn đoán nền tảng cho web và di động.</Text>
 
-          <Card accessible accessibilityLabel="API health status" mode="contained">
+          <Card accessible accessibilityLabel="Tình trạng API" mode="contained">
             <Card.Content style={styles.cardContent}>
-              <Text variant="titleLarge">API health</Text>
+              <Text variant="titleLarge">Tình trạng API</Text>
               <HealthStatus />
             </Card.Content>
           </Card>
@@ -110,23 +120,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingVertical: 24,
+    paddingVertical: spacing.lg,
   },
   content: {
     alignSelf: 'center',
-    gap: 16,
+    gap: spacing.md,
     maxWidth: CONTENT_MAX_WIDTH,
     width: '100%',
   },
   cardContent: {
-    gap: 16,
-    minHeight: 184,
-  },
-  stateContainer: {
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  retryButtonContent: {
-    minHeight: 48,
+    gap: spacing.md,
+    minHeight: HEALTH_CARD_HEIGHT,
   },
 });
