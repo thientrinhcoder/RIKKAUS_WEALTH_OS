@@ -1,7 +1,7 @@
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
-import HomeScreen from '@/app/index';
+import HomeScreen from '@/app/diagnostics';
 import { useResponsiveLayout } from '@/ui/responsive';
 
 import { renderWithProviders } from '../test/test-utils';

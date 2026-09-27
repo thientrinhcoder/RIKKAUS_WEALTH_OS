@@ -4,6 +4,7 @@ import type { ReactElement, PropsWithChildren } from 'react';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { paperSettings } from '@/providers/app-providers';
 import { appTheme } from '@/ui/theme';
 
 const initialWindowMetrics = {
@@ -29,7 +30,9 @@ export async function renderWithProviders(ui: ReactElement, options?: RenderOpti
     return (
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <QueryClientProvider client={queryClient}>
-          <PaperProvider theme={appTheme}>{children}</PaperProvider>
+          <PaperProvider settings={paperSettings} theme={appTheme}>
+            {children}
+          </PaperProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     );
