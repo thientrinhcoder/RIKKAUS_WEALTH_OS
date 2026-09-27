@@ -1,7 +1,8 @@
 package com.rikkaus.wealth.shared.error;
 
-import java.io.IOException;
+import com.rikkaus.wealth.shared.observability.CorrelationId;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -54,9 +55,9 @@ public class ProblemDetailWriter {
             ProblemDetail body = ProblemDetail.forStatusAndDetail(type.status(), detail);
             body.setType(type.type());
             body.setTitle(type.title());
-            // Same inlined key, and for the same reason, as ApiExceptionHandler: the observability
-            // package does not exist yet and replaces both occurrences together.
-            String correlationId = MDC.get("correlationId");
+            // The same read the advice does, so the member is present or absent identically on the
+            // pre-dispatch path and on every other.
+            String correlationId = MDC.get(CorrelationId.MDC_KEY);
             if (correlationId != null) {
                 body.setProperty("correlationId", correlationId);
             }

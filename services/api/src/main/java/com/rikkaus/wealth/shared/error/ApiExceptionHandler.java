@@ -1,5 +1,6 @@
 package com.rikkaus.wealth.shared.error;
 
+import com.rikkaus.wealth.shared.observability.CorrelationId;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     /** What {@code ProblemDetail} uses until something classifies the response. */
     private static final URI UNCLASSIFIED_TYPE = URI.create("about:blank");
 
-    static final String CORRELATION_ID_MEMBER = "correlationId";
+    static final String CORRELATION_ID_MEMBER = CorrelationId.MDC_KEY;
 
     /**
      * Statuses whose framework-supplied {@code detail} reflects attacker-controlled input and must be
@@ -141,10 +142,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     private static void addCorrelationId(ProblemDetail body) {
-        // The MDC key is inlined rather than referenced from the observability package, because the
-        // correlation filter does not exist yet; that package replaces this literal with its own
-        // constant. Until then MDC is empty and the member is simply absent, which RFC 9457 permits
-        // because extension members are optional.
+        // Absent when no filter has published one, which RFC 9457 permits because extension members
+        // are optional.
         String correlationId = MDC.get(CORRELATION_ID_MEMBER);
         if (correlationId != null) {
             body.setProperty(CORRELATION_ID_MEMBER, correlationId);

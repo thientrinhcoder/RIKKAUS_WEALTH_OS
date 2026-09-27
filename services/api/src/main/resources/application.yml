@@ -28,6 +28,15 @@ spring:
         # no longer binds and fails context startup outright.
         write-dates-as-timestamps: false
 
+logging:
+  pattern:
+    # The :-no-correlation-id default makes a missing identifier visible rather than rendering an
+    # empty bracket, which distinguishes "outside a request" from "the filter did not run".
+    # This is a readable console pattern, not JSON. A structured encoder for log shipping is a
+    # deployment concern and belongs with the CI/CD task, so the structured-logging requirement is
+    # only partly met here and the acceptance report says so.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%X{correlationId:-no-correlation-id}] %logger{40} - %msg%n"
+
 rikkaus:
   api:
     # Fails closed. An unset or empty value registers no CORS mapping at all rather than guessing
