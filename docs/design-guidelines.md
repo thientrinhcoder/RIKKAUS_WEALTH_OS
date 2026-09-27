@@ -141,6 +141,44 @@ Light mode is the required MVP baseline. A dark theme is not implied by this doc
 mode enters approved scope, define and contrast-test a complete semantic token set; do not invert
 the light palette mechanically.
 
+#### Verified contrast pairs
+
+These are the required contrast pairs for the approved light palette. Ratios were computed from the
+baseline hex values above against the WCAG 2.2 thresholds in section 12: 4.5:1 for normal text,
+3:1 for large text and meaningful UI graphics. A token value may be tuned only if every pair it
+appears in still meets its threshold.
+
+| Foreground | Background | Required for | Ratio | Threshold |
+|---|---|---|---:|---:|
+| `color.ink` | `canvas`, `surface`, `surfaceSubtle` | Normal text | 14.95 / 16.29 / 13.70 | 4.5:1 |
+| `color.inkSecondary` | `canvas`, `surface`, `surfaceSubtle` | Normal text | 5.92 / 6.46 / 5.43 | 4.5:1 |
+| `color.primary` | `canvas`, `surface`, `primaryContainer` | Normal text | 7.14 / 7.78 / 6.49 | 4.5:1 |
+| `color.primaryPressed` | `canvas`, `surface` | Normal text | 9.61 / 10.48 | 4.5:1 |
+| `color.surface` | `primary`, `primaryPressed` | Text on filled action | 7.78 / 10.48 | 4.5:1 |
+| `color.success` | `canvas`, `surface` | Normal text | 6.01 / 6.56 | 4.5:1 |
+| `color.warning` | `canvas`, `surface` | Normal text | 5.44 / 5.93 | 4.5:1 |
+| `color.error` | `canvas`, `surface` | Normal text | 6.03 / 6.57 | 4.5:1 |
+| `color.surface` | `error` | Text on destructive action | 6.57 | 4.5:1 |
+| `color.info` | `canvas`, `surface` | Normal text | 6.37 / 6.95 | 4.5:1 |
+| `color.brandNavy` | `canvas`, `surface` | Normal text | 13.10 / 14.28 | 4.5:1 |
+| `color.surface` | `brandNavy` | Text on brand anchor | 14.28 | 4.5:1 |
+| `color.controlBorder` | `canvas`, `surface`, `surfaceSubtle` | Control boundary graphic | 3.28 / 3.58 / 3.01 | 3:1 |
+| `color.focus` | `canvas`, `surface`, `surfaceSubtle` | Focus ring graphic | 4.54 / 4.95 / 4.16 | 3:1 |
+| `color.heritageGold` | `canvas`, `surface` | Large text and decorative accent only | 3.71 / 4.04 | 3:1 |
+
+Two results are intentional and must not be "corrected" by changing a token value:
+
+- `color.heritageGold` meets the 3:1 large-text and graphic threshold but not the 4.5:1 normal-text
+  threshold. This matches its approved restriction to large decorative accents and editorial rules;
+  it is never used for normal body text, financial values, or control labels.
+- `color.border` reaches only 1.38:1 on `canvas` and 1.51:1 on `surface`. It is a decorative
+  divider, not a meaningful UI graphic, so the 3:1 threshold does not apply to it. This is why
+  `color.border` must never be the only visual boundary for an input or interactive control.
+
+`color.controlBorder` on `color.surfaceSubtle` passes at 3.01:1 with almost no margin. Treat both
+tokens as frozen for the MVP: any darkening of `surfaceSubtle` or lightening of `controlBorder`
+drops this pair below AA.
+
 #### React Native Paper MD3 handoff
 
 Production components consume the project semantic roles first; the Paper theme is an adapter,
@@ -207,6 +245,9 @@ and rows vertically rather than hiding or clipping amounts and labels.
 - Interactive-control boundaries use `color.controlBorder`; the quieter `color.border` must not
   be the only visual boundary for an input or control.
 - Long forms and explanatory text use a maximum content width of 640–720px on large screens.
+- The shell's bounded content area uses a maximum width of 1120px at 1024px and above, centred
+  within the remaining space beside the sidebar. The 640–720px measure above is the narrower
+  limit for long forms and explanatory prose inside that area, not the width of the area itself.
 
 The approved elevation recipes are:
 
@@ -249,6 +290,12 @@ The mobile bottom navigation contains exactly five labeled destinations, in this
 Profile and settings open from the top app bar avatar. Do not add a hamburger menu for primary
 destinations. Do not mix a drawer and bottom navigation at the same hierarchy level.
 
+A destination may carry an optional badge. A badge means "this destination has something that
+needs your attention now", never an unread-message count or a growth figure. It shows a count
+only when the count is itself actionable, is never the sole carrier of the information, and
+is exposed to assistive technology as part of the destination's accessible name rather than as
+a separate focusable element. No badge is required for MVP 0.
+
 ### 6.2 Global create action
 
 A labeled **Thêm** action remains reachable from the lower thumb zone and opens a short action
@@ -275,6 +322,12 @@ back behavior, drafts, keyboard avoidance, validation, and deep links remain pre
 - Fixed bars reserve space for safe-area insets and never cover content or primary actions.
 - System back, iOS swipe-back, and Android predictive back must not be intercepted by custom
   gestures.
+- The bottom navigation, rail, and sidebar are one navigation list in every mode. Tab moves into
+  and out of the list as a single stop; arrow keys move between destinations inside it; Enter or
+  Space activates. The active destination carries the selected state, and the list exposes the
+  same accessible names and order that are visible.
+- On web, a skip link precedes the navigation list so keyboard users can reach main content
+  without traversing all five destinations.
 
 ## 7. Screen hierarchy guardrails
 
@@ -332,8 +385,10 @@ avatars, or conversational AI styling.
 - Use a short common form first; type-specific details are collapsed until relevant.
 - Keep labels permanently visible. Place units and currency adjacent to values, not only in
   placeholders.
-- Validate on blur for most fields and again on submit. Show cause and recovery directly below the
-  field.
+- Validate on blur and again on submit. Show cause and recovery directly below the field. Do not
+  validate while the user is still typing in an amount, number, or date field, because a partially
+  entered value is not yet a wrong value; these fields validate on blur only. Fields whose format is
+  fixed and short, such as a selection, may validate on change.
 - Focus the first invalid field after submission and provide an accessible error summary when
   several fields fail.
 - Mark required fields explicitly; group related fields semantically and visually.
@@ -342,6 +397,57 @@ avatars, or conversational AI styling.
 - Never preselect a financially meaningful answer merely to shorten the form.
 - Dates use a Vietnamese-friendly display while preserving an unambiguous stored value.
 - Negative values are accepted only where the product contract explicitly permits them.
+- Read-only and disabled are different states and must not share an appearance. Read-only presents a
+  real value the user may read, select, and copy but not change in this context; it keeps ordinary
+  text contrast and is exposed as read-only to assistive technology. Disabled presents a control
+  that is not currently usable, uses native disabled semantics, and shows the reason nearby when it
+  is not self-evident.
+
+Each control kind declares the keyboard and picker it opens, so a number is never typed on a prose
+keyboard:
+
+| Control | Keyboard or picker | Notes |
+|---|---|---|
+| Text | Default text | Sentence capitalisation; autocorrect off for codes and identifiers |
+| Currency | Numeric, digits and grouping separator only | No minus key unless the field permits negatives; unit is adjacent to the field, not in the placeholder |
+| Number | Decimal numeric | Decimal separator follows the Vietnamese locale |
+| Date | Platform date picker with typed entry as an alternative | Vietnamese-friendly display, unambiguous stored value |
+| Select | Platform picker or sheet, never a free-text field | Current selection is announced as the control's value |
+| Search | Text with a search return key | Clear affordance inside the field; see the discovery controls below |
+| Textarea | Multi-line text | Grows with content; never a fixed single-line height |
+
+### 8.1 Search, filter, and discovery controls
+
+Search and filter are shared discovery controls, not per-screen features. Every catalog that
+searches or filters uses the same behaviour so the interaction is learned once.
+
+- Search filters the list already on screen and never navigates to a separate results screen.
+- Search applies as the user types, debounced at roughly 250–300ms, with no minimum query length
+  and no explicit submit required. The return key only dismisses the keyboard.
+- A search field with content shows a clear control that restores the unfiltered list, is part of
+  the field's accessible name, and meets the minimum touch target.
+- While a query is applied, the view states how many records match and keeps the query visible.
+  A search that matches nothing uses the empty state anatomy in section 11.1: it names the query,
+  explains that no record matches it, and offers clearing the query as the next action. It never
+  shows the create-record action as the only way out of a search with no match.
+- Filters are additive and always visible as applied filters with a count, each individually
+  removable, plus one control that clears all of them at once.
+- Below 768px, filters open in a bottom sheet. The sheet stages changes and applies them on an
+  explicit apply action, so a filter is never applied while the sheet still covers the result.
+  Dismissing the sheet discards staged changes and leaves the applied filters untouched.
+- At 768px and above, filters may sit inline beside or above the list and apply immediately,
+  because the result stays visible while the control changes.
+- Search and filter state is held by the caller and passed in. The shared controls own no query
+  or filter state of their own, and they encode no field names, categories, or domain vocabulary.
+
+Tabs and segmented controls look similar and are not interchangeable:
+
+- Use tabs to switch between sibling sections of a screen that each have their own content and
+  their own scroll position, such as a record's detail and its history.
+- Use a segmented control to change how one single set of content is presented or narrowed, such
+  as the period of a cash-flow view. A segmented control is a filter, so it follows the filter
+  rules above.
+- Neither is used for primary navigation; section 6.1 owns that.
 
 ## 9. Money, dates, and financial data
 
@@ -401,10 +507,31 @@ state, and offer the correct next action.
   path.
 - Success states identify what changed and the logical next action.
 - Disabled controls use native semantics and show the reason nearby when it is not self-evident.
-- Destructive and unsaved-change states name the consequence, keep a safe cancel route, and use
-  undo when feasible.
+- Destructive and unsaved-change states name the consequence and keep a safe cancel route. Both are
+  required. Undo is optional: the shared overlay exposes an undo slot and stores nothing itself, and
+  whether a given action offers undo is decided by the domain that owns the consequence.
 - An unavailable target uses the non-enumerating message “Không thể mở mục này” and a safe return
   path; it does not confirm record existence, account identity, or permissions.
+
+Each state also declares how it reaches assistive technology, so a screen reader user learns the
+same thing a sighted user does:
+
+| State | Announcement | Politeness |
+|---|---|---|
+| Loading, skeleton, progress | Busy state on the region being loaded | Polite; announced once, not on every frame |
+| Empty | Part of the region's content, read in normal reading order | Not announced separately |
+| Partial, stale | Status message naming the affected value and the update path | Polite |
+| Validation error, inline | Bound to its field as the field's error, plus an invalid state | Announced when the field is reached |
+| Validation summary | Status message on submit, then focus moves to the first invalid field | Polite, followed by the focus move |
+| Request, offline error | Alert naming what failed, what was preserved, and the retry path | Assertive |
+| Success confirmation | Status message naming what changed | Polite |
+| Snackbar, toast | Status message; never takes focus | Polite |
+
+A snackbar or toast stays visible for at least 5 seconds, or longer when it carries an action, and
+always offers an explicit dismiss route. At most one is visible at a time; a newer message replaces
+the current one rather than stacking. A failure that the user must act on is never delivered only as
+a toast, because a toast can expire unread; it also appears in the affected region as an error
+state.
 
 Issue #36 owns this shared visual anatomy. Issue #37 owns its production component and shell
 implementation. Identity issue #40 owns session, account, ownership, and access behavior. Later
@@ -422,7 +549,21 @@ policy.
 - Do not disable browser zoom.
 - Test Dynamic Type/font scaling at the largest practical setting without losing critical data or
   actions.
-- Modals and sheets have a clear close/cancel route; focus returns to the invoking element.
+- Modals and sheets have a clear close/cancel route; focus returns to the invoking element. Focus is
+  trapped inside the overlay while it is open, and the content behind it is not reachable by
+  keyboard or screen reader.
+- Which dismissal routes an overlay accepts depends on what dismissing it costs:
+  - An overlay that loses nothing when dismissed, such as the create-action sheet, a filter sheet,
+    or a selection sheet, accepts all of Escape, the platform back gesture, a backdrop tap, and its
+    own close control.
+  - An overlay that would discard entered data, or that confirms a destructive action, accepts only
+    an explicit choice: its own cancel control, Escape, or the platform back gesture, each of which
+    resolves to cancel. A backdrop tap must not dismiss it, because an accidental tap outside would
+    silently choose for the user.
+  - A blocking error dialog offers exactly one safe way forward and is not dismissed by a backdrop
+    tap.
+- Cancel never carries out the consequence. The destructive choice is never the default focused
+  control, and the two are separated spatially as required below.
 - Toasts do not steal focus and are announced politely.
 - Destructive actions are separated spatially and visually from ordinary actions.
 
@@ -574,6 +715,36 @@ that materially change appearance or behavior:
 
 Components should be reusable enough to keep the mockup visually consistent, but they do not need
 production-grade APIs, exhaustive configurability, or a standalone component package.
+
+##### Applicability to the MVP 0 production component kit
+
+The paragraph above sets the bar for a review prototype. The component inventory in the table,
+however, is also the required inventory for the MVP 0 production component kit delivered by issue
+[#37](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/37). When #37 and its sub-issues
+cite this table, they inherit the families, variants, and states, and they additionally require
+production-grade APIs, the full state coverage of section 11, and the accessibility baseline of
+section 12. The relaxation of production-grade APIs applies only to a clickable mockup.
+
+Production ownership of the inventory across #37's delivery slices is:
+
+| Component family | Owning sub-issue |
+|---|---|
+| Buttons | [#114](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/114) |
+| Bottom navigation, rail, sidebar | [#115](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/115) |
+| Inputs | [#116](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/116) |
+| Cards, lists, tabs, search and filter controls | [#117](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/117) |
+| Status indicators, feedback | [#118](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/118) |
+| Dialogs, bottom sheets | [#119](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/issues/119) |
+
+Two entries in the table need a boundary that the table itself does not draw:
+
+- **Buttons** are required by this inventory but were not claimed by any sub-issue's scope. The
+  family belongs to #114 so that it exists before the shell and the overlay slices need it. This
+  extends #114 beyond the theme adapter described in its issue body.
+- **Status indicators** list success, warning, error, info, and stale alongside on-track,
+  at-risk, and behind. Only the first five are shared vocabulary. The production kit ships one
+  generic indicator whose label is supplied by the caller; on-track, at-risk, and behind are goal
+  vocabulary that the goals feature passes in. The shared kit never hard-codes goal language.
 
 #### 4. Screens
 
