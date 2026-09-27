@@ -1,0 +1,153 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "Rikkaus Wealth OS API",
+    "description" : "Versioned REST contract for the Rikkaus Wealth OS backend. Errors follow RFC 9457 with a urn:rikkaus:problem: type.",
+    "version" : "v1"
+  },
+  "servers" : [ {
+    "url" : "/",
+    "description" : "Relative to the deployment's own base URL"
+  } ],
+  "paths" : {
+    "/api/v1/meta" : {
+      "get" : {
+        "tags" : [ "meta-controller" ],
+        "summary" : "Report which build of the API the caller is talking to",
+        "description" : "Unauthenticated by design. Exposes the application name, the API version, the build version and the current server time in UTC, and nothing else. The build timestamp is deliberately withheld.",
+        "operationId" : "meta",
+        "responses" : {
+          "200" : {
+            "description" : "API metadata",
+            "headers" : {
+              "X-Correlation-Id" : {
+                "description" : "Correlation identifier for this request",
+                "style" : "simple",
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MetaResponse"
+                },
+                "examples" : {
+                  "current build" : {
+                    "description" : "current build",
+                    "value" : {
+                      "application" : "rikkaus-wealth-api",
+                      "apiVersion" : "v1",
+                      "buildVersion" : "0.0.1-SNAPSHOT",
+                      "serverTime" : "2026-09-27T07:42:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ProblemDetail" : {
+        "type" : "object",
+        "description" : "RFC 9457 problem details. Returned for every error under /api/v1/**.",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "description" : "Stable taxonomy identifier. A URN rather than a URL because the project owns no domain; RFC 9457 does not require it to dereference.",
+            "enum" : [ "urn:rikkaus:problem:forbidden", "urn:rikkaus:problem:internal-error", "urn:rikkaus:problem:malformed-request", "urn:rikkaus:problem:method-not-allowed", "urn:rikkaus:problem:not-acceptable", "urn:rikkaus:problem:not-found", "urn:rikkaus:problem:unauthorized", "urn:rikkaus:problem:unsupported-media-type", "urn:rikkaus:problem:validation-failed" ]
+          },
+          "title" : {
+            "type" : "string",
+            "description" : "Short, human-readable summary."
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "The HTTP status code."
+          },
+          "detail" : {
+            "type" : "string",
+            "description" : "Human-readable explanation, safe to display. Never contains a stack trace, an internal class name or a credential."
+          },
+          "instance" : {
+            "type" : "string",
+            "description" : "The request URI the problem occurred for."
+          },
+          "correlationId" : {
+            "type" : "string",
+            "description" : "Extension member. The same value as the X-Correlation-Id response header and the server's log lines for this request."
+          },
+          "errors" : {
+            "type" : "array",
+            "description" : "Extension member, present on validation failures only. One entry per rejected field.",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "field" : {
+                  "type" : "string"
+                },
+                "message" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        "required" : [ "status", "title", "type" ]
+      },
+      "MetaResponse" : {
+        "type" : "object",
+        "properties" : {
+          "application" : {
+            "type" : "string"
+          },
+          "apiVersion" : {
+            "type" : "string"
+          },
+          "buildVersion" : {
+            "type" : "string"
+          },
+          "serverTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      }
+    },
+    "headers" : {
+      "X-Correlation-Id" : {
+        "description" : "Correlation identifier. Send one matching ^[A-Za-z0-9-]{8,64}$ to have it echoed; anything else is replaced with a generated value and the request still succeeds. Always returned.",
+        "schema" : {
+          "type" : "string",
+          "pattern" : "^[A-Za-z0-9-]{8,64}$"
+        }
+      }
+    }
+  }
+}

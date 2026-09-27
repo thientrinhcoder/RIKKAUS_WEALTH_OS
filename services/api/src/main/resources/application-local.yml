@@ -7,3 +7,11 @@
 rikkaus:
   api:
     allowed-origins: http://localhost:8081
+
+# The contract endpoint and Swagger UI are a developer convenience, enabled here only. Shipping them
+# elsewhere would advertise every route to anonymous callers.
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

@@ -60,6 +60,16 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!--
+            Pinned. 3.1.1 is the current release and its aggregator POM builds against the same
+            Spring Boot 4.1 line this project uses. The widely documented 2.x line targets Boot 3
+            and will not work here.
+        -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.1.1</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

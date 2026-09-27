@@ -28,6 +28,21 @@ spring:
         # no longer binds and fails context startup outright.
         write-dates-as-timestamps: false
 
+springdoc:
+  api-docs:
+    # The contract endpoint itself is gated, not only the browsable UI. Leaving /v3/api-docs
+    # anonymously readable would publish every route, every schema and the whole error taxonomy —
+    # including the codes reserved for authentication — on a service that has no authentication yet.
+    # The committed openapi.json is what siblings consume, so nothing needs the live endpoint outside
+    # local development and the build.
+    enabled: false
+    path: /v3/api-docs
+  # Keeps /actuator/** and any future version out of the v1 contract without annotating anything.
+  paths-to-match: /api/v1/**
+  swagger-ui:
+    enabled: false
+  show-actuator: false
+
 logging:
   pattern:
     # The :-no-correlation-id default makes a missing identifier visible rather than rendering an

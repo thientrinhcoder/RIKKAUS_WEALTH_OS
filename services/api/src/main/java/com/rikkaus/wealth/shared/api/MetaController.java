@@ -1,9 +1,17 @@
 package com.rikkaus.wealth.shared.api;
 
+import com.rikkaus.wealth.shared.observability.CorrelationId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.time.Clock;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 class MetaController {
 
     private static final String UNKNOWN_BUILD_VERSION = "unknown";
+    private static final String PROBLEM_JSON = MediaType.APPLICATION_PROBLEM_JSON_VALUE;
+    private static final String PROBLEM_SCHEMA_REF = "#/components/schemas/ProblemDetail";
 
     private final Clock clock;
     private final String applicationName;
@@ -42,6 +52,47 @@ class MetaController {
         this.buildVersion = build != null ? build.getVersion() : UNKNOWN_BUILD_VERSION;
     }
 
+    @Operation(
+            summary = "Report which build of the API the caller is talking to",
+            description =
+                    "Unauthenticated by design. Exposes the application name, the API version, the "
+                            + "build version and the current server time in UTC, and nothing else. The "
+                            + "build timestamp is deliberately withheld.")
+    @ApiResponse(
+            responseCode = "200",
+            description = "API metadata",
+            headers =
+                    @Header(
+                            name = CorrelationId.HEADER,
+                            description = "Correlation identifier for this request",
+                            schema = @Schema(type = "string")),
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = MetaResponse.class),
+                            examples =
+                                    @ExampleObject(
+                                            name = "current build",
+                                            value =
+                                                    """
+                                                    {
+                                                      "application": "rikkaus-wealth-api",
+                                                      "apiVersion": "v1",
+                                                      "buildVersion": "0.0.1-SNAPSHOT",
+                                                      "serverTime": "2026-09-27T07:42:00Z"
+                                                    }
+                                                    """)))
+    // Only the statuses this endpoint can actually return are documented. An over-broad contract is
+    // worse than a narrow one, because a consumer would generate fixtures for responses that never
+    // occur. It takes no request body and no parameters, so it cannot produce 400 or 415.
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @GetMapping("/meta")
     MetaResponse meta() {
         return new MetaResponse(applicationName, "v1", buildVersion, clock.instant());

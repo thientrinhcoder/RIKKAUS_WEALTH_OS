@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.rikkaus.testfixtures.ProblemFixtureController;
 import com.rikkaus.wealth.support.AbstractPostgresIntegrationTest;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The slice tests prove the handler; this proves the assembled application.
@@ -27,6 +30,8 @@ class ProblemDetailsContractIT extends AbstractPostgresIntegrationTest {
     private static final String URN_PREFIX = "urn:rikkaus:problem:";
 
     @Autowired private TestRestTemplate restTemplate;
+
+    @Autowired private ObjectMapper objectMapper;
 
     @Test
     void anUnknownPathUnderTheApiPrefixIsAConformingNotFound() {
@@ -67,6 +72,34 @@ class ProblemDetailsContractIT extends AbstractPostgresIntegrationTest {
 
         assertConforming(response, 500, "internal-error");
         assertThat(response.getBody()).doesNotContain("internal detail that must not leak");
+    }
+
+    /**
+     * Closes the blind spot a hand-written schema creates.
+     *
+     * <p>The drift check compares the generated contract against the committed one, and both derive
+     * from the same bean — so a schema claiming a member the server never sends would pass every build
+     * while a consumer's parser rejected every real error response. This compares the published
+     * contract against actual behaviour instead.
+     */
+    @Test
+    void everyRequiredMemberThePublishedContractDocumentsIsActuallySent() throws Exception {
+        var contract = objectMapper.readTree(Files.readString(Path.of("openapi", "openapi.json")));
+        var required =
+                contract.get("components").get("schemas").get("ProblemDetail").get("required");
+        var realErrorBody =
+                objectMapper.readTree(
+                        restTemplate.getForEntity("/api/v1/no-such-resource", String.class).getBody());
+
+        assertThat(required).isNotEmpty();
+        for (var member : required) {
+            assertThat(realErrorBody.has(member.asString()))
+                    .as(
+                            "the published contract documents '%s' as required, but the server does not "
+                                    + "send it",
+                            member.asString())
+                    .isTrue();
+        }
     }
 
     private void assertConforming(
