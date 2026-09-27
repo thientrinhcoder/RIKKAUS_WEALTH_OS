@@ -85,7 +85,7 @@ export default function HomeScreen() {
         testID="screen-content"
       >
         <View style={styles.content}>
-          <Text accessibilityRole="header" variant="headlineMedium">
+          <Text accessibilityRole="header" variant="headlineSmall">
             Rikkaus Wealth OS
           </Text>
           <Text variant="bodyLarge">

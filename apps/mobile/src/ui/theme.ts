@@ -1,6 +1,6 @@
 import { MD3LightTheme, useTheme } from 'react-native-paper';
 
-import { paperFontOverrides } from './typography';
+import { buildPaperFonts } from './typography';
 import { colors } from './tokens';
 
 /**
@@ -43,10 +43,7 @@ export const appTheme = {
     info: colors.info,
     focus: colors.focus,
   },
-  fonts: {
-    ...MD3LightTheme.fonts,
-    ...paperFontOverrides(),
-  },
+  fonts: buildPaperFonts(MD3LightTheme.fonts),
 };
 
 export type AppTheme = typeof appTheme;

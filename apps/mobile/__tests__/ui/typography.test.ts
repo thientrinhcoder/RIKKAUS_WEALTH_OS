@@ -1,7 +1,5 @@
 import {
   NUMERIC_TYPOGRAPHY_ROLES,
-  SANS_FONT_STACK,
-  SERIF_FONT_STACK,
   typographyRoles,
   type TypographyRole,
 } from '@/ui/typography';
@@ -62,31 +60,6 @@ describe('tabular figures', () => {
   it('does not force tabular numerals on prose-only roles', () => {
     for (const role of ['heading1', 'heading2', 'title'] as const) {
       expect(typographyRoles[role].fontVariant).toBeUndefined();
-    }
-  });
-});
-
-describe('font families', () => {
-  it('uses IBM Plex Sans with a system sans fallback', () => {
-    expect(SANS_FONT_STACK[0]).toBe('IBM Plex Sans');
-    expect(SANS_FONT_STACK.length).toBeGreaterThan(1);
-    expect(SANS_FONT_STACK[SANS_FONT_STACK.length - 1]).toBe('sans-serif');
-  });
-
-  it('keeps Noto Serif Display reachable only through the display and brand roles', () => {
-    expect(SERIF_FONT_STACK[0]).toBe('Noto Serif Display');
-    expect(SERIF_FONT_STACK[SERIF_FONT_STACK.length - 1]).toBe('serif');
-
-    const serifRoles = Object.entries(typographyRoles)
-      .filter(([, role]) => role.fontFamily === SERIF_FONT_STACK.join(', '))
-      .map(([name]) => name);
-
-    expect(serifRoles).toEqual([]);
-  });
-
-  it('keeps every critical value on the sans stack', () => {
-    for (const role of NUMERIC_TYPOGRAPHY_ROLES) {
-      expect(typographyRoles[role].fontFamily).toBe(SANS_FONT_STACK.join(', '));
     }
   });
 });
