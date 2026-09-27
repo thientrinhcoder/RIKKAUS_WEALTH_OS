@@ -4,7 +4,7 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * Base class for every integration test that needs a real PostgreSQL.
@@ -19,6 +19,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
  *
  * <p>The image tag is pinned to the tag in {@code docker-compose.yml} so tests and local
  * development cannot drift onto different PostgreSQL versions.
+ *
+ * <p>The container class comes from {@code org.testcontainers.postgresql} and takes no type
+ * parameter. The legacy generic {@code org.testcontainers.containers.PostgreSQLContainer} still ships
+ * in 2.0.5 and compiles, but carries a deprecation marker, so later phases should copy the import
+ * below rather than the one in the abundant 1.x documentation.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
@@ -26,8 +31,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 public abstract class AbstractPostgresIntegrationTest {
 
     @ServiceConnection
-    protected static final PostgreSQLContainer<?> POSTGRES =
-            new PostgreSQLContainer<>("postgres:18.6-alpine3.24");
+    protected static final PostgreSQLContainer POSTGRES =
+            new PostgreSQLContainer("postgres:18.6-alpine3.24");
 
     static {
         POSTGRES.start();
