@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
@@ -51,34 +51,50 @@ export function FormShell({
   const [succeeded, setSucceeded] = useState(false);
 
   /**
-   * Duplicate-submission prevention lives in single-flight rather than in state, because two
-   * activations in the same tick would both read a state flag's pre-update value.
+   * The callers' latest callbacks, read at submit time.
+   *
+   * A form is normally given inline callbacks, so they are new on every render. Rebuilding the
+   * guard from them would hand out a fresh guard each render and defeat it entirely: the second
+   * activation would meet a guard that had never seen the first.
    */
-  const submit = useMemo(
-    () =>
-      singleFlight(async () => {
-        setSubmitting(true);
-        setSucceeded(false);
+  const latest = useRef({ validate, onSubmit, onFocusField });
 
-        try {
-          const found = await validate();
+  /**
+   * Refreshed after each render rather than during it. Effects run before any interaction can
+   * reach the button, so a submit never reads a stale callback.
+   */
+  useEffect(() => {
+    latest.current = { validate, onSubmit, onFocusField };
+  });
 
-          setErrors(found);
+  /**
+   * One guard for the component's lifetime. Duplicate-submission prevention lives here rather
+   * than in state because two activations in the same tick would both read a state flag's
+   * pre-update value.
+   */
+  const submit = useRef(
+    singleFlight(async () => {
+      setSubmitting(true);
+      setSucceeded(false);
 
-          if (found.length > 0) {
-            /** Section 8 moves focus to the first invalid field in visual order. */
-            onFocusField?.(found[0].name);
-            return;
-          }
+      try {
+        const found = await latest.current.validate();
 
-          await onSubmit();
-          setSucceeded(true);
-        } finally {
-          setSubmitting(false);
+        setErrors(found);
+
+        if (found.length > 0) {
+          /** Section 8 moves focus to the first invalid field in visual order. */
+          latest.current.onFocusField?.(found[0].name);
+          return;
         }
-      }),
-    [onFocusField, onSubmit, validate],
-  );
+
+        await latest.current.onSubmit();
+        setSucceeded(true);
+      } finally {
+        setSubmitting(false);
+      }
+    }),
+  ).current;
 
   return (
     <View style={styles.form} testID={testID}>

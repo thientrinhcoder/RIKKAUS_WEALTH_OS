@@ -39,7 +39,19 @@ export function SearchField({
         accessibilityRole="search"
         autoCapitalize="none"
         disabled={state.disabled}
-        left={<TextInput.Icon icon="magnify" />}
+        left={
+          /**
+           * Decorative only. Without these it renders as a pressable with no accessible name,
+           * which a screen reader announces as an unlabelled button that does nothing. The
+           * field already declares its search role and carries a visible label.
+           */
+          <TextInput.Icon
+            accessibilityElementsHidden
+            focusable={false}
+            icon="magnify"
+            importantForAccessibility="no-hide-descendants"
+          />
+        }
         mode="outlined"
         onBlur={onBlur}
         onChangeText={onChangeValue}

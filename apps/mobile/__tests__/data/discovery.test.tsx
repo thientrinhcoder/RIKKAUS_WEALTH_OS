@@ -314,8 +314,17 @@ describe('filter sheet', () => {
   }
 
   /** Stands in for the shared bottom sheet until the overlay slice provides one. */
-  function TestContainer({ visible, children, testID }: FilterSheetContainerProps) {
-    return visible ? <View testID={testID}>{children as ReactNode}</View> : null;
+  function TestContainer({
+    visible,
+    children,
+    accessibilityLabel,
+    testID,
+  }: FilterSheetContainerProps) {
+    return visible ? (
+      <View accessibilityLabel={accessibilityLabel} testID={testID}>
+        {children as ReactNode}
+      </View>
+    ) : null;
   }
 
   function Harness({ onApply }: { onApply: (filters: Filters) => void }) {

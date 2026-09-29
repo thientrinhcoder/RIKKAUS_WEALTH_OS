@@ -9,6 +9,12 @@ export interface FilterSheetContainerProps {
   visible: boolean;
   onDismiss: () => void;
   children: ReactNode;
+  /**
+   * The container names itself for assistive technology. Declared here so the shared bottom
+   * sheet satisfies this interface directly rather than through a cast that would hide a real
+   * mismatch.
+   */
+  accessibilityLabel: string;
   testID?: string;
 }
 
@@ -62,7 +68,12 @@ export function FilterSheet<Filters>({
   }
 
   return (
-    <Container onDismiss={onDismiss} testID={`${testID}-container`} visible={visible}>
+    <Container
+      accessibilityLabel={title}
+      onDismiss={onDismiss}
+      testID={`${testID}-container`}
+      visible={visible}
+    >
       <View style={styles.sheet} testID={testID}>
         <Text accessibilityRole="header" variant="titleMedium">
           {title}

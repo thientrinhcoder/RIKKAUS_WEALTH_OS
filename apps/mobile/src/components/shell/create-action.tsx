@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Surface, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 
 import { ActionButton } from '@/components/action';
-import { elevation } from '@/ui/elevation';
-import { radius, sizing, spacing } from '@/ui/tokens';
-import { useAppTheme } from '@/ui/theme';
+import { BottomSheet } from '@/components/overlay';
+import { spacing } from '@/ui/tokens';
 
 /**
  * The five record types the global create action offers, per section 6.2.
@@ -28,12 +27,14 @@ interface CreateActionProps {
 }
 
 /**
- * Deliberate seam: the sheet below is a temporary inline presentation so this phase stays
- * independent of the overlay slice. Phase 8 replaces it with the shared bottom sheet from
- * #119. The selection contract above it does not change when that happens.
+ * The sheet is the shared bottom sheet from the overlay kit. This started as a temporary inline
+ * presentation so the shell could merge before the overlay slice existed; the selection contract
+ * did not change when the real container replaced it.
+ *
+ * It dismisses by any route: choosing a record type is not a decision that costs anything, so a
+ * tap outside is a safe way out.
  */
 export function CreateAction({ onSelectRecordType }: CreateActionProps) {
-  const theme = useAppTheme();
   const [open, setOpen] = useState(false);
 
   const choose = (recordType: CreateRecordType) => {
@@ -52,16 +53,17 @@ export function CreateAction({ onSelectRecordType }: CreateActionProps) {
         Thêm
       </ActionButton>
 
-      {open ? (
-        <Surface
-          elevation={elevation.modal.level}
-          style={[styles.sheet, { backgroundColor: theme.colors.surface }]}
-          testID="shell-create-sheet"
-        >
-          <Text accessibilityRole="header" variant="titleMedium">
-            Thêm bản ghi mới
-          </Text>
+      <BottomSheet
+        accessibilityLabel="Thêm bản ghi mới"
+        onDismiss={() => setOpen(false)}
+        testID="shell-create-sheet"
+        visible={open}
+      >
+        <Text accessibilityRole="header" variant="titleMedium">
+          Thêm bản ghi mới
+        </Text>
 
+        <View style={styles.options}>
           {CREATE_RECORD_TYPES.map((recordType) => (
             <ActionButton
               key={recordType.key}
@@ -72,18 +74,14 @@ export function CreateAction({ onSelectRecordType }: CreateActionProps) {
               {recordType.label}
             </ActionButton>
           ))}
-        </Surface>
-      ) : null}
+        </View>
+      </BottomSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: {
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    gap: spacing.sm,
-    minHeight: sizing.minControlHeight,
-    padding: spacing.md,
+  options: {
+    gap: spacing.xs,
   },
 });
