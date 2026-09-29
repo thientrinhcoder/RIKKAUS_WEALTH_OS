@@ -260,7 +260,9 @@ The approved elevation recipes are:
 ### 5.4 Icons and imagery
 
 - Use one consistent vector icon family with matching stroke weight.
-- Navigation icons always include text labels.
+- Navigation icons always include text labels, with the single exception in section 6.1 for the
+  bottom bar below 340pt, where the label is dropped rather than clipped and the accessible name
+  is kept.
 - Icon-only actions require an accessible label and a full-size hit area.
 - Core financial workflows should not depend on illustrations.
 - If illustrations are introduced for onboarding or empty states, keep them abstract, mature, and
@@ -286,6 +288,17 @@ The mobile bottom navigation contains exactly five labeled destinations, in this
 3. **Dòng tiền**
 4. **Mục tiêu**
 5. **Nhận định**
+
+The bottom bar divides its width between all five, which on a 393pt phone leaves each about 78pt.
+"Tài sản & Nợ" does not fit there on one line, and wrapping it made its item taller than its
+neighbours. The bottom bar therefore shows **TS & Nợ** for that destination, on a single line that
+never wraps. The rail, the sidebar and the top app bar show the full name, and the full name is
+always what assistive technology announces.
+
+Below 340pt a fifth of the width cannot hold a readable label beside the icon, so the bottom bar
+drops the visible text and shows the icon alone. This is the one exception to section 5.4's rule
+that navigation icons always carry a text label: a clipped word is worse than none, and the
+accessible name is unchanged, so a screen reader user loses nothing.
 
 Profile and settings open from the top app bar avatar. Do not add a hamburger menu for primary
 destinations. Do not mix a drawer and bottom navigation at the same hierarchy level.
@@ -318,6 +331,9 @@ back behavior, drafts, keyboard avoidance, validation, and deep links remain pre
   when this improves comparison.
 - Widths of 1024px and above use a stable left sidebar and a centered, bounded content area.
 - Names, order, selected state, and information hierarchy remain consistent across breakpoints.
+- The active destination is marked by a filled indicator behind its icon and a heavier label, not
+  by colour alone, so it stays identifiable under section 12's rule against colour-only
+  distinctions.
 - Avoid nested scroll areas and horizontal page scrolling.
 - Fixed bars reserve space for safe-area insets and never cover content or primary actions.
 - System back, iOS swipe-back, and Android predictive back must not be intercepted by custom
@@ -528,10 +544,11 @@ same thing a sighted user does:
 | Snackbar, toast | Status message; never takes focus | Polite |
 
 A snackbar or toast stays visible for at least 5 seconds, or longer when it carries an action, and
-always offers an explicit dismiss route. At most one is visible at a time; a newer message replaces
-the current one rather than stacking. A failure that the user must act on is never delivered only as
-a toast, because a toast can expire unread; it also appears in the affected region as an error
-state.
+always offers an explicit dismiss route. At most one is visible at a time, and a message raised
+while one is on screen waits its turn rather than stacking beside it or replacing it: replacing
+would let a message the user never read disappear, and would take any undo it carried with it. A
+failure that the user must act on is never delivered only as a toast, because a toast can expire
+unread; it also appears in the affected region as an error state.
 
 Issue #36 owns this shared visual anatomy. Issue #37 owns its production component and shell
 implementation. Identity issue #40 owns session, account, ownership, and access behavior. Later
