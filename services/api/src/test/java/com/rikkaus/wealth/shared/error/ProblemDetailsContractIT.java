@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.rikkaus.testfixtures.ProblemFixtureController;
 import com.rikkaus.wealth.support.AbstractPostgresIntegrationTest;
+import com.rikkaus.wealth.support.AuthenticatedClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,13 @@ import tools.jackson.databind.ObjectMapper;
  * <p>It catches the class of failure where a filter, message converter or content-negotiation setting
  * reshapes the body in the full stack but not in a slice — which is precisely where a published
  * contract and real behaviour drift apart.
+ *
+ * <p><strong>Every request here now authenticates.</strong> The security chain denies by default, and
+ * {@code /test-fixtures/**} is not on its permit list — deliberately, because test scaffolding must not
+ * appear in production security configuration. So these tests sign a user in through
+ * {@link AuthenticatedClient} and send a bearer token. They are about the error taxonomy, not about
+ * authorization: without the token every one of them would assert against a 401 and stop exercising the
+ * handler at all. Authorization itself is covered by {@code SecurityConfigurationIT}.
  */
 @Import(ProblemFixtureController.class)
 class ProblemDetailsContractIT extends AbstractPostgresIntegrationTest {
@@ -33,16 +41,24 @@ class ProblemDetailsContractIT extends AbstractPostgresIntegrationTest {
 
     @Autowired private ObjectMapper objectMapper;
 
+    @Autowired private AuthenticatedClient authenticatedClient;
+
     @Test
     void anUnknownPathUnderTheApiPrefixIsAConformingNotFound() {
         ResponseEntity<String> response =
-                restTemplate.getForEntity("/api/v1/no-such-resource", String.class);
+                restTemplate.exchange(
+                        "/api/v1/no-such-resource",
+                        HttpMethod.GET,
+                        authenticatedClient.newUserBearerEntity(),
+                        String.class);
 
         assertConforming(response, 404, "not-found");
     }
 
     @Test
     void theWrongMethodOnARealEndpointIsAConformingMethodNotAllowed() {
+        // /api/v1/meta is public, so no token is needed to reach the 405. Left unauthenticated on purpose:
+        // it proves the taxonomy still applies on a permitted route rather than only behind the token.
         ResponseEntity<String> response =
                 restTemplate.exchange("/api/v1/meta", HttpMethod.DELETE, null, String.class);
 
@@ -51,12 +67,12 @@ class ProblemDetailsContractIT extends AbstractPostgresIntegrationTest {
 
     @Test
     void aValidationFailureCarriesThePerFieldErrorsMember() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
         ResponseEntity<String> response =
-                restTemplate.postForEntity(
+                restTemplate.exchange(
                         "/test-fixtures/validated",
-                        new HttpEntity<>("{\"name\":\"\"}", headers),
+                        HttpMethod.POST,
+                        authenticatedClient.bearerEntityFor(
+                                authenticatedClient.signInNewUser(), "{\"name\":\"\"}"),
                         String.class);
 
         assertConforming(response, 400, "validation-failed");
@@ -68,7 +84,12 @@ class ProblemDetailsContractIT extends AbstractPostgresIntegrationTest {
 
     @Test
     void anUnexpectedFailureLeaksNothingInTheFullStackEither() {
-        ResponseEntity<String> response = restTemplate.getForEntity("/test-fixtures/boom", String.class);
+        ResponseEntity<String> response =
+                restTemplate.exchange(
+                        "/test-fixtures/boom",
+                        HttpMethod.GET,
+                        authenticatedClient.newUserBearerEntity(),
+                        String.class);
 
         assertConforming(response, 500, "internal-error");
         assertThat(response.getBody()).doesNotContain("internal detail that must not leak");
@@ -89,7 +110,13 @@ class ProblemDetailsContractIT extends AbstractPostgresIntegrationTest {
                 contract.get("components").get("schemas").get("ProblemDetail").get("required");
         var realErrorBody =
                 objectMapper.readTree(
-                        restTemplate.getForEntity("/api/v1/no-such-resource", String.class).getBody());
+                        restTemplate
+                                .exchange(
+                                        "/api/v1/no-such-resource",
+                                        HttpMethod.GET,
+                                        authenticatedClient.newUserBearerEntity(),
+                                        String.class)
+                                .getBody());
 
         assertThat(required).isNotEmpty();
         for (var member : required) {
