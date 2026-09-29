@@ -21,9 +21,13 @@ resource "aws_lb" "api" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = [for subnet in aws_subnet.public : subnet.id]
 
-  # Left on so a rollout cannot cut an in-flight request short.
+  # Off because this environment is expected to be destroyed and rebuilt; Production is not
+  # deployed from this stack.
   enable_deletion_protection = false
-  idle_timeout               = 60
+
+  # Comfortably longer than any request this API serves, so a slow response is not cut short by the
+  # load balancer before the application has answered.
+  idle_timeout = 60
 }
 
 resource "aws_lb_target_group" "api" {

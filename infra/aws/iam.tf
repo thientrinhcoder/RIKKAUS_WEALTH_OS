@@ -49,10 +49,22 @@ data "aws_iam_policy_document" "task_execution_secrets" {
     sid       = "DecryptThroughSsm"
     actions   = ["kms:Decrypt"]
     resources = ["*"]
+
+    # `*` is unavoidable here: SecureStrings created without an explicit key use the account's
+    # AWS-managed SSM key, whose ARN is not a stable input to this configuration. The two
+    # conditions are what narrow it. ViaService alone would still permit decrypting any SSM
+    # parameter in the region, so the encryption context pins it to this environment's own prefix,
+    # and the grant stays narrow even if the GetParameters statement above is later widened.
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
       values   = ["ssm.${var.aws_region}.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "kms:EncryptionContext:PARAMETER_ARN"
+      values   = ["arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${local.parameter_prefix}/*"]
     }
   }
 }
@@ -100,14 +112,29 @@ data "aws_iam_policy_document" "github_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # The branch allowlist, and the reason a pull request cannot deploy even if the workflow's own
-    # `if` were removed. A pull-request run's subject is `repo:owner/name:pull_request`, and a run
-    # from a fork names the fork, so neither matches `repo:owner/name:ref:refs/heads/main`. This is
-    # the control that does not depend on workflow YAML staying correct.
+    # The allowlist, and the reason a pull request cannot deploy even if the workflow's own `if`
+    # were removed. A pull-request run's subject is `repo:owner/name:pull_request`, and a run from
+    # a fork names the fork, so neither form below can match. This is the control that does not
+    # depend on workflow YAML staying correct.
+    #
+    # Two forms are needed because GitHub changes the subject claim depending on the job. A job
+    # with no `environment:` gets `repo:owner/name:ref:refs/heads/<branch>`, which is what the
+    # `publish` job presents. A job that declares an environment — as `deploy` does, so the
+    # deployment URL shows in the GitHub UI — gets `repo:owner/name:environment:<name>` instead,
+    # and its branch does not appear in the claim at all. Listing only the ref form would let the
+    # image be published and then fail the deployment with an error that reads like a mis-set
+    # secret.
+    #
+    # The environment form carries no branch, so it is the workflow's `needs: publish` that keeps
+    # it behind the branch check rather than the trust policy: `deploy` cannot run at all unless
+    # `publish` succeeded, and `publish` is admitted only on a listed branch.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [for branch in var.github_deploy_branches : "repo:${var.github_repository}:ref:refs/heads/${branch}"]
+      values = concat(
+        [for branch in var.github_deploy_branches : "repo:${var.github_repository}:ref:refs/heads/${branch}"],
+        ["repo:${var.github_repository}:environment:${var.environment}"],
+      )
     }
   }
 }
@@ -151,6 +178,14 @@ data "aws_iam_policy_document" "github_deploy" {
     sid       = "RegisterTaskDefinitions"
     actions   = ["ecs:RegisterTaskDefinition", "ecs:DescribeTaskDefinition"]
     resources = ["*"]
+  }
+
+  # Lets the deploy job find the revision this configuration last registered, which is the one it
+  # derives each deployment from. Read-only, and one parameter.
+  statement {
+    sid       = "ReadTheBaseTaskDefinitionPointer"
+    actions   = ["ssm:GetParameter"]
+    resources = [aws_ssm_parameter.base_task_definition.arn]
   }
 
   statement {

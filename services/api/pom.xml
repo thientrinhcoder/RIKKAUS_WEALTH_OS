@@ -173,9 +173,6 @@
                         <removeUnusedImports/>
                         <trimTrailingWhitespace/>
                         <endWithNewline/>
-                        <removeUnusedImports/>
-                        <trimTrailingWhitespace/>
-                        <endWithNewline/>
                     </java>
                 </configuration>
                 <executions>

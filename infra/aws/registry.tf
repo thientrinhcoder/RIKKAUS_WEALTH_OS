@@ -3,6 +3,15 @@
 # One repository serves every environment, because the promotion model requires that the image
 # Testing runs is byte-for-byte the image Development ran. A repository per environment would make
 # that impossible to express: promotion would become a copy, and a copy is a new image.
+#
+# The consequence, stated here rather than discovered later: this repository and the account-wide
+# OIDC provider in iam.tf are both singletons, so `tofu apply -var environment=testing` in the same
+# account fails on RepositoryAlreadyExistsException and EntityAlreadyExists. Standing Testing up
+# beside Development therefore needs these two resources moved behind a data source or a toggle
+# first. Only Development is in scope for issue #47, and nothing here pretends otherwise.
+#
+# The lifecycle rule below would also become shared: thirty images total across both environments,
+# not thirty each, which would shorten how far back a Development rollback can reach.
 
 resource "aws_ecr_repository" "api" {
   name = "rikkaus-wealth-api"

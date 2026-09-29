@@ -15,8 +15,10 @@ resource "random_password" "database" {
 }
 
 resource "random_password" "jwt_signing_key" {
-  # The application refuses to start below 32 bytes, because a guessable key lets anyone mint a
-  # token for any user. 64 leaves margin and costs nothing.
+  # Forward-looking: nothing in services/api reads this yet. It is provisioned now because the
+  # identity work in issue #42 refuses to start below 32 bytes — a guessable signing key lets
+  # anyone mint a token for any user — and an environment that first learns this on the merge is
+  # an environment that is down on the merge. 64 leaves margin and costs nothing.
   length  = 64
   special = false
 }

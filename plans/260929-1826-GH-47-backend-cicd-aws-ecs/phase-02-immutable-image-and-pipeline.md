@@ -52,10 +52,17 @@ Permissions are declared per job. Only `publish` and `deploy` receive `id-token:
 that runs pull-request code has no path to an AWS credential at all.
 
 **A pull request cannot deploy for two independent reasons.** The jobs carry an `if` excluding
-`pull_request`, and the IAM trust policy admits only a token whose subject is
-`repo:<owner>/<name>:ref:refs/heads/main` or `…/develop`. A pull-request run's subject is
-`repo:<owner>/<name>:pull_request`, and a fork's names the fork, so neither matches. Deleting the
-`if` would not be enough to break the rule — which is the point of having both.
+`pull_request`, and the IAM trust policy admits only subjects it lists. A pull-request run's
+subject is `repo:<owner>/<name>:pull_request`, and a fork's names the fork, so neither is listed.
+Deleting the `if` would not be enough to break the rule — which is the point of having both.
+
+Review caught this stated in a form that would have failed. The trust policy originally listed only
+`repo:<owner>/<name>:ref:refs/heads/<branch>`, which is the subject a job with no environment
+presents. `deploy` declares the `development` environment so that the deployment URL appears in the
+GitHub UI, and GitHub then emits `repo:<owner>/<name>:environment:development` instead, with no
+branch in it. Every push would have published an image and then failed to deploy, with an error
+reading like a mis-set secret. Both forms are now listed, and it is `needs: publish` that keeps the
+environment form — which carries no branch — behind the branch check.
 
 **Scan before push, not after.** Trivy runs against the locally built image; only then is it
 pushed. Scanning an image already in the registry would mean a vulnerable image existed in ECR,

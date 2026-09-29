@@ -2,9 +2,14 @@
 
 How the API gets from a commit to a URL a reviewer can open, and what to do when it does not.
 
-Scope is the Development environment on AWS. Testing reuses the same stack with
-`-var environment=testing`; Production is a VPS running the same image and is not deployed from
-here.
+Scope is the Development environment on AWS. Production is a VPS running the same image and is not
+deployed from here.
+
+Testing is not yet deployable. The stack's ECR repository is shared by design — promotion means the
+same image, so a repository per environment would make that impossible to express — and the GitHub
+OIDC provider is an account-wide singleton, so `tofu apply -var environment=testing` in the same
+account fails on both. Standing Testing up beside Development needs those two resources moved behind
+a data source or a toggle first.
 
 ## What exists
 
@@ -33,9 +38,15 @@ runs three jobs in order. A pull request runs only the first.
    not answer is a red build, not a surprise for whoever opens the page next.
 
 A pull request cannot deploy for two independent reasons: the `publish` and `deploy` jobs carry an
-`if` that excludes `pull_request`, and the IAM role's trust policy admits only a token whose
-subject is `repo:<owner>/<name>:ref:refs/heads/main` or `…/develop`. Deleting the `if` would not be
-enough to break the rule.
+`if` that excludes `pull_request`, and the IAM trust policy admits only tokens whose subject it
+lists. Deleting the `if` would not be enough to break the rule.
+
+The subject a run presents depends on the job. `publish` declares no environment and presents
+`repo:<owner>/<name>:ref:refs/heads/<branch>`, so the branch allowlist applies to it directly.
+`deploy` declares the `development` environment, which makes GitHub emit
+`repo:<owner>/<name>:environment:development` instead, carrying no branch at all — both forms are
+therefore in the trust policy. What keeps `deploy` on an allowed branch is `needs: publish`: it
+cannot run unless `publish` succeeded, and `publish` is admitted only on a listed branch.
 
 > **`develop` does not exist yet.** The architecture's branch policy deploys Development from
 > `develop`; this repository currently integrates on `main`, so both are wired as triggers and as
@@ -64,8 +75,11 @@ tofu apply -var-file=development.tfvars
 
 The first apply takes about ten minutes, nearly all of it waiting for RDS.
 
-The service comes up running a placeholder image and its targets will be unhealthy until the first
-real deployment. That is expected; step 3 fixes it.
+**The first apply ends with a failed deployment on record, and that is expected.** The service
+starts on a placeholder image that answers nothing, so its target never becomes healthy, so the
+deployment circuit breaker marks the deployment `FAILED`; with no earlier revision to return to,
+the service settles at zero running tasks. `describe-services` therefore reads like a broken apply.
+Step 3 starts a fresh deployment with a real image and the service recovers on its own.
 
 **If the apply fails with `EntityAlreadyExists` on the OIDC provider**, the account already has a
 GitHub provider from another repository. Adopt it rather than creating a second:
@@ -95,6 +109,7 @@ gh variable set ECR_REPOSITORY  --body "$(tofu output -raw ecr_repository)"
 gh variable set ECS_CLUSTER     --body "$(tofu output -raw ecs_cluster)"
 gh variable set ECS_SERVICE     --body "$(tofu output -raw ecs_service)"
 gh variable set API_BASE_URL    --body "$(tofu output -raw api_base_url)"
+gh variable set BASE_TASK_DEFINITION_PARAMETER --body "$(tofu output -raw base_task_definition_parameter)"
 gh secret   set AWS_DEPLOY_ROLE_ARN --body "$(tofu output -raw github_deploy_role_arn)"
 ```
 
@@ -128,6 +143,27 @@ Expected:
 
 Both endpoints are anonymous by design, so a QE engineer needs no credential and no VPN — a browser
 is enough. `buildVersion` and the workflow's run summary together identify which commit is live.
+
+## Changing runtime configuration
+
+Anything in the task's shape — `api_allowed_origins`, the Google parameters, CPU, memory, the log
+group — is owned by OpenTofu, not by the pipeline. Change the variable and apply:
+
+```bash
+cd infra/aws
+tofu apply -var-file=development.tfvars
+```
+
+That registers a new base revision and updates the pointer the deploy job reads, so the change
+reaches a running task on the next deployment. It does not roll the service by itself, because the
+base revision still carries the placeholder image; deploy to pick it up:
+
+```bash
+gh workflow run Backend --ref main
+```
+
+The pipeline never copies the previously deployed revision, so a change applied here cannot be
+silently carried over and lost.
 
 ## Routine operations
 
@@ -169,9 +205,10 @@ cannot read a Parameter Store value — normally because a parameter was renamed
 prefix does not match. `aws_iam_role_policy.task_execution_secrets` in
 [`infra/aws/iam.tf`](../infra/aws/iam.tf) scopes the grant to `/rikkaus/<environment>/*`.
 
-**The deploy job succeeds but the version does not change.** The job finds the container by the name
-`api`. If `container_definitions` in [`infra/aws/service.tf`](../infra/aws/service.tf) is renamed,
-the `jq` filter in the workflow matches nothing and registers an unchanged revision.
+**`no container named 'api' in …`.** The deploy job finds the container by that name. Renaming it
+in `container_definitions` in [`infra/aws/service.tf`](../infra/aws/service.tf) without renaming it
+in the workflow stops the match. The job fails rather than registering an unchanged revision, which
+is deliberate: a green build that deployed nothing is worse than a red one.
 
 **Flyway fails to validate.** A migration was edited after it had been applied. Checksums are
 compared on every start-up and `clean-disabled` is true, so the fix is a new migration, never an

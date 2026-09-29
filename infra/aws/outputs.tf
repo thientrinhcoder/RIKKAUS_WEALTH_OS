@@ -42,6 +42,11 @@ output "ecs_service" {
   value       = aws_ecs_service.api.name
 }
 
+output "base_task_definition_parameter" {
+  description = "Becomes the GitHub repository variable BASE_TASK_DEFINITION_PARAMETER. Names the Parameter Store entry holding the revision each deployment derives from, which is how a change applied here reaches a running task."
+  value       = aws_ssm_parameter.base_task_definition.name
+}
+
 output "aws_region" {
   description = "Becomes the GitHub repository variable AWS_REGION."
   value       = var.aws_region

@@ -45,6 +45,7 @@ jobs:
   verify:
     name: Format, test and cover
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -96,8 +97,10 @@ jobs:
       # Mints the short-lived OIDC token that the AWS role trusts. No long-lived access key is
       # stored in this repository.
       id-token: write
+    timeout-minutes: 30
     outputs:
-      image-digest: ${{ steps.push.outputs.digest }}
+      # Whichever path produced it: a fresh build, or the image this commit already has in ECR.
+      image-digest: ${{ steps.push.outputs.digest || steps.existing.outputs.digest }}
     steps:
       - uses: actions/checkout@v7
 
@@ -109,10 +112,35 @@ jobs:
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # Tags are immutable, so pushing a tag that already exists is refused by the registry. That
+      # is the property the promotion model wants, but taken naively it makes three ordinary things
+      # fail: re-running a failed deploy, `gh workflow run` on a commit already built by its merge,
+      # and two branches sitting on the same commit. The image for a given commit is by definition
+      # the image for that commit, so the right answer is to reuse it rather than rebuild it.
+      - id: existing
+        name: Reuse this commit's image if it is already published
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          digest="$(aws ecr describe-images --repository-name "${REPOSITORY}" \
+            --image-ids "imageTag=${GITHUB_SHA}" \
+            --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)"
+
+          if [ -n "${digest}" ] && [ "${digest}" != "None" ]; then
+            echo "digest=${REGISTRY}/${REPOSITORY}@${digest}" >> "${GITHUB_OUTPUT}"
+            echo "found=true" >> "${GITHUB_OUTPUT}"
+            echo "Reusing the image already published for ${GITHUB_SHA}"
+          else
+            echo "found=false" >> "${GITHUB_OUTPUT}"
+          fi
+
       # Built before it is scanned and pushed, and loaded into the local daemon rather than pushed
       # straight through. Scanning an image that is already in the registry would mean a vulnerable
       # image existed in ECR, however briefly, which a deploy could have picked up.
       - name: Build the image
+        if: steps.existing.outputs.found != 'true'
         run: |
           docker build \
             --tag "local/rikkaus-api:${GITHUB_SHA}" \
@@ -120,6 +148,7 @@ jobs:
             services/api
 
       - name: Scan the image
+        if: steps.existing.outputs.found != 'true'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: local/rikkaus-api:${{ github.sha }}
@@ -135,6 +164,8 @@ jobs:
           # packaged artifact.
           scanners: vuln
           vuln-type: os,library
+          cache: "true"
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       # Tagged with the commit SHA and nothing else. No `latest`, because the whole promotion model
       # rests on a tag meaning exactly one commit forever; the repository is configured with
@@ -142,6 +173,7 @@ jobs:
       # rewriting history.
       - id: push
         name: Push to ECR
+        if: steps.existing.outputs.found != 'true'
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
           REPOSITORY: ${{ vars.ECR_REPOSITORY }}
@@ -156,7 +188,11 @@ jobs:
           # same bytes.
           digest="$(docker inspect --format='{{index .RepoDigests 0}}' "${target}")"
           echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
-          echo "Pushed ${digest}"
+
+          # Deliberately not the full reference: the registry host is the AWS account id, and this
+          # repository is public, so printing it here would disclose it for free. The repository
+          # name and the content digest are what a reader actually needs.
+          echo "Pushed ${REPOSITORY}@${digest#*@}"
 
   # -------------------------------------------------------------------------------------------
   # Roll the Development ECS service onto the digest just published, then prove it answers.
@@ -164,8 +200,13 @@ jobs:
   deploy:
     name: Deploy to Development
     needs: publish
-    if: vars.ECS_CLUSTER != '' && vars.ECS_SERVICE != ''
+    if: >-
+      vars.ECS_CLUSTER != ''
+      && vars.ECS_SERVICE != ''
+      && vars.BASE_TASK_DEFINITION_PARAMETER != ''
     runs-on: ubuntu-latest
+    # Generous, because AWS_MAX_ATTEMPTS below allows the rollout twenty minutes on its own.
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write
@@ -178,23 +219,33 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # The live task definition is read and patched rather than rendered from a JSON file kept in
-      # this repository. OpenTofu owns the task definition's shape — its CPU, memory, secrets and
-      # log configuration — and a second copy here would drift from it the first time either side
-      # changed alone. This reads whatever is deployed now and changes exactly one field.
+      # The task definition is derived from the revision OpenTofu last registered, not from the one
+      # currently running. That distinction is the whole point: OpenTofu owns the task's shape — its
+      # CPU, memory, environment, secrets and logging — while this job owns only the image. Copying
+      # the running revision instead would mean a change applied in infra/aws/ never reached a task,
+      # because every deployment would keep re-copying the previous deployment's copy. The pointer
+      # is a Parameter Store entry written by OpenTofu, since both it and this job register into the
+      # same family and nothing else could tell their revisions apart afterwards.
       - id: taskdef
         name: Register a task definition pinned to the new digest
         env:
-          CLUSTER: ${{ vars.ECS_CLUSTER }}
-          SERVICE: ${{ vars.ECS_SERVICE }}
+          BASE_PARAMETER: ${{ vars.BASE_TASK_DEFINITION_PARAMETER }}
           IMAGE: ${{ needs.publish.outputs.image-digest }}
         run: |
           set -euo pipefail
-          current="$(aws ecs describe-services --cluster "${CLUSTER}" --services "${SERVICE}" \
-            --query 'services[0].taskDefinition' --output text)"
+          base="$(aws ssm get-parameter --name "${BASE_PARAMETER}" \
+            --query 'Parameter.Value' --output text)"
 
-          aws ecs describe-task-definition --task-definition "${current}" \
+          aws ecs describe-task-definition --task-definition "${base}" \
             --query 'taskDefinition' --output json > taskdef.json
+
+          # Without this guard a renamed container is a silent no-op: jq would emit the definition
+          # unchanged, registration and the rollout would both succeed, and the smoke check would
+          # pass against the image that was already running. A green build that deployed nothing is
+          # worse than a red one.
+          jq -e '[.containerDefinitions[] | select(.name == "api")] | length == 1' \
+            taskdef.json > /dev/null \
+            || { echo "::error::no container named 'api' in ${base}"; exit 1; }
 
           # The read-only fields ECS returns are rejected on registration, so they are dropped
           # rather than edited around.
@@ -206,12 +257,26 @@ jobs:
 
           arn="$(aws ecs register-task-definition --cli-input-json file://taskdef-next.json \
             --query 'taskDefinition.taskDefinitionArn' --output text)"
+
+          # Proves the registered revision carries the image intended, rather than trusting that
+          # the edit above landed.
+          registered="$(aws ecs describe-task-definition --task-definition "${arn}" \
+            --query 'taskDefinition.containerDefinitions[?name==`api`].image' --output text)"
+          [ "${registered}" = "${IMAGE}" ] \
+            || { echo "::error::registered ${registered}, expected the published digest"; exit 1; }
+
           echo "arn=${arn}" >> "${GITHUB_OUTPUT}"
 
       - name: Roll the service and wait for it to stabilise
         env:
           CLUSTER: ${{ vars.ECS_CLUSTER }}
           SERVICE: ${{ vars.ECS_SERVICE }}
+          # The waiter defaults to 40 attempts at 15 seconds, which is ten minutes. A cold Fargate
+          # placement, the health check grace period, two passing checks thirty seconds apart and
+          # the old task's drain can exceed that on a rollout that succeeded, and the job would
+          # then fail on a deployment that actually landed — the worst outcome, because the
+          # instinct is to re-run. Twenty minutes covers it.
+          AWS_MAX_ATTEMPTS: "80"
         run: |
           set -euo pipefail
           aws ecs update-service --cluster "${CLUSTER}" --service "${SERVICE}" \

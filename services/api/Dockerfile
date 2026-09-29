@@ -4,9 +4,13 @@
 # be copied into a layer by accident.
 #
 # Both stages pin an exact Temurin patch, as the architecture document requires of every deployed
-# tag. A floating `25-jre` would silently change the runtime underneath a digest that the pipeline
-# promotes between environments unchanged, which is precisely the property the promotion rule
-# exists to guarantee.
+# tag. A floating `25-jre` would change the JVM under an unrelated rebuild with nothing in the diff
+# to show it.
+#
+# What this does not give is bit-for-bit reproducibility: a tag, even an exact one, can in
+# principle be re-pushed, and only `eclipse-temurin@sha256:...` would rule that out. The property
+# the promotion rule actually depends on is unaffected either way, because what is promoted between
+# environments is this image's own digest, resolved once at push and never re-resolved.
 
 # ---------------------------------------------------------------------------------------------
 # Stage 1 — compile and package
@@ -44,6 +48,9 @@ WORKDIR /app
 COPY --from=builder --chown=rikkaus:rikkaus /workspace/target/*.jar /app/app.jar
 USER rikkaus
 
+# Documentation only; ECS publishes the port from the task definition's portMappings. The
+# application listens on 8080 unless SERVER_PORT says otherwise, which is what the infrastructure's
+# api_container_port variable sets.
 EXPOSE 8080
 
 # MaxRAMPercentage rather than a fixed -Xmx, so the heap follows whatever memory the ECS task

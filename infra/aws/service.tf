@@ -28,11 +28,16 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
   }
 }
 
-# This is the initial revision only. Every deployment registers a new revision with a new image
-# digest, from the live definition rather than from this file, so after the first deploy the
-# running revision is no longer the one described here. That is why the service below ignores
-# changes to `task_definition`, and why the placeholder image is harmless: it is replaced before
-# anyone sees it.
+# The base revision. Every deployment starts from whichever revision this configuration last
+# registered, replaces the image and registers a new one, so this file stays authoritative for the
+# task's shape — its CPU, memory, environment, secrets and logging — while the pipeline is
+# authoritative for the image alone.
+#
+# That only works because the deploy job is told which revision is the base, rather than copying
+# whatever is running. The pipeline registers into this same family, so "the latest revision" would
+# be the pipeline's own and a change made here would never reach a task. The pointer below is how
+# the two stay in their lanes: change `api_allowed_origins` or a secret here, apply, and the next
+# deployment picks it up.
 resource "aws_ecs_task_definition" "api" {
   family                   = "${local.name}-api"
   requires_compatibilities = ["FARGATE"]
@@ -57,10 +62,15 @@ resource "aws_ecs_task_definition" "api" {
       # here without renaming it there makes deployments silently no-ops.
       name  = "api"
       image = "public.ecr.aws/docker/library/busybox:1.37.0"
-      # Sleeps rather than exiting immediately, so the placeholder does not spend the window before
-      # the first deployment in a restart loop. It still fails the load balancer's health check,
-      # because it answers nothing: the service is expected to have no healthy target until the
-      # pipeline deploys a real image over it.
+      # A placeholder, replaced by the first deployment. It sleeps rather than exiting immediately
+      # so the window before that deployment is not spent in a restart loop.
+      #
+      # Be precise about what the first apply leaves behind, because it looks like a broken apply
+      # and is not: this container answers nothing, so it never becomes a healthy target, so the
+      # circuit breaker below marks the initial deployment FAILED and — there being no earlier
+      # revision to return to — the service settles with no running task and a failed deployment on
+      # record. That is the expected state until the pipeline deploys a real image, which starts a
+      # fresh deployment and recovers on its own.
       command = ["sh", "-c", "sleep infinity"]
 
       essential = true
@@ -82,6 +92,12 @@ resource "aws_ecs_task_definition" "api" {
         # log group. The application has no profile of this name and ignores it today; it exists so
         # a person reading `describe-tasks` knows what they are looking at.
         { name = "RIKKAUS_ENVIRONMENT", value = var.environment },
+        # Without this the port variable would be decorative: the application sets no `server.port`
+        # and would listen on Spring Boot's 8080 whatever the target group, security groups and
+        # port mapping were told. Spring's relaxed binding reads SERVER_PORT as `server.port`, so
+        # one variable now drives the listener and the application alike. A mismatch would have
+        # surfaced as a target that never goes healthy, with nothing naming the cause.
+        { name = "SERVER_PORT", value = tostring(var.api_container_port) },
       ]
 
       # Resolved by the ECS agent from Parameter Store at start-up and injected into the process
@@ -111,11 +127,25 @@ resource "aws_ecs_task_definition" "api" {
     }
   ])
 
-  # The placeholder image above would otherwise be proposed on every plan, reverting whatever the
-  # pipeline last deployed.
-  lifecycle {
-    ignore_changes = [container_definitions]
-  }
+  # Both grants are separate resources, so nothing otherwise orders them before the service that
+  # depends on this definition. Without this, ECS may place the first task while the execution role
+  # still cannot read Parameter Store, and it fails with exactly the ResourceInitializationError
+  # the runbook documents — self-healing, because ECS retries, but indistinguishable from a real
+  # misconfiguration for the several minutes it lasts.
+  depends_on = [
+    aws_iam_role_policy.task_execution_secrets,
+    aws_iam_role_policy_attachment.task_execution_managed,
+  ]
+}
+
+# The pointer the deploy job resolves to find the revision above. A parameter rather than a
+# convention, because the pipeline registers into the same family and no naming rule could tell
+# the two apart afterwards.
+resource "aws_ssm_parameter" "base_task_definition" {
+  name        = "${local.parameter_prefix}/base-task-definition"
+  description = "Task definition revision that deployments derive from. Written by OpenTofu, read by the deploy workflow."
+  type        = "String"
+  value       = aws_ecs_task_definition.api.arn
 }
 
 resource "aws_ecs_service" "api" {

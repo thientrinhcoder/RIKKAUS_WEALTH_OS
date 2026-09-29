@@ -5,7 +5,7 @@ variable "aws_region" {
 }
 
 variable "environment" {
-  description = "Environment this stack instance represents. Part of every resource name, so two environments can coexist in one account without colliding."
+  description = "Environment this stack instance represents. Part of most resource names, but see the note in registry.tf: a second instance in the same account collides on the shared ECR repository and the account-wide GitHub OIDC provider, and standing Testing up alongside Development needs that resolved first."
   type        = string
   default     = "development"
 
