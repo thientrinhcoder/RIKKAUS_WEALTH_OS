@@ -167,8 +167,22 @@ error responses, correlation identifiers, and a two-tier test harness. See
 client.
 
 It still deliberately contains no domain endpoints or tables, no authentication, no ownership
-enforcement, no CI/CD pipeline and no domain UI. Those are owned by their dedicated delivery tasks.
-Because authentication is absent, this API must not be exposed beyond local development yet.
+enforcement and no domain UI. Those are owned by their dedicated delivery tasks.
+
+The backend now has a pipeline and a deployable AWS preview environment, described in
+[`docs/backend-deployment.md`](docs/backend-deployment.md). Every pull request runs formatting,
+unit, integration and coverage gates; a push to the integration branch publishes an immutable image
+and rolls an ECS Fargate service that answers on a public URL, so a reviewer can check the running
+API without a checkout.
+
+That preview is exposed over plain HTTP, and the earlier warning that an unauthenticated API must
+not leave local development still holds for anything with data behind it. It is safe today only
+because there is nothing behind it: the only reachable endpoints are `/actuator/health`,
+`/api/v1/meta` and an error surface, all of which are anonymous by design and disclose no user
+data. Before the identity work from issue #42 or any domain endpoint is deployed there, the
+environment needs HTTPS — a certificate and a 443 listener — because a session token crossing a
+plain-HTTP hop is readable in transit. The deployment document records this as a known limitation
+rather than a finished state.
 
 The backend slice now has unit, integration, Testcontainers and ArchUnit tests, so issue #35's
 original automated-test acceptance criterion is satisfiable: it was intentionally unsatisfied because

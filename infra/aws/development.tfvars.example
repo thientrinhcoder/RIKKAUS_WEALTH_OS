@@ -1,0 +1,34 @@
+# Copy to development.tfvars and edit. The real file is git-ignored.
+#
+#   cp development.tfvars.example development.tfvars
+#   tofu apply -var-file=development.tfvars
+
+aws_region  = "ap-southeast-1"
+environment = "development"
+
+# Must match the repository whose workflow assumes the deploy role, or federation is refused.
+github_repository      = "thientrinhcoder/RIKKAUS_WEALTH_OS"
+github_deploy_branches = ["main", "develop"]
+
+# Set to 0 between test windows to stop paying for Fargate compute without destroying anything;
+# set back to 1 and re-apply when the next review starts. The database keeps running either way.
+api_desired_count = 1
+
+# Browser origins permitted to call the API, comma-separated. Empty registers no CORS mapping at
+# all, which is the application's intended default. Fill this in once issue #46 publishes an Expo
+# web preview origin.
+api_allowed_origins = ""
+
+# Google OAuth, for after issue #42 merges. Until then leave all three empty: no parameter is
+# created and the task receives no such variable.
+#
+# Do not put a real client secret in a file you might commit. Prefer the environment:
+#   export TF_VAR_google_oauth_client_secret='...'
+google_oauth_client_id     = ""
+google_oauth_client_secret = ""
+
+# Exact-match allowlist, comma-separated. Google delivers the authorization code to whatever this
+# names, so an unregistered URI is how a code reaches somewhere it should not. Note that Google
+# refuses a plain-HTTP redirect URI on a public host, so sign-in through this environment needs the
+# HTTPS follow-up described in the README.
+google_oauth_redirect_uris = ""

@@ -19,6 +19,14 @@
 
     <properties>
         <java.version>25</java.version>
+        <!--
+            Pinned deliberately. The architecture document forbids floating versions in the
+            build, and an unpinned formatter is the worst offender of the three: a new
+            google-java-format release changes what "formatted" means and turns every
+            unrelated pull request red on a rule nobody chose.
+        -->
+        <spotless-maven-plugin.version>3.10.3</spotless-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -128,6 +136,117 @@
 
     <build>
         <plugins>
+            <!--
+                Formatting gate. `spotless:check` is bound to `validate`, so a branch fails before
+                anything is compiled and `./mvnw spotless:apply` is the fix.
+
+                No whole-file Java formatter is configured, and that is a decision rather than an
+                omission. Both candidates were run against this source tree before choosing:
+                palantir-java-format rewrites 437 lines across 17 files, and google-java-format
+                AOSP rewraps prose in 12 files, stranding tokens like {@code and orphaning a word
+                onto its own comment line. The sources here are wrapped by hand at sentence
+                boundaries and carry the reasoning behind decisions, so either formatter would
+                trade readable explanation for mechanical column fitting, in a pull request whose
+                subject is the deployment pipeline.
+
+                What is enforced is the part that rots silently and that nobody disputes: unused
+                imports, import order, trailing whitespace and the final newline. Adopting a full
+                formatter remains open, but it is a separate change with a measured cost and its
+                own review.
+            -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless-maven-plugin.version}</version>
+                <configuration>
+                    <java>
+                        <!--
+                            The order the sources already use: static imports first, then every
+                            other import in one ASCII-sorted block with no blank-line groups, so
+                            com, jakarta, java and org interleave by name. Declared explicitly
+                            because Spotless's default is not this, and an unstated order is a
+                            rule that only announces itself by failing someone's build.
+                        -->
+                        <importOrder>
+                            <order>\#,</order>
+                        </importOrder>
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--
+                Coverage. Two separate executions and two separate reports because the two test
+                tiers run in different phases: Surefire's database-free tests in `test`, Failsafe's
+                Testcontainers tests in `integration-test`. A single merged report is deliberately
+                not produced, because it would let integration coverage paper over an untested unit, and
+                reading them apart is how a thin unit tier stays visible.
+
+                No `check` rule with a minimum ratio is configured. A threshold invented here would
+                be a number nobody agreed to, and the first team to hit it deletes an assertion
+                rather than writes one. The reports are published as build artifacts so a reviewer
+                reads them; agreeing a floor is a separate, explicit decision.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>unit-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco-unit.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unit-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco-unit.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-unit</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>integration-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent-integration</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco-integration.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>integration-report</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>report-integration</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco-integration.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-integration</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

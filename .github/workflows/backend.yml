@@ -1,0 +1,242 @@
+# Backend pipeline for services/api.
+#
+# One workflow rather than two, because the branch policy is a property of the relationship between
+# the jobs and not of either job alone. `verify` runs for every trigger; `publish` and `deploy`
+# carry an `if` that admits only a push to an integration branch or a deliberate manual run, and
+# they `needs:` the gate. A pull request therefore cannot reach a shared environment even by
+# accident, and an integration push cannot deploy without the whole gate having passed first.
+#
+# Permissions are declared per job, not at the top. Only `publish` and `deploy` are granted
+# `id-token: write`, so the job that runs untrusted pull-request code has no path to an AWS
+# credential at all.
+
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - "services/api/**"
+      - ".github/workflows/backend.yml"
+      - "infra/aws/**"
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "services/api/**"
+      - ".github/workflows/backend.yml"
+      - "infra/aws/**"
+  workflow_dispatch:
+
+# A second push supersedes an in-flight run on the same ref. Deployments are exempt: cancelling
+# midway through an ECS rollout leaves the service half-updated with no job watching it.
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  JAVA_VERSION: "25"
+  JAVA_DISTRIBUTION: temurin
+
+jobs:
+  # -------------------------------------------------------------------------------------------
+  # Quality gate. Runs for every trigger, holds no credentials, touches no environment.
+  # -------------------------------------------------------------------------------------------
+  verify:
+    name: Format, test and cover
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      # `verify` is the whole gate in one command, in this order: spotless:check bound to validate,
+      # compile, Surefire's database-free tests, Failsafe's Testcontainers tests against a real
+      # PostgreSQL, and a JaCoCo report per tier. The GitHub-hosted runner provides the Docker
+      # daemon that Testcontainers needs; no service container is declared here because
+      # Testcontainers starts and disposes of its own.
+      - name: Run the backend gate
+        working-directory: services/api
+        run: ./mvnw -B verify
+
+      # Uploaded unconditionally. A failing run is exactly the run whose reports somebody needs,
+      # and `if: always()` is what keeps them reachable after a red build.
+      - name: Publish test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-reports-${{ github.run_id }}
+          path: |
+            services/api/target/surefire-reports/
+            services/api/target/failsafe-reports/
+            services/api/target/site/jacoco-unit/
+            services/api/target/site/jacoco-integration/
+          retention-days: 14
+          if-no-files-found: warn
+
+  # -------------------------------------------------------------------------------------------
+  # Build one image, scan it, and push it to ECR under its commit SHA.
+  # -------------------------------------------------------------------------------------------
+  publish:
+    name: Scan and push image
+    needs: verify
+    if: >-
+      github.event_name != 'pull_request'
+      && vars.AWS_REGION != ''
+      && vars.ECR_REPOSITORY != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Mints the short-lived OIDC token that the AWS role trusts. No long-lived access key is
+      # stored in this repository.
+      id-token: write
+    outputs:
+      image-digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Built before it is scanned and pushed, and loaded into the local daemon rather than pushed
+      # straight through. Scanning an image that is already in the registry would mean a vulnerable
+      # image existed in ECR, however briefly, which a deploy could have picked up.
+      - name: Build the image
+        run: |
+          docker build \
+            --tag "local/rikkaus-api:${GITHUB_SHA}" \
+            --file services/api/Dockerfile \
+            services/api
+
+      - name: Scan the image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: local/rikkaus-api:${{ github.sha }}
+          format: table
+          # Fails the job on a fixable HIGH or CRITICAL finding. `ignore-unfixed` is set because a
+          # base-image vulnerability with no released fix is not something this pipeline can act
+          # on, and a gate that cannot be satisfied is one that gets disabled.
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          # Covers both halves of the architecture's scan requirement in one pass: the OS packages
+          # in the Temurin base layer and the application's own jars, which Trivy reads from the
+          # packaged artifact.
+          scanners: vuln
+          vuln-type: os,library
+
+      # Tagged with the commit SHA and nothing else. No `latest`, because the whole promotion model
+      # rests on a tag meaning exactly one commit forever; the repository is configured with
+      # immutable tags so a re-push of the same tag is refused by the registry rather than silently
+      # rewriting history.
+      - id: push
+        name: Push to ECR
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          target="${REGISTRY}/${REPOSITORY}:${GITHUB_SHA}"
+          docker tag "local/rikkaus-api:${GITHUB_SHA}" "${target}"
+          docker push "${target}"
+
+          # The digest, not the tag, is what the deploy job pins. A tag is a pointer; a digest is
+          # the image, and pinning it is what makes promotion to a later environment provably the
+          # same bytes.
+          digest="$(docker inspect --format='{{index .RepoDigests 0}}' "${target}")"
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
+          echo "Pushed ${digest}"
+
+  # -------------------------------------------------------------------------------------------
+  # Roll the Development ECS service onto the digest just published, then prove it answers.
+  # -------------------------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Development
+    needs: publish
+    if: vars.ECS_CLUSTER != '' && vars.ECS_SERVICE != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: development
+      url: ${{ vars.API_BASE_URL }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # The live task definition is read and patched rather than rendered from a JSON file kept in
+      # this repository. OpenTofu owns the task definition's shape — its CPU, memory, secrets and
+      # log configuration — and a second copy here would drift from it the first time either side
+      # changed alone. This reads whatever is deployed now and changes exactly one field.
+      - id: taskdef
+        name: Register a task definition pinned to the new digest
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+          IMAGE: ${{ needs.publish.outputs.image-digest }}
+        run: |
+          set -euo pipefail
+          current="$(aws ecs describe-services --cluster "${CLUSTER}" --services "${SERVICE}" \
+            --query 'services[0].taskDefinition' --output text)"
+
+          aws ecs describe-task-definition --task-definition "${current}" \
+            --query 'taskDefinition' --output json > taskdef.json
+
+          # The read-only fields ECS returns are rejected on registration, so they are dropped
+          # rather than edited around.
+          jq --arg image "${IMAGE}" '
+              .containerDefinitions |= map(if .name == "api" then .image = $image else . end)
+              | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                    .compatibilities, .registeredAt, .registeredBy)
+            ' taskdef.json > taskdef-next.json
+
+          arn="$(aws ecs register-task-definition --cli-input-json file://taskdef-next.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)"
+          echo "arn=${arn}" >> "${GITHUB_OUTPUT}"
+
+      - name: Roll the service and wait for it to stabilise
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+        run: |
+          set -euo pipefail
+          aws ecs update-service --cluster "${CLUSTER}" --service "${SERVICE}" \
+            --task-definition "${{ steps.taskdef.outputs.arn }}" >/dev/null
+
+          # Returns only once the new tasks are running, registered healthy with the load balancer
+          # and the old ones are drained. Without this the job would report success at the moment
+          # the rollout was requested, which says nothing about whether it worked.
+          aws ecs wait services-stable --cluster "${CLUSTER}" --services "${SERVICE}"
+
+      # The deployment is not finished until the public URL answers. This is the same check the
+      # Product Owner and QE will run by hand, executed here so a broken deploy is red in CI rather
+      # than discovered by a person opening a browser.
+      - name: Smoke-check the public endpoint
+        if: vars.API_BASE_URL != ''
+        env:
+          BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          health="$(curl -fsS --retry 10 --retry-delay 6 --retry-all-errors "${BASE_URL}/actuator/health")"
+          echo "health: ${health}"
+          echo "${health}" | jq -e '.status == "UP"' >/dev/null
+
+          meta="$(curl -fsS "${BASE_URL}/api/v1/meta")"
+          echo "meta: ${meta}"
+          echo "${meta}" | jq -e '.apiVersion == "v1"' >/dev/null
+
+          echo "::notice title=Development API::${BASE_URL}/actuator/health is UP on ${GITHUB_SHA}"

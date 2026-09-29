@@ -1,0 +1,7 @@
+# Keep build output, local state and secrets out of the build context entirely. Anything listed
+# here cannot reach a layer even if a COPY is later widened by mistake.
+target/
+*.log
+.env
+.env.*
+.DS_Store

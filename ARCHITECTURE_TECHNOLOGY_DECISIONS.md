@@ -53,7 +53,7 @@ flowchart LR
 | Web preview hosting | Amazon S3 + CloudFront | Low-cost browser access for developers, QC, and PO |
 | Container registry | Amazon ECR | Native integration with ECS and immutable image storage |
 | Production option | VPS + Docker Compose + Caddy | Lower fixed cost after validation while preserving container portability |
-| CI/CD | Jenkins LTS, Multibranch Declarative Pipeline | Pipeline as code, familiar tooling, and control over operating cost |
+| CI/CD | GitHub Actions | Pipeline as code on the platform the repository already lives on, with no build controller to host or maintain |
 | Infrastructure as code | OpenTofu | Open-source, reviewable, and reproducible AWS infrastructure |
 
 The exact patch versions must be pinned in lockfiles, Maven configuration, container tags, and CI images. Upgrades are deliberate changes; do not use `latest` tags in deployed environments.
@@ -188,7 +188,9 @@ Operational database backup is mandatory even though user-facing backup/restore 
 
 ## 8. CI/CD standard
 
-Jenkins is configured as a **Multibranch Declarative Pipeline**. The repository-root `Jenkinsfile` is the only source of truth for build and deployment logic.
+GitHub Actions workflows under `.github/workflows/` are the only source of truth for build and deployment logic.
+
+> **Amended during issue #47.** This standard named Jenkins LTS as a Multibranch Declarative Pipeline with a repository-root `Jenkinsfile`. No Jenkins controller was ever stood up, and the Product Owner chose GitHub Actions when #47 was implemented, on the grounds that Jenkins would have required hosting and maintaining a controller reachable by webhook before a single pull request could be gated, while Actions runs on the next push and is free for this public repository. The stage list, the branch and release policy, and the promotion-by-digest rule below are unchanged; only the runner changed.
 
 ```mermaid
 flowchart LR
@@ -225,7 +227,7 @@ flowchart LR
 - Version tag such as `v1.0.0`: manual approval before Production deployment.
 - Rollback: redeploy the previous known-good image digest and compatible task definition/Compose release.
 
-Jenkins credentials must use least-privilege AWS access. Secrets must be referenced through the Jenkins Credentials store and must never be committed or interpolated into logs.
+The pipeline authenticates to AWS by OpenID Connect, assuming a least-privilege role whose trust policy admits only this repository on a named integration branch. No long-lived AWS access key is stored in the repository. Other secrets are referenced from GitHub Actions secrets, are never committed, and are never interpolated into logs. Runtime secrets reach the container from Systems Manager Parameter Store through the task definition's `secrets` block, so they appear in no task definition, API response or log line.
 
 ## 9. Security and operations baseline
 
@@ -252,7 +254,7 @@ rikkaus-wealth-os/
 │   └── vps/                 # Docker Compose and Caddy configuration
 ├── docs/                    # Product and technical decisions
 ├── docker-compose.yml       # Local PostgreSQL and supporting services
-├── Jenkinsfile              # CI/CD pipeline as code
+├── .github/workflows/       # CI/CD pipeline as code
 └── README.md                # Developer setup and common commands
 ```
 
@@ -302,6 +304,7 @@ Review this record when one of these conditions occurs:
 - [Eclipse Temurin container images](https://hub.docker.com/_/eclipse-temurin)
 - [PostgreSQL documentation](https://www.postgresql.org/docs/current/)
 - [Amazon ECS with AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/getting-started-fargate.html)
-- [Jenkins Pipeline as Code](https://www.jenkins.io/doc/book/pipeline/pipeline-as-code/)
+- [GitHub Actions workflow syntax](https://docs.github.com/actions/reference/workflow-syntax-for-github-actions)
+- [Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 - [OpenTofu documentation](https://opentofu.org/docs/)
 - [Caddy automatic HTTPS](https://caddyserver.com/docs/automatic-https)
