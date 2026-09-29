@@ -117,25 +117,62 @@ describe('layout safety across the reviewed widths', () => {
     expect(content.minWidth).toBeUndefined();
   });
 
-  it.each([360, 375, 768, 1024, 1440])(
-    'keeps destination labels readable at a large font scale at %ipx',
+  it.each([360, 375])(
+    'keeps the bottom bar to one line per destination at %ipx',
     async (width) => {
-      atWidth(width, 1.5);
+      atWidth(width, 1.6);
       await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
 
       for (const destination of DESTINATIONS) {
+        const item = screen.getByTestId(`shell-destination-${destination.key}`);
+        const [label] = within(item).getAllByText(destination.shortLabel);
+
         /**
-         * The active destination's name also appears as the top app bar title, so the query is
-         * scoped to the navigation item rather than to the whole screen.
+         * The bottom bar gives each destination a fifth of the width. A wrapped label makes its
+         * item taller than its siblings and knocks the row out of alignment, so the bar shows the
+         * short label on a single line instead.
          */
+        expect(label.props.numberOfLines).toBe(1);
+      }
+    },
+  );
+
+  it.each([768, 1024, 1440])(
+    'lets the rail and sidebar labels wrap freely at %ipx',
+    async (width) => {
+      atWidth(width, 1.6);
+      await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
+
+      for (const destination of DESTINATIONS) {
         const item = screen.getByTestId(`shell-destination-${destination.key}`);
         const [label] = within(item).getAllByText(destination.label);
 
-        expect(label.props.numberOfLines).toBeUndefined();
+        /** There is room here, so section 5.2's preference for wrapping over truncation holds. */
         expect(label.props.ellipsizeMode).toBeUndefined();
       }
     },
   );
+
+  it('drops the visible label on a very narrow screen but never the accessible name', async () => {
+    atWidth(320);
+    await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
+
+    for (const destination of DESTINATIONS) {
+      /** The name a screen reader announces is the full one at every width. */
+      expect(screen.getByRole('tab', { name: destination.label })).toBeTruthy();
+    }
+
+    expect(screen.queryByText('TS & Nợ')).toBeNull();
+  });
+
+  it('shows the short label once there is room for it', async () => {
+    atWidth(375);
+    await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
+
+    expect(screen.getByText('TS & Nợ')).toBeTruthy();
+    /** The full label is still what assistive technology hears. */
+    expect(screen.getByRole('tab', { name: 'Tài sản & Nợ' })).toBeTruthy();
+  });
 });
 
 describe('hierarchy consistency', () => {

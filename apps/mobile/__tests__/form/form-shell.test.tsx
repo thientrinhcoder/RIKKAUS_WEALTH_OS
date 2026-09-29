@@ -22,7 +22,7 @@ function submitButton() {
 }
 
 describe('submitting a valid form', () => {
-  it('calls the caller submit exactly once and confirms success', async () => {
+  it('calls the caller submit exactly once', async () => {
     const onSubmit = jest.fn();
 
     await renderWithProviders(
@@ -39,27 +39,11 @@ describe('submitting a valid form', () => {
     fireEvent.press(submitButton());
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByText('Đã lưu tài sản.')).toBeTruthy());
+
+    /** The confirmation itself is a snackbar; form-shell-confirmation.test.tsx covers it. */
+    expect(screen.queryByTestId('form-success')).toBeNull();
   });
 
-  it('announces success politely rather than stealing focus', async () => {
-    await renderWithProviders(
-      <FormShell
-        onSubmit={jest.fn()}
-        submitLabel="Lưu tài sản"
-        successMessage="Đã lưu tài sản."
-        validate={() => []}
-      >
-        <Text>Nội dung biểu mẫu</Text>
-      </FormShell>,
-    );
-
-    fireEvent.press(submitButton());
-
-    await waitFor(() =>
-      expect(screen.getByTestId('form-success').props.accessibilityLiveRegion).toBe('polite'),
-    );
-  });
 });
 
 describe('preventing a duplicate submission', () => {

@@ -1,9 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { spacing } from '@/ui/tokens';
 import { useAppTheme } from '@/ui/theme';
-import { DestinationItem } from './destination-item';
+import { DestinationItem, LABEL_HIDDEN_BELOW_WIDTH } from './destination-item';
 import { DESTINATIONS, type Destination } from './destinations';
 
 interface BottomNavProps {
@@ -14,6 +14,14 @@ interface BottomNavProps {
 export function BottomNav({ activeRoute, onNavigate }: BottomNavProps) {
   const theme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  /**
+   * Five destinations share the width, so each gets a fifth of it. Below the threshold a label
+   * cannot be read beside the icon, and the icon alone is clearer than a clipped word. The
+   * accessible name is unaffected.
+   */
+  const showLabel = width >= LABEL_HIDDEN_BELOW_WIDTH;
 
   return (
     <View
@@ -32,9 +40,11 @@ export function BottomNav({ activeRoute, onNavigate }: BottomNavProps) {
         <DestinationItem
           destination={destination}
           key={destination.key}
+          labelVariant="short"
           onPress={onNavigate}
           orientation="vertical"
           selected={destination.route === activeRoute}
+          showLabel={showLabel}
           style={styles.item}
         />
       ))}

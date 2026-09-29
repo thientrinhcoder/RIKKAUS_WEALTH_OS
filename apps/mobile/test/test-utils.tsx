@@ -4,6 +4,7 @@ import type { ReactElement, PropsWithChildren } from 'react';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SnackbarProvider } from '@/components/feedback';
 import { paperSettings } from '@/providers/app-providers';
 import { appTheme } from '@/ui/theme';
 
@@ -31,7 +32,7 @@ export async function renderWithProviders(ui: ReactElement, options?: RenderOpti
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <QueryClientProvider client={queryClient}>
           <PaperProvider settings={paperSettings} theme={appTheme}>
-            {children}
+            <SnackbarProvider>{children}</SnackbarProvider>
           </PaperProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

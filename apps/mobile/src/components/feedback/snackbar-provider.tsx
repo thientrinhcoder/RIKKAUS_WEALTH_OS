@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type PropsWithChildren,
@@ -76,6 +77,23 @@ export function SnackbarProvider({ children }: PropsWithChildren) {
   }, []);
 
   const current = queue[0] ?? null;
+
+  /**
+   * A snackbar that never leaves is a banner. Section 11.1 gives it a dwell of at least five
+   * seconds, or longer when it carries an action so the action can actually be reached, after
+   * which the next queued message takes its place.
+   */
+  useEffect(() => {
+    if (current === null) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setQueue((waiting) => waiting.slice(1));
+    }, durationFor(current));
+
+    return () => clearTimeout(timer);
+  }, [current]);
 
   const api = useMemo<SnackbarApi>(
     () => ({

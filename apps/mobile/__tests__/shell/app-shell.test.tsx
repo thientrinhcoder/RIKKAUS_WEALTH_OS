@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { StyleSheet, useWindowDimensions } from 'react-native';
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 
 import { AppShell } from '@/components/shell';
 import { DESTINATIONS } from '@/components/shell/destinations';
@@ -172,6 +172,43 @@ describe('the create action', () => {
     expect(screen.getByTestId('shell-root')).toContainElement(
       screen.getByTestId('shell-create-action'),
     );
+  });
+});
+
+describe('the selected destination is visible without colour', () => {
+  it('gives the active destination a filled indicator and a heavier label', async () => {
+    atWidth(375);
+    await renderWithProviders(
+      <AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>,
+    );
+
+    for (const destination of DESTINATIONS) {
+      const indicator = screen.getByTestId(`shell-destination-${destination.key}-indicator`);
+      const style = StyleSheet.flatten(indicator.props.style) as { backgroundColor?: string };
+      const filled = style.backgroundColor !== undefined;
+
+      expect({ key: destination.key, filled }).toEqual({
+        key: destination.key,
+        filled: destination.route === DESTINATIONS[2].route,
+      });
+    }
+  });
+
+  it('weights the active label more heavily than the rest', async () => {
+    atWidth(375);
+    await renderWithProviders(
+      <AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>,
+    );
+
+    /** The active destination's name also appears as the top app bar title, so scope the query. */
+    const label = (key: string, text: string) =>
+      within(screen.getByTestId(`shell-destination-${key}`)).getAllByText(text)[0];
+
+    const active = label(DESTINATIONS[2].key, DESTINATIONS[2].shortLabel);
+    const other = label(DESTINATIONS[0].key, DESTINATIONS[0].shortLabel);
+
+    expect(StyleSheet.flatten(active.props.style)).toMatchObject({ fontWeight: '600' });
+    expect(StyleSheet.flatten(other.props.style)).toMatchObject({ fontWeight: '400' });
   });
 });
 

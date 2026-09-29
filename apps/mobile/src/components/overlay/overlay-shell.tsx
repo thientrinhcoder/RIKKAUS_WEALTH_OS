@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { BackHandler, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { Surface } from 'react-native-paper';
+import { Portal, Surface } from 'react-native-paper';
 
 import { elevation } from '@/ui/elevation';
 import { radius, spacing } from '@/ui/tokens';
@@ -16,6 +16,11 @@ import { useAppTheme } from '@/ui/theme';
  * every dismissal route including a scrim tap; one that would discard data or confirm a
  * destructive action accepts only an explicit choice, because an accidental tap outside would
  * silently choose for the user.
+ *
+ * It renders through a portal at the app root. Absolute positioning resolves against the nearest
+ * positioned ancestor, so an overlay rendered in place inside a scrolling screen is trapped in
+ * the content box: it scrolls with the content and its scrim dims only that box rather than the
+ * screen. Every real screen scrolls, so this is not an edge case.
  */
 export type DismissPolicy = 'any-route' | 'explicit-only';
 
@@ -104,36 +109,38 @@ export function OverlayShell({
   const scrimDismisses = dismissPolicy === 'any-route';
 
   return (
-    <View
-      /** Background content is inert to assistive technology while this is open. */
-      accessibilityViewIsModal
-      aria-modal
-      style={[styles.layer, placement === 'bottom' && styles.bottom]}
-      testID={testID}
-    >
-      <Pressable
-        accessibilityElementsHidden
-        aria-hidden
-        importantForAccessibility="no-hide-descendants"
-        onPress={scrimDismisses ? onDismiss : undefined}
-        style={[styles.scrim, { backgroundColor: elevation.modal.scrim }]}
-        testID={`${testID}-scrim`}
-      />
-
-      <Surface
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="none"
-        elevation={elevation.modal.level}
-        style={[
-          styles.panel,
-          placement === 'bottom' ? styles.panelBottom : styles.panelCenter,
-          { backgroundColor: theme.colors.surface },
-        ]}
-        testID={`${testID}-panel`}
+    <Portal>
+      <View
+        /** Background content is inert to assistive technology while this is open. */
+        accessibilityViewIsModal
+        aria-modal
+        style={[styles.layer, placement === 'bottom' && styles.bottom]}
+        testID={testID}
       >
-        {children}
-      </Surface>
-    </View>
+        <Pressable
+          accessibilityElementsHidden
+          aria-hidden
+          importantForAccessibility="no-hide-descendants"
+          onPress={scrimDismisses ? onDismiss : undefined}
+          style={[styles.scrim, { backgroundColor: elevation.modal.scrim }]}
+          testID={`${testID}-scrim`}
+        />
+
+        <Surface
+          accessibilityLabel={accessibilityLabel}
+          accessibilityRole="none"
+          elevation={elevation.modal.level}
+          style={[
+            styles.panel,
+            placement === 'bottom' ? styles.panelBottom : styles.panelCenter,
+            { backgroundColor: theme.colors.surface },
+          ]}
+          testID={`${testID}-panel`}
+        >
+          {children}
+        </Surface>
+      </View>
+    </Portal>
   );
 }
 

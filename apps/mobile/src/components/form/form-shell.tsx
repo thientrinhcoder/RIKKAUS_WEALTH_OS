@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Text } from 'react-native-paper';
 
 import { ActionButton } from '@/components/action';
+import { useSnackbar } from '@/components/feedback';
 import { spacing } from '@/ui/tokens';
-import { useAppTheme } from '@/ui/theme';
 import { ErrorSummary, type FieldError } from './error-summary';
 import { singleFlight } from './single-flight';
 
@@ -18,11 +17,18 @@ export interface FormShellProps {
    */
   validate: () => ValidationResult | Promise<ValidationResult>;
   onSubmit: () => void | Promise<void>;
+  /**
+   * Raised as a snackbar when the submission succeeds, so the confirmation appears over the
+   * screen and clears itself. A success message parked at the foot of the form is easy to miss
+   * and stays there long after it stopped being true.
+   */
   onCancel?: () => void;
   onFocusField?: (name: string) => void;
   submitLabel: string;
   cancelLabel?: string;
   successMessage?: string;
+  /** Optional undo on the success snackbar. The form stores nothing on the caller's behalf. */
+  onUndoSubmit?: () => void;
   testID?: string;
 }
 
@@ -43,12 +49,12 @@ export function FormShell({
   submitLabel,
   cancelLabel = 'Huỷ',
   successMessage,
+  onUndoSubmit,
   testID = 'form',
 }: FormShellProps) {
-  const theme = useAppTheme();
+  const snackbar = useSnackbar();
   const [errors, setErrors] = useState<ValidationResult>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [succeeded, setSucceeded] = useState(false);
 
   /**
    * The callers' latest callbacks, read at submit time.
@@ -57,14 +63,14 @@ export function FormShell({
    * guard from them would hand out a fresh guard each render and defeat it entirely: the second
    * activation would meet a guard that had never seen the first.
    */
-  const latest = useRef({ validate, onSubmit, onFocusField });
+  const latest = useRef({ validate, onSubmit, onFocusField, successMessage, onUndoSubmit, snackbar });
 
   /**
    * Refreshed after each render rather than during it. Effects run before any interaction can
    * reach the button, so a submit never reads a stale callback.
    */
   useEffect(() => {
-    latest.current = { validate, onSubmit, onFocusField };
+    latest.current = { validate, onSubmit, onFocusField, successMessage, onUndoSubmit, snackbar };
   });
 
   /**
@@ -75,7 +81,6 @@ export function FormShell({
   const submit = useRef(
     singleFlight(async () => {
       setSubmitting(true);
-      setSucceeded(false);
 
       try {
         const found = await latest.current.validate();
@@ -89,7 +94,14 @@ export function FormShell({
         }
 
         await latest.current.onSubmit();
-        setSucceeded(true);
+
+        if (latest.current.successMessage !== undefined) {
+          latest.current.snackbar.show({
+            message: latest.current.successMessage,
+            actionLabel: latest.current.onUndoSubmit === undefined ? undefined : 'Hoàn tác',
+            onAction: latest.current.onUndoSubmit,
+          });
+        }
       } finally {
         setSubmitting(false);
       }
@@ -105,17 +117,6 @@ export function FormShell({
       />
 
       {children}
-
-      {succeeded && successMessage !== undefined ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          style={{ color: theme.colors.success }}
-          testID={`${testID}-success`}
-          variant="bodyLarge"
-        >
-          {successMessage}
-        </Text>
-      ) : null}
 
       <View style={styles.actions}>
         {onCancel === undefined ? null : (
