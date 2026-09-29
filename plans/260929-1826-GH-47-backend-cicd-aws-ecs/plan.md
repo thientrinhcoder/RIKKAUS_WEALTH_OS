@@ -50,6 +50,7 @@ what gets built and one of them contradicts a recorded architecture decision.
 | 2 | Immutable image and the pipeline | [phase-02](phase-02-immutable-image-and-pipeline.md) | done |
 | 3 | AWS baseline as OpenTofu, and the operator runbook | [phase-03](phase-03-aws-baseline-and-runbook.md) | done |
 | 4 | HTTPS at the edge, and `main` as the deploy branch | [phase-04](phase-04-https-and-main-only-deploys.md) | done |
+| 5 | Security scanning in the pipeline | [phase-05](phase-05-security-scanning.md) | done |
 
 The image and the workflow that produces it are recorded together, and so are the infrastructure
 and the runbook for operating it, because in each pair neither half is verifiable without the
@@ -58,7 +59,8 @@ other.
 ## Acceptance criteria
 
 - [ ] `./mvnw verify` runs formatting, compile, unit, Testcontainers integration tests and coverage.
-- [ ] A pull request touching `services/api` runs every gate and deploys nothing.
+- [ ] A pull request touching `services/api` runs every gate — formatting, tests, coverage, secret
+      scanning, dependency vulnerabilities and static analysis — and deploys nothing.
 - [ ] A push to the integration branch builds one image, pushes it to ECR under its commit SHA, and
       updates the ECS service to that digest.
 - [ ] `infra/aws/` provisions ECR, RDS, ECS Fargate, an ALB and Parameter Store, with no public

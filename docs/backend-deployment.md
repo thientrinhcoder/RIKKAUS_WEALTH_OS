@@ -20,16 +20,21 @@ a data source or a toggle first.
 | AWS infrastructure | [`infra/aws/`](../infra/aws/) |
 | HTTPS front end | [`infra/aws/cdn.tf`](../infra/aws/cdn.tf) |
 | Formatting, test and coverage gates | [`services/api/pom.xml`](../services/api/pom.xml) |
+| Secret-scanning rules | [`.gitleaks.toml`](../.gitleaks.toml) |
+| Dependency update policy | [`.github/dependabot.yml`](../.github/dependabot.yml) |
 
 ## The pipeline
 
 A push to `main` that touches `services/api/**`, `infra/aws/**` or the workflow itself runs three
 jobs in order. A pull request runs only the first.
 
-1. **verify** — `./mvnw verify` in `services/api`: Spotless formatting check, compile, Surefire
-   unit tests, Failsafe integration tests against a real PostgreSQL started by Testcontainers, and
-   a JaCoCo report per tier. Test and coverage reports are uploaded as a build artifact whether the
-   job passes or fails. This job holds no AWS credential.
+1. **verify** — Gitleaks over the branch's full history, then `./mvnw verify` in `services/api`
+   (Spotless formatting check, compile, Surefire unit tests, Failsafe integration tests against a
+   real PostgreSQL started by Testcontainers, a JaCoCo report per tier), then Trivy over the
+   resolved dependencies. Test and coverage reports are uploaded whether the job passes or fails.
+   This job holds no AWS credential.
+1. **codeql** — CodeQL `security-extended` over the Java source, running beside `verify` rather
+   than after it. Results appear in the Security tab and as pull-request annotations.
 2. **publish** — builds the image, scans it with Trivy, and pushes it to ECR tagged with the commit
    SHA. The scan runs against the locally built image, before the push, so a vulnerable image never
    reaches the registry. A fixable HIGH or CRITICAL finding fails the job.
@@ -54,6 +59,48 @@ cannot run unless `publish` succeeded, and `publish` is admitted only on a liste
 > `main` as the integration branch. It is the only push trigger and the only branch in the deploy
 > role's trust policy. Adopting `develop` later means adding it in both places, which is
 > `.github/workflows/backend.yml` and the `github_deploy_branches` variable.
+
+## What is checked for security, and what is not
+
+| Concern | Where | Runs on a pull request |
+|---|---|---|
+| Committed secrets and keys | Gitleaks in `verify`, full history | yes |
+| Provider tokens at push time | GitHub secret scanning with push protection | n/a — blocks the push itself |
+| Dependency vulnerabilities | Trivy filesystem scan in `verify` | yes |
+| Container and OS vulnerabilities | Trivy image scan in `publish` | no — nothing is built on a PR |
+| Security defects in our own code | CodeQL `security-extended` | yes |
+| Vulnerable dependencies over time | Dependabot | n/a — opens pull requests |
+
+Two limits are worth stating rather than assuming.
+
+**GitHub's secret scanning is narrower than its name suggests.** Push protection blocks recognised
+provider tokens — an AWS key, a GitHub PAT — but `secret_scanning_non_provider_patterns` is
+disabled on this repository, so a high-entropy string with no vendor prefix is not matched. This
+project's most dangerous secret is exactly that shape: `RIKKAUS_JWT_SECRET` is 64 random bytes, and
+whoever holds it can mint a valid access token for any user. That is the gap
+[`.gitleaks.toml`](../.gitleaks.toml) exists to close, and its rules were checked against planted
+canaries in both the shapes that secret travels in — an environment assignment and the JSON
+`name`/`value` pair an ECS task definition uses — as well as against the repository's real history.
+
+**Infrastructure misconfiguration is not scanned.** Trivy can check OpenTofu for things like an
+unencrypted volume or an over-permissive rule (`scanners: misconfig`), and it is not enabled here.
+That is a deliberate omission rather than an oversight: turning it on produces findings that need
+triage before the gate can be trusted, and this change was already large.
+
+### If the secret scan fails
+
+Treat the credential as compromised the moment it is pushed, because the repository is public.
+Rotate first, clean history second — a force-push does not un-publish anything that was already
+fetched or indexed.
+
+- `RIKKAUS_JWT_SECRET`: `tofu taint random_password.jwt_signing_key` then apply, which rotates the
+  Parameter Store value and invalidates every issued token.
+- Database password: `tofu taint random_password.database` then apply.
+- An AWS key: deactivate it in IAM before anything else.
+
+If a finding is a documented example rather than a credential, add a narrow exemption to
+`.gitleaks.toml`. The existing ones match on the declaring line rather than the value, so a real
+secret in the same file is still caught; keep new ones that tight.
 
 ## How a request reaches the API
 
@@ -276,3 +323,8 @@ These are accepted for this environment, not oversights.
   to gets satisfied by deleting assertions; agreeing one is a separate decision.
 - **No browser smoke test.** The pipeline verifies the API's own endpoints. End-to-end browser
   checks need the frontend preview from issue #46.
+- **Dependabot security updates are disabled at the repository level.** `.github/dependabot.yml`
+  opens scheduled version-bump pull requests, but an out-of-cycle security advisory raises nothing
+  until the toggle in Settings → Code security is switched on. That setting is the repository
+  owner's to change.
+- **Infrastructure misconfiguration is not scanned**, as described above.

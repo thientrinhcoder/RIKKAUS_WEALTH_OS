@@ -49,6 +49,25 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The secret scan below reads history, not just the working tree. A secret added in one
+          # commit of a branch and removed in the next is still in the branch, and still published
+          # the moment it is pushed; the default shallow checkout would not see it.
+          fetch-depth: 0
+
+      # Runs before anything is compiled, because a leaked credential is not made less leaked by a
+      # passing test suite, and the sooner the job stops the sooner it can be rotated.
+      #
+      # GitHub's own secret scanning is enabled on this repository and blocks recognised provider
+      # tokens at push time. This covers what that misses: non-provider patterns are disabled there,
+      # so a high-entropy string with no vendor prefix is not matched — and RIKKAUS_JWT_SECRET, the
+      # one secret that lets anyone mint a token for any user, is exactly that. The rules and the
+      # deliberate exemptions are in .gitleaks.toml.
+      - name: Scan for committed secrets
+        run: |
+          docker run --rm -v "${GITHUB_WORKSPACE}:/repo" -w /repo \
+            zricethezav/gitleaks:v8.30.1 git \
+            --config=/repo/.gitleaks.toml --redact --no-banner --verbose
 
       - uses: actions/setup-java@v6
         with:
@@ -64,6 +83,31 @@ jobs:
       - name: Run the backend gate
         working-directory: services/api
         run: ./mvnw -B verify
+
+      # Dependency vulnerabilities, on every pull request.
+      #
+      # The image scan in `publish` cannot do this job: `publish` never runs on a pull request, so
+      # until this step existed, a change that introduced a dependency with a known CVE passed every
+      # check, got merged, and was caught only on the push to main — by which point the fix is a
+      # revert rather than a review comment. The architecture puts the scan alongside the tests for
+      # this reason (ARCHITECTURE_TECHNOLOGY_DECISIONS.md, stage 5).
+      #
+      # Deliberately placed after the build, so the scan sees the resolved artifact under target/ as
+      # well as the POM, rather than only the declared dependencies.
+      - name: Scan dependencies for known vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: services/api
+          format: table
+          exit-code: "1"
+          # A vulnerability with no released fix is not something a pull request can act on, and a
+          # gate that cannot be satisfied is one that gets switched off.
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          scanners: vuln
+          cache: "true"
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       # Uploaded unconditionally. A failing run is exactly the run whose reports somebody needs,
       # and `if: always()` is what keeps them reachable after a red build.
@@ -81,11 +125,58 @@ jobs:
           if-no-files-found: warn
 
   # -------------------------------------------------------------------------------------------
+  # Static analysis of the service's own source.
+  #
+  # Trivy answers "does a library we depend on have a known CVE". This answers the different and
+  # unaddressed question of what our own code does with it: an injection, a disabled certificate
+  # check, a credential written to a log. That matters for a service that issues session tokens and,
+  # once issue #42 merges, stores refresh tokens.
+  #
+  # Runs beside `verify` rather than after it. It is slower than the test suite and neither depends
+  # on the other, so serialising them would only lengthen the pull request.
+  # -------------------------------------------------------------------------------------------
+  codeql:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      # Publishes results to the Security tab and as pull-request annotations.
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: java-kotlin
+          # Manual rather than autobuild, so the analysis observes this project's real Maven build
+          # on the JDK it actually targets instead of a guess at how to compile it.
+          build-mode: manual
+          # Broader than the default pack: includes the lower-severity and higher-noise security
+          # queries, which is the right trade for a service that has not been analysed before.
+          queries: security-extended
+
+      - name: Compile for analysis
+        working-directory: services/api
+        run: ./mvnw -B -q -DskipTests -Dspotless.check.skip=true compile
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:java-kotlin
+
+  # -------------------------------------------------------------------------------------------
   # Build one image, scan it, and push it to ECR under its commit SHA.
   # -------------------------------------------------------------------------------------------
   publish:
     name: Scan and push image
-    needs: verify
+    needs: [verify, codeql]
     if: >-
       github.event_name != 'pull_request'
       && vars.AWS_REGION != ''
