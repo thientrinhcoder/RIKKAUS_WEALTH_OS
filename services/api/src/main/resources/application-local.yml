@@ -15,3 +15,19 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+# A fixed development signing secret. Local-only, and it is committed on purpose so a new developer
+# can run the API without inventing one — exactly the same reasoning as the committed PostgreSQL
+# password in docker-compose.yml. Any deployed environment supplies RIKKAUS_JWT_SECRET instead, and
+# the base configuration has no default, so this value cannot leak into one by being forgotten.
+rikkaus:
+  auth:
+    jwt:
+      secret: local-development-only-jwt-signing-secret
+    google:
+      # Supply a real client id from Google Cloud Console to sign in locally. The redirect URI below is
+      # the one Expo web serves on; register the same value in the Google OAuth client or Google will
+      # reject the exchange.
+      client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+      client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
+      redirect-uris: ${GOOGLE_OAUTH_REDIRECT_URIS:http://localhost:8081/auth/callback}
