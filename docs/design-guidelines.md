@@ -528,10 +528,11 @@ same thing a sighted user does:
 | Snackbar, toast | Status message; never takes focus | Polite |
 
 A snackbar or toast stays visible for at least 5 seconds, or longer when it carries an action, and
-always offers an explicit dismiss route. At most one is visible at a time; a newer message replaces
-the current one rather than stacking. A failure that the user must act on is never delivered only as
-a toast, because a toast can expire unread; it also appears in the affected region as an error
-state.
+always offers an explicit dismiss route. At most one is visible at a time, and a message raised
+while one is on screen waits its turn rather than stacking beside it or replacing it: replacing
+would let a message the user never read disappear, and would take any undo it carried with it. A
+failure that the user must act on is never delivered only as a toast, because a toast can expire
+unread; it also appears in the affected region as an error state.
 
 Issue #36 owns this shared visual anatomy. Issue #37 owns its production component and shell
 implementation. Identity issue #40 owns session, account, ownership, and access behavior. Later
