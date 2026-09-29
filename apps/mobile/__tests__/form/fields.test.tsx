@@ -136,7 +136,7 @@ describe('date field', () => {
     expect(input('date').props.value).toBe('12/09/2026');
   });
 
-  it('reports back an unambiguous stored value', async () => {
+  it('reports back an unambiguous stored value when typed', async () => {
     const onChangeValue = jest.fn();
 
     await renderWithProviders(
@@ -166,6 +166,40 @@ describe('date field', () => {
 
     expect(onInvalid).toHaveBeenCalledWith(DATE_ERROR_MESSAGES['invalid-day']);
     expect(onChangeValue).not.toHaveBeenCalled();
+  });
+
+  it('offers a named control that opens the platform picker', async () => {
+    await renderWithProviders(<DateField label="Ngày định giá" testID="date" value="" />);
+
+    /**
+     * Section 16.2 wants the platform picker with typing as the alternative, so both routes are
+     * present: the field accepts a typed date and this control opens the picker.
+     */
+    expect(screen.getByLabelText('Mở bộ chọn ngày')).toBeTruthy();
+  });
+
+  it('keeps the picker closed until it is asked for', async () => {
+    await renderWithProviders(<DateField label="Ngày định giá" testID="date" value="" />);
+
+    expect(screen.queryByTestId('date-picker')).toBeNull();
+  });
+
+  it('opens the picker when the control is pressed', async () => {
+    await renderWithProviders(<DateField label="Ngày định giá" testID="date" value="" />);
+
+    fireEvent.press(screen.getByLabelText('Mở bộ chọn ngày'));
+
+    await waitFor(() => expect(screen.getByTestId('date-picker')).toBeTruthy());
+  });
+
+  it('does not offer the picker on a read-only field', async () => {
+    await renderWithProviders(
+      <DateField label="Ngày định giá" readOnly testID="date" value="2026-09-12" />,
+    );
+
+    expect(screen.getByLabelText('Mở bộ chọn ngày').props.accessibilityState).toMatchObject({
+      disabled: true,
+    });
   });
 });
 
