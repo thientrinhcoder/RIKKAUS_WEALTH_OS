@@ -63,7 +63,15 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                 .as(
                         "A non-production path leaked into the contract. A test controller inside the "
                                 + "component-scan root is the usual cause.")
-                .containsExactly("/api/v1/meta");
+                // In any order, not containsExactly: the served document's key order is springdoc's own,
+                // and the canonicalizing mapper sorts keys on the way out rather than in the parsed tree.
+                // The set is still exact, which is what catches a leaked path.
+                .containsExactlyInAnyOrder(
+                        "/api/v1/auth/google",
+                        "/api/v1/auth/logout",
+                        "/api/v1/auth/refresh",
+                        "/api/v1/auth/session",
+                        "/api/v1/meta");
     }
 
     @Test

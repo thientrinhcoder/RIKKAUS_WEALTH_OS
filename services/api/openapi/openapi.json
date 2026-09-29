@@ -10,6 +10,216 @@
     "description" : "Relative to the deployment's own base URL"
   } ],
   "paths" : {
+    "/api/v1/auth/refresh" : {
+      "post" : {
+        "tags" : [ "authentication-controller" ],
+        "summary" : "Renew a session",
+        "description" : "Exchanges a refresh token for a new access token and a new refresh token. The presented token is single-use: presenting it again is treated as evidence that it leaked and revokes the whole session.",
+        "operationId" : "renew",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshSessionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The session was renewed",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The refresh token is missing from the body",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "The refresh token is unknown, expired, already used, or revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout" : {
+      "post" : {
+        "tags" : [ "authentication-controller" ],
+        "summary" : "Sign out",
+        "description" : "Revokes the session the refresh token belongs to. Returns 204 whether or not the token was still live, so the endpoint cannot be used to test whether a token is valid.",
+        "operationId" : "signOut",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshSessionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "The session is no longer usable"
+          },
+          "400" : {
+            "description" : "The refresh token is missing from the body",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/google" : {
+      "post" : {
+        "tags" : [ "authentication-controller" ],
+        "summary" : "Complete a Google sign-in and start a session",
+        "description" : "Exchanges an authorization code with Google using PKCE, creates the account on first sign-in, and returns an access token with a rotating refresh token. Google is the only identity provider; there is no password.",
+        "operationId" : "signInWithGoogle",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GoogleSignInRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The session was established",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A field is missing, or the redirect URI is not allowlisted",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "redirect URI not allowlisted" : {
+                    "description" : "redirect URI not allowlisted",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/auth/google",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "redirectUri",
+                        "message" : "is not an allowed redirect URI"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Google rejected the code, or the identity could not be verified",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/meta" : {
       "get" : {
         "tags" : [ "meta-controller" ],
@@ -69,6 +279,59 @@
           }
         }
       }
+    },
+    "/api/v1/auth/session" : {
+      "get" : {
+        "tags" : [ "authentication-controller" ],
+        "summary" : "Read the signed-in user",
+        "description" : "Confirms the access token is still valid and returns who it belongs to. This is how a client tells a live session from an expired or revoked one without having to infer it from a failed domain request.",
+        "operationId" : "currentSession",
+        "responses" : {
+          "200" : {
+            "description" : "The session is live",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthenticatedUserResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
     }
   },
   "components" : {
@@ -121,6 +384,92 @@
         },
         "required" : [ "status", "title", "type" ]
       },
+      "RefreshSessionRequest" : {
+        "type" : "object",
+        "description" : "Carries the refresh token identifying the session to renew or end.",
+        "properties" : {
+          "refreshToken" : {
+            "type" : "string",
+            "description" : "The refresh token returned by the most recent sign-in or renewal.",
+            "example" : "1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "refreshToken" ]
+      },
+      "AuthenticatedUserResponse" : {
+        "type" : "object",
+        "description" : "The signed-in user.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "example" : "0f2c8d14-6b3a-4c7e-9f51-8ad2e6b40c93"
+          },
+          "email" : {
+            "type" : "string",
+            "example" : "an.nguyen@example.com"
+          },
+          "displayName" : {
+            "type" : "string",
+            "example" : "An Nguyễn"
+          }
+        }
+      },
+      "SessionResponse" : {
+        "type" : "object",
+        "description" : "A signed-in session: an access token, its lifetime, and the refresh token.",
+        "properties" : {
+          "accessToken" : {
+            "type" : "string",
+            "description" : "Signed JWT to send as `Authorization: Bearer`.",
+            "example" : "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwZjJjOGQxNCJ9.placeholder-signature"
+          },
+          "tokenType" : {
+            "type" : "string",
+            "example" : "Bearer"
+          },
+          "expiresInSeconds" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Seconds until the access token expires.",
+            "example" : 900
+          },
+          "refreshToken" : {
+            "type" : "string",
+            "description" : "Single-use token for renewing the session. Rotated on every renewal.",
+            "example" : "1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/AuthenticatedUserResponse"
+          }
+        }
+      },
+      "GoogleSignInRequest" : {
+        "type" : "object",
+        "description" : "Completes a Google sign-in started by the client.",
+        "properties" : {
+          "authorizationCode" : {
+            "type" : "string",
+            "description" : "The authorization code Google returned to the client's redirect URI.",
+            "example" : "4/0AbUR2VPlaceholderAuthorizationCode",
+            "minLength" : 1
+          },
+          "codeVerifier" : {
+            "type" : "string",
+            "description" : "The PKCE code verifier for the challenge sent when the flow started.",
+            "example" : "dBjftJeZ4CVPmB92K27uhbUJU1p1r-wW1gFWFOEjXk",
+            "minLength" : 1
+          },
+          "redirectUri" : {
+            "type" : "string",
+            "description" : "The redirect URI used to obtain the code. Must appear in the server's allowlist.",
+            "example" : "https://app.rikkaus.example/auth/callback",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "authorizationCode", "codeVerifier", "redirectUri" ]
+      },
       "MetaResponse" : {
         "type" : "object",
         "properties" : {
@@ -147,6 +496,14 @@
           "type" : "string",
           "pattern" : "^[A-Za-z0-9-]{8,64}$"
         }
+      }
+    },
+    "securitySchemes" : {
+      "bearerAuth" : {
+        "type" : "http",
+        "description" : "The access token returned by /api/v1/auth/google or /api/v1/auth/refresh. Short-lived; renew with the refresh token rather than waiting for a 401.",
+        "scheme" : "bearer",
+        "bearerFormat" : "JWT"
       }
     }
   }
