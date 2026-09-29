@@ -109,6 +109,30 @@ jobs:
           cache: "true"
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
+      # Infrastructure misconfiguration.
+      #
+      # The severity range is wider than the two vulnerability scans above, and the asymmetry is
+      # deliberate. A LOW or MEDIUM CVE is frequently unfixable and arrives in numbers nobody can
+      # act on, so gating on it produces a check that gets switched off. A misconfiguration is the
+      # opposite: the set is finite, deterministic, and every one of them is a choice somebody made
+      # in a file in this repository. Failing on all of them is affordable precisely because the
+      # existing ones have been triaged to zero.
+      #
+      # A new finding therefore has exactly two honest resolutions: change the infrastructure, or
+      # add an entry to infra/aws/.trivyignore.yaml saying what the check wants, why this
+      # environment does not do it, and what would change the answer. Every existing entry carries
+      # that statement and an expiry, so none of them is permanent.
+      - name: Scan infrastructure for misconfiguration
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infra/aws
+          trivyignores: infra/aws/.trivyignore.yaml
+          format: table
+          exit-code: "1"
+          cache: "true"
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+
       # Uploaded unconditionally. A failing run is exactly the run whose reports somebody needs,
       # and `if: always()` is what keeps them reachable after a red build.
       - name: Publish test and coverage reports

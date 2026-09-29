@@ -150,13 +150,56 @@ resource "aws_vpc_security_group_ingress_rule" "api_from_alb" {
   ip_protocol                  = "tcp"
 }
 
-# Unrestricted egress. The task pulls its image from ECR, writes to CloudWatch Logs and fetches
-# Google's signing keys, all over HTTPS to endpoints whose addresses are not fixed.
-resource "aws_vpc_security_group_egress_rule" "api_all" {
+# Egress, enumerated rather than opened.
+#
+# This was `ip_protocol = "-1"` to `0.0.0.0/0` on the reasoning that the task's destinations — ECR,
+# CloudWatch Logs, Google's JWKS endpoint — have no fixed addresses. That is true of the addresses
+# and not of the ports: every one of those is HTTPS. Allowing every protocol to every address also
+# grants a compromised task a free outbound channel on any port, which is exactly the path data
+# leaves by.
+#
+# Three rules replace it, which is the complete set of what the task actually does.
+#
+# If a deployment ever fails with CannotPullContainerError or a task starts and logs nothing, this
+# block is the first place to look: widening it back to `ip_protocol = "-1"` will confirm or clear
+# it in one apply.
+resource "aws_vpc_security_group_egress_rule" "api_https" {
   security_group_id = aws_security_group.api.id
-  description       = "Outbound to ECR, CloudWatch and Google"
+  description       = "HTTPS to ECR, S3 for image layers, CloudWatch Logs and Google"
   cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+}
+
+# The VPC resolver, which lives inside the VPC's own range. Without this nothing resolves and the
+# HTTPS rule above is useless — the failure looks like a network outage rather than a missing rule,
+# which is why it is called out here.
+resource "aws_vpc_security_group_egress_rule" "api_dns_udp" {
+  security_group_id = aws_security_group.api.id
+  description       = "DNS to the VPC resolver"
+  cidr_ipv4         = var.vpc_cidr
+  from_port         = 53
+  to_port           = 53
+  ip_protocol       = "udp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_dns_tcp" {
+  security_group_id = aws_security_group.api.id
+  description       = "DNS over TCP, for responses too large for UDP"
+  cidr_ipv4         = var.vpc_cidr
+  from_port         = 53
+  to_port           = 53
+  ip_protocol       = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "api_database" {
+  security_group_id            = aws_security_group.api.id
+  description                  = "PostgreSQL to the database"
+  referenced_security_group_id = aws_security_group.database.id
+  from_port                    = 5432
+  to_port                      = 5432
+  ip_protocol                  = "tcp"
 }
 
 resource "aws_security_group" "database" {

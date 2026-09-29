@@ -105,11 +105,59 @@ Everything here was run, not reasoned about:
 unproven here and the first pull request is what will prove it. If it fails, the fallbacks in order
 are `build-mode: none`, or dropping the job and recording the gap.
 
-## What is still not covered
+## Infrastructure misconfiguration, added and triaged
 
-- **Infrastructure misconfiguration.** Trivy can scan the OpenTofu for an unencrypted volume or an
-  over-permissive rule with `scanners: misconfig`; it is deliberately not enabled, because it
-  produces findings needing triage before the gate can be trusted.
+Enabled after the rest, on the Product Owner's instruction. The first scan of `infra/aws` returned
+**thirteen findings**. Two were defects and were fixed; eleven were decisions and were recorded.
+
+**AWS-0052, invalid header fields.** Fixed. `drop_invalid_header_fields = true` on the load
+balancer. Two proxies sit in front of the application, and request smuggling is what happens when
+two of them disagree about where one request ends and the next begins. No cost, nothing legitimate
+rejected.
+
+**AWS-0104, unrestricted egress.** Fixed in substance. The task security group allowed every
+protocol to every address, justified by the fact that ECR, CloudWatch and Google have no fixed
+addresses — true of the addresses, and not of the ports, since all three are HTTPS. It is now TCP
+443 outbound, DNS scoped to the VPC range, and PostgreSQL scoped to the database security group.
+
+That one is worth dwelling on, because **the check still fires**: it flags any `0.0.0.0/0`
+destination regardless of port. The finding persisting does not mean nothing changed — a compromised
+task no longer has a free outbound channel on any port, which is the path data leaves by. Removing
+the finding entirely would mean VPC interface endpoints for ECR, S3 and CloudWatch at roughly seven
+US dollars each per availability zone, and Google's JWKS endpoint would still require 443 outbound
+afterwards, so the spend would not even buy the clean result. It is recorded as accepted with that
+arithmetic written down.
+
+The remaining eleven are in `infra/aws/.trivyignore.yaml`, each with a statement naming what the
+check wants, why this environment does not do it, and what would change the answer:
+
+| Finding | Why accepted |
+|---|---|
+| AWS-0054 plain HTTP listener | Structural: an ALB cannot serve HTTPS on its generated hostname. Only CloudFront reaches it |
+| AWS-0053 internet-facing load balancer | True in the AWS sense, not the reachable sense. CloudFront VPC origins would remove it |
+| AWS-0011 no WAF | A standing cost against an environment whose whole surface is three anonymous endpoints |
+| AWS-0010 no CloudFront access logs | Needs a bucket; the application's own correlation-tagged logs cover diagnosis at this stage |
+| AWS-0176 no RDS IAM auth | Would make the application depend on the AWS SDK to start, breaking the VPS portability the architecture requires |
+| AWS-0177 no deletion protection | This environment is meant to be destroyed and rebuilt; Production is not deployed from this stack |
+| AWS-0178 no VPC flow logs | Detects unexpected traffic, a question for an environment carrying real data |
+| AWS-0017, AWS-0033 AWS-managed keys not CMKs | Logs carry no secrets by rule; image layers carry none by construction |
+| AWS-0034 Container Insights off | Explicit cost decision, in an environment meant to scale to zero |
+| AWS-0133 Performance Insights off | Profiles queries, on a database with one baseline migration and no domain tables |
+
+Every entry expires on **2027-04-01**, so all twelve decisions resurface together at the next
+infrastructure review rather than quietly becoming permanent.
+
+**The gate fails on any severity**, which is stricter than the two vulnerability scans and
+deliberately so. A LOW CVE is often unfixable and arrives in numbers; a misconfiguration is finite,
+deterministic, and always somebody's choice in a file here. Triaging the existing ones to zero is
+what makes the stricter setting affordable.
+
+It was then proved to be a gate rather than a suppression file. Planted canaries — a publicly
+accessible RDS instance, an unencrypted one, a security group opening SSH to the world, and a bare
+S3 bucket — produced thirteen new findings across four rules, none of them masked by the existing
+entries, because each entry is scoped to one rule identifier in one file.
+
+## What is still not covered
 - **Dependabot security updates are off at the repository level.** The committed file opens
   scheduled version bumps, but an out-of-cycle advisory raises nothing until the toggle in
   Settings → Code security is switched on. That is the repository owner's change to make, not one

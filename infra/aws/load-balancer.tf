@@ -23,6 +23,12 @@ resource "aws_lb" "api" {
   # deployed from this stack.
   enable_deletion_protection = false
 
+  # Rejects requests with malformed headers instead of passing them through. Two proxies sit in
+  # front of the application — CloudFront and this load balancer — and request smuggling is what
+  # happens when two of them disagree about where one request ends and the next begins. There is no
+  # cost and nothing legitimate is rejected.
+  drop_invalid_header_fields = true
+
   # Comfortably longer than any request this API serves, so a slow response is not cut short by the
   # load balancer before the application has answered.
   idle_timeout = 60

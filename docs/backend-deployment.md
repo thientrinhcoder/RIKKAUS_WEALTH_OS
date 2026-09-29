@@ -21,6 +21,7 @@ a data source or a toggle first.
 | HTTPS front end | [`infra/aws/cdn.tf`](../infra/aws/cdn.tf) |
 | Formatting, test and coverage gates | [`services/api/pom.xml`](../services/api/pom.xml) |
 | Secret-scanning rules | [`.gitleaks.toml`](../.gitleaks.toml) |
+| Triaged infrastructure findings | [`infra/aws/.trivyignore.yaml`](../infra/aws/.trivyignore.yaml) |
 | Dependency update policy | [`.github/dependabot.yml`](../.github/dependabot.yml) |
 
 ## The pipeline
@@ -69,6 +70,7 @@ cannot run unless `publish` succeeded, and `publish` is admitted only on a liste
 | Dependency vulnerabilities | Trivy filesystem scan in `verify` | yes |
 | Container and OS vulnerabilities | Trivy image scan in `publish` | no — nothing is built on a PR |
 | Security defects in our own code | CodeQL `security-extended` | yes |
+| Infrastructure misconfiguration | Trivy config scan in `verify` | yes |
 | Vulnerable dependencies over time | Dependabot | n/a — opens pull requests |
 
 Two limits are worth stating rather than assuming.
@@ -82,10 +84,17 @@ whoever holds it can mint a valid access token for any user. That is the gap
 canaries in both the shapes that secret travels in — an environment assignment and the JSON
 `name`/`value` pair an ECS task definition uses — as well as against the repository's real history.
 
-**Infrastructure misconfiguration is not scanned.** Trivy can check OpenTofu for things like an
-unencrypted volume or an over-permissive rule (`scanners: misconfig`), and it is not enabled here.
-That is a deliberate omission rather than an oversight: turning it on produces findings that need
-triage before the gate can be trusted, and this change was already large.
+**The infrastructure gate fails on any severity, unlike the vulnerability gates.** A LOW or MEDIUM
+CVE is often unfixable and arrives in numbers nobody can act on, so gating on it produces a check
+that gets switched off. A misconfiguration is the opposite: finite, deterministic, and every one is
+a choice somebody made in a file here. The existing findings are triaged to zero, which is what
+makes the stricter setting affordable.
+
+A new infrastructure finding has two honest resolutions: change the infrastructure, or add an entry
+to [`infra/aws/.trivyignore.yaml`](../infra/aws/.trivyignore.yaml) stating what the check wants, why
+this environment does not do it, and what would change the answer. Every existing entry carries that
+statement and an expiry of **2027-04-01**, so none is permanent and all of them resurface together
+at the next infrastructure review. An entry with no statement should fail review.
 
 ### If the secret scan fails
 
@@ -327,4 +336,8 @@ These are accepted for this environment, not oversights.
   opens scheduled version-bump pull requests, but an out-of-cycle security advisory raises nothing
   until the toggle in Settings → Code security is switched on. That setting is the repository
   owner's to change.
-- **Infrastructure misconfiguration is not scanned**, as described above.
+- **Twelve infrastructure findings are accepted, not fixed.** Each is recorded with its reasoning
+  and an expiry in [`infra/aws/.trivyignore.yaml`](../infra/aws/.trivyignore.yaml). The ones most
+  worth knowing: there is no WAF on the distribution, no CloudFront access logging, and no VPC flow
+  logs — all cost decisions taken against an environment with no user data, and all of which should
+  be re-asked before a pilot user is given the URL.
