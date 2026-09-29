@@ -1,18 +1,16 @@
-# Public entry point.
+# The origin behind the CDN.
 #
-# An internet-facing Application Load Balancer on its AWS-generated DNS name, listening on HTTP
-# port 80. No ACM certificate and no custom domain: that is the Product Owner's accepted decision
-# for this environment, recorded in plans/260929-1826-GH-47-backend-cicd-aws-ecs/plan.md.
+# This load balancer is internet-facing in the AWS sense — it sits in public subnets and has a
+# public DNS name — but it is not reachable from the internet: the security group in network.tf
+# admits only CloudFront's edge addresses. Viewers arrive at the distribution in cdn.tf over HTTPS,
+# and this is what it forwards to.
 #
-# What it costs, stated plainly so nobody has to rediscover it:
-#   * Traffic between a reviewer's browser and this listener is unencrypted. Nothing that matters
-#     should be sent to this environment, and the Google sign-in that issue #42 adds will not be
-#     usable from here until HTTPS lands, because Google refuses a plain-HTTP redirect URI.
-#   * A browser page served over HTTPS cannot call an HTTP API; it is blocked as mixed content. The
-#     Expo web preview from issue #46 will therefore need HTTPS here before it can talk to this
-#     environment from anywhere but a local page.
-# Both are removed by adding a certificate and a 443 listener, which is a small change to this file
-# and one more security-group rule.
+# It therefore stays on plain HTTP with no certificate, which is not a compromise but the direct
+# consequence of the chosen approach: a certificate here would have to name a domain, and the whole
+# point of fronting with CloudFront was to get HTTPS without owning one.
+#
+# `api_base_url` in outputs.tf is the CloudFront hostname, not this one. Nothing should be pointed
+# at the ALB's DNS name — it will simply time out.
 
 resource "aws_lb" "api" {
   name               = "${local.name}-alb"

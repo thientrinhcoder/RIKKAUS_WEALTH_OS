@@ -169,12 +169,22 @@ Development and test may share one small RDS instance to reduce cost, but must u
 - ECS Fargate service for the Spring Boot API.
 - ECR repository for immutable API images.
 - One shared Application Load Balancer for development and testing where practical.
-- ACM certificates and HTTPS for all remote environments.
-- S3 and CloudFront for the Expo web build.
+- HTTPS for all remote environments, by ACM certificate where a domain exists.
+- S3 and CloudFront for the Expo web build, and CloudFront in front of the API where the environment has no domain.
 - RDS PostgreSQL with isolated databases and credentials per environment.
 - Systems Manager Parameter Store or Secrets Manager for runtime secrets.
 - CloudWatch Logs for API logs and deployment diagnosis.
 - OpenTofu definitions committed under `infra/aws/`.
+
+> **Amended during issue #47.** This list required ACM certificates. The Development environment
+> has no domain, and an Application Load Balancer cannot serve HTTPS on its generated hostname
+> because AWS owns `elb.amazonaws.com` and issues no certificate for a name under it, so ACM was
+> not available without first buying a domain. The Product Owner chose CloudFront's default
+> `*.cloudfront.net` certificate instead, which satisfies the HTTPS requirement with nothing to buy
+> or renew. The load balancer accepts connections only from CloudFront's published edge ranges, so
+> the API cannot be reached in clear text. ACM becomes the mechanism again the moment a custom
+> domain is adopted, and the certificate must then be issued in us-east-1, which is the only region
+> CloudFront accepts one from.
 
 Development and testing services should scale to zero outside active test windows where the workflow permits. Cost controls must not weaken environment isolation or expose PostgreSQL publicly.
 

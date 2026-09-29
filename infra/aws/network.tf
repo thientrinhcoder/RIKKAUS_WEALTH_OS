@@ -91,15 +91,34 @@ resource "aws_security_group" "alb" {
   tags = { Name = "${local.name}-alb" }
 }
 
-# Port 80 only, and open to the world, because the accepted decision for this environment is a
-# plain-HTTP listener on the load balancer's own DNS name with no certificate. Traffic between a
-# reviewer's browser and this listener is unencrypted; that is the known cost of skipping ACM, it
-# is recorded in the plan and the runbook, and it is why no real credential should ever be sent to
-# this environment. Adding HTTPS later is a listener, a certificate and one more rule here.
-resource "aws_vpc_security_group_ingress_rule" "alb_http" {
+# Port 80, and reachable only from CloudFront.
+#
+# HTTPS is terminated at the CloudFront distribution in cdn.tf, which speaks HTTP to this load
+# balancer. That alone would leave the ALB's own DNS name answering on plain HTTP to anyone who
+# found it, which is not a theoretical problem: once the identity work in issue #42 merges, a
+# person handed that URL would send a session token in clear text. AWS publishes the set of
+# addresses its edge servers originate from as a managed prefix list, so the rule below closes the
+# ALB to everything else and the only way in is through the HTTPS front door.
+#
+# What this does not do is prove the request came from *our* distribution — any CloudFront
+# distribution originates from these addresses. Pinning that further means a shared secret header
+# and a listener rule to check it, which is not added here because there is nothing at the edge to
+# bypass: CloudFront performs no authentication, so reaching the ALB directly grants an attacker
+# nothing it would not already get through the front door. What the prefix list buys is the
+# guarantee that no reviewer, script or bookmark can reach this API over plain HTTP by accident,
+# and that is the risk that actually exists.
+data "aws_ec2_managed_prefix_list" "cloudfront_origin_facing" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
+# Note for whoever adds the next rule to this group: a prefix list consumes one rule entry per
+# address in it, not one in total, and CloudFront's is large. The group's rules count against a
+# quota that defaults to 60, so this one rule accounts for most of it. Raising the quota is a
+# support request, not a configuration change.
+resource "aws_vpc_security_group_ingress_rule" "alb_http_from_cloudfront" {
   security_group_id = aws_security_group.alb.id
-  description       = "HTTP from the internet"
-  cidr_ipv4         = "0.0.0.0/0"
+  description       = "HTTP from CloudFront edge servers only"
+  prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront_origin_facing.id
   from_port         = 80
   to_port           = 80
   ip_protocol       = "tcp"

@@ -21,7 +21,6 @@ on:
   push:
     branches:
       - main
-      - develop
     paths:
       - "services/api/**"
       - ".github/workflows/backend.yml"

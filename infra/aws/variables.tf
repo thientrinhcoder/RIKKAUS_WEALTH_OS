@@ -22,9 +22,9 @@ variable "github_repository" {
 }
 
 variable "github_deploy_branches" {
-  description = "Branches whose workflow runs may assume the deploy role. A pull-request run from a fork carries a different subject and cannot match, which is the second half of the guarantee the workflow's own `if` makes."
+  description = "Branches whose workflow runs may assume the deploy role. The Product Owner deploys Development from main, so that is the only entry; the architecture's `develop` branch was never created. A pull-request run, or a run from a fork, carries a different subject and cannot match, which is the second half of the guarantee the workflow's own `if` makes."
   type        = list(string)
-  default     = ["main", "develop"]
+  default     = ["main"]
 }
 
 variable "vpc_cidr" {
@@ -98,6 +98,17 @@ variable "google_oauth_redirect_uris" {
   description = "Comma-separated exact-match allowlist of OAuth redirect URIs. Empty permits none, which is how the application fails closed."
   type        = string
   default     = ""
+}
+
+variable "cloudfront_price_class" {
+  description = "Which edge locations the distribution uses. PriceClass_200 includes Asia, which is where this team and its reviewers are; PriceClass_100 is cheaper but serves Vietnam from North America and Europe, adding a noticeable round trip to every call."
+  type        = string
+  default     = "PriceClass_200"
+
+  validation {
+    condition     = contains(["PriceClass_100", "PriceClass_200", "PriceClass_All"], var.cloudfront_price_class)
+    error_message = "Must be one of PriceClass_100, PriceClass_200 or PriceClass_All."
+  }
 }
 
 variable "log_retention_days" {

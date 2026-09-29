@@ -18,12 +18,13 @@ a data source or a toggle first.
 | Quality gate, image build, scan, push, deploy | [`.github/workflows/backend.yml`](../.github/workflows/backend.yml) |
 | Container image | [`services/api/Dockerfile`](../services/api/Dockerfile) |
 | AWS infrastructure | [`infra/aws/`](../infra/aws/) |
+| HTTPS front end | [`infra/aws/cdn.tf`](../infra/aws/cdn.tf) |
 | Formatting, test and coverage gates | [`services/api/pom.xml`](../services/api/pom.xml) |
 
 ## The pipeline
 
-A push to `main` or `develop` that touches `services/api/**`, `infra/aws/**` or the workflow itself
-runs three jobs in order. A pull request runs only the first.
+A push to `main` that touches `services/api/**`, `infra/aws/**` or the workflow itself runs three
+jobs in order. A pull request runs only the first.
 
 1. **verify** — `./mvnw verify` in `services/api`: Spotless formatting check, compile, Surefire
    unit tests, Failsafe integration tests against a real PostgreSQL started by Testcontainers, and
@@ -32,7 +33,7 @@ runs three jobs in order. A pull request runs only the first.
 2. **publish** — builds the image, scans it with Trivy, and pushes it to ECR tagged with the commit
    SHA. The scan runs against the locally built image, before the push, so a vulnerable image never
    reaches the registry. A fixable HIGH or CRITICAL finding fails the job.
-3. **deploy** — reads the live ECS task definition, replaces the `api` container's image with the
+3. **deploy** — reads the OpenTofu-owned ECS task definition, replaces the `api` container's image with the
    digest just published, registers a new revision, rolls the service, waits for it to stabilise,
    and then calls `/actuator/health` and `/api/v1/meta` on the public URL. A deployment that does
    not answer is a red build, not a surprise for whoever opens the page next.
@@ -48,9 +49,36 @@ The subject a run presents depends on the job. `publish` declares no environment
 therefore in the trust policy. What keeps `deploy` on an allowed branch is `needs: publish`: it
 cannot run unless `publish` succeeded, and `publish` is admitted only on a listed branch.
 
-> **`develop` does not exist yet.** The architecture's branch policy deploys Development from
-> `develop`; this repository currently integrates on `main`, so both are wired as triggers and as
-> permitted OIDC subjects. Creating `develop` later needs no change here.
+> **Development deploys from `main`.** The architecture's branch policy names `develop`, but that
+> branch was never created and this repository integrates on `main`, so the Product Owner chose
+> `main` as the integration branch. It is the only push trigger and the only branch in the deploy
+> role's trust policy. Adopting `develop` later means adding it in both places, which is
+> `.github/workflows/backend.yml` and the `github_deploy_branches` variable.
+
+## How a request reaches the API
+
+```
+browser ──HTTPS──> CloudFront ──HTTP──> ALB ──HTTP──> Fargate task ──> RDS
+          (*.cloudfront.net cert)   (CloudFront IPs only)   (ALB SG only)   (task SG only)
+```
+
+HTTPS is terminated at CloudFront, on its own `*.cloudfront.net` certificate. That is why there is
+no ACM certificate and no domain anywhere in this stack: an ALB cannot serve HTTPS on its generated
+hostname, because AWS owns `elb.amazonaws.com` and issues no certificate for it, and CloudFront's
+default certificate is the only HTTPS that needs nothing bought or renewed.
+
+The load balancer's own DNS name is **not** a usable address. Its security group admits only
+CloudFront's published edge ranges, so a request from anywhere else times out. `tofu output -raw
+alb_dns_name` exists for diagnosis, nothing more. That closure is what stops a bookmark, a script
+or a reviewer from reaching this API in clear text — which matters from the moment issue #42 lands,
+because a session token on a plain-HTTP hop is readable in transit.
+
+The last two hops are HTTP, inside the VPC. Encrypting them would need a certificate on the load
+balancer, which needs a domain, which is the option not taken. Because TLS ends at the edge, the
+task runs with `SERVER_FORWARD_HEADERS_STRATEGY=framework` so the application honours
+`X-Forwarded-Proto` and builds absolute URLs — an OAuth redirect above all — as `https`. That is
+safe here precisely because nothing but CloudFront can reach the load balancer, so those headers
+cannot be forged by a client.
 
 ## First-time setup
 
@@ -73,7 +101,9 @@ are the two that cost money whether or not anyone uses them.
 tofu apply -var-file=development.tfvars
 ```
 
-The first apply takes about ten minutes, nearly all of it waiting for RDS.
+The first apply takes fifteen to twenty-five minutes. RDS and the CloudFront distribution are both
+slow to create, and OpenTofu waits for the distribution to finish deploying so that when the apply
+returns the URL genuinely works.
 
 **The first apply ends with a failed deployment on record, and that is expected.** The service
 starts on a placeholder image that answers nothing, so its target never becomes healthy, so the
@@ -142,7 +172,12 @@ Expected:
 ```
 
 Both endpoints are anonymous by design, so a QE engineer needs no credential and no VPN — a browser
-is enough. `buildVersion` and the workflow's run summary together identify which commit is live.
+is enough, and the URL is HTTPS so the browser will not warn. `buildVersion` and the workflow's run
+summary together identify which commit is live.
+
+The hostname is opaque, something like `https://d2x3k9abcdef.cloudfront.net`. That is fine for a QE
+engineer and wrong for a pilot user; a readable address means adopting a domain, which is the
+follow-up described under Known limitations.
 
 ## Changing runtime configuration
 
@@ -218,12 +253,21 @@ edit to an applied one.
 
 These are accepted for this environment, not oversights.
 
-- **No HTTPS.** The listener is plain HTTP on the load balancer's AWS DNS name. Traffic is
-  unencrypted, so nothing real should be sent here. It also means two things do not work yet:
-  Google refuses a plain-HTTP redirect URI, so the sign-in from issue #42 cannot be exercised
-  through this environment; and a browser page served over HTTPS will block a call to it as mixed
-  content, which the Expo web preview from issue #46 will hit. Fixing it is an ACM certificate, a
-  443 listener and one security-group rule.
+- **The hostname is opaque and not ours.** HTTPS works, but the address is a generated
+  `*.cloudfront.net` name. Handing that to a pilot user is wrong, and the name changes if the
+  distribution is ever destroyed and recreated. Adopting a domain means an ACM certificate issued
+  **in us-east-1** — CloudFront accepts certificates from no other region — plus `aliases` on the
+  distribution and a DNS record pointing at it. `API_BASE_URL` and every registered Google OAuth
+  redirect URI change with it.
+- **The internal hops are unencrypted.** CloudFront reaches the load balancer, and the load
+  balancer the task, over plain HTTP inside the VPC. Encrypting the first hop needs a certificate
+  on the ALB, which needs a domain. This is the accepted trade for HTTPS without one.
+- **A distribution change takes about ten minutes.** Editing `cdn.tf` and applying is slow, and
+  `tofu apply` waits it out. Deployments of the API do not touch the distribution and are
+  unaffected.
+- **Certificate renewal is AWS's problem, not yours** — which is the upside of the default
+  certificate, and disappears the day a custom domain is adopted, because an ACM certificate
+  renews only while its DNS validation record stays in place.
 - **State is local.** `tofu` writes `terraform.tfstate` next to the configuration, and it contains
   the generated database password and JWT signing key in plain text. It is git-ignored. Before a
   second person runs an apply, move it to an S3 backend with locking — two divergent local states

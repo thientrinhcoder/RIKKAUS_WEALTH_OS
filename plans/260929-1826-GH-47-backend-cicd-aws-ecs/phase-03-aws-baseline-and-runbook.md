@@ -80,10 +80,10 @@ were about to run earns its keep.
 
 ## Known limitations, accepted rather than overlooked
 
-- **No HTTPS.** The accepted decision for this environment. Traffic is unencrypted; Google refuses
-  a plain-HTTP redirect URI, so the sign-in from issue #42 cannot be exercised here; and an HTTPS
-  page cannot call an HTTP API, which the Expo web preview from issue #46 will hit. Recorded in
-  `load-balancer.tf`, the runbook and `README.md`, all three stating the same thing.
+- ~~**No HTTPS.**~~ Superseded by [phase-04](phase-04-https-and-main-only-deploys.md). The Product
+  Owner asked for HTTPS after reading this, and a CloudFront distribution now terminates TLS in
+  front of the load balancer. All three consequences recorded here — unencrypted traffic, Google
+  refusing a plain-HTTP redirect URI, and an HTTPS page unable to call an HTTP API — are resolved.
 - **State is local** and holds the generated database password and signing key in plain text. It is
   git-ignored. An S3 backend with locking is needed before a second operator applies.
 - **Nothing was applied.** No AWS resource was created and no live URL was verified, per the

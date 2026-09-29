@@ -98,6 +98,14 @@ resource "aws_ecs_task_definition" "api" {
         # one variable now drives the listener and the application alike. A mismatch would have
         # surfaced as a target that never goes healthy, with nothing naming the cause.
         { name = "SERVER_PORT", value = tostring(var.api_container_port) },
+        # TLS is terminated at CloudFront and the last two hops are plain HTTP, so without this the
+        # application believes every request arrived over HTTP on the container's own port. It then
+        # builds any absolute URL — an OAuth redirect above all, once issue #42 lands — with the
+        # wrong scheme and host, and Google rejects a plain-HTTP redirect URI outright. `framework`
+        # tells Spring to honour the X-Forwarded-* headers that CloudFront and the load balancer
+        # set. It is safe precisely because nothing but CloudFront can reach the load balancer, so
+        # a client cannot forge those headers.
+        { name = "SERVER_FORWARD_HEADERS_STRATEGY", value = "framework" },
       ]
 
       # Resolved by the ECS agent from Parameter Store at start-up and injected into the process

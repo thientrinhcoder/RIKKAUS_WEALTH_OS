@@ -23,7 +23,8 @@ what gets built and one of them contradicts a recorded architecture decision.
 |---|---|---|
 | CI runner | **GitHub Actions** | `ARCHITECTURE_TECHNOLOGY_DECISIONS.md` is amended; no `Jenkinsfile` is written |
 | AWS provisioning | **Product Owner applies the OpenTofu** | This branch authors `infra/aws/` and a runbook; it creates no billed resource and verifies no live URL |
-| Public entry point | **ALB over HTTP on the AWS-generated DNS name** | No domain or ACM certificate; HTTPS is a documented follow-up, and an HTTPS web client cannot call the API until it lands |
+| Public entry point | **CloudFront over HTTPS on its default certificate** | No domain and no ACM certificate; the hostname is a generated `*.cloudfront.net` name, and adopting a readable domain is the follow-up |
+| Deploy branch | **`main`** | The architecture's `develop` was never created; `main` is the only push trigger and the only branch the deploy role trusts |
 
 ## Constraints
 
@@ -38,7 +39,7 @@ what gets built and one of them contradicts a recorded architecture decision.
 
 - Frontend CI and the Expo web preview, which are issue #46.
 - Testing and Production environments, their promotion approvals, and version-tag releases.
-- HTTPS, ACM, and a custom domain, deferred by the accepted decision above.
+- A custom domain and an ACM certificate. HTTPS itself is delivered, terminated at the edge; a readable hostname is not.
 - Browser smoke tests, which need the frontend preview from #46.
 
 ## Phases
@@ -48,6 +49,7 @@ what gets built and one of them contradicts a recorded architecture decision.
 | 1 | Backend quality gates in the Maven build | [phase-01](phase-01-backend-quality-gates.md) | done |
 | 2 | Immutable image and the pipeline | [phase-02](phase-02-immutable-image-and-pipeline.md) | done |
 | 3 | AWS baseline as OpenTofu, and the operator runbook | [phase-03](phase-03-aws-baseline-and-runbook.md) | done |
+| 4 | HTTPS at the edge, and `main` as the deploy branch | [phase-04](phase-04-https-and-main-only-deploys.md) | done |
 
 The image and the workflow that produces it are recorded together, and so are the infrastructure
 and the runbook for operating it, because in each pair neither half is verifiable without the
@@ -61,5 +63,6 @@ other.
       updates the ECS service to that digest.
 - [ ] `infra/aws/` provisions ECR, RDS, ECS Fargate, an ALB and Parameter Store, with no public
       database and no secret in state output.
-- [ ] After the Product Owner applies the stack, `GET <alb-dns>/actuator/health` returns `UP` and
-      `GET <alb-dns>/api/v1/meta` returns the deployed commit, both anonymously.
+- [ ] After the Product Owner applies the stack, `GET <cloudfront-host>/actuator/health` returns
+      `UP` over HTTPS and `GET <cloudfront-host>/api/v1/meta` returns the deployed commit, both
+      anonymously, and the load balancer's own DNS name is unreachable from the internet.

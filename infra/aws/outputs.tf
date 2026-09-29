@@ -8,18 +8,23 @@
 # and in the state file, and printing either would put it in a terminal history and a CI log.
 
 output "api_base_url" {
-  description = "Public base URL of the API. Becomes the GitHub repository variable API_BASE_URL, and is the address the Product Owner and QE verify. HTTP, not HTTPS, by the accepted decision for this environment."
-  value       = "http://${aws_lb.api.dns_name}"
+  description = "Public base URL of the API, over HTTPS on CloudFront's own certificate. Becomes the GitHub repository variable API_BASE_URL, and is the address the Product Owner and QE verify."
+  value       = "https://${aws_cloudfront_distribution.api.domain_name}"
 }
 
 output "health_check_url" {
   description = "The endpoint to open first. Answers {\"status\":\"UP\"} anonymously once a deployment has landed."
-  value       = "http://${aws_lb.api.dns_name}/actuator/health"
+  value       = "https://${aws_cloudfront_distribution.api.domain_name}/actuator/health"
 }
 
 output "meta_url" {
   description = "Reports the build version actually running, which is how a reviewer confirms which commit they are looking at."
-  value       = "http://${aws_lb.api.dns_name}/api/v1/meta"
+  value       = "https://${aws_cloudfront_distribution.api.domain_name}/api/v1/meta"
+}
+
+output "alb_dns_name" {
+  description = "The load balancer behind the distribution. Published for diagnosis only: its security group admits CloudFront alone, so a request sent here from anywhere else times out rather than being refused. Do not hand this to anyone or configure it as an origin."
+  value       = aws_lb.api.dns_name
 }
 
 output "ecr_repository" {

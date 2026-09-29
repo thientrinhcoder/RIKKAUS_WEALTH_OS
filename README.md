@@ -175,14 +175,15 @@ unit, integration and coverage gates; a push to the integration branch publishes
 and rolls an ECS Fargate service that answers on a public URL, so a reviewer can check the running
 API without a checkout.
 
-That preview is exposed over plain HTTP, and the earlier warning that an unauthenticated API must
-not leave local development still holds for anything with data behind it. It is safe today only
-because there is nothing behind it: the only reachable endpoints are `/actuator/health`,
-`/api/v1/meta` and an error surface, all of which are anonymous by design and disclose no user
-data. Before the identity work from issue #42 or any domain endpoint is deployed there, the
-environment needs HTTPS — a certificate and a 443 listener — because a session token crossing a
-plain-HTTP hop is readable in transit. The deployment document records this as a known limitation
-rather than a finished state.
+That preview is served over HTTPS by a CloudFront distribution using its own `*.cloudfront.net`
+certificate, and the load balancer behind it accepts connections from CloudFront alone, so there is
+no way to reach the API in clear text. The address is therefore a generated hostname rather than a
+name of ours; adopting a domain is a follow-up, not a prerequisite.
+
+The earlier warning that an unauthenticated API must not leave local development still applies to
+anything with data behind it. This environment is safe today because there is nothing behind it:
+the only reachable endpoints are `/actuator/health`, `/api/v1/meta` and an error surface, all
+anonymous by design and disclosing no user data.
 
 The backend slice now has unit, integration, Testcontainers and ArchUnit tests, so issue #35's
 original automated-test acceptance criterion is satisfiable: it was intentionally unsatisfied because
