@@ -59,9 +59,11 @@ name a host that resolves to nothing; RFC 9457 does not require the type to dere
 | `forbidden` | `urn:rikkaus:problem:forbidden` | Access denied | 403 |
 | `internal-error` | `urn:rikkaus:problem:internal-error` | Unexpected server error | 500 |
 
-`unauthorized` and `forbidden` are **reserved and currently unreachable**. They are declared now so the
-authentication work can throw them without renegotiating this contract, and so your error classifier
-can handle them before that lands.
+`unauthorized` is now reachable: it is what a missing, expired, revoked or malformed credential returns —
+see *Authentication* below. `forbidden` is declared and remains unreachable in practice, because MVP 0 has a
+single role and an ownership failure deliberately returns `not-found` rather than `forbidden`. Keep handling
+it: it is wired up, so a framework-level denial renders as a conforming problem document rather than as
+Boot's default body.
 
 A real response body, copied from live output rather than invented:
 
@@ -128,38 +130,138 @@ developer's real database.
 `verify` therefore fails closed without a Docker daemon. That is intentional. CI must provide Docker
 rather than reach for `-DskipITs`.
 
-## Ownership contract — shape agreed, enforcement not yet built
+## Authentication
 
-This section exists so the authentication work implements against an agreed interface instead of
-inventing one. **No ownership enforcement exists today.**
+Identity is **Google Account OIDC only**. There is no password, no sign-up endpoint and no app-managed
+credential. That is the accepted product direction (the Product Owner decision recorded in the design for
+issue #40), not an unfinished piece.
+
+### The four routes
+
+| Route | Token needed | Body | Success |
+|---|---|---|---|
+| `POST /api/v1/auth/google` | none | `authorizationCode`, `codeVerifier`, `redirectUri` | 200, a session |
+| `POST /api/v1/auth/refresh` | none | `refreshToken` | 200, a new session |
+| `POST /api/v1/auth/logout` | none | `refreshToken` | 204 |
+| `GET /api/v1/auth/session` | **bearer** | — | 200, the signed-in user |
+
+The client performs the Google handoff and sends the **authorization code**, not an identity token. The
+backend redeems it with PKCE, so the Google client secret never reaches the browser and no Google token is
+ever held by the client. `redirectUri` must appear in the server's exact-match allowlist or the request is
+a 400 with an `errors` entry for `redirectUri`; an unregistered value is never forwarded to Google.
+
+Refresh and logout are deliberately **unauthenticated**. Their credential is the refresh token in the body.
+Requiring a live access token would make an expired session impossible to recover from.
+
+A session response:
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer",
+  "expiresInSeconds": 900,
+  "refreshToken": "1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE",
+  "user": { "id": "0f2c8d14-...", "email": "an.nguyen@example.com", "displayName": "An Nguyễn" }
+}
+```
+
+Send the access token as `Authorization: Bearer <accessToken>`. The published contract declares this as the
+`bearerAuth` security scheme, applied per route rather than globally, so sign-in and renewal are not
+described as needing a token they exist to provide.
+
+### Session lifetimes and rotation
+
+- The access token is a signed JWT valid for **15 minutes**. It carries the user id and session id and
+  nothing else — no email, no name.
+- The refresh token is valid for **30 days** and is **single-use**. Every renewal returns a new one and
+  retires the presented one.
+- **Presenting an already-retired refresh token revokes the entire session.** It is treated as evidence
+  the value leaked, and by then the successor may already be in someone else's hands. The legitimate user
+  is signed out and signs in again.
+- Refresh tokens exist in the database only as a SHA-256 hash. An adaptive password hash is deliberately
+  not used: the token is 256 random bits, so there is no low-entropy secret for a cost factor to protect.
+
+`GET /api/v1/auth/session` is how a client distinguishes a live session from an expired or revoked one
+without inferring it from a failed domain call.
+
+**One limitation, stated plainly:** signing out revokes the ability to renew, not the access token already
+issued. The access token is self-contained and verified without a database lookup, so it stays valid for the
+remainder of its 15 minutes. `AuthenticationFlowIT` asserts this so it cannot change unnoticed.
+
+### Deny by default — a change from the previous contract
+
+The security chain now denies every route that is not explicitly permitted. Two consequences differ from
+the pre-authentication behaviour:
+
+| Request | Was | Is now |
+|---|---|---|
+| Unauthenticated request to an unknown path under `/api/v1` | 404 `not-found` | **401 `unauthorized`** |
+| Any request carrying a malformed or expired bearer token, even to a public route | (not possible) | **401 `unauthorized`** |
+
+The first is deliberate: an unauthenticated caller must not be able to map which paths exist. An
+*authenticated* request to an unknown path still returns 404 `not-found`. The second is also deliberate — a
+bad token is rejected rather than silently treated as anonymous, so clock skew or a rotated key surfaces as
+one clear rejection instead of a confusing success.
+
+The publicly reachable routes are exactly: `GET /api/v1/meta`, the three `POST /api/v1/auth/*` routes above,
+`GET /actuator/health`, and — under the `local` profile only — `/v3/api-docs` and `/swagger-ui/**`.
+`SecurityConfigurationIT` asserts each one individually, so widening the list requires editing a test.
+
+`unauthorized` and `forbidden` are no longer reserved; `unauthorized` is now reachable. `forbidden` remains
+unreachable in practice because MVP 0 has one role and ownership failures return `not-found` — see below.
+
+### Error detail language
+
+Problem `detail` text is English, matching the rest of the taxonomy. The Vietnamese user-facing copy for
+each state — expired session, revoked session, cancelled Google handoff, cross-user denial — is specified by
+the accepted identity design and is mapped by the client from the `type` URN. Do not parse or display
+`detail` as user copy; switch on `type`.
+
+### CORS and credentials
+
+`allowCredentials(false)` stays correct and is not an oversight now that authentication exists. The access
+token travels in an `Authorization` header the client sets explicitly, not in a cookie, so no credential is
+attached by the browser and none needs to be allowed. That is also why CSRF protection is disabled: there is
+no cookie-borne credential to forge. If a cookie session is ever introduced, both decisions must be revisited
+together.
+
+## Ownership enforcement — implemented
+
+Every user-owned query and mutation enforces ownership server-side, and the viewer's identity comes only
+from the verified access token.
 
 - A missing or invalid principal returns `urn:rikkaus:problem:unauthorized` (401).
-- An authenticated principal without rights returns `urn:rikkaus:problem:forbidden` (403).
-- **A resource owned by another user returns `not-found`, not `forbidden`**, so the API does not
-  disclose that another user's record exists.
+- An authenticated principal without rights returns `urn:rikkaus:problem:forbidden` (403). Unreachable in
+  MVP 0, which has a single role.
+- **A resource owned by another user returns `not-found`, not `forbidden`** — and the response body is
+  byte-identical to that of a record that genuinely does not exist. A 403 would confirm the record exists,
+  turning any list of identifiers into an enumeration oracle.
 
-`ARCHITECTURE_TECHNOLOGY_DECISIONS.md:140` requires that every user-owned query and mutation enforce
-ownership on the server and never trust a client-supplied `userId`. That requirement is satisfied by
-the authentication task, not by this foundation.
+Two mechanisms keep this true as slices are added:
 
-Because authentication is absent, **this API must not be exposed beyond local development** until that
-work lands.
+- `OwnershipGuard` is the single enforcement point. It takes the detail text from the taxonomy rather than
+  from the caller, so no slice can write a helpful-sounding message that reintroduces the disclosure.
+- An ArchUnit rule fails the build if any controller method binds a user identifier from a `@PathVariable`
+  or `@RequestParam`. `ARCHITECTURE_TECHNOLOGY_DECISIONS.md` requires never trusting a client-supplied
+  `userId`; this makes that a compile-time guarantee rather than a review habit.
+
+A later slice inherits the whole rule set by extending `OwnershipContract`, which asserts owner-reads-200,
+non-owner-reads-404, non-owner-writes-404, anonymous-401, and the byte-identical-body property.
+
+**What no static rule can guarantee** is that a slice calls `OwnershipGuard` at all. The contract test makes
+doing so cheap; it cannot make omitting it impossible.
 
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
 
-- Authentication, session handling and ownership enforcement.
 - CI pipeline, coverage thresholds, formatting enforcement, and JSON log encoding. The console log
   pattern carries the correlation identifier but is readable text, not structured JSON.
 - Pagination conventions, rate limiting and idempotency keys.
 - Domain resources. Assets, liabilities, cash flow, goals and insights are later work.
+- Account deletion, profile editing, a second identity provider, household or shared access, and roles.
 - **`/actuator/health` is absent from the published contract**, by design, because the contract is
   scoped to `/api/v1/**`. The endpoint works and is CORS-enabled; it simply is not described there.
-- **The contract contains no request-accepting endpoint**, so it carries no 400 validation example and
-  no populated `errors` sample. That is the cost of keeping test scaffolding out of a published
-  contract. The `errors` member is still documented in the schema, so its shape is agreed before the
-  first real request body arrives.
 - **Contract consumption is hand-written this iteration.** `apps/mobile` has no OpenAPI codegen
   dependency and no generate script, so this document and `openapi.json` are review and documentation
   artifacts, not a generation input. If codegen is wanted, it belongs to the frontend task's scope.
