@@ -251,4 +251,52 @@ describe('success state', () => {
 
     expect(onNextAction).toHaveBeenCalledTimes(1);
   });
+
+  it('offers no undo unless the caller asked for one', async () => {
+    await renderWithProviders(
+      <SuccessState
+        message="Đã lưu định giá mới."
+        nextActionLabel="Xem lịch sử định giá"
+        onNextAction={jest.fn()}
+        testID="ok"
+      />,
+    );
+
+    expect(screen.queryByTestId('ok-undo')).toBeNull();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+  });
+
+  it('offers undo when the caller passes one, and stores nothing itself', async () => {
+    const onUndo = jest.fn();
+
+    await renderWithProviders(
+      <SuccessState
+        message="Đã xoá căn hộ Thảo Điền."
+        nextActionLabel="Xem danh sách tài sản"
+        onNextAction={jest.fn()}
+        onUndo={onUndo}
+        testID="ok"
+      />,
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Hoàn tác' }));
+
+    /** The callback is invoked with nothing: what is restorable belongs to the caller. */
+    expect(onUndo).toHaveBeenCalledWith();
+  });
+
+  it('lets the caller name the undo affordance', async () => {
+    await renderWithProviders(
+      <SuccessState
+        message="Đã xoá căn hộ Thảo Điền."
+        nextActionLabel="Xem danh sách tài sản"
+        onNextAction={jest.fn()}
+        onUndo={jest.fn()}
+        testID="ok"
+        undoLabel="Khôi phục tài sản"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Khôi phục tài sản' })).toBeTruthy();
+  });
 });
