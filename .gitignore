@@ -75,8 +75,11 @@ plans/**/*
 !plans/260913-0421-issue-36-design-system-responsive-shell/**
 !plans/260927-0742-issue-39-api-contract-errors-foundation/
 !plans/260927-0742-issue-39-api-contract-errors-foundation/**
+!plans/260927-2136-issue-42-identity-session-ownership/
+!plans/260927-2136-issue-42-identity-session-ownership/**
 !plans/reports/
 !plans/reports/pm-260927-issue-39-acceptance.md
+!plans/reports/pm-260927-2136-issue-42-acceptance.md
 screenshots/*
 docs/screenshots/*
 logs.txt
