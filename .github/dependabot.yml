@@ -1,0 +1,85 @@
+# Dependency updates.
+#
+# Trivy tells you a dependency has a known vulnerability at the moment you build. This is what
+# raises a pull request to fix it, so the finding turns into a change rather than a red pipeline
+# nobody can act on — and it covers `apps/mobile`, which the backend pipeline never scans.
+#
+# One setting here cannot be expressed in this file: **Dependabot security updates must be enabled
+# on the repository**, under Settings → Code security. Without it, this file still opens scheduled
+# version-bump pull requests, but an out-of-cycle security advisory raises nothing. It is currently
+# disabled.
+
+version: 2
+
+updates:
+  # ------------------------------------------------------------------------------------------
+  # Backend
+  # ------------------------------------------------------------------------------------------
+  - package-ecosystem: maven
+    directory: /services/api
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Ho_Chi_Minh
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build(api)
+    groups:
+      # Spring Boot's modules are released together and are only coherent together, so bumping one
+      # at a time produces pull requests that cannot pass on their own. The parent POM governs
+      # their versions, which is what makes a single grouped update the correct unit.
+      spring:
+        patterns:
+          - org.springframework*
+          - org.springframework.boot*
+      testing:
+        patterns:
+          - org.testcontainers*
+          - org.junit*
+          - org.assertj*
+          - org.mockito*
+          - com.tngtech.archunit*
+
+  # ------------------------------------------------------------------------------------------
+  # Frontend. Owned by issue #46, which has no pipeline yet; until it does, this is the only thing
+  # watching apps/mobile for a vulnerable package.
+  # ------------------------------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /apps/mobile
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Ho_Chi_Minh
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build(mobile)
+    groups:
+      expo:
+        patterns:
+          - expo
+          - expo-*
+          - "@expo/*"
+          - react-native*
+      types:
+        patterns:
+          - "@types/*"
+        update-types:
+          - minor
+          - patch
+
+  # ------------------------------------------------------------------------------------------
+  # The pipeline's own actions. An action is code that runs with this repository's credentials, so
+  # a stale one is a supply-chain exposure and not merely an outdated dependency.
+  # ------------------------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Ho_Chi_Minh
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci

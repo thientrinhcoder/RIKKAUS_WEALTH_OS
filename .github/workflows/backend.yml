@@ -1,0 +1,396 @@
+# Backend pipeline for services/api.
+#
+# One workflow rather than two, because the branch policy is a property of the relationship between
+# the jobs and not of either job alone. `verify` runs for every trigger; `publish` and `deploy`
+# carry an `if` that admits only a push to an integration branch or a deliberate manual run, and
+# they `needs:` the gate. A pull request therefore cannot reach a shared environment even by
+# accident, and an integration push cannot deploy without the whole gate having passed first.
+#
+# Permissions are declared per job, not at the top. Only `publish` and `deploy` are granted
+# `id-token: write`, so the job that runs untrusted pull-request code has no path to an AWS
+# credential at all.
+
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - "services/api/**"
+      - ".github/workflows/backend.yml"
+      - "infra/aws/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "services/api/**"
+      - ".github/workflows/backend.yml"
+      - "infra/aws/**"
+  workflow_dispatch:
+
+# A second push supersedes an in-flight run on the same ref. Deployments are exempt: cancelling
+# midway through an ECS rollout leaves the service half-updated with no job watching it.
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Static analysis is deliberately not a job in this file.
+#
+# This workflow carried a CodeQL job on `security-extended` for Java. It failed on the first pull
+# request with "CodeQL analyses from advanced configurations cannot be processed when the default
+# setup is enabled": GitHub's CodeQL default setup is configured on this repository, and the two
+# cannot coexist.
+#
+# Default setup is the one that stays. It analyses java-kotlin, javascript-typescript and python,
+# where the job here covered Java alone, and it needs no workflow code to maintain. Its query suite
+# is `default` rather than `extended`, which is the one thing lost and the one thing changeable
+# without touching this file — it is a setting on the default setup, not a property of the analysis.
+#
+# The consequence worth knowing: `publish` cannot require those checks, because they belong to a
+# workflow GitHub owns and `needs:` reaches only jobs in this file. Requiring static analysis before
+# a merge is a branch-protection rule on `main`, which is where it belongs anyway — `publish` runs
+# after the merge, so gating it was never the control that mattered.
+
+env:
+  JAVA_VERSION: "25"
+  JAVA_DISTRIBUTION: temurin
+
+jobs:
+  # -------------------------------------------------------------------------------------------
+  # Quality gate. Runs for every trigger, holds no credentials, touches no environment.
+  # -------------------------------------------------------------------------------------------
+  verify:
+    name: Format, test and cover
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The secret scan below reads history, not just the working tree. A secret added in one
+          # commit of a branch and removed in the next is still in the branch, and still published
+          # the moment it is pushed; the default shallow checkout would not see it.
+          fetch-depth: 0
+
+      # Runs before anything is compiled, because a leaked credential is not made less leaked by a
+      # passing test suite, and the sooner the job stops the sooner it can be rotated.
+      #
+      # GitHub's own secret scanning is enabled on this repository and blocks recognised provider
+      # tokens at push time. This covers what that misses: non-provider patterns are disabled there,
+      # so a high-entropy string with no vendor prefix is not matched — and RIKKAUS_JWT_SECRET, the
+      # one secret that lets anyone mint a token for any user, is exactly that. The rules and the
+      # deliberate exemptions are in .gitleaks.toml.
+      - name: Scan for committed secrets
+        run: |
+          docker run --rm -v "${GITHUB_WORKSPACE}:/repo" -w /repo \
+            zricethezav/gitleaks:v8.30.1 git \
+            --config=/repo/.gitleaks.toml --redact --no-banner --verbose
+
+      - uses: actions/setup-java@v6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      # `verify` is the whole gate in one command, in this order: spotless:check bound to validate,
+      # compile, Surefire's database-free tests, Failsafe's Testcontainers tests against a real
+      # PostgreSQL, and a JaCoCo report per tier. The GitHub-hosted runner provides the Docker
+      # daemon that Testcontainers needs; no service container is declared here because
+      # Testcontainers starts and disposes of its own.
+      - name: Run the backend gate
+        working-directory: services/api
+        run: ./mvnw -B verify
+
+      # Dependency vulnerabilities, on every pull request.
+      #
+      # The image scan in `publish` cannot do this job: `publish` never runs on a pull request, so
+      # until this step existed, a change that introduced a dependency with a known CVE passed every
+      # check, got merged, and was caught only on the push to main — by which point the fix is a
+      # revert rather than a review comment. The architecture puts the scan alongside the tests for
+      # this reason (ARCHITECTURE_TECHNOLOGY_DECISIONS.md, stage 5).
+      #
+      # Deliberately placed after the build, and the order is load-bearing for a second reason
+      # beyond seeing the artifact under target/. Trivy resolves a POM's transitive dependencies by
+      # reading the parent and BOM POMs, and it prefers the local Maven repository over the network;
+      # running after `verify` means every one of them is already in ~/.m2. Run on a cold cache it
+      # fetches them from Maven Central instead and can be rate-limited with an HTTP 429 that reads
+      # like a scanner failure rather than a missing cache. If this step ever fails that way, the
+      # cause is the cache and not the dependencies.
+      - name: Scan dependencies for known vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: services/api
+          format: table
+          exit-code: "1"
+          # A vulnerability with no released fix is not something a pull request can act on, and a
+          # gate that cannot be satisfied is one that gets switched off.
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          scanners: vuln
+          cache: "true"
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+      # Infrastructure misconfiguration.
+      #
+      # The severity range is wider than the two vulnerability scans above, and the asymmetry is
+      # deliberate. A LOW or MEDIUM CVE is frequently unfixable and arrives in numbers nobody can
+      # act on, so gating on it produces a check that gets switched off. A misconfiguration is the
+      # opposite: the set is finite, deterministic, and every one of them is a choice somebody made
+      # in a file in this repository. Failing on all of them is affordable precisely because the
+      # existing ones have been triaged to zero.
+      #
+      # A new finding therefore has exactly two honest resolutions: change the infrastructure, or
+      # add an entry to infra/aws/.trivyignore.yaml saying what the check wants, why this
+      # environment does not do it, and what would change the answer. Every existing entry carries
+      # that statement and an expiry, so none of them is permanent.
+      - name: Scan infrastructure for misconfiguration
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infra/aws
+          trivyignores: infra/aws/.trivyignore.yaml
+          format: table
+          exit-code: "1"
+          cache: "true"
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+      # Uploaded unconditionally. A failing run is exactly the run whose reports somebody needs,
+      # and `if: always()` is what keeps them reachable after a red build.
+      - name: Publish test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-reports-${{ github.run_id }}
+          path: |
+            services/api/target/surefire-reports/
+            services/api/target/failsafe-reports/
+            services/api/target/site/jacoco-unit/
+            services/api/target/site/jacoco-integration/
+          retention-days: 14
+          if-no-files-found: warn
+
+  # -------------------------------------------------------------------------------------------
+  # Build one image, scan it, and push it to ECR under its commit SHA.
+  # -------------------------------------------------------------------------------------------
+  publish:
+    name: Scan and push image
+    needs: verify
+    if: >-
+      github.event_name != 'pull_request'
+      && vars.AWS_REGION != ''
+      && vars.ECR_REPOSITORY != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Mints the short-lived OIDC token that the AWS role trusts. No long-lived access key is
+      # stored in this repository.
+      id-token: write
+    timeout-minutes: 30
+    outputs:
+      # Whichever path produced it: a fresh build, or the image this commit already has in ECR.
+      image-digest: ${{ steps.push.outputs.digest || steps.existing.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Tags are immutable, so pushing a tag that already exists is refused by the registry. That
+      # is the property the promotion model wants, but taken naively it makes three ordinary things
+      # fail: re-running a failed deploy, `gh workflow run` on a commit already built by its merge,
+      # and two branches sitting on the same commit. The image for a given commit is by definition
+      # the image for that commit, so the right answer is to reuse it rather than rebuild it.
+      - id: existing
+        name: Reuse this commit's image if it is already published
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          digest="$(aws ecr describe-images --repository-name "${REPOSITORY}" \
+            --image-ids "imageTag=${GITHUB_SHA}" \
+            --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)"
+
+          if [ -n "${digest}" ] && [ "${digest}" != "None" ]; then
+            echo "digest=${REGISTRY}/${REPOSITORY}@${digest}" >> "${GITHUB_OUTPUT}"
+            echo "found=true" >> "${GITHUB_OUTPUT}"
+            echo "Reusing the image already published for ${GITHUB_SHA}"
+          else
+            echo "found=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      # Built before it is scanned and pushed, and loaded into the local daemon rather than pushed
+      # straight through. Scanning an image that is already in the registry would mean a vulnerable
+      # image existed in ECR, however briefly, which a deploy could have picked up.
+      - name: Build the image
+        if: steps.existing.outputs.found != 'true'
+        run: |
+          docker build \
+            --tag "local/rikkaus-api:${GITHUB_SHA}" \
+            --file services/api/Dockerfile \
+            services/api
+
+      - name: Scan the image
+        if: steps.existing.outputs.found != 'true'
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: local/rikkaus-api:${{ github.sha }}
+          format: table
+          # Fails the job on a fixable HIGH or CRITICAL finding. `ignore-unfixed` is set because a
+          # base-image vulnerability with no released fix is not something this pipeline can act
+          # on, and a gate that cannot be satisfied is one that gets disabled.
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          # Covers both halves of the architecture's scan requirement in one pass: the OS packages
+          # in the Temurin base layer and the application's own jars, which Trivy reads from the
+          # packaged artifact.
+          scanners: vuln
+          vuln-type: os,library
+          cache: "true"
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tagged with the commit SHA and nothing else. No `latest`, because the whole promotion model
+      # rests on a tag meaning exactly one commit forever; the repository is configured with
+      # immutable tags so a re-push of the same tag is refused by the registry rather than silently
+      # rewriting history.
+      - id: push
+        name: Push to ECR
+        if: steps.existing.outputs.found != 'true'
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          target="${REGISTRY}/${REPOSITORY}:${GITHUB_SHA}"
+          docker tag "local/rikkaus-api:${GITHUB_SHA}" "${target}"
+          docker push "${target}"
+
+          # The digest, not the tag, is what the deploy job pins. A tag is a pointer; a digest is
+          # the image, and pinning it is what makes promotion to a later environment provably the
+          # same bytes.
+          digest="$(docker inspect --format='{{index .RepoDigests 0}}' "${target}")"
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
+
+          # Deliberately not the full reference: the registry host is the AWS account id, and this
+          # repository is public, so printing it here would disclose it for free. The repository
+          # name and the content digest are what a reader actually needs.
+          echo "Pushed ${REPOSITORY}@${digest#*@}"
+
+  # -------------------------------------------------------------------------------------------
+  # Roll the Development ECS service onto the digest just published, then prove it answers.
+  # -------------------------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Development
+    needs: publish
+    if: >-
+      vars.ECS_CLUSTER != ''
+      && vars.ECS_SERVICE != ''
+      && vars.BASE_TASK_DEFINITION_PARAMETER != ''
+    runs-on: ubuntu-latest
+    # Generous, because AWS_MAX_ATTEMPTS below allows the rollout twenty minutes on its own.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: development
+      url: ${{ vars.API_BASE_URL }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # The task definition is derived from the revision OpenTofu last registered, not from the one
+      # currently running. That distinction is the whole point: OpenTofu owns the task's shape — its
+      # CPU, memory, environment, secrets and logging — while this job owns only the image. Copying
+      # the running revision instead would mean a change applied in infra/aws/ never reached a task,
+      # because every deployment would keep re-copying the previous deployment's copy. The pointer
+      # is a Parameter Store entry written by OpenTofu, since both it and this job register into the
+      # same family and nothing else could tell their revisions apart afterwards.
+      - id: taskdef
+        name: Register a task definition pinned to the new digest
+        env:
+          BASE_PARAMETER: ${{ vars.BASE_TASK_DEFINITION_PARAMETER }}
+          IMAGE: ${{ needs.publish.outputs.image-digest }}
+        run: |
+          set -euo pipefail
+          base="$(aws ssm get-parameter --name "${BASE_PARAMETER}" \
+            --query 'Parameter.Value' --output text)"
+
+          aws ecs describe-task-definition --task-definition "${base}" \
+            --query 'taskDefinition' --output json > taskdef.json
+
+          # Without this guard a renamed container is a silent no-op: jq would emit the definition
+          # unchanged, registration and the rollout would both succeed, and the smoke check would
+          # pass against the image that was already running. A green build that deployed nothing is
+          # worse than a red one.
+          jq -e '[.containerDefinitions[] | select(.name == "api")] | length == 1' \
+            taskdef.json > /dev/null \
+            || { echo "::error::no container named 'api' in ${base}"; exit 1; }
+
+          # The read-only fields ECS returns are rejected on registration, so they are dropped
+          # rather than edited around.
+          jq --arg image "${IMAGE}" '
+              .containerDefinitions |= map(if .name == "api" then .image = $image else . end)
+              | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                    .compatibilities, .registeredAt, .registeredBy)
+            ' taskdef.json > taskdef-next.json
+
+          arn="$(aws ecs register-task-definition --cli-input-json file://taskdef-next.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)"
+
+          # Proves the registered revision carries the image intended, rather than trusting that
+          # the edit above landed.
+          registered="$(aws ecs describe-task-definition --task-definition "${arn}" \
+            --query 'taskDefinition.containerDefinitions[?name==`api`].image' --output text)"
+          [ "${registered}" = "${IMAGE}" ] \
+            || { echo "::error::registered ${registered}, expected the published digest"; exit 1; }
+
+          echo "arn=${arn}" >> "${GITHUB_OUTPUT}"
+
+      - name: Roll the service and wait for it to stabilise
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+          # The waiter defaults to 40 attempts at 15 seconds, which is ten minutes. A cold Fargate
+          # placement, the health check grace period, two passing checks thirty seconds apart and
+          # the old task's drain can exceed that on a rollout that succeeded, and the job would
+          # then fail on a deployment that actually landed — the worst outcome, because the
+          # instinct is to re-run. Twenty minutes covers it.
+          AWS_MAX_ATTEMPTS: "80"
+        run: |
+          set -euo pipefail
+          aws ecs update-service --cluster "${CLUSTER}" --service "${SERVICE}" \
+            --task-definition "${{ steps.taskdef.outputs.arn }}" >/dev/null
+
+          # Returns only once the new tasks are running, registered healthy with the load balancer
+          # and the old ones are drained. Without this the job would report success at the moment
+          # the rollout was requested, which says nothing about whether it worked.
+          aws ecs wait services-stable --cluster "${CLUSTER}" --services "${SERVICE}"
+
+      # The deployment is not finished until the public URL answers. This is the same check the
+      # Product Owner and QE will run by hand, executed here so a broken deploy is red in CI rather
+      # than discovered by a person opening a browser.
+      - name: Smoke-check the public endpoint
+        if: vars.API_BASE_URL != ''
+        env:
+          BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          health="$(curl -fsS --retry 10 --retry-delay 6 --retry-all-errors "${BASE_URL}/actuator/health")"
+          echo "health: ${health}"
+          echo "${health}" | jq -e '.status == "UP"' >/dev/null
+
+          meta="$(curl -fsS "${BASE_URL}/api/v1/meta")"
+          echo "meta: ${meta}"
+          echo "${meta}" | jq -e '.apiVersion == "v1"' >/dev/null
+
+          echo "::notice title=Development API::${BASE_URL}/actuator/health is UP on ${GITHUB_SHA}"

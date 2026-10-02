@@ -1,0 +1,160 @@
+# Triaged infrastructure findings.
+#
+# Every entry below is a decision, not a suppression. Each one names what the check wants, why this
+# environment does not do it, and what would change the answer. Two findings from the first scan are
+# absent because they were fixed rather than accepted: AWS-0052 (invalid header fields now dropped)
+# and, in substance, AWS-0104.
+#
+# `expiredAt` is uniform on purpose. Every one of these is a trade made for a Development preview
+# with no user data, and every one deserves re-asking before this environment carries anything real.
+# On 2027-04-01 they all reappear at once, which is the next infrastructure review.
+#
+# Adding an entry here is a decision that needs the same treatment: what the check wants, why not,
+# and what would change it. An entry with no statement should fail review.
+
+misconfigurations:
+  # ------------------------------------------------------------------------------------------
+  # CRITICAL
+  # ------------------------------------------------------------------------------------------
+  - id: AWS-0054
+    paths:
+      - "load-balancer.tf"
+    statement: >-
+      Plain HTTP listener. Accepted and structural, not an oversight: an ALB cannot serve HTTPS on
+      its generated hostname, because AWS owns elb.amazonaws.com and issues no certificate for a
+      name under it. Viewers reach CloudFront over HTTPS and are redirected if they arrive on HTTP;
+      this listener is the origin behind it and accepts connections only from CloudFront's published
+      edge ranges, so no client can reach it in clear text. What remains unencrypted is the
+      CloudFront-to-ALB hop inside AWS. Closing that needs a certificate here, which needs a domain,
+      which is the option the Product Owner declined. Adopting a domain resolves this finding.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0104
+    paths:
+      - "network.tf"
+    statement: >-
+      Egress to 0.0.0.0/0. The check fires on the destination regardless of port, and this rule is
+      now TCP 443 only — it was every protocol to every address until this scan was first run, so
+      the finding persisting does not mean nothing changed. The task's remaining public destinations
+      are ECR, S3 for image layers, CloudWatch Logs and Google's JWKS endpoint. The first three
+      could move to VPC interface endpoints at roughly seven US dollars each per availability zone;
+      Google's could not, because it is on the public internet by definition, so 443 outbound would
+      survive that spend. DNS is scoped to the VPC range and PostgreSQL to the database security
+      group, both in the same file.
+    expiredAt: 2027-04-01
+
+  # ------------------------------------------------------------------------------------------
+  # HIGH
+  # ------------------------------------------------------------------------------------------
+  - id: AWS-0053
+    paths:
+      - "load-balancer.tf"
+    statement: >-
+      Internet-facing load balancer. True in the AWS sense and not in the reachable sense: the
+      security group admits only CloudFront's origin-facing prefix list, so a request from anywhere
+      else times out. It is internet-facing because a CloudFront origin must resolve publicly.
+      CloudFront VPC origins would remove even that and let this become an internal load balancer,
+      which is the strictly better shape and the reason this entry has an expiry rather than being
+      permanent. It was not adopted now because it is a new resource type that cannot be exercised
+      without an AWS account, and this environment had to work on its first apply.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0011
+    paths:
+      - "cdn.tf"
+    statement: >-
+      No WAF on the distribution. This is a cost decision and it belongs to the Product Owner, not
+      to this file: AWS WAF is a standing monthly charge plus per-rule and per-request cost, against
+      an environment whose only endpoints are an anonymous health check, a build-version resource
+      and an error surface, with no user data behind them. The calculus changes the moment issue #42
+      puts real sessions here or a pilot user is given the URL, which is what the expiry is for.
+    expiredAt: 2027-04-01
+
+  # ------------------------------------------------------------------------------------------
+  # MEDIUM
+  # ------------------------------------------------------------------------------------------
+  - id: AWS-0010
+    paths:
+      - "cdn.tf"
+    statement: >-
+      No CloudFront access logging. It needs a destination bucket with its own lifecycle and access
+      policy, which is real infrastructure for a benefit the application's own CloudWatch logs
+      already largely provide at this stage — every request reaching the API is logged there with a
+      correlation identifier. Access logs become worth the bucket when there is traffic worth
+      analysing or an incident to reconstruct.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0176
+    paths:
+      - "database.tf"
+    statement: >-
+      IAM database authentication is off. Enabling it would remove a stored password, which is
+      genuinely better, but it would also make the application generate AWS auth tokens at
+      connection time and therefore depend on the AWS SDK to start. The architecture requires the
+      opposite: the same image must run unchanged on the production VPS, and configuration arrives
+      through environment variables and secrets so moving between ECS and a VPS needs no code
+      change. The password is generated, never committed, held as a SecureString and read by the
+      ECS agent, so it reaches neither the task definition nor any log.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0177
+    paths:
+      - "database.tf"
+    statement: >-
+      Deletion protection is off, deliberately and for this environment only. Development and
+      Testing are meant to be destroyed and rebuilt, and protection would make `tofu destroy` fail
+      every time. Production is not deployed from this stack; it runs on a VPS with its own backup
+      regime. The same reasoning is recorded beside the resource.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0178
+    paths:
+      - "network.tf"
+    statement: >-
+      No VPC flow logs. They need a log group, an IAM role and continuous CloudWatch ingestion, and
+      their value is detecting traffic nobody expected — a question worth asking of an environment
+      carrying real data and premature for one whose entire surface is three anonymous endpoints.
+      This should be revisited alongside the WAF decision rather than separately.
+    expiredAt: 2027-04-01
+
+  # ------------------------------------------------------------------------------------------
+  # LOW
+  # ------------------------------------------------------------------------------------------
+  - id: AWS-0017
+    paths:
+      - "service.tf"
+    statement: >-
+      Log group encrypted with the AWS-managed key rather than a customer-managed one. CloudWatch
+      Logs are encrypted at rest either way; a CMK adds key administration and a monthly charge, and
+      buys control over key rotation and revocation. The application is forbidden from logging
+      passwords, tokens or financial payloads, so what a CMK would protect here is operational text.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0033
+    paths:
+      - "registry.tf"
+    statement: >-
+      ECR repository encrypted with the AWS-managed key rather than a customer-managed one. The same
+      reasoning as the log group: the contents are application image layers, which are built from a
+      public repository and carry no secret — every runtime secret is injected at start-up from
+      Parameter Store and none is baked into a layer.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0034
+    paths:
+      - "service.tf"
+    statement: >-
+      Container Insights disabled, explicitly and for cost. It is a per-metric CloudWatch charge on
+      an environment that is meant to scale to zero between test windows, which the architecture
+      calls for directly. Application logs and the load balancer's own metrics cover what diagnosis
+      needs at this stage.
+    expiredAt: 2027-04-01
+
+  - id: AWS-0133
+    paths:
+      - "database.tf"
+    statement: >-
+      Performance Insights disabled. It is a diagnostic aid for query performance on a database that
+      currently holds one baseline migration and no domain tables, on the smallest Graviton instance
+      available. It becomes useful when there are queries worth profiling.
+    expiredAt: 2027-04-01

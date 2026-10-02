@@ -1,0 +1,13 @@
+# Historical false positives, pinned by fingerprint.
+#
+# A fingerprint is commit:path:rule:line, so each line here exempts exactly one finding in exactly
+# one commit. It cannot widen to the file, the rule or any later commit — which is why this is the
+# right tool for a false positive already in history and the wrong tool for anything else. A real
+# leak is never resolved by adding a line here: rotate the credential, because a public repository
+# has already published it.
+
+# The phase-05 document describes the jdbc-url-with-inline-password rule and, in doing so, quoted a
+# connection string with an inline password as the canary that proved the rule works. The rule then
+# matched its own documentation. The prose was rewritten to describe the shape rather than spell it
+# out, so no later commit matches, but this commit still contains it and history does not change.
+61a05e622ca17ab04b6919ed858b30eaff39852c:plans/260929-1826-GH-47-backend-cicd-aws-ecs/phase-05-security-scanning.md:jdbc-url-with-inline-password:85

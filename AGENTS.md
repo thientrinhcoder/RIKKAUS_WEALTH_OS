@@ -34,6 +34,13 @@ options and the reasoning behind them in visible response text first. Never ask 
 on analysis they have not seen, and write every option so it stands alone. Internal reasoning is
 invisible to the user, so externalize it before any decision point.
 
+Every option must carry a real, detailed example drawn from this repository rather than an
+abstract description: the actual file path, the real component name, the concrete label. For any
+user-facing surface, product copy or financial value, write that example in Vietnamese with
+realistic Vietnamese-market figures and formatting, such as `12.002.000.000 ₫` or
+`cập nhật 12/09/2026`. No lorem ipsum, placeholder numbers, or English stand-ins for text that
+will ship in Vietnamese.
+
 ## Hook responses
 
 If the privacy-block hook emits a marker between `@@PRIVACY_PROMPT_START@@` and

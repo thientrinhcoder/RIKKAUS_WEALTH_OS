@@ -1,0 +1,113 @@
+title = "Rikkaus Wealth OS secret scanning"
+
+# GitHub's own secret scanning is enabled on this repository and blocks recognised provider tokens
+# at push time — an AWS access key, a GitHub PAT, a Stripe key. This file exists because that
+# coverage stops exactly where this project's real exposure begins: non-provider patterns are
+# disabled, so a high-entropy string with no recognisable prefix is not matched, and the most
+# dangerous secret this service has is precisely that. RIKKAUS_JWT_SECRET is 64 random bytes. Anyone
+# holding it can mint a valid access token for any user, which defeats every other control at once.
+#
+# The default rule set is kept and extended rather than replaced, so private keys, cloud
+# credentials and the rest still fire.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "rikkaus-jwt-signing-key"
+description = "JWT signing key assigned a real value rather than read from the environment"
+# Matches an assignment whose value is a long opaque string, in either the shape it travels in: an
+# environment assignment, and the JSON `{"name": "...", "value": "..."}` pair an ECS task definition
+# or a pasted API response uses. The second form was added after a canary proved the first regex
+# missed it and no default rule caught it either.
+#
+# A value of ${...}, or an empty one, is a reference rather than a secret and does not match, which
+# is what keeps application.yml and .env.example from failing the gate.
+regex = '''(?i)rikkaus[_.-]?jwt[_.-]?secret["'\s:=,]{1,20}(?:value["'\s:=]{1,8})?([A-Za-z0-9+/=_-]{32,})'''
+secretGroup = 1
+keywords = ["rikkaus_jwt_secret", "rikkaus.jwt.secret", "jwt-secret"]
+
+[[rules]]
+id = "jdbc-url-with-inline-password"
+description = "Database URL carrying credentials inline"
+# jdbc:postgresql://user:password@host — the form that puts a password into a connection string,
+# and therefore into logs, stack traces and process listings.
+regex = '''jdbc:[a-z]+://[^\s"'/]+:[^\s"'@/]{6,}@'''
+keywords = ["jdbc:"]
+
+[[rules]]
+id = "postgres-password-literal"
+description = "PostgreSQL password assigned a literal rather than an environment reference"
+regex = '''(?i)(?:postgres_password|spring\.datasource\.password|POSTGRES_PASSWORD)["'\s:=]{1,12}([A-Za-z0-9+/=_!#$%&*?-]{8,})'''
+secretGroup = 1
+keywords = ["postgres_password", "datasource.password"]
+
+[[allowlists]]
+description = "Values committed deliberately and documented as local-only"
+
+paths = [
+  # Lockfiles carry integrity hashes that look like secrets and are not.
+  '''package-lock\.json$''',
+  '''\.terraform\.lock\.hcl$''',
+  # This file's own rule patterns would otherwise match themselves.
+  '''\.gitleaks\.toml$''',
+]
+
+regexes = [
+  # The local PostgreSQL password, committed on purpose so a new developer can start the stack.
+  # docker-compose.yml and .env.example both carry it and say why.
+  '''rikkaus-local-only''',
+  # The local JWT signing key in application-local.yml, committed for the same reason and unusable
+  # anywhere else: every deployed environment supplies RIKKAUS_JWT_SECRET from Parameter Store, and
+  # the base configuration has no default, so this value cannot reach one by being forgotten.
+  '''local-development-only-jwt-signing-secret''',
+  # Placeholders in .env.example and the tfvars example. They are instructions, not credentials.
+  '''replace-me-with-at-least-32-bytes-of-random''',
+  # Passwords used by the throwaway containers in documented verification steps.
+  '''verify-only''',
+]
+
+# Sample tokens that document the shape of a response.
+#
+# The identity work in issue #42 publishes example access and refresh tokens through
+# `@Schema(example = ...)` and in the generated OpenAPI contract, and gitleaks reads them as a JWT
+# and a high-entropy key, which by pattern they are. Matching on the line rather than the value is
+# what keeps this narrow: a token is permitted only where the line itself declares an example, so a
+# real credential pasted anywhere else in those same files is still caught.
+#
+# Worth fixing at the source rather than here. The `accessToken` example in the contract document is
+# truncated — `eyJhbGciOiJIUzI1NiJ9...` — and never trips any rule; the `refreshToken` example is a
+# full-length random string and does. Truncating the others the same way would let this exemption be
+# deleted. That belongs to issue #42, not here.
+[[allowlists]]
+description = "Documented example tokens, matched on the declaring line"
+regexTarget = "line"
+regexes = [
+  '''(?i)@Schema\([^)]*example''',
+  '''(?i)^\s*example\s*=''',
+  '''(?i)"example"\s*:''',
+]
+
+[[allowlists]]
+description = "The API contract document, which exists to carry example payloads"
+paths = [
+  '''docs/api-contract-conventions\.md$''',
+]
+
+# Example session payloads inside written documents.
+#
+# Design documents and plans quote a sample session response, and a sample access or refresh token
+# is by pattern indistinguishable from a real one. Both conditions must hold — a Markdown file, and
+# a line that is declaring one of these two response fields — so this exempts an illustrated payload
+# without exempting the documents themselves. A credential pasted anywhere else in the same file,
+# or under any other name, still fails the gate.
+[[allowlists]]
+description = "Sample session payloads quoted in Markdown"
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''\.md$''',
+]
+regexes = [
+  '''"(?:accessToken|refreshToken)"\s*:''',
+]

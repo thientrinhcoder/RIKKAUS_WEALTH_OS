@@ -190,9 +190,29 @@ rotating refresh tokens and server-side ownership enforcement. See
 [`docs/api-contract-conventions.md`](docs/api-contract-conventions.md) for what that means for a
 client.
 
+
 It still deliberately contains no domain endpoints or tables, no CI/CD pipeline and no domain UI.
 Those are owned by their dedicated delivery tasks. The security chain now **denies by default**, so an
 unauthenticated request to anything outside the documented public routes returns 401.
+
+It still deliberately contains no domain endpoints or tables, no authentication, no ownership
+enforcement and no domain UI. Those are owned by their dedicated delivery tasks.
+
+The backend now has a pipeline and a deployable AWS preview environment, described in
+[`docs/backend-deployment.md`](docs/backend-deployment.md). Every pull request runs formatting,
+unit, integration and coverage gates; a push to the integration branch publishes an immutable image
+and rolls an ECS Fargate service that answers on a public URL, so a reviewer can check the running
+API without a checkout.
+
+That preview is served over HTTPS by a CloudFront distribution using its own `*.cloudfront.net`
+certificate, and the load balancer behind it accepts connections from CloudFront alone, so there is
+no way to reach the API in clear text. The address is therefore a generated hostname rather than a
+name of ours; adopting a domain is a follow-up, not a prerequisite.
+
+The earlier warning that an unauthenticated API must not leave local development still applies to
+anything with data behind it. This environment is safe today because there is nothing behind it:
+the only reachable endpoints are `/actuator/health`, `/api/v1/meta` and an error surface, all
+anonymous by design and disclosing no user data.
 
 The backend slice now has unit, integration, Testcontainers and ArchUnit tests, so issue #35's
 original automated-test acceptance criterion is satisfiable: it was intentionally unsatisfied because

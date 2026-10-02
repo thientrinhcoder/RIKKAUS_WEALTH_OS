@@ -75,6 +75,8 @@ plans/**/*
 !plans/260913-0421-issue-36-design-system-responsive-shell/**
 !plans/260927-0742-issue-39-api-contract-errors-foundation/
 !plans/260927-0742-issue-39-api-contract-errors-foundation/**
+!plans/260929-1826-GH-47-backend-cicd-aws-ecs/
+!plans/260929-1826-GH-47-backend-cicd-aws-ecs/**
 !plans/260927-2136-issue-42-identity-session-ownership/
 !plans/260927-2136-issue-42-identity-session-ownership/**
 !plans/reports/
@@ -126,3 +128,14 @@ external/
 
 # Git worktrees (local development only)
 worktrees/
+
+# OpenTofu working state. The state file holds the generated database password and JWT signing
+# key in plain text, so it must never be committed; the provider cache and any local tfvars are
+# likewise per-operator. The lock file IS committed, because pinning provider checksums is the
+# point of it.
+infra/**/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.*
+infra/**/*.tfvars
+infra/**/crash.log
+!infra/**/*.tfvars.example
