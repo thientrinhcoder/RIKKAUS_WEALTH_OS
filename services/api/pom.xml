@@ -27,6 +27,31 @@
         -->
         <spotless-maven-plugin.version>3.10.3</spotless-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+
+        <!--
+            Security overrides on top of the Spring Boot 4.1.1 BOM. Each of these raises a managed
+            version the BOM pins below a published fix, and each was found by the pipeline's own
+            dependency scan rather than by reading an advisory feed.
+
+            Overriding the BOM's property, rather than declaring a dependency with a version, is
+            what keeps every artifact in the family moving together: jackson-core and
+            jackson-databind are both pinned by their bom, and pinning one alone is how a build ends
+            up with two incompatible halves of the same library.
+
+            Each is the lowest version that clears the advisory, not the newest available. Dependabot
+            proposes the later bumps with their own pull request and their own run of this gate,
+            which is the right place for a change that is not a security fix.
+
+            Delete an entry when the Spring Boot upgrade that supersedes it lands: the BOM will then
+            pin a version at or above the fix, and leaving a stale override behind is how a project
+            quietly pins itself below the BOM later on.
+        -->
+        <!-- CVE-2026-89407 (jackson-core), CVE-2026-68497 (jackson-databind). BOM pins 3.1.5. -->
+        <jackson-bom.version>3.1.7</jackson-bom.version>
+        <!-- The Jackson 2 line, still present transitively. Same advisories. BOM pins 2.21.5. -->
+        <jackson-2-bom.version>2.21.7</jackson-2-bom.version>
+        <!-- CVE-2026-65182, CRITICAL. BOM pins 11.0.24. -->
+        <tomcat.version>11.0.25</tomcat.version>
     </properties>
 
     <dependencies>

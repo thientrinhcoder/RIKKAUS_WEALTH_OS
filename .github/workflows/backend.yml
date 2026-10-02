@@ -109,8 +109,13 @@ jobs:
       # revert rather than a review comment. The architecture puts the scan alongside the tests for
       # this reason (ARCHITECTURE_TECHNOLOGY_DECISIONS.md, stage 5).
       #
-      # Deliberately placed after the build, so the scan sees the resolved artifact under target/ as
-      # well as the POM, rather than only the declared dependencies.
+      # Deliberately placed after the build, and the order is load-bearing for a second reason
+      # beyond seeing the artifact under target/. Trivy resolves a POM's transitive dependencies by
+      # reading the parent and BOM POMs, and it prefers the local Maven repository over the network;
+      # running after `verify` means every one of them is already in ~/.m2. Run on a cold cache it
+      # fetches them from Maven Central instead and can be rate-limited with an HTTP 429 that reads
+      # like a scanner failure rather than a missing cache. If this step ever fails that way, the
+      # cause is the cache and not the dependencies.
       - name: Scan dependencies for known vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
         with:
