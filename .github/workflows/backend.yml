@@ -284,18 +284,14 @@ jobs:
           echo "Pushed ${REPOSITORY}@${digest#*@}"
 
   # -------------------------------------------------------------------------------------------
-  # Roll the Development ECS service onto the digest just published, then prove it answers.
+  # Point the App Runner service at the digest just published, then prove it answers.
   # -------------------------------------------------------------------------------------------
   deploy:
     name: Deploy to Development
     needs: publish
-    if: >-
-      vars.ECS_CLUSTER != ''
-      && vars.ECS_SERVICE != ''
-      && vars.BASE_TASK_DEFINITION_PARAMETER != ''
+    if: vars.APPRUNNER_SERVICE_ARN != ''
     runs-on: ubuntu-latest
-    # Generous, because AWS_MAX_ATTEMPTS below allows the rollout twenty minutes on its own.
-    timeout-minutes: 45
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
@@ -308,83 +304,71 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # The task definition is derived from the revision OpenTofu last registered, not from the one
-      # currently running. That distinction is the whole point: OpenTofu owns the task's shape — its
-      # CPU, memory, environment, secrets and logging — while this job owns only the image. Copying
-      # the running revision instead would mean a change applied in infra/aws/ never reached a task,
-      # because every deployment would keep re-copying the previous deployment's copy. The pointer
-      # is a Parameter Store entry written by OpenTofu, since both it and this job register into the
-      # same family and nothing else could tell their revisions apart afterwards.
-      - id: taskdef
-        name: Register a task definition pinned to the new digest
+      # UpdateService with a new image identifier is what triggers an App Runner deployment. There
+      # is no task definition to copy, patch and register: OpenTofu owns the service's shape — its
+      # CPU, memory, environment and secrets — and this job changes one field of it, so the two
+      # cannot drift the way a repository-held task definition would.
+      #
+      # `auto_deployments_enabled` is off on the service, deliberately. Auto-deployment watches a
+      # single tag, and every image here is tagged with its commit SHA under an immutable-tag
+      # policy, so there is no moving tag to watch and the deployed version stays traceable to one
+      # commit.
+      - id: update
+        name: Deploy the published digest
         env:
-          BASE_PARAMETER: ${{ vars.BASE_TASK_DEFINITION_PARAMETER }}
+          SERVICE_ARN: ${{ vars.APPRUNNER_SERVICE_ARN }}
           IMAGE: ${{ needs.publish.outputs.image-digest }}
         run: |
           set -euo pipefail
-          base="$(aws ssm get-parameter --name "${BASE_PARAMETER}" \
-            --query 'Parameter.Value' --output text)"
+          operation="$(aws apprunner update-service \
+            --service-arn "${SERVICE_ARN}" \
+            --source-configuration "ImageRepository={ImageIdentifier=${IMAGE},ImageRepositoryType=ECR}" \
+            --query 'OperationId' --output text)"
+          echo "operation=${operation}" >> "${GITHUB_OUTPUT}"
+          echo "Started App Runner operation ${operation}"
 
-          aws ecs describe-task-definition --task-definition "${base}" \
-            --query 'taskDefinition' --output json > taskdef.json
-
-          # Without this guard a renamed container is a silent no-op: jq would emit the definition
-          # unchanged, registration and the rollout would both succeed, and the smoke check would
-          # pass against the image that was already running. A green build that deployed nothing is
-          # worse than a red one.
-          jq -e '[.containerDefinitions[] | select(.name == "api")] | length == 1' \
-            taskdef.json > /dev/null \
-            || { echo "::error::no container named 'api' in ${base}"; exit 1; }
-
-          # The read-only fields ECS returns are rejected on registration, so they are dropped
-          # rather than edited around.
-          jq --arg image "${IMAGE}" '
-              .containerDefinitions |= map(if .name == "api" then .image = $image else . end)
-              | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
-                    .compatibilities, .registeredAt, .registeredBy)
-            ' taskdef.json > taskdef-next.json
-
-          arn="$(aws ecs register-task-definition --cli-input-json file://taskdef-next.json \
-            --query 'taskDefinition.taskDefinitionArn' --output text)"
-
-          # Proves the registered revision carries the image intended, rather than trusting that
-          # the edit above landed.
-          registered="$(aws ecs describe-task-definition --task-definition "${arn}" \
-            --query 'taskDefinition.containerDefinitions[?name==`api`].image' --output text)"
-          [ "${registered}" = "${IMAGE}" ] \
-            || { echo "::error::registered ${registered}, expected the published digest"; exit 1; }
-
-          echo "arn=${arn}" >> "${GITHUB_OUTPUT}"
-
-      - name: Roll the service and wait for it to stabilise
+      # App Runner has no CLI waiter, so this polls. Reporting success at the moment the deployment
+      # was requested would say nothing about whether it worked, and the status is the only thing
+      # that distinguishes a rollout from a rollback.
+      - name: Wait for the deployment to finish
         env:
-          CLUSTER: ${{ vars.ECS_CLUSTER }}
-          SERVICE: ${{ vars.ECS_SERVICE }}
-          # The waiter defaults to 40 attempts at 15 seconds, which is ten minutes. A cold Fargate
-          # placement, the health check grace period, two passing checks thirty seconds apart and
-          # the old task's drain can exceed that on a rollout that succeeded, and the job would
-          # then fail on a deployment that actually landed — the worst outcome, because the
-          # instinct is to re-run. Twenty minutes covers it.
-          AWS_MAX_ATTEMPTS: "80"
+          SERVICE_ARN: ${{ vars.APPRUNNER_SERVICE_ARN }}
         run: |
           set -euo pipefail
-          aws ecs update-service --cluster "${CLUSTER}" --service "${SERVICE}" \
-            --task-definition "${{ steps.taskdef.outputs.arn }}" >/dev/null
-
-          # Returns only once the new tasks are running, registered healthy with the load balancer
-          # and the old ones are drained. Without this the job would report success at the moment
-          # the rollout was requested, which says nothing about whether it worked.
-          aws ecs wait services-stable --cluster "${CLUSTER}" --services "${SERVICE}"
+          for attempt in $(seq 1 60); do
+            status="$(aws apprunner describe-service --service-arn "${SERVICE_ARN}" \
+              --query 'Service.Status' --output text)"
+            case "${status}" in
+              RUNNING)
+                echo "Service is RUNNING after ${attempt} checks."
+                exit 0
+                ;;
+              OPERATION_IN_PROGRESS)
+                sleep 15
+                ;;
+              *)
+                # CREATE_FAILED, DELETED, PAUSED and the rest are all terminal for this job. A
+                # PAUSED service is the one case that is not a defect: somebody paused it to stop
+                # the bill, and the deployment cannot land until it is resumed.
+                echo "::error::service status is ${status}, which is not a successful deployment"
+                exit 1
+                ;;
+            esac
+          done
+          echo "::error::service did not reach RUNNING within fifteen minutes"
+          exit 1
 
       # The deployment is not finished until the public URL answers. This is the same check the
-      # Product Owner and QE will run by hand, executed here so a broken deploy is red in CI rather
-      # than discovered by a person opening a browser.
+      # Product Owner and QE run by hand, executed here so a broken deploy is red in CI rather than
+      # discovered by a person opening a browser.
       - name: Smoke-check the public endpoint
         if: vars.API_BASE_URL != ''
         env:
           BASE_URL: ${{ vars.API_BASE_URL }}
         run: |
           set -euo pipefail
+          # Retries generously on purpose. The first request after a deployment may wake a suspended
+          # Neon compute, and Flyway validates its migrations before the application answers at all.
           health="$(curl -fsS --retry 10 --retry-delay 6 --retry-all-errors "${BASE_URL}/actuator/health")"
           echo "health: ${health}"
           echo "${health}" | jq -e '.status == "UP"' >/dev/null

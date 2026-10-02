@@ -204,10 +204,11 @@ unit, integration and coverage gates; a push to the integration branch publishes
 and rolls an ECS Fargate service that answers on a public URL, so a reviewer can check the running
 API without a checkout.
 
-That preview is served over HTTPS by a CloudFront distribution using its own `*.cloudfront.net`
-certificate, and the load balancer behind it accepts connections from CloudFront alone, so there is
-no way to reach the API in clear text. The address is therefore a generated hostname rather than a
-name of ours; adopting a domain is a follow-up, not a prerequisite.
+That preview runs on AWS App Runner, which serves HTTPS on its own `*.awsapprunner.com`
+certificate, with PostgreSQL on Neon's free plan. The address is a generated hostname rather than a
+name of ours; adopting a domain is a follow-up, not a prerequisite. It costs roughly `50.000 ₫` a
+month because both halves scale to nothing when idle — App Runner pauses, and Neon suspends its
+compute after five minutes without a connection.
 
 The earlier warning that an unauthenticated API must not leave local development still applies to
 anything with data behind it. This environment is safe today because there is nothing behind it:

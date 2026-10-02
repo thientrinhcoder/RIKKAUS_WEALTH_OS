@@ -1,11 +1,11 @@
 variable "aws_region" {
-  description = "Region for every resource in this stack."
+  description = "Region for every resource in this stack. Keep it the same as the Neon project's region: Neon offers aws-ap-southeast-1, and putting the database on another continent adds a round trip to every query."
   type        = string
   default     = "ap-southeast-1"
 }
 
 variable "environment" {
-  description = "Environment this stack instance represents. Part of most resource names, but see the note in registry.tf: a second instance in the same account collides on the shared ECR repository and the account-wide GitHub OIDC provider, and standing Testing up alongside Development needs that resolved first."
+  description = "Environment this stack instance represents. Part of most resource names, but see the note in registry.tf: the ECR repository and the account-wide GitHub OIDC provider are singletons, so a second instance in the same account needs those resolved first."
   type        = string
   default     = "development"
 
@@ -22,97 +22,103 @@ variable "github_repository" {
 }
 
 variable "github_deploy_branches" {
-  description = "Branches whose workflow runs may assume the deploy role. The Product Owner deploys Development from main, so that is the only entry; the architecture's `develop` branch was never created. A pull-request run, or a run from a fork, carries a different subject and cannot match, which is the second half of the guarantee the workflow's own `if` makes."
+  description = "Branches whose workflow runs may assume the deploy role. The Product Owner deploys Development from main, so that is the only entry; the architecture's `develop` branch was never created."
   type        = list(string)
   default     = ["main"]
 }
 
-variable "vpc_cidr" {
-  description = "Address space for the VPC."
-  type        = string
-  default     = "10.20.0.0/16"
-}
+# ---------------------------------------------------------------------------------------------
+# Compute
+# ---------------------------------------------------------------------------------------------
 
-variable "api_container_port" {
-  description = "Port the Spring Boot application listens on inside the task."
+variable "api_port" {
+  description = "Port the application listens on inside the container. Passed through as SERVER_PORT, so this value genuinely drives the listener rather than only describing it."
   type        = number
   default     = 8080
 }
 
 variable "api_cpu" {
-  description = "Fargate CPU units for the API task. 512 is a quarter vCPU."
-  type        = number
-  default     = 512
+  description = "App Runner vCPU, in the units the service expects. 256 is 0.25 vCPU, the smallest it allows. Valid pairings are constrained: 0.25 vCPU takes 512 or 1024 MB only."
+  type        = string
+  default     = "256"
 }
 
 variable "api_memory" {
-  description = "Fargate memory (MiB) for the API task. The JVM takes 75% of this as its heap ceiling; see JAVA_OPTS in the Dockerfile."
-  type        = number
-  default     = 1024
-}
-
-variable "api_desired_count" {
-  description = "Running tasks. Set to 0 outside a test window to stop paying for compute without destroying anything."
-  type        = number
-  default     = 1
-}
-
-variable "db_instance_class" {
-  description = "RDS instance class. db.t4g.micro is the cheapest Graviton option that runs PostgreSQL."
+  description = "App Runner memory in MB. 512 was chosen after running the real image under `--memory=512m --cpus=0.25`, where it started and answered /actuator/health; it is the cheapest configuration the service offers. Raise to 1024 if start-up ever fails on memory after the application grows."
   type        = string
-  default     = "db.t4g.micro"
+  default     = "512"
 }
 
-variable "db_engine_version" {
-  description = "PostgreSQL major version on RDS. Major-only lets AWS pick the current minor. Check what the region actually offers with: aws rds describe-db-engine-versions --engine postgres --query 'DBEngineVersions[].EngineVersion'"
+# ---------------------------------------------------------------------------------------------
+# Database — Neon, outside AWS
+# ---------------------------------------------------------------------------------------------
+#
+# These three have no defaults on purpose. There is nothing sensible to default to, and a stack
+# that applied with a placeholder database would produce a service that starts and then fails every
+# request, which is worse than an apply that refuses.
+
+variable "database_url" {
+  description = "JDBC URL of the Neon database, with no credentials in it. Example shape: jdbc:postgresql://ep-cool-name-123456.ap-southeast-1.aws.neon.tech/rikkaus?sslmode=require — the sslmode is not optional, because this connection crosses the public internet. Take the host from the Neon console and write the JDBC form by hand; Neon shows a libpq URL that embeds the password, and that password belongs in database_password instead."
   type        = string
-  default     = "17"
+
+  validation {
+    condition     = can(regex("^jdbc:postgresql://", var.database_url))
+    error_message = "Must be a JDBC URL beginning jdbc:postgresql://."
+  }
+
+  validation {
+    condition     = !can(regex("@", var.database_url))
+    error_message = "The URL must not contain credentials. An inline password would be returned in plain text by `apprunner describe-service`; put it in database_password, which is stored as a SecureString."
+  }
+
+  validation {
+    condition     = can(regex("sslmode=require|sslmode=verify-full", var.database_url))
+    error_message = "Must set sslmode=require or sslmode=verify-full. The connection crosses the public internet."
+  }
 }
 
-variable "db_allocated_storage" {
-  description = "Allocated storage in GiB."
-  type        = number
-  default     = 20
+variable "database_username" {
+  description = "Neon database role. Not secret on its own, and it is passed as a plain environment variable."
+  type        = string
 }
+
+variable "database_password" {
+  description = "Password for the Neon role. Never commit it: supply it through the environment as TF_VAR_database_password, and it is stored as a Parameter Store SecureString and injected as a secret rather than an environment variable."
+  type        = string
+  sensitive   = true
+}
+
+# ---------------------------------------------------------------------------------------------
+# Application configuration
+# ---------------------------------------------------------------------------------------------
 
 variable "api_allowed_origins" {
-  description = "Comma-separated browser origins permitted to call the API. Empty registers no CORS mapping at all, which is the application's intended default; set it to the Expo web preview origin once issue #46 publishes one."
+  description = "Comma-separated browser origins permitted to call the API. Empty registers no CORS mapping at all, which is the application's intended default; set it once issue #46 publishes an Expo web preview origin."
   type        = string
   default     = ""
 }
 
 variable "google_oauth_client_id" {
-  description = "Google OAuth client id. Optional: leave empty until issue #42 merges and sign-in is actually wired up. When empty, no parameter is created and the task receives no such variable."
+  description = "Google OAuth client id. Optional until sign-in is exercised through this environment. When empty, no parameter is created and the service receives no such variable."
   type        = string
   default     = ""
 }
 
 variable "google_oauth_client_secret" {
-  description = "Google OAuth client secret. Optional, and genuinely absent for a public PKCE client. Never commit a value; supply it through a tfvars file that git ignores, or set TF_VAR_google_oauth_client_secret in the shell."
+  description = "Google OAuth client secret. Optional, and genuinely absent for a public PKCE client. Supply through TF_VAR_google_oauth_client_secret rather than a file."
   type        = string
   default     = ""
   sensitive   = true
 }
 
 variable "google_oauth_redirect_uris" {
-  description = "Comma-separated exact-match allowlist of OAuth redirect URIs. Empty permits none, which is how the application fails closed."
+  description = "Comma-separated exact-match allowlist of OAuth redirect URIs. Empty permits none, which is how the application fails closed. Use the App Runner URL from `tofu output -raw api_base_url`, which is HTTPS and therefore acceptable to Google."
   type        = string
   default     = ""
 }
 
-variable "cloudfront_price_class" {
-  description = "Which edge locations the distribution uses. PriceClass_200 includes Asia, which is where this team and its reviewers are; PriceClass_100 is cheaper but serves Vietnam from North America and Europe, adding a noticeable round trip to every call."
-  type        = string
-  default     = "PriceClass_200"
-
-  validation {
-    condition     = contains(["PriceClass_100", "PriceClass_200", "PriceClass_All"], var.cloudfront_price_class)
-    error_message = "Must be one of PriceClass_100, PriceClass_200 or PriceClass_All."
-  }
-}
-
-variable "log_retention_days" {
-  description = "CloudWatch Logs retention for the API log group."
+variable "image_retention_count" {
+  description = "How many images ECR keeps. Ten is deliberate for an environment nobody rolls back by more than a few commits: at roughly 400 MB an image, thirty would cost more per month than the compute does."
   type        = number
-  default     = 14
+  default     = 10
 }

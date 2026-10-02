@@ -23,7 +23,8 @@ what gets built and one of them contradicts a recorded architecture decision.
 |---|---|---|
 | CI runner | **GitHub Actions** | `ARCHITECTURE_TECHNOLOGY_DECISIONS.md` is amended; no `Jenkinsfile` is written |
 | AWS provisioning | **Product Owner applies the OpenTofu** | This branch authors `infra/aws/` and a runbook; it creates no billed resource and verifies no live URL |
-| Public entry point | **CloudFront over HTTPS on its default certificate** | No domain and no ACM certificate; the hostname is a generated `*.cloudfront.net` name, and adopting a readable domain is the follow-up |
+| Public entry point | **App Runner's own HTTPS endpoint** | No domain, no certificate, no load balancer and no CDN; the hostname is a generated `*.awsapprunner.com` name |
+| Compute and database | **App Runner + Neon, chosen on cost** | The ECS/ALB/CloudFront/RDS build was rejected by the Product Owner at ~`1.500.000 ₫`/month and replaced at ~`50.000 ₫`; see phase 6 |
 | Deploy branch | **`main`** | The architecture's `develop` was never created; `main` is the only push trigger and the only branch the deploy role trusts |
 
 ## Constraints
@@ -51,6 +52,7 @@ what gets built and one of them contradicts a recorded architecture decision.
 | 3 | AWS baseline as OpenTofu, and the operator runbook | [phase-03](phase-03-aws-baseline-and-runbook.md) | done |
 | 4 | HTTPS at the edge, and `main` as the deploy branch | [phase-04](phase-04-https-and-main-only-deploys.md) | done |
 | 5 | Security scanning in the pipeline | [phase-05](phase-05-security-scanning.md) | done |
+| 6 | Cost rebuild on App Runner and Neon | [phase-06](phase-06-cost-rebuild-on-app-runner-and-neon.md) | done |
 
 The image and the workflow that produces it are recorded together, and so are the infrastructure
 and the runbook for operating it, because in each pair neither half is verifiable without the
@@ -63,8 +65,10 @@ other.
       scanning, dependency vulnerabilities and static analysis — and deploys nothing.
 - [ ] A push to the integration branch builds one image, pushes it to ECR under its commit SHA, and
       updates the ECS service to that digest.
-- [ ] `infra/aws/` provisions ECR, RDS, ECS Fargate, an ALB and Parameter Store, with no public
-      database and no secret in state output.
-- [ ] After the Product Owner applies the stack, `GET <cloudfront-host>/actuator/health` returns
-      `UP` over HTTPS and `GET <cloudfront-host>/api/v1/meta` returns the deployed commit, both
-      anonymously, and the load balancer's own DNS name is unreachable from the internet.
+- [ ] `infra/aws/` provisions ECR, an App Runner service and Parameter Store, with no secret in any
+      output and no credential in any environment variable.
+- [ ] After the Product Owner applies the stack, `GET <apprunner-host>/actuator/health` returns
+      `UP` over HTTPS and `GET <apprunner-host>/api/v1/meta` returns the deployed commit, both
+      anonymously.
+- [ ] The environment costs under `100.000 ₫` a month at the stated usage, and both compute and
+      database return to zero cost when idle.

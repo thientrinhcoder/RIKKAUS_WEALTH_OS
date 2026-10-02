@@ -1,6 +1,7 @@
 # Copy to development.tfvars and edit. The real file is git-ignored.
 #
 #   cp development.tfvars.example development.tfvars
+#   export TF_VAR_database_password='...'        # from the Neon console; never put it in a file
 #   tofu apply -var-file=development.tfvars
 
 aws_region  = "ap-southeast-1"
@@ -10,32 +11,53 @@ environment = "development"
 github_repository      = "thientrinhcoder/RIKKAUS_WEALTH_OS"
 github_deploy_branches = ["main"]
 
-# Set to 0 between test windows to stop paying for Fargate compute without destroying anything;
-# set back to 1 and re-apply when the next review starts. The database keeps running either way.
-api_desired_count = 1
+# ---------------------------------------------------------------------------------------------
+# Database — Neon
+# ---------------------------------------------------------------------------------------------
+#
+# Create a project at https://console.neon.tech in region "AWS Asia Pacific (Singapore)", which is
+# the same region as the App Runner service; a database on another continent adds a round trip to
+# every query.
+#
+# Neon shows a libpq connection string with the password inside it. Do not paste that here. Take the
+# host and database name from it and write the JDBC form below; the password goes in the environment
+# instead, and the stack validates that this URL contains no credentials.
+#
+# sslmode=require is not optional. This connection crosses the public internet.
+database_url      = "jdbc:postgresql://ep-example-name-123456.ap-southeast-1.aws.neon.tech/rikkaus?sslmode=require"
+database_username = "rikkaus_owner"
 
-# Edge locations. PriceClass_200 includes Asia; PriceClass_100 would serve Vietnam from North
-# America and Europe and add a round trip to every call.
-cloudfront_price_class = "PriceClass_200"
+# database_password is deliberately absent from this file. Supply it as an environment variable:
+#   export TF_VAR_database_password='...'
+# Putting it here risks committing it, and the repository's secret scan would catch a jdbc URL with
+# an inline password — which is the rule working, not a false positive.
+
+# ---------------------------------------------------------------------------------------------
+# Application
+# ---------------------------------------------------------------------------------------------
 
 # Browser origins permitted to call the API, comma-separated. Empty registers no CORS mapping at
 # all, which is the application's intended default. Fill this in once issue #46 publishes an Expo
 # web preview origin.
 api_allowed_origins = ""
 
-# Google OAuth, for after issue #42 merges. Until then leave all three empty: no parameter is
-# created and the task receives no such variable.
+# Google OAuth. Optional until sign-in is exercised through this environment; when empty, no
+# parameter is created and the service receives no such variable.
 #
-# Do not put a real client secret in a file you might commit. Prefer the environment:
 #   export TF_VAR_google_oauth_client_secret='...'
 google_oauth_client_id     = ""
 google_oauth_client_secret = ""
 
 # Exact-match allowlist, comma-separated. Google delivers the authorization code to whatever this
-# names, so an unregistered URI is how a code reaches somewhere it should not.
-#
-# This environment serves HTTPS, so Google will accept a redirect URI here. Use the CloudFront
-# hostname from `tofu output -raw api_base_url` — for example
-# https://d2x3k9abcdef.cloudfront.net/auth/callback — and register the identical string on the
-# Google OAuth client, which compares it character for character.
+# names, so an unregistered URI is how a code reaches somewhere it should not. App Runner serves
+# HTTPS, so Google accepts a URI here: use `tofu output -raw api_base_url` and register the
+# identical string on the Google OAuth client, which compares it character for character.
 google_oauth_redirect_uris = ""
+
+# ---------------------------------------------------------------------------------------------
+# Sizing. The defaults are the cheapest App Runner allows and were verified by running the real
+# image under `--memory=512m --cpus=0.25`, where it started and answered /actuator/health. Raise
+# api_memory to "1024" if start-up ever fails on memory as the application grows.
+# ---------------------------------------------------------------------------------------------
+api_cpu    = "256"
+api_memory = "512"

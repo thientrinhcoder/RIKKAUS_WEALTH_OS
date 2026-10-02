@@ -1,60 +1,74 @@
-# Identities: two for the running task, one for the pipeline.
+# Identities: two for the service, one for the pipeline.
 #
 # The pipeline's identity is federated, not a stored key. GitHub mints a short-lived OIDC token for
-# a workflow run, AWS trusts it only when its subject matches this repository on a named branch,
-# and no access key exists in the repository to leak or rotate.
+# a workflow run, AWS trusts it only when its subject matches this repository on a named branch, and
+# no access key exists in the repository to leak or rotate.
 
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
 # ---------------------------------------------------------------------------------------------
-# Task roles
+# App Runner roles
 # ---------------------------------------------------------------------------------------------
 
-data "aws_iam_policy_document" "ecs_tasks_assume" {
+# Used by App Runner's build side to pull the image. Note the principal: `build.apprunner`, not
+# `tasks.apprunner`. Getting these two the wrong way round is the usual cause of a service that
+# cannot pull its image while appearing to have the right permissions.
+data "aws_iam_policy_document" "apprunner_build_assume" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
       type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
+      identifiers = ["build.apprunner.amazonaws.com"]
     }
   }
 }
 
-# Used by the ECS agent, not by the application: it pulls the image and resolves the SecureString
-# parameters before the container starts.
-resource "aws_iam_role" "task_execution" {
-  name               = "${local.name}-task-execution"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+resource "aws_iam_role" "apprunner_ecr_access" {
+  name               = "${local.name}-apprunner-ecr"
+  description        = "Lets App Runner pull the API image from ECR"
+  assume_role_policy = data.aws_iam_policy_document.apprunner_build_assume.json
 }
 
-resource "aws_iam_role_policy_attachment" "task_execution_managed" {
-  role       = aws_iam_role.task_execution.name
-  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+resource "aws_iam_role_policy_attachment" "apprunner_ecr_access" {
+  role       = aws_iam_role.apprunner_ecr_access.name
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
 }
 
-data "aws_iam_policy_document" "task_execution_secrets" {
-  # The managed policy above covers ECR and CloudWatch but grants nothing on Parameter Store, so
-  # without this statement every task fails to start with a ResourceInitializationError. Scoped to
-  # this environment's prefix: a Development task cannot read a Testing parameter.
+# Assumed by the running instance. Its only job is reading this environment's parameters: the
+# application talks to Neon and to Google and to no AWS API at all.
+data "aws_iam_policy_document" "apprunner_tasks_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["tasks.apprunner.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "apprunner_instance" {
+  name               = "${local.name}-apprunner-instance"
+  description        = "Runtime identity of the API; reads its own secrets and nothing else"
+  assume_role_policy = data.aws_iam_policy_document.apprunner_tasks_assume.json
+}
+
+data "aws_iam_policy_document" "apprunner_instance" {
+  # Scoped to this environment's prefix, so a Development instance cannot read a Testing parameter.
   statement {
     sid       = "ReadEnvironmentParameters"
-    actions   = ["ssm:GetParameters"]
+    actions   = ["ssm:GetParameters", "ssm:GetParameter"]
     resources = ["arn:${data.aws_partition.current.partition}:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${local.parameter_prefix}/*"]
   }
 
   # SecureStrings created without an explicit key are encrypted under the account's AWS-managed SSM
-  # key, and decrypting them requires this, conditioned so the grant only works through SSM.
+  # key, whose ARN is not a stable input here, so the resource is `*` and two conditions narrow it:
+  # the grant works only through SSM, and only for this environment's own parameters.
   statement {
     sid       = "DecryptThroughSsm"
     actions   = ["kms:Decrypt"]
     resources = ["*"]
 
-    # `*` is unavoidable here: SecureStrings created without an explicit key use the account's
-    # AWS-managed SSM key, whose ARN is not a stable input to this configuration. The two
-    # conditions are what narrow it. ViaService alone would still permit decrypting any SSM
-    # parameter in the region, so the encryption context pins it to this environment's own prefix,
-    # and the grant stays narrow even if the GetParameters statement above is later widened.
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
@@ -69,28 +83,18 @@ data "aws_iam_policy_document" "task_execution_secrets" {
   }
 }
 
-resource "aws_iam_role_policy" "task_execution_secrets" {
+resource "aws_iam_role_policy" "apprunner_instance" {
   name   = "read-runtime-parameters"
-  role   = aws_iam_role.task_execution.id
-  policy = data.aws_iam_policy_document.task_execution_secrets.json
-}
-
-# Assumed by the application code itself. It is deliberately empty: this service talks to
-# PostgreSQL and to Google, and to no AWS API at all. The role exists so that the day something
-# does need an AWS permission, it is granted here rather than by widening the execution role, which
-# would hand it to the agent's image-pull path as well.
-resource "aws_iam_role" "task" {
-  name               = "${local.name}-task"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume.json
+  role   = aws_iam_role.apprunner_instance.id
+  policy = data.aws_iam_policy_document.apprunner_instance.json
 }
 
 # ---------------------------------------------------------------------------------------------
 # GitHub Actions deploy role
 # ---------------------------------------------------------------------------------------------
 
-# One OIDC provider per account. If the account already has one for GitHub — another repository
-# may have created it — this apply fails with EntityAlreadyExists; import it rather than creating a
-# second. docs/backend-deployment.md gives the exact import command.
+# One OIDC provider per account. If the account already has one for GitHub, this apply fails with
+# EntityAlreadyExists; import it rather than creating a second. The runbook gives the command.
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
@@ -112,22 +116,13 @@ data "aws_iam_policy_document" "github_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # The allowlist, and the reason a pull request cannot deploy even if the workflow's own `if`
-    # were removed. A pull-request run's subject is `repo:owner/name:pull_request`, and a run from
-    # a fork names the fork, so neither form below can match. This is the control that does not
-    # depend on workflow YAML staying correct.
-    #
-    # Two forms are needed because GitHub changes the subject claim depending on the job. A job
-    # with no `environment:` gets `repo:owner/name:ref:refs/heads/<branch>`, which is what the
-    # `publish` job presents. A job that declares an environment — as `deploy` does, so the
-    # deployment URL shows in the GitHub UI — gets `repo:owner/name:environment:<name>` instead,
-    # and its branch does not appear in the claim at all. Listing only the ref form would let the
-    # image be published and then fail the deployment with an error that reads like a mis-set
-    # secret.
-    #
-    # The environment form carries no branch, so it is the workflow's `needs: publish` that keeps
-    # it behind the branch check rather than the trust policy: `deploy` cannot run at all unless
-    # `publish` succeeded, and `publish` is admitted only on a listed branch.
+    # Two subject forms are needed because GitHub changes the claim depending on the job. A job with
+    # no `environment:` presents `repo:owner/name:ref:refs/heads/<branch>`, which is what the publish
+    # job sends. A job declaring an environment — as the deploy job does, so its URL shows in the
+    # GitHub UI — presents `repo:owner/name:environment:<name>` with no branch in it at all. Listing
+    # only the ref form is how a pipeline publishes an image and then fails to deploy it with an
+    # error that reads like a mis-set secret. What keeps the environment form on an allowed branch is
+    # the workflow's `needs: publish`, since publish is admitted only on a listed branch.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
@@ -141,13 +136,13 @@ data "aws_iam_policy_document" "github_assume" {
 
 resource "aws_iam_role" "github_deploy" {
   name                 = "${local.name}-github-deploy"
-  description          = "Assumed by the Backend workflow to push an image and roll the ECS service"
+  description          = "Assumed by the Backend workflow to push an image and deploy the App Runner service"
   assume_role_policy   = data.aws_iam_policy_document.github_assume.json
   max_session_duration = 3600
 }
 
 data "aws_iam_policy_document" "github_deploy" {
-  # The token is account-wide, so this is narrowed to the one repository the pipeline pushes to.
+  # The OIDC token is account-wide, so this narrows to the one repository the pipeline pushes to.
   statement {
     sid = "PushToThisRepository"
     actions = [
@@ -163,45 +158,36 @@ data "aws_iam_policy_document" "github_deploy" {
     resources = [aws_ecr_repository.api.arn]
   }
 
-  # Not resource-scopable: the token that `docker login` needs is an account-level call.
+  # Not resource-scopable: the token `docker login` needs is an account-level call.
   statement {
     sid       = "AuthenticateToEcr"
     actions   = ["ecr:GetAuthorizationToken"]
     resources = ["*"]
   }
 
-  # RegisterTaskDefinition takes no resource condition, which is an IAM limitation rather than a
-  # choice. The blast radius is bounded by the PassRole statement below: a registration naming any
-  # role other than this environment's two is refused, so the permission cannot be used to run a
-  # task as a more privileged identity.
+  # Deploy, read status, and nothing else. Notably absent: CreateService and DeleteService. The
+  # pipeline changes which image a service runs; it does not get to create or destroy one, which
+  # stays with whoever runs `tofu apply`.
   statement {
-    sid       = "RegisterTaskDefinitions"
-    actions   = ["ecs:RegisterTaskDefinition", "ecs:DescribeTaskDefinition"]
-    resources = ["*"]
+    sid = "DeployThisServiceOnly"
+    actions = [
+      "apprunner:UpdateService",
+      "apprunner:DescribeService",
+      "apprunner:ListOperations",
+    ]
+    resources = [aws_apprunner_service.api.arn]
   }
 
-  # Lets the deploy job find the revision this configuration last registered, which is the one it
-  # derives each deployment from. Read-only, and one parameter.
+  # UpdateService may pass the two roles the service already uses, and no others, so the permission
+  # cannot be turned into running the service as a more privileged identity.
   statement {
-    sid       = "ReadTheBaseTaskDefinitionPointer"
-    actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.base_task_definition.arn]
-  }
-
-  statement {
-    sid       = "RollThisServiceOnly"
-    actions   = ["ecs:DescribeServices", "ecs:UpdateService"]
-    resources = [aws_ecs_service.api.arn]
-  }
-
-  statement {
-    sid       = "PassOnlyThisEnvironmentsTaskRoles"
+    sid       = "PassOnlyThisServicesRoles"
     actions   = ["iam:PassRole"]
-    resources = [aws_iam_role.task_execution.arn, aws_iam_role.task.arn]
+    resources = [aws_iam_role.apprunner_ecr_access.arn, aws_iam_role.apprunner_instance.arn]
     condition {
       test     = "StringEquals"
       variable = "iam:PassedToService"
-      values   = ["ecs-tasks.amazonaws.com"]
+      values   = ["build.apprunner.amazonaws.com", "tasks.apprunner.amazonaws.com"]
     }
   }
 }

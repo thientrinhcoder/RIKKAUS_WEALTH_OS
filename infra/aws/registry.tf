@@ -34,17 +34,19 @@ resource "aws_ecr_repository" "api" {
 resource "aws_ecr_lifecycle_policy" "api" {
   repository = aws_ecr_repository.api.name
 
-  # Storage is billed per gigabyte-month and every commit to an integration branch adds an image.
-  # Thirty is deep enough that a rollback target from weeks ago is still present.
+  # Storage is billed per gigabyte-month and every commit to the integration branch adds one. This
+  # image is roughly 400 MB, so the retention count is not a rounding error here: at thirty it would
+  # cost more per month than the compute does, which is the wrong shape for an environment chosen
+  # for being cheap. Ten still reaches back further than anyone rolls back.
   policy = jsonencode({
     rules = [
       {
         rulePriority = 1
-        description  = "Keep the 30 most recent images"
+        description  = "Keep the ${var.image_retention_count} most recent images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = 30
+          countNumber = var.image_retention_count
         }
         action = { type = "expire" }
       }

@@ -4,27 +4,22 @@
 # docs/backend-deployment.md pipes each one straight into the GitHub repository variable or secret
 # it becomes; nothing here has to be looked up in the console.
 #
-# No secret is output. The database password and the JWT signing key exist only in Parameter Store
-# and in the state file, and printing either would put it in a terminal history and a CI log.
+# No secret is output. The JWT signing key and the Neon password exist only in Parameter Store and
+# in the state file, and printing either would put it in a terminal history and a CI log.
 
 output "api_base_url" {
-  description = "Public base URL of the API, over HTTPS on CloudFront's own certificate. Becomes the GitHub repository variable API_BASE_URL, and is the address the Product Owner and QE verify."
-  value       = "https://${aws_cloudfront_distribution.api.domain_name}"
+  description = "Public base URL of the API, over HTTPS on App Runner's own certificate. Becomes the GitHub repository variable API_BASE_URL, and is the address the Product Owner and QE verify."
+  value       = "https://${aws_apprunner_service.api.service_url}"
 }
 
 output "health_check_url" {
   description = "The endpoint to open first. Answers {\"status\":\"UP\"} anonymously once a deployment has landed."
-  value       = "https://${aws_cloudfront_distribution.api.domain_name}/actuator/health"
+  value       = "https://${aws_apprunner_service.api.service_url}/actuator/health"
 }
 
 output "meta_url" {
   description = "Reports the build version actually running, which is how a reviewer confirms which commit they are looking at."
-  value       = "https://${aws_cloudfront_distribution.api.domain_name}/api/v1/meta"
-}
-
-output "alb_dns_name" {
-  description = "The load balancer behind the distribution. Published for diagnosis only: its security group admits CloudFront alone, so a request sent here from anywhere else times out rather than being refused. Do not hand this to anyone or configure it as an origin."
-  value       = aws_lb.api.dns_name
+  value       = "https://${aws_apprunner_service.api.service_url}/api/v1/meta"
 }
 
 output "ecr_repository" {
@@ -37,19 +32,9 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.api.repository_url
 }
 
-output "ecs_cluster" {
-  description = "Becomes the GitHub repository variable ECS_CLUSTER."
-  value       = aws_ecs_cluster.main.name
-}
-
-output "ecs_service" {
-  description = "Becomes the GitHub repository variable ECS_SERVICE."
-  value       = aws_ecs_service.api.name
-}
-
-output "base_task_definition_parameter" {
-  description = "Becomes the GitHub repository variable BASE_TASK_DEFINITION_PARAMETER. Names the Parameter Store entry holding the revision each deployment derives from, which is how a change applied here reaches a running task."
-  value       = aws_ssm_parameter.base_task_definition.name
+output "apprunner_service_arn" {
+  description = "Becomes the GitHub repository variable APPRUNNER_SERVICE_ARN. The deploy job updates this service, and the deploy role is scoped to this ARN alone."
+  value       = aws_apprunner_service.api.arn
 }
 
 output "aws_region" {
@@ -63,11 +48,11 @@ output "github_deploy_role_arn" {
 }
 
 output "log_group" {
-  description = "Where the API's logs land. `aws logs tail <this> --follow` is the fastest way to read a failing start-up."
-  value       = aws_cloudwatch_log_group.api.name
+  description = "Where the application's own logs land. App Runner creates this itself; `aws logs tail <this> --follow` is the fastest way to read a failing start-up. A second group ending /service carries App Runner's own deployment events."
+  value       = "/aws/apprunner/${aws_apprunner_service.api.service_name}/${aws_apprunner_service.api.service_id}/application"
 }
 
-output "database_endpoint" {
-  description = "RDS address. Reachable only from inside the VPC; there is no public route to it."
-  value       = aws_db_instance.main.address
+output "pause_command" {
+  description = "Stops all compute charges without destroying anything. Resume with the same command and resume-service. Printed as an output because it is the single most useful thing to know about running this environment cheaply."
+  value       = "aws apprunner pause-service --service-arn ${aws_apprunner_service.api.arn} --region ${var.aws_region}"
 }

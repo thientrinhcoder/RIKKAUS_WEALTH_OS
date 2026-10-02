@@ -160,23 +160,48 @@ Development and test may share one small RDS instance to reduce cost, but must u
 | Environment | Client | API | Database | Deployment trigger |
 |---|---|---|---|---|
 | Local | Expo dev server and browser | Local JVM or Docker | Docker Compose PostgreSQL | Developer action |
-| Development | Static web preview | ECS Fargate | RDS PostgreSQL development DB | Automatic from `develop` |
+| Development | Static web preview | App Runner | Neon PostgreSQL (free plan) | Automatic from `main` |
 | Testing | Static web preview for QC/PO | ECS Fargate | RDS PostgreSQL test DB | Approved release candidate |
 | Production | Web and/or native build | VPS Docker Compose initially; ECS remains compatible | PostgreSQL with off-host backup | Version tag plus manual approval |
 
 ### AWS development/testing components
 
-- ECS Fargate service for the Spring Boot API.
+- App Runner service for the Spring Boot API in Development; ECS Fargate remains the pattern for a shared environment that outgrows it.
 - ECR repository for immutable API images.
-- One shared Application Load Balancer for development and testing where practical.
+- A shared Application Load Balancer only where a service needs one; App Runner publishes HTTPS without it.
 - HTTPS for all remote environments, by ACM certificate where a domain exists.
-- S3 and CloudFront for the Expo web build, and CloudFront in front of the API where the environment has no domain.
-- RDS PostgreSQL with isolated databases and credentials per environment.
+- S3 and CloudFront for the Expo web build.
+- RDS PostgreSQL with isolated databases and credentials per environment, where a shared environment warrants it; Development uses Neon.
 - Systems Manager Parameter Store or Secrets Manager for runtime secrets.
 - CloudWatch Logs for API logs and deployment diagnosis.
 - OpenTofu definitions committed under `infra/aws/`.
 
-> **Amended during issue #47.** This list required ACM certificates. The Development environment
+> **Amended twice during issue #47.**
+>
+> **Cost, second amendment.** The Development environment was first built as this list describes:
+> ECS Fargate behind an Application Load Balancer behind a CloudFront distribution, with RDS
+> PostgreSQL. It cost roughly `1.500.000 ₫` a month. The Product Owner rejected it on the grounds
+> that the environment serves one or two people for a few hours on weekdays, and that the load
+> balancer — the largest single line — was also the only component that could not be scaled to zero.
+>
+> Development now runs on **AWS App Runner** with **Neon** for PostgreSQL, at roughly `50.000 ₫` a
+> month. App Runner publishes HTTPS on its own `*.awsapprunner.com` certificate, so the load
+> balancer and the distribution both disappear; it pauses to zero cost; and with the database
+> outside AWS there is no private resource left to reach, so the VPC, its subnets and its security
+> groups disappear too. Thirteen infrastructure findings became one, by deletion rather than
+> exemption.
+>
+> Two consequences are recorded rather than hidden. Database traffic now crosses the public internet
+> under TLS instead of staying inside a VPC, which is acceptable only because this environment holds
+> no real user data. And PostgreSQL for Development is no longer an AWS service. Neither changes
+> production: it remains a VPS running the same image with PostgreSQL alongside it, and PostgreSQL
+> remains the single system of record.
+>
+> ECS Fargate, an ALB and RDS stay in this list as the pattern for a shared environment with real
+> users and real load. They were the wrong instrument for a two-person preview, not the wrong
+> instrument.
+>
+> **HTTPS, first amendment.** This list required ACM certificates. The Development environment
 > has no domain, and an Application Load Balancer cannot serve HTTPS on its generated hostname
 > because AWS owns `elb.amazonaws.com` and issues no certificate for a name under it, so ACM was
 > not available without first buying a domain. The Product Owner chose CloudFront's default
