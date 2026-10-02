@@ -198,6 +198,53 @@ expressed. Requiring static analysis before a merge is a branch-protection rule 
 the better place for it in any case, because `publish` runs after the merge, so gating it was never
 the control that mattered.
 
-The lesson common to both: a gate written against a local checkout is not a gate until it has run
-where it will live. Everything verified locally in this phase held up; everything that depended on
-the repository's own configuration did not.
+### Then the gates found real problems
+
+With both of those fixed, the next two runs failed on findings that were not false positives and not
+configuration clashes. These are the gates doing the job they were added for.
+
+**Spotless flagged seven files in the identity slice.** This configuration was written and verified
+against `main` before issue #42 merged, so its first run against the merged tree met code it had
+never seen. Three imports were genuinely unused — `HttpEntity`, `HttpHeaders`, `java.util.List` — and
+the rest were out of the ASCII order the rest of the codebase already follows, with `core` sorting
+after `lang` in the ArchUnit imports. The resolution was `spotless:apply` and nothing else: eleven
+import lines removed, eight added, no other line in any file touched. A new formatting gate meeting
+pre-existing code is the expected first encounter, not a defect in either.
+
+**The dependency scan found a CRITICAL and four HIGH advisories.** Thirteen findings across five
+artifacts, every one with a published fix that the Spring Boot 4.1.1 BOM pins below:
+
+| Artifact | BOM pins | Advisory | Raised to |
+|---|---|---|---|
+| `tomcat-embed-core` | 11.0.24 | CVE-2026-65182, CRITICAL | 11.0.25 |
+| `tools.jackson.core:jackson-core` | 3.1.5 | CVE-2026-89407, HIGH | 3.1.7 |
+| `tools.jackson.core:jackson-databind` | 3.1.5 | CVE-2026-68497, HIGH | 3.1.7 |
+| `com.fasterxml.jackson.core:jackson-core` | 2.21.5 | CVE-2026-89407, HIGH | 2.21.7 |
+| `com.fasterxml.jackson.core:jackson-databind` | 2.21.5 | CVE-2026-68497, HIGH | 2.21.7 |
+
+Three BOM properties were raised — `tomcat.version`, `jackson-bom.version`, `jackson-2-bom.version`
+— rather than versioned dependencies declared. `jackson-core` and `jackson-databind` are pinned
+together by their bom, and overriding one alone is how a build ends up with two incompatible halves
+of the same library. Each is the lowest version that clears the advisory rather than the newest
+published, because a non-security bump belongs in a Dependabot pull request with its own run of this
+gate. The property names and the available versions were read from the BOM and from Maven Central
+rather than assumed.
+
+This is worth stating plainly: **the backend had a CRITICAL Tomcat vulnerability and nothing in the
+project would have reported it.** It was found within an hour of the gate existing.
+
+### One operational fact learned from CI
+
+Trivy resolves a POM's parents and BOMs from the local Maven repository in preference to the network.
+Running the scan after `./mvnw verify` is therefore what keeps it off Maven Central — on a cold cache
+it fetches them and can be rate-limited with an HTTP 429 that reads like a scanner failure rather
+than a missing cache. This was reproduced locally before it could happen in CI, and is recorded in
+the workflow beside the step.
+
+### The lesson
+
+A gate written against a local checkout is not a gate until it has run where it will live. Of the
+four rounds this pull request took, two failed on things only the real repository could reveal — its
+CodeQL configuration, and its own history — and two failed on real defects that only a merged tree
+and a live advisory database could surface. Everything verified locally held up; nothing that
+depended on the environment did.

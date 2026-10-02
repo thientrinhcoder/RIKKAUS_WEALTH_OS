@@ -66,6 +66,7 @@ cannot run unless `publish` succeeded, and `publish` is admitted only on a liste
 | Committed secrets and keys | Gitleaks in `verify`, full history | yes |
 | Provider tokens at push time | GitHub secret scanning with push protection | n/a — blocks the push itself |
 | Dependency vulnerabilities | Trivy filesystem scan in `verify` | yes |
+| Managed versions pinned below a fix | BOM property overrides in `services/api/pom.xml` | n/a — see the comment there |
 | Container and OS vulnerabilities | Trivy image scan in `publish` | no — nothing is built on a PR |
 | Security defects in our own code | CodeQL **default setup**, not this workflow | yes |
 | Infrastructure misconfiguration | Trivy config scan in `verify` | yes |
