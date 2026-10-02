@@ -9,8 +9,6 @@ import com.rikkaus.wealth.identity.domain.RefreshTokenRepository;
 import com.rikkaus.wealth.identity.session.RefreshTokenService.Issued;
 import com.rikkaus.wealth.identity.session.RefreshTokenService.RefreshTokenRejectedException;
 import java.time.Clock;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.DefaultTransactionStatus;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -20,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.DefaultTransactionStatus;
 
 /**
  * Rotation, replay detection and revocation, against an in-memory repository.

@@ -2,8 +2,8 @@ package com.rikkaus.wealth.shared.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.rikkaus.wealth.support.AuthenticatedClient;
 import com.rikkaus.wealth.support.AbstractPostgresIntegrationTest;
+import com.rikkaus.wealth.support.AuthenticatedClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
