@@ -34,8 +34,6 @@ jobs in order. A pull request runs only the first.
    real PostgreSQL started by Testcontainers, a JaCoCo report per tier), then Trivy over the
    resolved dependencies. Test and coverage reports are uploaded whether the job passes or fails.
    This job holds no AWS credential.
-1. **codeql** — CodeQL `security-extended` over the Java source, running beside `verify` rather
-   than after it. Results appear in the Security tab and as pull-request annotations.
 2. **publish** — builds the image, scans it with Trivy, and pushes it to ECR tagged with the commit
    SHA. The scan runs against the locally built image, before the push, so a vulnerable image never
    reaches the registry. A fixable HIGH or CRITICAL finding fails the job.
@@ -69,7 +67,7 @@ cannot run unless `publish` succeeded, and `publish` is admitted only on a liste
 | Provider tokens at push time | GitHub secret scanning with push protection | n/a — blocks the push itself |
 | Dependency vulnerabilities | Trivy filesystem scan in `verify` | yes |
 | Container and OS vulnerabilities | Trivy image scan in `publish` | no — nothing is built on a PR |
-| Security defects in our own code | CodeQL `security-extended` | yes |
+| Security defects in our own code | CodeQL **default setup**, not this workflow | yes |
 | Infrastructure misconfiguration | Trivy config scan in `verify` | yes |
 | Vulnerable dependencies over time | Dependabot | n/a — opens pull requests |
 
@@ -83,6 +81,23 @@ whoever holds it can mint a valid access token for any user. That is the gap
 [`.gitleaks.toml`](../.gitleaks.toml) exists to close, and its rules were checked against planted
 canaries in both the shapes that secret travels in — an environment assignment and the JSON
 `name`/`value` pair an ECS task definition uses — as well as against the repository's real history.
+
+**Static analysis belongs to GitHub, not to this workflow.** CodeQL default setup is configured on
+this repository and analyses `java-kotlin`, `javascript-typescript` and `python`. An advanced CodeQL
+job was written into `backend.yml` first and failed on the first pull request — the two configurations
+cannot coexist — so it was removed. Default setup covers more languages and needs no workflow code;
+what it gives up is the `extended` query suite, which is a setting on default setup rather than a
+property of the analysis:
+
+```bash
+gh api -X PATCH repos/thientrinhcoder/RIKKAUS_WEALTH_OS/code-scanning/default-setup \
+  -f query_suite=extended
+```
+
+Because those checks live in a workflow GitHub owns, `publish` cannot list them under `needs:`.
+Requiring static analysis before a merge is a branch-protection rule on `main` — which is the right
+place for it regardless, since `publish` runs after the merge and gating it was never the control
+that mattered.
 
 **The infrastructure gate fails on any severity, unlike the vulnerability gates.** A LOW or MEDIUM
 CVE is often unfixable and arrives in numbers nobody can act on, so gating on it produces a check

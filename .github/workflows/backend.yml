@@ -33,6 +33,23 @@ concurrency:
   group: backend-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Static analysis is deliberately not a job in this file.
+#
+# This workflow carried a CodeQL job on `security-extended` for Java. It failed on the first pull
+# request with "CodeQL analyses from advanced configurations cannot be processed when the default
+# setup is enabled": GitHub's CodeQL default setup is configured on this repository, and the two
+# cannot coexist.
+#
+# Default setup is the one that stays. It analyses java-kotlin, javascript-typescript and python,
+# where the job here covered Java alone, and it needs no workflow code to maintain. Its query suite
+# is `default` rather than `extended`, which is the one thing lost and the one thing changeable
+# without touching this file — it is a setting on the default setup, not a property of the analysis.
+#
+# The consequence worth knowing: `publish` cannot require those checks, because they belong to a
+# workflow GitHub owns and `needs:` reaches only jobs in this file. Requiring static analysis before
+# a merge is a branch-protection rule on `main`, which is where it belongs anyway — `publish` runs
+# after the merge, so gating it was never the control that mattered.
+
 env:
   JAVA_VERSION: "25"
   JAVA_DISTRIBUTION: temurin
@@ -149,58 +166,11 @@ jobs:
           if-no-files-found: warn
 
   # -------------------------------------------------------------------------------------------
-  # Static analysis of the service's own source.
-  #
-  # Trivy answers "does a library we depend on have a known CVE". This answers the different and
-  # unaddressed question of what our own code does with it: an injection, a disabled certificate
-  # check, a credential written to a log. That matters for a service that issues session tokens and,
-  # once issue #42 merges, stores refresh tokens.
-  #
-  # Runs beside `verify` rather than after it. It is slower than the test suite and neither depends
-  # on the other, so serialising them would only lengthen the pull request.
-  # -------------------------------------------------------------------------------------------
-  codeql:
-    name: Static analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      # Publishes results to the Security tab and as pull-request annotations.
-      security-events: write
-      actions: read
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-java@v6
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          cache: maven
-
-      - uses: github/codeql-action/init@v4
-        with:
-          languages: java-kotlin
-          # Manual rather than autobuild, so the analysis observes this project's real Maven build
-          # on the JDK it actually targets instead of a guess at how to compile it.
-          build-mode: manual
-          # Broader than the default pack: includes the lower-severity and higher-noise security
-          # queries, which is the right trade for a service that has not been analysed before.
-          queries: security-extended
-
-      - name: Compile for analysis
-        working-directory: services/api
-        run: ./mvnw -B -q -DskipTests -Dspotless.check.skip=true compile
-
-      - uses: github/codeql-action/analyze@v4
-        with:
-          category: /language:java-kotlin
-
-  # -------------------------------------------------------------------------------------------
   # Build one image, scan it, and push it to ECR under its commit SHA.
   # -------------------------------------------------------------------------------------------
   publish:
     name: Scan and push image
-    needs: [verify, codeql]
+    needs: verify
     if: >-
       github.event_name != 'pull_request'
       && vars.AWS_REGION != ''

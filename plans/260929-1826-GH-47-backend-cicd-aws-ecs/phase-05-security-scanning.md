@@ -49,10 +49,9 @@ added in one commit and removed in the next is still in the branch and still pub
 it is pushed, and the default shallow checkout would not see it. It runs before anything is
 compiled, because a leaked credential is not made less leaked by a passing test suite.
 
-**CodeQL `security-extended`** over the Java source, as a job beside `verify` rather than after it,
-since neither depends on the other. Trivy answers whether a library has a known CVE; this answers
-what our own code does with it. `publish` now needs both jobs, so nothing is published from a commit
-whose source analysis has not run.
+**CodeQL `security-extended`** over the Java source, as a job beside `verify`. Trivy answers whether
+a library has a known CVE; this answers what our own code does with it. This job was then removed
+after the first pull request; see the last section.
 
 **`.github/dependabot.yml`** for `maven`, `npm` and `github-actions`, with Spring Boot's modules
 grouped because the parent POM versions them together and one-at-a-time bumps cannot pass on their
@@ -82,7 +81,7 @@ planted canaries:
 |---|---|
 | `RIKKAUS_JWT_SECRET=<64 chars>` in a `.env` | caught by `rikkaus-jwt-signing-key` |
 | `{"name":"RIKKAUS_JWT_SECRET","value":"<44 chars>"}` | **missed on the first attempt**, and by every default rule too |
-| `jdbc:postgresql://user:password@host` | caught by `jdbc-url-with-inline-password` |
+| a `jdbc:postgresql://` URL with credentials inline | caught by `jdbc-url-with-inline-password` |
 | `POSTGRES_PASSWORD=<literal>` | caught by `postgres-password-literal` |
 | `RIKKAUS_JWT_SECRET=${RIKKAUS_JWT_SECRET:}` and an empty value | correctly ignored |
 
@@ -99,11 +98,10 @@ Everything here was run, not reasoned about:
   five findings, triaged, then clean after narrowing the exemptions.
 - Canaries planted and removed, confirming three rules fire and references do not.
 - `./mvnw -B -DskipTests -Dspotless.check.skip=true compile`, the CodeQL build step, succeeds.
-- The workflow YAML parses and the job graph is as intended: `publish` needs `verify` and `codeql`.
+- The workflow YAML parses and the job graph is as intended.
 
-**CodeQL itself has not run.** Whether its Java extractor handles this project's Java 25 sources is
-unproven here and the first pull request is what will prove it. If it fails, the fallbacks in order
-are `build-mode: none`, or dropping the job and recording the gap.
+**Neither CodeQL nor the scans themselves have run in CI.** The first pull request is what proves
+them, and it is recorded in the last section below.
 
 ## Infrastructure misconfiguration, added and triaged
 
@@ -164,3 +162,42 @@ entries, because each entry is scoped to one rule identifier in one file.
   this branch can or should make for them.
 - **`apps/mobile` has no pipeline.** Dependabot watches its dependencies; nothing lints, tests or
   statically analyses it. That is issue #46.
+
+## What the first pull request found
+
+Both of the preceding sections describe work verified locally and unverified in CI. Pull request
+[#127](https://github.com/thientrinhcoder/RIKKAUS_WEALTH_OS/pull/127) ran it for the first time and
+failed two checks. Neither was a surprising failure, and both are worth recording because each is a
+class of mistake rather than a typo.
+
+**The secret scan caught this plan.** Line 85 of this document quoted a connection string with an
+inline password, as the canary that proved `jdbc-url-with-inline-password` works. The rule then
+matched its own documentation. A document describing a secret-detection rule should not contain the
+thing the rule detects, so the table above now names the shape instead of spelling it out.
+
+Fixing the prose was not sufficient, which is the part worth remembering: the scan reads history, and
+the string is still in commit `61a05e6` whatever later commits say. It is pinned in `.gitleaksignore`
+by fingerprint — `commit:path:rule:line` — so the exemption covers that one finding in that one
+commit and cannot widen to the file, the rule or any later commit. A real leak would never be
+resolved this way; a public repository has already published it, and the answer is rotation.
+
+**The CodeQL job could never have worked on this repository.** It failed with "CodeQL analyses from
+advanced configurations cannot be processed when the default setup is enabled". CodeQL default setup
+had been configured on the repository on 2026-09-29, and GitHub permits one or the other.
+
+Default setup is the one that stays, and the job was deleted. It analyses `java-kotlin`,
+`javascript-typescript` and `python` where this job covered Java alone, and it needs no workflow code
+to maintain. The single thing given up is the query suite — default setup runs `default`, not
+`extended` — and that is a setting on default setup rather than a property of the analysis, so it is
+recoverable without any change to `backend.yml`. The runbook carries the one-line command.
+
+One consequence does not resolve itself. `publish` listed the CodeQL job under `needs:`, so nothing
+could be published from a commit whose static analysis had not run. Default setup's checks belong to
+a workflow GitHub owns, and `needs:` reaches only jobs in the same file, so that dependency cannot be
+expressed. Requiring static analysis before a merge is a branch-protection rule on `main` — which is
+the better place for it in any case, because `publish` runs after the merge, so gating it was never
+the control that mattered.
+
+The lesson common to both: a gate written against a local checkout is not a gate until it has run
+where it will live. Everything verified locally in this phase held up; everything that depended on
+the repository's own configuration did not.
