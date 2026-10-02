@@ -485,7 +485,8 @@ Actual uploads, OCR, semantic search, and document Q&A are Phase 2 capabilities.
 
 There is no dedicated security module in the MVP, but these controls are non-negotiable implementation hygiene:
 
-- Hash passwords with an established password-hashing algorithm.
+- Authenticate through Google Account OIDC only; store no password and no app-managed credential. This supersedes the earlier password-hashing control, per the Product Owner decision in the accepted identity design (issue #40), reconciled here by issue #42.
+- Store refresh tokens only as a hash, and rotate them on every use.
 - Enforce server-side ownership checks for every user record.
 - Do not log passwords, tokens, or financial payloads.
 - Expire and invalidate authentication sessions correctly.

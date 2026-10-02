@@ -3,6 +3,7 @@ package com.rikkaus.wealth.shared.observability;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.rikkaus.wealth.support.AbstractPostgresIntegrationTest;
+import com.rikkaus.wealth.support.AuthenticatedClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -22,6 +23,8 @@ class CorrelationIdContractIT extends AbstractPostgresIntegrationTest {
 
     @Autowired private TestRestTemplate restTemplate;
 
+    @Autowired private AuthenticatedClient authenticatedClient;
+
     @Autowired private ObjectMapper objectMapper;
 
     @Test
@@ -35,8 +38,15 @@ class CorrelationIdContractIT extends AbstractPostgresIntegrationTest {
 
     @Test
     void anErrorCarriesTheSameIdentifierInTheHeaderAndTheBody() {
+        // Authenticated so this stays a 404 from the exception advice. Unauthenticated it would be a 401
+        // written by the security entry point, which also carries the member — the test would still pass
+        // while quietly covering a different code path. SecurityConfigurationIT covers that one.
         ResponseEntity<String> response =
-                restTemplate.getForEntity("/api/v1/no-such-resource", String.class);
+                restTemplate.exchange(
+                        "/api/v1/no-such-resource",
+                        HttpMethod.GET,
+                        authenticatedClient.newUserBearerEntity(),
+                        String.class);
 
         String fromHeader = response.getHeaders().getFirst(CorrelationId.HEADER);
         assertThat(fromHeader).isNotNull();
@@ -50,7 +60,8 @@ class CorrelationIdContractIT extends AbstractPostgresIntegrationTest {
 
     @Test
     void anInboundIdentifierIsEchoedOnBothTheHeaderAndTheProblemBody() {
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers =
+                authenticatedClient.bearerHeadersFor(authenticatedClient.signInNewUser());
         headers.set(CorrelationId.HEADER, "abcdef12-3456-7890");
 
         ResponseEntity<String> response =
@@ -84,7 +95,11 @@ class CorrelationIdContractIT extends AbstractPostgresIntegrationTest {
     @Test
     void anErrorResponseIsExactlyOneJsonDocument() {
         ResponseEntity<String> response =
-                restTemplate.getForEntity("/api/v1/no-such-resource", String.class);
+                restTemplate.exchange(
+                        "/api/v1/no-such-resource",
+                        HttpMethod.GET,
+                        authenticatedClient.newUserBearerEntity(),
+                        String.class);
 
         // A second body appended to a partially written one is the failure mode ProblemDetailWriter's
         // isCommitted guard exists to prevent, and a client would report it as malformed data rather

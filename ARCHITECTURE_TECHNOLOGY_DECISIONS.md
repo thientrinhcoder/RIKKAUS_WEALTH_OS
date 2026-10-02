@@ -100,7 +100,7 @@ The exact patch versions must be pinned in lockfiles, Maven configuration, conta
 | Framework | Spring Boot 4.1.x |
 | Build tool | Maven Wrapper (`mvnw`) |
 | HTTP | Spring Web MVC |
-| Authentication and authorization | Spring Security |
+| Authentication and authorization | Spring Security; Google Account OIDC as the only identity provider |
 | Access tokens | Signed, short-lived JWT access tokens |
 | Session renewal | Rotating refresh tokens stored hashed in PostgreSQL |
 | Persistence | Spring Data JPA with Hibernate |
@@ -242,7 +242,8 @@ The pipeline authenticates to AWS by OpenID Connect, assuming a least-privilege 
 ## 9. Security and operations baseline
 
 - HTTPS is mandatory outside local development.
-- Passwords are hashed using Spring Security's supported adaptive password encoder.
+- Identity is Google Account OIDC only. The application stores no password and has no app-managed credential, so there is no password to hash. This supersedes the earlier password-hashing control, per the Product Owner decision recorded in the accepted design for issue #40 and reconciled by issue #42.
+- Refresh tokens are stored only as a SHA-256 hash. An adaptive password hash is deliberately not used: the token is 256 bits from a cryptographic random source, so there is no low-entropy secret for a cost factor to protect.
 - Mobile tokens use Expo SecureStore; web authentication must avoid persistent tokens in browser local storage.
 - CORS uses an explicit environment-specific allowlist.
 - Database credentials, token signing keys, and AWS credentials are external secrets.

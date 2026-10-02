@@ -16,3 +16,17 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+# A signing secret for tests. The base configuration deliberately has no default, so without this the
+# whole suite would fail at context refresh rather than at an assertion. It is meaningless outside the
+# test JVM and never reaches a running deployment.
+rikkaus:
+  auth:
+    jwt:
+      secret: test-profile-only-jwt-signing-secret-value
+    google:
+      # A fixed client id so the audience check in NimbusGoogleIdentityTokenVerifier has something to
+      # compare against. No test reaches Google: both the code exchange and the token verifier are
+      # replaced by stubs, so the token-uri and jwks-uri below are never called.
+      client-id: test-google-oauth-client-id
+      redirect-uris: http://localhost:8081/auth/callback

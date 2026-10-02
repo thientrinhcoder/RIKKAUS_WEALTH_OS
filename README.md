@@ -34,6 +34,29 @@ Backend environment variables:
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | see `.env.example` | Local PostgreSQL container credentials and port. |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/rikkaus` | JDBC URL the API connects with. |
 | `API_ALLOWED_ORIGINS` | empty | Comma-separated browser origins allowed to call `/api/v1/**` and `/actuator/health`. **Empty permits nothing** and registers no CORS mapping at all, which is the intended default outside local development. The `local` Spring profile sets `http://localhost:8081`, the origin Expo web serves on. |
+| `RIKKAUS_JWT_SECRET` | none | Signing key for the short-lived JWT access tokens, at least 32 bytes. **The application refuses to start without it**, because a guessable key lets anyone mint a token for any user. Generate one with `openssl rand -base64 48`. The `local` profile carries a fixed development value, so only deployed environments need to set this. |
+| `GOOGLE_OAUTH_CLIENT_ID` | empty | The Google OAuth client the backend redeems authorization codes against. |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | empty | Optional. Leave empty for a public client using PKCE alone. |
+| `GOOGLE_OAUTH_REDIRECT_URIS` | empty (`local`: `http://localhost:8081/auth/callback`) | Comma-separated allowlist of redirect URIs, compared exactly. **Empty permits none**, which is the intended default: the value is forwarded to Google, which delivers the authorization code to whatever it names. Every entry must also be registered on the Google OAuth client. |
+
+## Signing in locally
+
+Identity is **Google Account OIDC only**. There is no password, no sign-up form and no app-managed
+credential — that is the accepted product direction, not a gap.
+
+To exercise sign-in against real Google you need a Google Cloud OAuth 2.0 client:
+
+1. In Google Cloud Console, create an **OAuth client ID** of type *Web application*.
+2. Add `http://localhost:8081/auth/callback` as an authorised redirect URI.
+3. Put the client id in `GOOGLE_OAUTH_CLIENT_ID`, and the secret in `GOOGLE_OAUTH_CLIENT_SECRET` if
+   the client is confidential.
+
+None of this is needed to build or test. The Google token exchange and identity-token verification sit
+behind interfaces that the test suite replaces, so `./services/api/mvnw verify` runs offline with no
+credentials and no live Google account.
+
+The session endpoints are described in
+[`docs/api-contract-conventions.md`](docs/api-contract-conventions.md).
 
 ## Start PostgreSQL
 
@@ -162,9 +185,15 @@ local database and should only be done intentionally.
 ## Current scope limits
 
 The backend now has a versioned `/api/v1` surface, a build-published OpenAPI contract, RFC 9457
-error responses, correlation identifiers, and a two-tier test harness. See
+error responses, correlation identifiers, a two-tier test harness, and Google OIDC sign-in with
+rotating refresh tokens and server-side ownership enforcement. See
 [`docs/api-contract-conventions.md`](docs/api-contract-conventions.md) for what that means for a
 client.
+
+
+It still deliberately contains no domain endpoints or tables, no CI/CD pipeline and no domain UI.
+Those are owned by their dedicated delivery tasks. The security chain now **denies by default**, so an
+unauthenticated request to anything outside the documented public routes returns 401.
 
 It still deliberately contains no domain endpoints or tables, no authentication, no ownership
 enforcement and no domain UI. Those are owned by their dedicated delivery tasks.

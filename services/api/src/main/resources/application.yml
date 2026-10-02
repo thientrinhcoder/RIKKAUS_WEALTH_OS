@@ -53,6 +53,33 @@ logging:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%X{correlationId:-no-correlation-id}] %logger{40} - %msg%n"
 
 rikkaus:
+  auth:
+    jwt:
+      # No default. The application must not start without a real signing secret: anyone who can guess
+      # it mints a valid token for any user id, which defeats every other control in this slice at once.
+      # SessionProperties rejects an absent or short value and names this property in the failure.
+      secret: ${RIKKAUS_JWT_SECRET:}
+      # Short on purpose. A leaked access token is only useful until it expires, and the rotating
+      # refresh token is what keeps a real session alive, so shortening this costs a user nothing.
+      access-token-ttl: PT15M
+    # How long a signed-in device can renew without returning to Google. Bounded so an abandoned
+    # device eventually stops being a live session on its own.
+    refresh-token-ttl: P30D
+    google:
+      client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+      # Optional. A public client using PKCE alone needs none, so an empty value is a valid
+      # configuration rather than a missing one.
+      client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
+      # Fails closed: empty permits no redirect URI at all. The value is forwarded to Google, which
+      # delivers the authorization code to whatever it names, so accepting an unregistered one is how
+      # codes reach an attacker's endpoint. Comma-separated, compared exactly.
+      redirect-uris: ${GOOGLE_OAUTH_REDIRECT_URIS:}
+      token-uri: https://oauth2.googleapis.com/token
+      jwks-uri: https://www.googleapis.com/oauth2/v3/certs
+      # Google issues both forms, and a single-issuer validator would reject one of them.
+      issuers:
+        - https://accounts.google.com
+        - accounts.google.com
   api:
     # Fails closed. An unset or empty value registers no CORS mapping at all rather than guessing
     # an origin, as an explicit environment-specific allowlist requires. Comma-separated.

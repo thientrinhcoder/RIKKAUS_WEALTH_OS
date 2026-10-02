@@ -11,6 +11,7 @@ import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +30,8 @@ class OpenApiConfiguration {
 
     static final String PROBLEM_DETAIL_SCHEMA = "ProblemDetail";
 
+    static final String BEARER_AUTH_SCHEME = "bearerAuth";
+
     @Bean
     OpenAPI rikkausWealthApi() {
         return new OpenAPI()
@@ -43,6 +46,7 @@ class OpenApiConfiguration {
                 .components(
                         new Components()
                                 .addSchemas(PROBLEM_DETAIL_SCHEMA, problemDetailSchema())
+                                .addSecuritySchemes(BEARER_AUTH_SCHEME, bearerAuthScheme())
                                 .addHeaders(CorrelationId.HEADER, correlationIdHeader()));
     }
 
@@ -114,6 +118,24 @@ class OpenApiConfiguration {
      */
     private static List<String> problemTypeUrns() {
         return Arrays.stream(ProblemType.values()).map(type -> type.type().toString()).sorted().toList();
+    }
+
+    /**
+     * Declared rather than applied globally.
+     *
+     * <p>Applying it at the document root would mark the sign-in and renewal routes as requiring a token,
+     * which is exactly backwards: those routes exist for callers who do not have one. Each protected
+     * operation carries its own {@code @SecurityRequirement} instead, so the contract states the truth
+     * per route.
+     */
+    private static SecurityScheme bearerAuthScheme() {
+        return new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description(
+                        "The access token returned by /api/v1/auth/google or /api/v1/auth/refresh. Short-lived; "
+                                + "renew with the refresh token rather than waiting for a 401.");
     }
 
     private static Header correlationIdHeader() {
