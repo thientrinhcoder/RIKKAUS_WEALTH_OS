@@ -312,6 +312,201 @@
         } ]
       }
     },
+    "/api/v1/assets/{assetId}" : {
+      "get" : {
+        "tags" : [ "asset-controller" ],
+        "summary" : "Read one asset",
+        "description" : "Returns the asset when the signed-in user owns it. An identifier belonging to another user answers not-found with the same body a missing identifier produces, so the response cannot be used to discover which identifiers exist.",
+        "operationId" : "read_2",
+        "parameters" : [ {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The asset",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such asset, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "tags" : [ "asset-controller" ],
+        "summary" : "Replace an asset's editable metadata",
+        "description" : "Replaces the name, liquidity and the optional common fields. An omitted optional field is cleared, because this is a replacement rather than a patch. The current value, its currency, the valuation date and the category are not editable here: a new value belongs in the valuation history issue #57 introduces, and the category is chosen once when the asset is created.",
+        "operationId" : "replaceMetadata",
+        "parameters" : [ {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateAssetMetadataRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The asset as it now stands",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The name or liquidity is missing, a value is negative or too precise, a quantity is not positive, or the purchase date is in the future or later than the asset's stored valuation date",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such asset, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "delete" : {
+        "tags" : [ "asset-controller" ],
+        "summary" : "Remove an asset",
+        "description" : "Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets.",
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The asset no longer exists"
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such asset, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/auth/refresh" : {
       "post" : {
         "tags" : [ "authentication-controller" ],
@@ -520,6 +715,195 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/assets" : {
+      "get" : {
+        "tags" : [ "asset-controller" ],
+        "summary" : "List the signed-in user's assets",
+        "description" : "Returns every asset the viewer owns, newest valuation date first and then by name, so the catalog's order is the server's rather than the database's incidental one. An empty catalog is an empty array and a 200, not a 404. Values are reported in each asset's own currency; converting a USD holding to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate.",
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "description" : "The viewer's catalog, possibly empty",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AssetResponse"
+                  }
+                },
+                "examples" : {
+                  "an empty catalog" : {
+                    "description" : "an empty catalog",
+                    "value" : [ ]
+                  },
+                  "two assets, one in USD" : {
+                    "description" : "two assets, one in USD",
+                    "value" : [ {
+                      "id" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                      "name" : "Tài khoản USD",
+                      "category" : "BANK_ACCOUNT",
+                      "currentValue" : 20000.0,
+                      "currency" : "USD",
+                      "valuationDate" : "2026-09-12",
+                      "liquidity" : "HIGH",
+                      "purchaseValue" : null,
+                      "purchaseDate" : null,
+                      "quantity" : 20000.0,
+                      "institution" : "Ngân hàng An Tín",
+                      "notes" : "Tiền gửi dự phòng bằng USD.",
+                      "createdAt" : "2026-09-12T02:42:11.503Z",
+                      "updatedAt" : "2026-09-12T02:42:11.503Z"
+                    }, {
+                      "id" : "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64",
+                      "name" : "Căn hộ Thảo Điền",
+                      "category" : "REAL_ESTATE",
+                      "currentValue" : 6.1E9,
+                      "currency" : "VND",
+                      "valuationDate" : "2026-08-02",
+                      "liquidity" : "LOW",
+                      "purchaseValue" : 4.8E9,
+                      "purchaseDate" : "2021-11-05",
+                      "quantity" : null,
+                      "institution" : "Sổ hồng cá nhân",
+                      "notes" : null,
+                      "createdAt" : "2026-08-02T01:15:03.221Z",
+                      "updatedAt" : "2026-08-02T01:15:03.221Z"
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "post" : {
+        "tags" : [ "asset-controller" ],
+        "summary" : "Add an asset to the catalog",
+        "description" : "Creates an asset owned by the signed-in user. All prices are manually entered; there is no market-price integration in MVP 1A. The valuation date must not be in the future and a purchase date must not be later than it, both judged as Vietnamese civil dates.",
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateAssetRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "The asset was created. Location carries its URI.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A required field is missing, a value is negative or too precise, a quantity is not positive, or a date is impossible. An unrecognised category, currency or liquidity is a malformed-request instead, because the body cannot be parsed.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "liquidity missing" : {
+                    "description" : "liquidity missing",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/assets",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "liquidity",
+                        "message" : "must not be null"
+                      } ]
+                    }
+                  },
+                  "purchase date after the valuation date" : {
+                    "description" : "purchase date after the valuation date",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/assets",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "purchaseDate",
+                        "message" : "must not be later than the valuation date"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
       }
     },
     "/api/v1/meta" : {
@@ -768,6 +1152,142 @@
           }
         }
       },
+      "UpdateAssetMetadataRequest" : {
+        "type" : "object",
+        "description" : "Replace an asset's editable metadata. The valuation is not editable here.",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this asset.",
+            "example" : "Tài khoản USD dự phòng",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "liquidity" : {
+            "type" : "string",
+            "description" : "How readily the user judges this asset can be turned into cash.",
+            "enum" : [ "HIGH", "MEDIUM", "LOW" ],
+            "example" : "HIGH"
+          },
+          "purchaseValue" : {
+            "type" : "number",
+            "description" : "Purchase value or cost basis, in the asset's own currency. Omit to clear it.",
+            "example" : 19500.0,
+            "minimum" : 0
+          },
+          "purchaseDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When the asset was acquired. Must not be in the future and must not be later than the asset's stored valuation date. Omit to clear it.",
+            "example" : "2024-03-18"
+          },
+          "quantity" : {
+            "type" : "number",
+            "description" : "Units held. Must be greater than zero when present. Omit to clear it.",
+            "example" : 20000.0,
+            "exclusiveMinimum" : 0
+          },
+          "institution" : {
+            "type" : "string",
+            "description" : "Where the asset is held or stored. Omit to clear it.",
+            "example" : "Ngân hàng An Tín",
+            "maxLength" : 160,
+            "minLength" : 0
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "Anything the user wants to remember. Omit to clear it.",
+            "example" : "Đã chuyển sang kỳ hạn 6 tháng.",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "liquidity", "name" ]
+      },
+      "AssetResponse" : {
+        "type" : "object",
+        "description" : "An asset in the signed-in user's catalog.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset's identifier.",
+            "example" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this asset.",
+            "example" : "Tài khoản USD"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "One of the eleven asset categories.",
+            "enum" : [ "CASH", "BANK_ACCOUNT", "TERM_DEPOSIT", "LISTED_SECURITIES", "BOND", "INVESTMENT_FUND", "REAL_ESTATE", "PRIVATE_BUSINESS_EQUITY", "VEHICLE_OR_VALUABLE_ASSET", "COLLECTIBLE", "OTHER_ASSET" ],
+            "example" : "BANK_ACCOUNT"
+          },
+          "currentValue" : {
+            "type" : "number",
+            "description" : "What the asset is worth, in its own currency.",
+            "example" : 20000.0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the values are expressed in.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "USD"
+          },
+          "valuationDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states the value was accurate.",
+            "example" : "2026-09-12"
+          },
+          "liquidity" : {
+            "type" : "string",
+            "description" : "How readily the user judges it can be turned into cash.",
+            "enum" : [ "HIGH", "MEDIUM", "LOW" ],
+            "example" : "HIGH"
+          },
+          "purchaseValue" : {
+            "type" : "number",
+            "description" : "Purchase value or cost basis. Null when not recorded.",
+            "example" : 19500.0
+          },
+          "purchaseDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When the asset was acquired. Null when not recorded.",
+            "example" : "2024-03-18"
+          },
+          "quantity" : {
+            "type" : "number",
+            "description" : "Units held. Null when not recorded.",
+            "example" : 20000.0
+          },
+          "institution" : {
+            "type" : "string",
+            "description" : "Where it is held or stored. Null when not recorded.",
+            "example" : "Ngân hàng An Tín"
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "The user's own note. Null when not recorded.",
+            "example" : "Tiền gửi dự phòng bằng USD."
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server first stored this asset.",
+            "example" : "2026-09-12T02:42:11.503Z"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server last stored a change to it.",
+            "example" : "2026-09-12T02:42:11.503Z"
+          }
+        }
+      },
       "RefreshSessionRequest" : {
         "type" : "object",
         "description" : "Carries the refresh token identifying the session to renew or end.",
@@ -853,6 +1373,82 @@
           }
         },
         "required" : [ "authorizationCode", "codeVerifier", "redirectUri" ]
+      },
+      "CreateAssetRequest" : {
+        "type" : "object",
+        "description" : "Create an asset with the fields every category shares.",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this asset.",
+            "example" : "Tài khoản USD",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "One of the eleven asset categories.",
+            "enum" : [ "CASH", "BANK_ACCOUNT", "TERM_DEPOSIT", "LISTED_SECURITIES", "BOND", "INVESTMENT_FUND", "REAL_ESTATE", "PRIVATE_BUSINESS_EQUITY", "VEHICLE_OR_VALUABLE_ASSET", "COLLECTIBLE", "OTHER_ASSET" ],
+            "example" : "BANK_ACCOUNT"
+          },
+          "currentValue" : {
+            "type" : "number",
+            "description" : "What the asset is worth, in this asset's currency. Entered by the user; there is no price feed. Zero is allowed, negative is not.",
+            "example" : 20000.0,
+            "minimum" : 0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the values are expressed in. The reporting currency is separately fixed to VND and is read from the settings resource.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "USD"
+          },
+          "valuationDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states this value was accurate. Must not be in the future, judged as a Vietnamese civil date.",
+            "example" : "2026-09-12"
+          },
+          "liquidity" : {
+            "type" : "string",
+            "description" : "How readily the user judges this asset can be turned into cash.",
+            "enum" : [ "HIGH", "MEDIUM", "LOW" ],
+            "example" : "HIGH"
+          },
+          "purchaseValue" : {
+            "type" : "number",
+            "description" : "Purchase value or cost basis, in the same currency.",
+            "example" : 19500.0,
+            "minimum" : 0
+          },
+          "purchaseDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When the asset was acquired. Must not be in the future and must not be later than the valuation date.",
+            "example" : "2024-03-18"
+          },
+          "quantity" : {
+            "type" : "number",
+            "description" : "Units held, where that is meaningful. Must be greater than zero.",
+            "example" : 20000.0,
+            "exclusiveMinimum" : 0
+          },
+          "institution" : {
+            "type" : "string",
+            "description" : "Where the asset is held or stored.",
+            "example" : "Ngân hàng An Tín",
+            "maxLength" : 160,
+            "minLength" : 0
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "Anything the user wants to remember about it.",
+            "example" : "Tiền gửi dự phòng bằng USD.",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "category", "currency", "currentValue", "liquidity", "name", "valuationDate" ]
       },
       "MetaResponse" : {
         "type" : "object",

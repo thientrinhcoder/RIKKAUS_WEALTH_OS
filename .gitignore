@@ -79,9 +79,12 @@ plans/**/*
 !plans/260929-1826-GH-47-backend-cicd-aws-ecs/**
 !plans/260927-2136-issue-42-identity-session-ownership/
 !plans/260927-2136-issue-42-identity-session-ownership/**
+!plans/261103-2231-GH-53-asset-catalog-common-crud/
+!plans/261103-2231-GH-53-asset-catalog-common-crud/**
 !plans/reports/
 !plans/reports/pm-260927-issue-39-acceptance.md
 !plans/reports/pm-260927-2136-issue-42-acceptance.md
+!plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md
 screenshots/*
 docs/screenshots/*
 logs.txt
@@ -122,6 +125,11 @@ assets/
 # Exception: use-mcp ships a persistent tool catalog at assets/tools.json
 !claude/skills/use-mcp/assets/
 !claude/skills/use-mcp/assets/**
+# The backend's asset catalog slice is Java source, not marketing imagery. Without this the whole
+# package is invisible to git: the migration and the contract commit while none of the code does,
+# and the first sign of it is a pipeline compiling against classes that were never pushed.
+!services/api/src/main/java/com/rikkaus/wealth/assets/
+!services/api/src/main/java/com/rikkaus/wealth/assets/**
 
 # External repos for study/reference
 external/

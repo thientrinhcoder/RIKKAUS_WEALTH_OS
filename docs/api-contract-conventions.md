@@ -332,24 +332,131 @@ here rather than at sign-up so the identity slice needs no knowledge that this s
 ArchUnit slice rule forbids that dependency, and inverting it would mean every new feature slice
 editing the sign-in path to seed its own row.
 
+## Asset catalog — implemented
+
+The first domain resource. Five routes, all under `bearerAuth`, all owner-scoped by the token.
+
+| Route | Body | Success |
+|---|---|---|
+| `GET /api/v1/assets` | — | 200, the viewer's catalog as an array |
+| `POST /api/v1/assets` | the six required fields, plus any of the five optional ones | 201, the asset, with `Location` |
+| `GET /api/v1/assets/{assetId}` | — | 200, the asset |
+| `PUT /api/v1/assets/{assetId}` | the editable metadata | 200, the asset as it now stands |
+| `DELETE /api/v1/assets/{assetId}` | — | 204 |
+
+### The eleven categories
+
+`CASH`, `BANK_ACCOUNT`, `TERM_DEPOSIT`, `LISTED_SECURITIES`, `BOND`, `INVESTMENT_FUND`, `REAL_ESTATE`,
+`PRIVATE_BUSINESS_EQUITY`, `VEHICLE_OR_VALUABLE_ASSET`, `COLLECTIBLE`, `OTHER_ASSET`.
+
+The same eleven are a check constraint in `V4__assets.sql`, so a twelfth needs a reviewed migration
+rather than a code change. No Vietnamese label is published: the client maps each constant to the copy
+the accepted design specifies, and a second mapping on the server would be product copy that nothing
+keeps in step with the first.
+
+### Fields
+
+| | |
+|---|---|
+| Required | `name` (≤120 chars), `category`, `currentValue`, `currency`, `valuationDate`, `liquidity` |
+| Optional | `purchaseValue`, `purchaseDate`, `quantity`, `institution` (≤160), `notes` (≤2000) |
+| Enumerated | `currency` is `VND` or `USD`; `liquidity` is `HIGH`, `MEDIUM` or `LOW` |
+| Exact decimals | `currentValue` and `purchaseValue` are `NUMERIC(19, 2)`; `quantity` is `NUMERIC(19, 6)`. The `@Digits` bounds in the request records mirror those columns, so an over-precise value is a named `validation-failed` rather than a 500 from PostgreSQL |
+
+`currentValue` of exactly `0` is accepted — an emptied or fully depreciated holding is a real state.
+Negative is refused, because a negative asset is a liability and that is issue #16's own table rather
+than a sign convention on this one. `quantity` must be strictly positive when present.
+
+Dates are judged as Vietnamese civil dates in `Asia/Ho_Chi_Minh`, exactly as the declared
+exchange-rate date is: `valuationDate` and `purchaseDate` may not be in the future, and `purchaseDate`
+may not be later than `valuationDate`. A request with two date problems returns both in one `errors`
+array.
+
+### The valuation is read-only after creation
+
+`PUT` accepts `name`, `liquidity`, `purchaseValue`, `purchaseDate`, `quantity`, `institution` and
+`notes`. It does **not** accept `currentValue`, `currency`, `valuationDate` or `category`.
+
+That is the accepted design for issue #51 — the current value is read-only in the edit form, with its
+update deferred to the append-only valuation history issue #57 introduces — and it is enforced three
+times over: those members are absent from `UpdateAssetMetadataRequest`, `Asset` has no mutator for
+them, and the columns are mapped `updatable = false` so Hibernate omits them from every `UPDATE`.
+
+**One consequence to plan for:** until #57 ships there is no way to correct a mistyped value. The
+escape hatch is to delete the asset and create it again.
+
+Two further things about `PUT`:
+
+- **It is a replacement, not a patch.** An optional field omitted from the body is cleared. That is
+  what makes "remove my note" expressible without a sentinel value.
+- **A frozen member sent anyway is silently dropped**, not rejected. It is an unknown property, and
+  Spring Boot's own default is to ignore one. Nothing is applied and nothing is reported, so a client
+  must not read a `200` as confirmation that a value it sent was stored.
+
+### No conversion, no totals
+
+An asset reports the amount the user entered and the currency they entered it in. There is no
+converted VND figure, no exchange rate and no portfolio total anywhere in this resource.
+
+The rate belongs to the settings resource, which the ArchUnit slice rule forbids the assets slice from
+depending on, and the client has already read it from `GET /api/v1/settings/exchange-rate`. Converting
+here would also mean storing or recomputing a figure whose rate nobody could see.
+
+### Errors specific to this resource
+
+- An unrecognised `category`, `currency` or `liquidity` is **`malformed-request`, not
+  `validation-failed`**, and carries no `errors` array. Jackson cannot construct the request record at
+  all, so the failure happens before bean validation runs. Switch on `type`, not on the status.
+- Another user's asset identifier answers `not-found`, for reads and for writes, with a body that
+  differs from a genuinely missing identifier's only in `instance` and `correlationId`.
+- A second `DELETE` of the same identifier answers `not-found` rather than `204`. A deleted identifier
+  is treated exactly like one that never existed.
+- `GET` on the collection takes **no query parameter**. Search, filter and sort are issue #99's, and
+  there is no pagination.
+
+### Verified by hand, not by the suite
+
+No automated test exercises any of these five routes. The resource shipped on Product Owner direction
+with manual verification only:
+[`docs/manual-test-guide-assets.md`](manual-test-guide-assets.md) is the reproducible procedure and
+`plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` is what it returned
+on the implementing run — 70 cases, 64 through HTTP and 6 straight into PostgreSQL.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
 
 - CI pipeline, coverage thresholds, formatting enforcement, and JSON log encoding. The console log
   pattern carries the correlation identifier but is readable text, not structured JSON.
-- Pagination conventions, rate limiting and idempotency keys.
-- Domain resources. Assets, liabilities, cash flow, goals and insights are later work.
+- Pagination conventions, rate limiting and idempotency keys. The asset catalog returns an unpaginated
+  array; a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has
+  agreed is worse than returning all of them.
+- **The remaining domain resources.** Assets are described above. Liabilities, cash flow, goals and
+  insights are still later work.
+- **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and
+  interest rate or expected yield are issue #54's. The asset table has no column for any of them,
+  deliberately: a nullable column nobody writes reads as a promise.
+- **Asset valuation history.** There is no history table and no way to change an asset's current
+  value. Issue #57 owns both, and the asset resource is shaped so that it can add them without
+  reopening this contract.
+- **Hardened deletion.** `DELETE` removes the row. There is no undo, no soft delete, no retention
+  window and no handling of records that will later reference an asset. Issue #102 owns all of it.
+- **Search, filter and sort over the catalog.** Issue #99's.
 - Account deletion, a second identity provider, household or shared access, and roles.
 - **Exchange-rate history.** Declaring a rate overwrites the previous one. There is no change log, no
   history resource, no automatic or fetched rate, and no third currency.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile and exchange-rate routes.** Those two resources shipped on Product
-  Owner direction with manual verification only, recorded in
-  `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`. Every other
-  route named in this document is covered by the suite.
+- **Automated tests for the profile, exchange-rate and asset routes.** All three resources shipped on
+  Product Owner direction with manual verification only, recorded in
+  `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md` and
+  `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`. Every other route
+  named in this document is covered by the suite. What the suite still enforces across all of them:
+  `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
+  published path that is not declared or a declared one that is not published, and
+  `ArchitectureRulesTest` fails on a controller binding an owner identifier from the request, on a
+  monetary `double`, and on one feature slice reaching into another.
 - **`/actuator/health` is absent from the published contract**, by design, because the contract is
   scoped to `/api/v1/**`. The endpoint works and is CORS-enabled; it simply is not described there.
 - **Contract consumption is hand-written this iteration.** `apps/mobile` has no OpenAPI codegen

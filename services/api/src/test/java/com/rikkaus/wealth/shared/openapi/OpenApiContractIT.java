@@ -67,6 +67,8 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                 // and the canonicalizing mapper sorts keys on the way out rather than in the parsed tree.
                 // The set is still exact, which is what catches a leaked path.
                 .containsExactlyInAnyOrder(
+                        "/api/v1/assets",
+                        "/api/v1/assets/{assetId}",
                         "/api/v1/auth/google",
                         "/api/v1/auth/logout",
                         "/api/v1/auth/refresh",
