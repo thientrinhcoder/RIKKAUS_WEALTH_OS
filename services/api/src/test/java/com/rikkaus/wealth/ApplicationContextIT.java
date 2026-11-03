@@ -73,7 +73,7 @@ class ApplicationContextIT extends AbstractPostgresIntegrationTest {
             }
             assertThat(tableNames)
                     .as("the wealth schema must hold exactly the tables the migrations declare")
-                    .containsExactly("refresh_tokens", "users");
+                    .containsExactly("refresh_tokens", "user_settings", "users");
         }
     }
 }

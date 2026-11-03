@@ -92,6 +92,26 @@
             <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
         <!--
+            Carries RestClientAutoConfiguration, which contributes the RestClient.Builder that
+            HttpGoogleAuthorizationCodeExchange takes in its constructor. Spring Boot 4 moved that
+            autoconfiguration out of spring-boot-autoconfigure into this per-technology module, and
+            no declared starter brings it in.
+
+            It must be a compile dependency, not a test one. It was previously declared with
+            <scope>test</scope> for a test-only reason — spring-boot-resttestclient needs
+            RestTemplateBuilder from the same module and declares it only as optional — and the test
+            classpath therefore satisfied the bean while the packaged application did not: every
+            @SpringBootTest refreshed, and `java -jar` failed at startup with "Parameter 0 of
+            constructor in HttpGoogleAuthorizationCodeExchange required a bean of type
+            'org.springframework.web.client.RestClient$Builder' that could not be found". A compile
+            scope covers both uses, so the two classpaths cannot disagree about whether the
+            application starts.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-restclient</artifactId>
+        </dependency>
+        <!--
             Carries FlywayAutoConfiguration. Spring Boot 4 moved autoconfiguration into
             per-technology modules and no declared starter brings this one in, so without it
             spring.flyway.* is inert configuration and migrations never run.
@@ -139,18 +159,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-resttestclient</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!--
-            Carries org.springframework.boot.restclient.RestTemplateBuilder, which
-            TestRestTemplateTestAutoConfiguration references. Without it every @SpringBootTest
-            context annotated @AutoConfigureTestRestTemplate fails to refresh with
-            NoClassDefFoundError while evaluating that autoconfiguration's @ConditionalOnMissingBean.
-            spring-boot-resttestclient declares it only as optional, so it must be declared here.
-        -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-restclient</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

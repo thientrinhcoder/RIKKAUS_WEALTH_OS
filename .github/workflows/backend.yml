@@ -80,11 +80,18 @@ jobs:
       # so a high-entropy string with no vendor prefix is not matched — and RIKKAUS_JWT_SECRET, the
       # one secret that lets anyone mint a token for any user, is exactly that. The rules and the
       # deliberate exemptions are in .gitleaks.toml.
+      #
+      # Scoped to the history of the ref being built. Left to itself gitleaks reads every ref the
+      # runner has fetched, and `fetch-depth: 0` fetches all of them, so a finding on somebody
+      # else's unmerged branch failed this job on every pull request and on main — a red build
+      # nobody could fix from the branch they were working on. Each ref is still scanned in full by
+      # its own run, which is what the checkout comment above is about, so nothing goes unread.
       - name: Scan for committed secrets
         run: |
           docker run --rm -v "${GITHUB_WORKSPACE}:/repo" -w /repo \
             zricethezav/gitleaks:v8.30.1 git \
-            --config=/repo/.gitleaks.toml --redact --no-banner --verbose
+            --config=/repo/.gitleaks.toml --redact --no-banner --verbose \
+            --log-opts='--full-history HEAD'
 
       - uses: actions/setup-java@v6
         with:

@@ -155,6 +155,20 @@ public class IdentityService {
         return users.findById(userId).orElseThrow(IdentityService::unauthorized);
     }
 
+    /**
+     * Sets the display name the user chose for themselves.
+     *
+     * <p>Goes through the same lookup as {@link #requireUser}, so a token whose subject has no account
+     * row stays {@code unauthorized} rather than becoming a 500 — the same reasoning as in {@link
+     * #renew}.
+     */
+    @Transactional
+    public UserAccount updatePreferredDisplayName(UUID userId, String displayName) {
+        UserAccount user = requireUser(userId);
+        user.changePreferredDisplayName(displayName, clock.instant());
+        return users.save(user);
+    }
+
     private AuthenticatedSession sessionFor(UserAccount user, Issued issued) {
         return new AuthenticatedSession(
                 user,

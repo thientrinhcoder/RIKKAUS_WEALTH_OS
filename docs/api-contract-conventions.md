@@ -251,6 +251,87 @@ non-owner-reads-404, non-owner-writes-404, anonymous-401, and the byte-identical
 **What no static rule can guarantee** is that a slice calls `OwnershipGuard` at all. The contract test makes
 doing so cheap; it cannot make omitting it impossible.
 
+## Personal profile — implemented
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| `GET` | `/api/v1/profile` | — | `{ id, email, displayName }` |
+| `PUT` | `/api/v1/profile` | `{ "displayName": "Trinh Nguyễn" }` | the profile after the change |
+
+The display name is the only editable field. The email comes from the verified Google identity token
+and is read-only here, so the request carries no `email` member at all rather than one the server
+would have to ignore.
+
+**The name you set survives the next Google sign-in.** `wealth.users` has two name columns.
+`display_name` stays whatever Google reports and is still refreshed on every sign-in;
+`preferred_display_name` holds what the user typed. `displayName` in every response is the preferred
+one when it is set and the Google one otherwise. A single column would have been overwritten the next
+time the user signed in, and the edit would have vanished with no error anywhere.
+
+`GET /api/v1/auth/session` reports the same effective name, so the session probe and the profile
+resource cannot disagree about what the user is called. **For a client that was reading
+`displayName` from the session probe, the field's meaning has changed** even though its shape has not:
+it is now the user's chosen name rather than Google's.
+
+`displayName` must be non-blank and at most 120 characters. The bound exists because the column is
+`TEXT` and has none of its own; without it the API would accept a megabyte of text into a field the
+design renders on one line. The value is trimmed before storing, so a name of nothing but spaces is a
+`validation-failed` rather than an empty greeting.
+
+## Exchange-rate settings — implemented
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| `GET` | `/api/v1/settings/exchange-rate` | — | `{ baseCurrency, usdToVndRate, effectiveDate, updatedAt }` |
+| `PUT` | `/api/v1/settings/exchange-rate` | `{ "usdToVndRate": 25100.000000, "effectiveDate": "2026-09-12" }` | the settings after the change |
+
+`baseCurrency` is always `VND`. It is stored rather than implied, with a database check that refuses
+any other value, so permitting a second reporting currency is a reviewed migration rather than a code
+change — but it is not settable and the request carries no member for it.
+
+**Two dates, and they mean different things.** `effectiveDate` is the date the *user* declares the rate
+took effect. `updatedAt` is when the *server* stored that declaration. Both are reported, because the
+point of the audit requirement is that they are separately visible: "the rate I entered this morning
+for last Friday" is a real case.
+
+**All three rate fields are `null` until the user declares a rate**, and the response is still `200`:
+
+```json
+{ "baseCurrency": "VND", "usdToVndRate": null, "effectiveDate": null, "updatedAt": null }
+```
+
+That is the designed rate-needed state. A `404` would make a user who has never saved look identical
+to one who does not exist. The three fields also move together — there is no state where a rate has no
+declared date, in the response, in the entity, or in the table.
+
+Validation, each refused as `urn:rikkaus:problem:validation-failed` with the field named:
+
+- `usdToVndRate` must be present and greater than zero.
+- `usdToVndRate` must fit `NUMERIC(19, 6)` — at most 13 integer digits and 6 decimal places. Refusing
+  it here is what keeps a value PostgreSQL cannot hold from arriving as a 500.
+- `effectiveDate` must be present and **must not be in the future**. It is compared against today in
+  `Asia/Ho_Chi_Minh`, not UTC: the declared date is a Vietnamese civil date, and judging it in UTC
+  would refuse a user who declares today's rate at nine in the evening.
+
+The rate is stored and returned as an exact decimal. A rate of `25100.000000` reads back from the
+column as `25100.000000`, unrounded, because `ARCHITECTURE_TECHNOLOGY_DECISIONS.md` forbids binary
+floating point for a value that multiplies into every USD holding a user owns.
+
+### Ownership on a singleton resource
+
+Both resources are singletons addressed by the access token: there is no identifier in either path and
+no request parameter, so there is nothing a caller could substitute to reach another user. That makes
+them the one shape `OwnershipContract` does not fit — it needs a path carrying a record id and a
+well-formed path at which no record exists, and neither exists here. `OwnershipGuard.requireOwned` is
+still applied to the loaded settings row as a second barrier against a later refactor introducing a
+lookup that is not keyed by the viewer.
+
+`GET /api/v1/settings/exchange-rate` creates the default row on a user's first read. It is a write on
+exactly one request per user, it is idempotent because the owner is the primary key, and it is done
+here rather than at sign-up so the identity slice needs no knowledge that this slice exists — the
+ArchUnit slice rule forbids that dependency, and inverting it would mean every new feature slice
+editing the sign-in path to seed its own row.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -259,7 +340,16 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   pattern carries the correlation identifier but is readable text, not structured JSON.
 - Pagination conventions, rate limiting and idempotency keys.
 - Domain resources. Assets, liabilities, cash flow, goals and insights are later work.
-- Account deletion, profile editing, a second identity provider, household or shared access, and roles.
+- Account deletion, a second identity provider, household or shared access, and roles.
+- **Exchange-rate history.** Declaring a rate overwrites the previous one. There is no change log, no
+  history resource, no automatic or fetched rate, and no third currency.
+- **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
+  freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
+  out of date is the client's, per the accepted design for issue #48.
+- **Automated tests for the profile and exchange-rate routes.** Those two resources shipped on Product
+  Owner direction with manual verification only, recorded in
+  `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`. Every other
+  route named in this document is covered by the suite.
 - **`/actuator/health` is absent from the published contract**, by design, because the contract is
   scoped to `/api/v1/**`. The endpoint works and is CORS-enabled; it simply is not described there.
 - **Contract consumption is hand-written this iteration.** `apps/mobile` has no OpenAPI codegen
