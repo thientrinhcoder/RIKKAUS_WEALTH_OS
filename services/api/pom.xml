@@ -26,7 +26,7 @@
             unrelated pull request red on a rule nobody chose.
         -->
         <spotless-maven-plugin.version>3.10.3</spotless-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
 
         <!--
             Security overrides on top of the Spring Boot 4.1.1 BOM. Each of these raises a managed
