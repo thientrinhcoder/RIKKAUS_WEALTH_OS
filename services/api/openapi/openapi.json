@@ -10,6 +10,308 @@
     "description" : "Relative to the deployment's own base URL"
   } ],
   "paths" : {
+    "/api/v1/settings/exchange-rate" : {
+      "get" : {
+        "tags" : [ "exchange-rate-settings-controller" ],
+        "summary" : "Read the reporting currency and the declared USD/VND rate",
+        "description" : "Returns VND as the fixed reporting currency together with the rate the user declared, the date they declared it effective, and when the server stored that declaration. The three rate fields are null until a rate has been declared; that is the rate-needed state, not an error.",
+        "operationId" : "read",
+        "responses" : {
+          "200" : {
+            "description" : "The settings of the signed-in user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExchangeRateResponse"
+                },
+                "examples" : {
+                  "no rate declared yet" : {
+                    "description" : "no rate declared yet",
+                    "value" : {
+                      "baseCurrency" : "VND",
+                      "usdToVndRate" : null,
+                      "effectiveDate" : null,
+                      "updatedAt" : null
+                    }
+                  },
+                  "a declared rate" : {
+                    "description" : "a declared rate",
+                    "value" : {
+                      "baseCurrency" : "VND",
+                      "usdToVndRate" : 25100.0,
+                      "effectiveDate" : "2026-09-12",
+                      "updatedAt" : "2026-09-12T02:42:11.503Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "tags" : [ "exchange-rate-settings-controller" ],
+        "summary" : "Declare the USD/VND exchange rate",
+        "description" : "Stores the rate and the date the user says it took effect, and stamps the server's own record of when it was stored. The effective date must not be in the future; it is judged as a Vietnamese civil date, not a UTC one.",
+        "operationId" : "declare",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeclareExchangeRateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The rate was stored",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExchangeRateResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The rate is missing or not positive, or the effective date is missing or in the future",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "effective date in the future" : {
+                    "description" : "effective date in the future",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/settings/exchange-rate",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "effectiveDate",
+                        "message" : "must not be in the future"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/profile" : {
+      "get" : {
+        "tags" : [ "profile-controller" ],
+        "summary" : "Read the personal profile",
+        "description" : "Returns the signed-in user's identifier, their verified Google email, and the display name they chose — or the Google one if they never changed it.",
+        "operationId" : "read_1",
+        "responses" : {
+          "200" : {
+            "description" : "The profile of the signed-in user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "tags" : [ "profile-controller" ],
+        "summary" : "Change the display name",
+        "description" : "Stores the name the user chose. It is kept apart from the name Google reports, so a later sign-in refreshes the Google value without reverting this one. The email is not editable: it comes from the verified identity token.",
+        "operationId" : "update",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The profile after the change",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The display name is blank or longer than 120 characters",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "blank display name" : {
+                    "description" : "blank display name",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/profile",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "displayName",
+                        "message" : "must not be blank"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/auth/refresh" : {
       "post" : {
         "tags" : [ "authentication-controller" ],
@@ -383,6 +685,88 @@
           }
         },
         "required" : [ "status", "title", "type" ]
+      },
+      "DeclareExchangeRateRequest" : {
+        "type" : "object",
+        "description" : "Declare the USD/VND exchange rate and the date it took effect.",
+        "properties" : {
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "How many VND one USD buys. Must be greater than zero.",
+            "example" : 25100.0,
+            "exclusiveMinimum" : 0
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date you confirm this rate took effect. Must not be in the future.",
+            "example" : "2026-09-12"
+          }
+        },
+        "required" : [ "effectiveDate", "usdToVndRate" ]
+      },
+      "ExchangeRateResponse" : {
+        "type" : "object",
+        "description" : "The reporting currency and the user-declared USD/VND exchange rate.",
+        "properties" : {
+          "baseCurrency" : {
+            "type" : "string",
+            "description" : "The reporting currency. Fixed to VND for MVP 1A.",
+            "example" : "VND"
+          },
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "How many VND one USD buys, as declared by the user. Null until declared.",
+            "example" : 25100.0
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user declares the rate took effect. Not the time it was stored.",
+            "example" : "2026-09-12"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server stored the declaration.",
+            "example" : "2026-09-12T02:42:00Z"
+          }
+        }
+      },
+      "UpdateProfileRequest" : {
+        "type" : "object",
+        "description" : "Change the display name. The only editable profile field.",
+        "properties" : {
+          "displayName" : {
+            "type" : "string",
+            "description" : "The name to show. Trimmed before storing.",
+            "example" : "An Nguyễn",
+            "maxLength" : 120,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "displayName" ]
+      },
+      "ProfileResponse" : {
+        "type" : "object",
+        "description" : "The signed-in user's personal profile.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "example" : "0f2c8d14-6b3a-4c7e-9f51-8ad2e6b40c93"
+          },
+          "email" : {
+            "type" : "string",
+            "description" : "From the verified Google identity token. Read-only here.",
+            "example" : "an.nguyen@example.com"
+          },
+          "displayName" : {
+            "type" : "string",
+            "description" : "The name the user chose, or the Google name if they never chose one.",
+            "example" : "An Nguyễn"
+          }
+        }
       },
       "RefreshSessionRequest" : {
         "type" : "object",

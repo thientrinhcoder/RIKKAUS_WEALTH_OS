@@ -18,6 +18,9 @@ public record AuthenticatedUserResponse(
         @Schema(example = "An Nguyễn") String displayName) {
 
     static AuthenticatedUserResponse of(UserAccount user) {
-        return new AuthenticatedUserResponse(user.getId(), user.getEmail(), user.getDisplayName());
+        // The effective name, not the raw column: the session probe and the profile resource must not
+        // disagree about what the user is called.
+        return new AuthenticatedUserResponse(
+                user.getId(), user.getEmail(), user.effectiveDisplayName());
     }
 }
