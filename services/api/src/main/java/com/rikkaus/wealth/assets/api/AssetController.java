@@ -6,6 +6,7 @@ import com.rikkaus.wealth.assets.domain.AssetValuation;
 import com.rikkaus.wealth.shared.api.ApiPaths;
 import com.rikkaus.wealth.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -37,10 +38,13 @@ import org.springframework.web.bind.annotation.RestController;
  * controller method that binds a {@code userId}, {@code ownerId} or {@code accountId} from the request,
  * which is what turns "never trust a client-supplied owner" from a review habit into a guarantee.
  *
- * <p>Another user's asset identifier answers {@code not-found}, with a body byte-identical to the one a
- * genuinely missing identifier produces. A 403 would confirm the record exists and turn a list of
- * identifiers into an enumeration oracle; {@code OwnershipGuard} is where that is decided, for every
- * route here.
+ * <p>Another user's asset identifier answers {@code not-found}, and the body carries the same {@code
+ * type}, {@code title}, {@code status} and {@code detail} a genuinely missing identifier produces. The
+ * two differ only in {@code instance}, which is the request URI and therefore the identifier the
+ * caller already sent, and in {@code correlationId}, which is fresh on every response. Nothing in
+ * either body distinguishes somebody else's record from one that was never written. A 403 would, and
+ * would turn a list of identifiers into an enumeration oracle; {@code OwnershipGuard} is where that is
+ * decided, for every route here.
  *
  * <p>{@code GET} on the collection takes no query parameter. Search, filter and sort belong to issue
  * #99, and pagination is listed as deliberately absent in the API conventions, so accepting a
@@ -124,6 +128,10 @@ class AssetController {
             description = "No access token, or it has expired or been revoked",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
             responseCode = "406",
             description = "The requested media type cannot be produced",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
@@ -142,7 +150,17 @@ class AssetController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "201",
-            description = "The asset was created. Location carries its URI.",
+            description = "The asset was created",
+            // Declared rather than only described in prose, so a reader of the contract alone knows the
+            // header is there. One caveat the contract cannot express: CorsConfiguration exposes only
+            // X-Correlation-Id, so a browser client cannot read Location off this response at all. The
+            // body carries the same identifier, which is why that is a documented limitation here
+            // rather than a reason to widen the CORS policy from inside this slice.
+            headers =
+                    @Header(
+                            name = "Location",
+                            description = "The new asset's URI, as /api/v1/assets/{assetId}.",
+                            schema = @Schema(type = "string")),
             content =
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -206,6 +224,10 @@ class AssetController {
             description = "Wrong HTTP method",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
             responseCode = "415",
             description = "The request body is not JSON",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
@@ -255,6 +277,14 @@ class AssetController {
             responseCode = "404",
             description = "No such asset, or it belongs to another user",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @GetMapping("/{assetId}")
     AssetResponse read(@PathVariable UUID assetId) {
         return AssetResponse.of(assetService.read(CurrentUser.require(), assetId));
@@ -289,7 +319,16 @@ class AssetController {
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "404",
-            description = "No such asset, or it belongs to another user",
+            description =
+                    "No such asset, it belongs to another user, or a concurrent request removed it first",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "415",
@@ -319,7 +358,9 @@ class AssetController {
                             + "destructive confirmation in the accepted design promises; undo, linked-record "
                             + "consequences and a retention policy belong to issue #102. A second delete of the "
                             + "same identifier answers not-found, so the response is not idempotent and that is "
-                            + "deliberate: it is the same answer any unknown identifier gets.")
+                            + "deliberate: it is the same answer any unknown identifier gets. Two deletes that "
+                            + "overlap, which is what a double-tapped confirm button produces, give one 204 and "
+                            + "not-found to the rest rather than a server error.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "204", description = "The asset no longer exists")
     @ApiResponse(
@@ -332,7 +373,12 @@ class AssetController {
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "404",
-            description = "No such asset, or it belongs to another user",
+            description =
+                    "No such asset, it belongs to another user, or a concurrent request removed it first",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @DeleteMapping("/{assetId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

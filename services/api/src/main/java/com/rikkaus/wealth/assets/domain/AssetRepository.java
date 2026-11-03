@@ -30,4 +30,16 @@ public interface AssetRepository extends Repository<Asset, UUID> {
     Asset save(Asset asset);
 
     void delete(Asset asset);
+
+    /**
+     * Sends the pending statements now, instead of at commit.
+     *
+     * <p>Declared for one reason: Hibernate checks the affected row count of an {@code UPDATE} or
+     * {@code DELETE} and raises a stale-state failure when it is zero, and that happens during the
+     * flush. Without a flush inside the service method the failure surfaces while the transaction
+     * commits — after the method has returned, where no {@code catch} in the slice can see it, and it
+     * reaches the client as a 500. Flushing inside the method is what lets the slice answer the
+     * {@code not-found} that a concurrently deleted row deserves.
+     */
+    void flush();
 }

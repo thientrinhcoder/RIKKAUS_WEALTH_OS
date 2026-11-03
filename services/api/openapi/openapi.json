@@ -367,6 +367,26 @@
                 }
               }
             }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         },
         "security" : [ {
@@ -429,7 +449,27 @@
             }
           },
           "404" : {
-            "description" : "No such asset, or it belongs to another user",
+            "description" : "No such asset, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -456,7 +496,7 @@
       "delete" : {
         "tags" : [ "asset-controller" ],
         "summary" : "Remove an asset",
-        "description" : "Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets.",
+        "description" : "Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
         "operationId" : "delete",
         "parameters" : [ {
           "name" : "assetId",
@@ -492,7 +532,17 @@
             }
           },
           "404" : {
-            "description" : "No such asset, or it belongs to another user",
+            "description" : "No such asset, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -787,6 +837,16 @@
               }
             }
           },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
           "406" : {
             "description" : "The requested media type cannot be produced",
             "content" : {
@@ -819,7 +879,16 @@
         },
         "responses" : {
           "201" : {
-            "description" : "The asset was created. Location carries its URI.",
+            "description" : "The asset was created",
+            "headers" : {
+              "Location" : {
+                "description" : "The new asset's URI, as /api/v1/assets/{assetId}.",
+                "style" : "simple",
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -882,6 +951,16 @@
           },
           "405" : {
             "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
             "content" : {
               "application/problem+json" : {
                 "schema" : {

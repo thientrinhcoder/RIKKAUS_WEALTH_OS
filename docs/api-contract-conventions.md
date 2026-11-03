@@ -407,14 +407,38 @@ here would also mean storing or recomputing a figure whose rate nobody could see
 - An unrecognised `category`, `currency` or `liquidity` is **`malformed-request`, not
   `validation-failed`**, and carries no `errors` array. Jackson cannot construct the request record at
   all, so the failure happens before bean validation runs. Switch on `type`, not on the status.
+- A `\u0000` anywhere in `name`, `institution` or `notes` is `validation-failed` naming that field,
+  with `must not contain a null character`. PostgreSQL cannot hold that byte in a `text` column, and
+  refusing it here is what keeps it a named 400 rather than a 500 from the driver. It is refused, not
+  stripped: dropping a character and answering 201 would store something other than what was sent. An
+  unpaired surrogate, by contrast, is accepted and stored — that one PostgreSQL takes without
+  complaint, so there is no rule against it.
+- A `name` that is blank once leading and trailing blank space is removed is `validation-failed` with
+  `must not be blank`. **Blank here is wider than `@NotBlank`'s own definition**: it includes every
+  Unicode space separator, so a name of a single non-breaking space is refused rather than creating an
+  asset that renders as an empty row. The optional text fields are cleaned the same way, and one left
+  with nothing becomes `null`.
 - Another user's asset identifier answers `not-found`, for reads and for writes, with a body that
   differs from a genuinely missing identifier's only in `instance` and `correlationId`.
 - A second `DELETE` of the same identifier answers `not-found` rather than `204`. A deleted identifier
-  is treated exactly like one that never existed.
+  is treated exactly like one that never existed. **Two deletes that overlap** — what a double-tapped
+  confirm button sends — give one `204` and `not-found` to the rest, as does a `PUT` racing a `DELETE`.
+  This is explicit rather than incidental: without it the losing request raises a stale-state failure
+  that reaches the client as a 500, which it did for 73 of 100 requests when it was measured.
+- **There is no row version and no edit-conflict detection.** Two overlapping `PUT`s both succeed and
+  the last writer wins, silently. One pilot user on one device makes that acceptable for now;
+  introducing a conflict response is a product decision about concurrent editing, not a defect here.
 - `GET` on the collection takes **no query parameter**. Search, filter and sort are issue #99's, and
   there is no pagination.
 
 ### Verified by hand, not by the suite
+
+**One thing to know before consuming a money field.** `currentValue`, `purchaseValue` and `quantity`
+are published as bare JSON numbers. `NUMERIC(19, 2)` permits 17 integer digits, which is past
+JavaScript's exact-integer range of about `9.007e15`, so a value above that would be rounded by
+`JSON.parse` even though the server and the database hold it exactly. Realistic Vietnamese portfolio
+figures are several orders of magnitude below the boundary, so no string encoding was introduced for
+it; a client that ever needs the full column range should read these as strings.
 
 No automated test exercises any of these five routes. The resource shipped on Product Owner direction
 with manual verification only:

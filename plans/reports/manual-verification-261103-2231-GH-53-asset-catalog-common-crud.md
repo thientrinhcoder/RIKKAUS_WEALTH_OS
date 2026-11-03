@@ -1,13 +1,18 @@
 # Manual verification — asset catalog and common CRUD (#53)
 
-Date: 2026-11-03, 22:47–22:49 ICT. Branch
+Date: 2026-11-03. First pass 22:47–22:49 ICT; second pass 23:03–23:10 ICT after code review. Branch
 `thientrinhcoder/feat/issue-53-asset-catalog-common-crud`, cut from `main` at `e73ceb4`.
 
 This is the behavioural evidence for issue #53. The Product Owner directed that the task ship
 **without new unit or integration tests**, verified instead by exercising the running API and
 recording what it answered — the same posture issue #50 shipped under. Every status and body below is
-copied from that run. No application code changed after it; the only later edits were this report, the
-guide and the conventions document.
+copied from a real run.
+
+**Read this file in two parts.** The sections up to *Observations* are the first pass, which found
+nothing wrong. Code review then raised three defects that the first pass had not looked for; all three
+were probed, confirmed, fixed and the whole list replayed. *Second pass* records that, including one
+case where my own first probe gave the wrong answer. The statuses in the first-pass sections were
+re-confirmed unchanged on the replay.
 
 The reproducible procedure is
 [`docs/manual-test-guide-assets.md`](../../docs/manual-test-guide-assets.md). This file is what that
@@ -24,8 +29,9 @@ procedure returned on this run.
 | Tokens | HS256 access tokens minted with the `local` profile's committed development secret and the exact claim set `AccessTokenService` issues (`iss=rikkaus-wealth-api`, `sub`, `sid`, `iat`, `exp`), plus an expired one and one signed with a different secret. Minting rather than stubbing means every request still went through the real `BearerTokenAuthenticationFilter` and `AccessTokenService.verify` |
 | Dates | Today was `2026-11-03` in `Asia/Ho_Chi_Minh`; the future date used for the refusal cases was `2026-12-01` |
 
-**70 cases: 64 through HTTP and 6 straight into PostgreSQL.** Every one behaved as designed; none had
-to be rerun after a fix.
+**70 cases: 64 through HTTP and 6 straight into PostgreSQL.** Every one behaved as designed. The
+defects review later found are not in this list — that is the point of recording them separately
+rather than quietly widening the list and claiming a clean first pass.
 
 | Status | Cases |
 |---|---|
@@ -287,6 +293,109 @@ inserted nothing; `SELECT count(*)` was `0` afterwards.
 This is the half of the verification that survives a future slice, a migration or a manual
 correction, none of which go through bean validation.
 
+## Second pass — three defects review found, measured and fixed
+
+Code review of the first commit raised two should-fix findings and a nit. All three were probed against
+a running instance before anything was changed, because a mechanism argument is not evidence. One
+turned out worse than reported, one was initially contradicted by a badly designed probe and then
+confirmed, and the nit's suggested fix would not have worked. Statuses below are from the reruns.
+
+### Defect A — a concurrent delete answered 500, in nearly three quarters of attempts
+
+Four simultaneous `DELETE`s of one asset, 25 rounds, 100 requests:
+
+| | Before | After |
+|---|---|---|
+| `204` | 25 | 25 |
+| `404` | 2 | 75 |
+| **`500`** | **73** | **0** |
+
+`PUT` racing `DELETE`, same shape, same counts. The application log named the cause:
+`StaleStateException`, translated by Spring to `ObjectOptimisticLockingFailureException`, which is
+neither an `ApiException` nor a Spring MVC exception and so reached the handler of last resort.
+
+Both requests read the row, both passed the ownership guard, the first committed, and the second's
+`UPDATE` or `DELETE` then matched zero rows. The review called this "low data risk" and it is — nothing
+is corrupted and nothing crosses a user boundary — but it was not low frequency. **A double-tapped
+delete button in issue #52 would have returned a server error almost every time.**
+
+Fixed in `AssetService.flushTreatingAVanishedRowAsNotFound`: the write is flushed inside the
+transaction and inside the method, where the failure can be caught, and a vanished row becomes the same
+`not-found` the sequential second delete already produced. A row version was considered and rejected —
+it would turn this into a retryable conflict, and there is no concurrent-edit feature to retry for.
+
+### Defect B — a null character reached PostgreSQL as a 500
+
+`U+0000` cannot be stored in a `text` column. A name of `Tiền\u0000mặt` is legal JSON, satisfies
+`@NotBlank` and `@Size`, and would satisfy every check constraint on the table.
+
+**The first probe of this wrongly came back clean, and the reason is worth recording.** It put the NUL
+at the *end* of the value, where the then-current `trim()` silently removed it, so the request answered
+`201` and stored a name the client had not sent. The reviewer's mechanism was right and the probe was
+wrong. A NUL anywhere else was always a 500, which the rerun showed the moment the probe was corrected.
+
+| Request | Before | After |
+|---|---|---|
+| `\u0000` at the end of `name` | `201`, stored as `Tiền mặt` with the character dropped | `400`, `name` / `must not contain a null character` |
+| `\u0000` in the middle of `name` | `500` `internal-error` | `400`, `name` / `must not contain a null character` |
+| `\u0000` in `institution` | `500` | `400`, `institution` / same message |
+| `\u0000` in `notes`, on `PUT` | `500` | `400`, `notes` / same message |
+
+Refused rather than stripped, because dropping a character and answering `201` stores something other
+than what was asked for without saying so.
+
+An unpaired surrogate was tested in the same pass and **is accepted**, `201`, stored and returned
+intact by PostgreSQL. Nothing needed protecting, so no rule was invented for it.
+
+### Defect C — a non-breaking space passed as a whole name
+
+| `name` | Before | After |
+|---|---|---|
+| `"   "` (ASCII spaces) | `400`, `must not be blank` | `400`, unchanged |
+| `"　"` (ideographic space) | `400`, `must not be blank` | `400`, unchanged |
+| `" "` (non-breaking space) | **`201`**, an asset whose name renders as an empty row | `400`, `must not be blank` |
+
+The review suggested `String.strip()`. **That would not have fixed it**, and the rerun is what showed
+why: `strip()` removes what `Character.isWhitespace` accepts, and that method deliberately rejects the
+non-breaking spaces because they are not line-breaking opportunities. The ideographic space was already
+refused for the same reason — `U+3000` *is* whitespace to Java — so only the non-breaking family was
+ever open. `AssetService.isBlankToAReader` is the union that closes it: Java whitespace plus every
+Unicode space separator.
+
+Switching from `trim()` to `strip()` is also what briefly turned defect B's trailing-NUL case from a
+silent `201` into a 500, which is how the two came to be fixed together rather than separately.
+
+### Everything else was rerun, and nothing else moved
+
+The full 64-case list was replayed against the fixed application on a fresh database. The status
+sequence is **identical to the first pass, case for case** — mechanically diffed after masking
+identifiers, not eyeballed. `./services/api/mvnw -f services/api/pom.xml verify` passes with no update
+flag: 81 unit and 50 integration tests.
+
+### Three contract gaps closed in the same pass
+
+- `POST /api/v1/assets` now declares the `Location` header in `openapi.json`, which the prose had
+  promised and the document had not carried. One limitation the contract cannot express is recorded in
+  the controller instead: `CorsConfiguration` exposes only `X-Correlation-Id`, so a browser client
+  cannot read `Location` at all. The 201 body carries the same identifier, which is why that is noted
+  rather than fixed by widening a CORS policy from inside this slice.
+- The published error-response sets were inconsistent across the five routes — `GET` on the collection
+  declared 406 but not 405, `POST` the reverse, and the three member routes neither. All five now
+  declare every status they can actually return, which the manual guide already exercised.
+- The guide's future-date cases hardcoded `2026-12-01`, which would have stopped being in the future
+  and turned two passing rows into apparent failures. They now compute `$FUTURE`.
+
+### Review findings deliberately not acted on
+
+- **`AssetResponse` publishes money as a bare JSON `number`.** `NUMERIC(19,2)` permits 17 integer
+  digits, beyond JavaScript's exact-integer range, so a client's `JSON.parse` would round a value above
+  roughly `9.007e15`. Real pilot figures are five orders of magnitude below that, and the conventions
+  document already records that no client generates code from this contract. Recorded, not changed.
+- **`save` on an assigned identifier issues a `SELECT` before the `INSERT`.** One extra round trip per
+  create, and the behaviour `UserSettings` already has. Changing it means `Persistable` or a different
+  repository base across both slices, which is a wider change than this issue.
+- **`AssetResponse` has no `required` array.** It matters to generated clients, and there are none.
+
 ## Observations that are not defects in this slice
 
 **Bean-validation failures carry Spring's own `detail`.** Cases 14–29 and 46–47 answer with
@@ -310,8 +419,8 @@ allowlisted, so they will be. Restoring #50's file is that task's to do.
 
 - **A real Google sign-in.** No OAuth client is configured locally, so the tokens were minted. The
   filter and the verifier exercised are the production ones; the Google handoff is not.
-- **Concurrency.** Two simultaneous edits of one asset are tested nowhere, by this run or by the suite.
-- **Automated regression protection for this resource.** There is none, by direction. The guide is the
+- **Concurrency beyond the two races probed above.** Two overlapping `PUT`s both succeed and the last
+  writer wins, with no conflict reported. There is no row version.
   only thing that catches a regression here. What the suite still guarantees is narrower and worth
   naming: `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   path that is published without being declared or declared without being published, and

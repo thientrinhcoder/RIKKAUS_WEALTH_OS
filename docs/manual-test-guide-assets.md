@@ -83,7 +83,7 @@ PY
 Export them, and set today's date as the application judges it — a Vietnamese civil date, not UTC:
 
 ```bash
-export A=<token A> B=<token B> EXPIRED=<expired> FORGED=<forged> TODAY=$(TZ=Asia/Ho_Chi_Minh date +%F)
+export A=<token A> B=<token B> EXPIRED=<expired> FORGED=<forged> TODAY=$(TZ=Asia/Ho_Chi_Minh date +%F) FUTURE=$(TZ=Asia/Ho_Chi_Minh date -v+1m +%F)
 ```
 
 A short helper keeps every case below to one line:
@@ -177,12 +177,15 @@ chooses from a picker.
 
 ### Impossible dates
 
+Use `$FUTURE` rather than a literal date. A hardcoded one stops being in the future, and then these
+two rows answer `201` and the operator reads a pass as a failure.
+
 | Send | Expect |
 |---|---|
-| `valuationDate` of `2026-12-01` | `valuationDate` / `must not be in the future` |
-| `purchaseDate` of `2026-12-01` | `purchaseDate` / `must not be in the future` |
+| `valuationDate` of `$FUTURE` | `valuationDate` / `must not be in the future` |
+| `purchaseDate` of `$FUTURE` | `purchaseDate` / `must not be in the future` |
 | `valuationDate` `2026-06-01` with `purchaseDate` `2026-09-01` | `purchaseDate` / `must not be later than the valuation date` |
-| both dates in the future | **two** `errors` entries, one per field, and no third about their order |
+| both dates `$FUTURE` | **two** `errors` entries, one per field, and no third about their order |
 
 Date handling is judged in `Asia/Ho_Chi_Minh`. To see that this is real rather than incidental, run
 the first case again with today's date late in a Vietnamese evening: it must be accepted, even though
@@ -238,6 +241,47 @@ Then the remaining edit cases:
 | a `purchaseDate` after the asset's stored `valuationDate` | `purchaseDate` / `must not be later than the valuation date` |
 
 The last one is checked against the **stored** valuation date, which the edit cannot change.
+
+### Characters that only fail further down
+
+These three exist because review found them and a run confirmed them. Each is legal JSON that
+satisfies every annotation and every check constraint, so nothing upstream of these cases catches them.
+
+```bash
+api "$A" POST /assets '{"name":"Tiền\u0000mặt","category":"CASH","currentValue":"1000000.00","currency":"VND","valuationDate":"'$TODAY'","liquidity":"HIGH"}'
+```
+
+| Send | Expect |
+|---|---|
+| a `\u0000` anywhere in `name`, `institution` or `notes`, on `POST` or on `PUT` | `400`, that field / `must not contain a null character` |
+| a `name` of a single ` ` (non-breaking space) | `400`, `name` / `must not be blank` |
+| a `name` of a single `　` (ideographic space) | `400`, `name` / `must not be blank` |
+
+A `201` on the first row means PostgreSQL is about to be handed a byte it cannot store in a `text`
+column, and the next thing in the log is a 500 with a stack trace. A `201` on the other two means an
+asset was created whose name renders as an empty row in the catalog. Put the NUL in the **middle** of
+the value: a trailing one was removed by `trim()` in an earlier revision, which is exactly why an
+earlier probe of this wrongly came back clean.
+
+An unpaired surrogate — `"notes":"xin ch\ud800o"` — is **expected to be accepted** with a `201`.
+PostgreSQL stores and returns it without complaint, so there is nothing to refuse.
+
+### Two requests at once
+
+The one concurrency case that is worth testing, because it is what a double-tapped confirm button
+produces and because it used to be a 500.
+
+```bash
+ID=<an asset the viewer owns>
+for i in 1 2 3 4; do api "$A" DELETE "/assets/$ID" -o /dev/null -w "%{http_code}\n" & done; wait
+```
+
+Expect exactly one `204` and three `404`. **Any `500` is a regression** — the race returned
+`internal-error` for 73 of 100 requests before `AssetService.flushTreatingAVanishedRowAsNotFound`
+existed. Repeat it a dozen times, not once: it is a race, so a single clean round proves little.
+
+The same applies to a `PUT` racing a `DELETE`. Run two of each against one identifier and expect
+`204` once and `404` for the rest, never a 500.
 
 ### Credentials
 
@@ -328,7 +372,8 @@ docker rm -f rikkaus-assets-check
 
 - A real Google sign-in. There is no OAuth client configured locally, so the tokens are minted. The
   filter and the verifier under test are the production ones; the Google handoff is not exercised.
-- Concurrency. Two simultaneous edits of one asset are not tested anywhere, by this guide or by the
-  suite.
+- Concurrency beyond the delete and edit-versus-delete races above. Two simultaneous *edits* of one
+  asset are not tested, and the last writer wins with no conflict reported — there is no row version,
+  which is a product decision about edit conflicts rather than an oversight.
 - The mobile client. This is the API's behaviour only; the frontend task is issue #52.
 - Anything the `settings` or `identity` routes own. Those have their own coverage and their own guide.
