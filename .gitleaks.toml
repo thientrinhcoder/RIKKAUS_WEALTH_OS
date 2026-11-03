@@ -111,3 +111,29 @@ paths = [
 regexes = [
   '''"(?:accessToken|refreshToken)"\s*:''',
 ]
+
+# Terraform wiring a password to a Parameter Store reference rather than a value.
+#
+# `postgres-password-literal` captures whatever follows the name, and in HCL that is an unquoted
+# expression: `POSTGRES_PASSWORD = aws_ssm_parameter.database_password.arn` reads as an eight-plus
+# character value and fires. There is no secret on such a line — it names where the password lives,
+# which is the opposite of carrying it — and the rule's own description says it is looking for a
+# literal. The jwt rule already states this principle, that a reference is not a secret; this
+# extends it to the one assignment shape RE2 cannot express as a negative lookahead.
+#
+# Matched on the declaring line only, with no `paths` entry beside it. A `paths` list is not the
+# second half of an AND here: gitleaks applies it as a file skip, so pairing one with `\.tf$` exempts
+# every Terraform file from these rules instead of exempting one line shape within them. That was
+# measured against a canary, not assumed. The line regex carries the whole exemption on its own,
+# which is safe because the shape it requires — an unquoted dotted reference into a Terraform object
+# — cannot hold a credential wherever it appears.
+#
+# A quoted value is not a reference and still fails the gate: the canary
+# `POSTGRES_PASSWORD = "Pr0dPassw0rdLiteral"` is caught both by the rule above and by the default
+# `hashicorp-tf-password` rule, which this exemption does not touch.
+[[allowlists]]
+description = "Terraform password references, matched on the declaring line"
+regexTarget = "line"
+regexes = [
+  '''(?i)(?:postgres_password|spring\.datasource\.password)\s*=\s*(?:aws_[a-z0-9_]+|var|local|data|module)\.[A-Za-z0-9_.\[\]-]+[,\s]*$''',
+]
