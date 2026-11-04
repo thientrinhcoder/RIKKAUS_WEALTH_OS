@@ -65,6 +65,11 @@ regexes = [
   '''replace-me-with-at-least-32-bytes-of-random''',
   # Passwords used by the throwaway containers in documented verification steps.
   '''verify-only''',
+  # The textbook JDBC placeholder, as it appears in the table of planted canaries in the issue #47
+  # phase-05 plan and in the jdbc rule's own comment. `user:password` is the documentation of the
+  # shape the rule catches, not an instance of it. It is exempted by value rather than by exempting
+  # either file, so a real inline-credential URL in the same document still fails the gate.
+  '''jdbc:postgresql://user:password@''',
 ]
 
 # Sample tokens that document the shape of a response.
@@ -97,17 +102,49 @@ paths = [
 # Example session payloads inside written documents.
 #
 # Design documents and plans quote a sample session response, and a sample access or refresh token
-# is by pattern indistinguishable from a real one. Both conditions must hold — a Markdown file, and
-# a line that is declaring one of these two response fields — so this exempts an illustrated payload
-# without exempting the documents themselves. A credential pasted anywhere else in the same file,
-# or under any other name, still fails the gate.
+# is by pattern indistinguishable from a real one. The exemption is the line shape that declares one
+# of those two response fields, so an illustrated payload passes while a credential under any other
+# name on any other line still fails the gate.
+#
+# This deliberately carries no `paths` entry. It had one, `\.md$`, paired with `condition = "AND"` in
+# the belief that both had to hold. They do not: gitleaks applies `paths` as a file skip evaluated
+# before any finding, so the pair exempted every Markdown file in the repository from every rule here.
+# A canary proved it — a .md file carrying a bare `POSTGRES_PASSWORD = "..."` and a full-length
+# RIKKAUS_JWT_SECRET scanned clean. The same mistake is easy to repeat, which is why both this entry
+# and the Terraform one below say so in place of the shape that looks right.
+#
+# What this costs: the line shape is now exempt in any file type rather than only in Markdown. That
+# is the narrower of the two errors available. The Java and OpenAPI examples that carry the same
+# payloads are already covered by the example-line exemption above, so nothing depends on the widening.
 [[allowlists]]
-description = "Sample session payloads quoted in Markdown"
-condition = "AND"
+description = "Sample session payloads, matched on the declaring line"
 regexTarget = "line"
-paths = [
-  '''\.md$''',
-]
 regexes = [
   '''"(?:accessToken|refreshToken)"\s*:''',
+]
+
+# Terraform wiring a password to a Parameter Store reference rather than a value.
+#
+# `postgres-password-literal` captures whatever follows the name, and in HCL that is an unquoted
+# expression: `POSTGRES_PASSWORD = aws_ssm_parameter.database_password.arn` reads as an eight-plus
+# character value and fires. There is no secret on such a line — it names where the password lives,
+# which is the opposite of carrying it — and the rule's own description says it is looking for a
+# literal. The jwt rule already states this principle, that a reference is not a secret; this
+# extends it to the one assignment shape RE2 cannot express as a negative lookahead.
+#
+# Matched on the declaring line only, with no `paths` entry beside it. A `paths` list is not the
+# second half of an AND here: gitleaks applies it as a file skip, so pairing one with `\.tf$` exempts
+# every Terraform file from these rules instead of exempting one line shape within them. That was
+# measured against a canary, not assumed. The line regex carries the whole exemption on its own,
+# which is safe because the shape it requires — an unquoted dotted reference into a Terraform object
+# — cannot hold a credential wherever it appears.
+#
+# A quoted value is not a reference and still fails the gate: the canary
+# `POSTGRES_PASSWORD = "Pr0dPassw0rdLiteral"` is caught both by the rule above and by the default
+# `hashicorp-tf-password` rule, which this exemption does not touch.
+[[allowlists]]
+description = "Terraform password references, matched on the declaring line"
+regexTarget = "line"
+regexes = [
+  '''(?i)(?:postgres_password|spring\.datasource\.password)\s*=\s*(?:aws_[a-z0-9_]+|var|local|data|module)\.[A-Za-z0-9_.\[\]-]+[,\s]*$''',
 ]
