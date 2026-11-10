@@ -1,6 +1,7 @@
 package com.rikkaus.wealth.assets.api;
 
 import com.rikkaus.wealth.assets.application.AssetService;
+import com.rikkaus.wealth.assets.domain.AssetInstrumentDetails;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
 import com.rikkaus.wealth.assets.domain.AssetValuation;
 import com.rikkaus.wealth.shared.api.ApiPaths;
@@ -101,6 +102,10 @@ class AssetController {
                                                     "quantity": 20000.000000,
                                                     "institution": "Ngân hàng An Tín",
                                                     "notes": "Tiền gửi dự phòng bằng USD.",
+                                                    "symbol": null,
+                                                    "costPerUnit": null,
+                                                    "currentPricePerUnit": null,
+                                                    "interestRate": null,
                                                     "createdAt": "2026-09-12T02:42:11.503Z",
                                                     "updatedAt": "2026-09-12T02:42:11.503Z"
                                                   },
@@ -117,6 +122,10 @@ class AssetController {
                                                     "quantity": null,
                                                     "institution": "Sổ hồng cá nhân",
                                                     "notes": null,
+                                                    "symbol": null,
+                                                    "costPerUnit": null,
+                                                    "currentPricePerUnit": null,
+                                                    "interestRate": null,
                                                     "createdAt": "2026-08-02T01:15:03.221Z",
                                                     "updatedAt": "2026-08-02T01:15:03.221Z"
                                                   }
@@ -146,7 +155,13 @@ class AssetController {
                     "Creates an asset owned by the signed-in user. All prices are manually entered; there is "
                             + "no market-price integration in MVP 1A. The valuation date must not be in the "
                             + "future and a purchase date must not be later than it, both judged as Vietnamese "
-                            + "civil dates.")
+                            + "civil dates. The four instrument fields are optional everywhere they are "
+                            + "accepted, and sending none of them is valid for every category. A symbol, a cost "
+                            + "per unit or a current price per unit is accepted only for LISTED_SECURITIES, "
+                            + "BOND, INVESTMENT_FUND and OTHER_ASSET; an interest rate only for BOND, "
+                            + "TERM_DEPOSIT and OTHER_ASSET. currentValue is never derived from a quantity and "
+                            + "a unit price, and a request where their product differs from it is stored as "
+                            + "sent.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "201",
@@ -164,12 +179,72 @@ class AssetController {
             content =
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = AssetResponse.class)))
+                            schema = @Schema(implementation = AssetResponse.class),
+                            examples = {
+                                @ExampleObject(
+                                        name = "a listed holding, with the instrument fields",
+                                        description =
+                                                "500 shares at 24150 a share. currentValue is 12000000.00, which is "
+                                                        + "not 500 x 24150: it is the figure the user entered, and "
+                                                        + "the server does not derive or check the product.",
+                                        value =
+                                                """
+                                                {
+                                                  "id": "c4e71b08-2a9d-4e63-8b17-91f0d35a7c82",
+                                                  "name": "Cổ phiếu VCB",
+                                                  "category": "LISTED_SECURITIES",
+                                                  "currentValue": 12000000.00,
+                                                  "currency": "VND",
+                                                  "valuationDate": "2026-11-10",
+                                                  "liquidity": "HIGH",
+                                                  "purchaseValue": null,
+                                                  "purchaseDate": "2025-04-07",
+                                                  "quantity": 500.000000,
+                                                  "institution": "Chứng khoán An Tín",
+                                                  "notes": null,
+                                                  "symbol": "VCB",
+                                                  "costPerUnit": 21800.000000,
+                                                  "currentPricePerUnit": 24150.000000,
+                                                  "interestRate": null,
+                                                  "createdAt": "2026-11-10T01:44:12.118Z",
+                                                  "updatedAt": "2026-11-10T01:44:12.118Z"
+                                                }
+                                                """),
+                                @ExampleObject(
+                                        name = "a term deposit, with a rate and nothing else",
+                                        description =
+                                                "The one instrument field a deposit accepts. A symbol or a unit "
+                                                        + "price on this category is refused.",
+                                        value =
+                                                """
+                                                {
+                                                  "id": "5b2a9f31-7c84-4d06-9e51-3fa8c1b7d209",
+                                                  "name": "Tiền gửi 12 tháng An Tín",
+                                                  "category": "TERM_DEPOSIT",
+                                                  "currentValue": 300000000.00,
+                                                  "currency": "VND",
+                                                  "valuationDate": "2026-11-10",
+                                                  "liquidity": "LOW",
+                                                  "purchaseValue": null,
+                                                  "purchaseDate": null,
+                                                  "quantity": null,
+                                                  "institution": "Ngân hàng An Tín",
+                                                  "notes": null,
+                                                  "symbol": null,
+                                                  "costPerUnit": null,
+                                                  "currentPricePerUnit": null,
+                                                  "interestRate": 6.2500,
+                                                  "createdAt": "2026-11-10T01:44:12.118Z",
+                                                  "updatedAt": "2026-11-10T01:44:12.118Z"
+                                                }
+                                                """)
+                            }))
     @ApiResponse(
             responseCode = "400",
             description =
                     "A required field is missing, a value is negative or too precise, a quantity is not "
-                            + "positive, or a date is impossible. An unrecognised category, currency or "
+                            + "positive, a date is impossible, or an instrument field was sent for a "
+                            + "category that does not accept it. An unrecognised category, currency or "
                             + "liquidity is a malformed-request instead, because the body cannot be parsed.",
             content =
                     @Content(
@@ -191,6 +266,33 @@ class AssetController {
                                                     {
                                                       "field": "liquidity",
                                                       "message": "must not be null"
+                                                    }
+                                                  ]
+                                                }
+                                                """),
+                                @ExampleObject(
+                                        name = "instrument fields the category does not accept",
+                                        description =
+                                                "A cash holding carrying a symbol and a unit price. Every refused "
+                                                        + "field is named in one response rather than one per round "
+                                                        + "trip.",
+                                        value =
+                                                """
+                                                {
+                                                  "type": "urn:rikkaus:problem:validation-failed",
+                                                  "title": "Request validation failed",
+                                                  "status": 400,
+                                                  "detail": "Request validation failed.",
+                                                  "instance": "/api/v1/assets",
+                                                  "correlationId": "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                                                  "errors": [
+                                                    {
+                                                      "field": "symbol",
+                                                      "message": "must not be set for this asset category"
+                                                    },
+                                                    {
+                                                      "field": "currentPricePerUnit",
+                                                      "message": "must not be set for this asset category"
                                                     }
                                                   ]
                                                 }
@@ -247,7 +349,12 @@ class AssetController {
                                         request.purchaseDate(),
                                         request.quantity(),
                                         request.institution(),
-                                        request.notes())));
+                                        request.notes()),
+                                new AssetInstrumentDetails(
+                                        request.symbol(),
+                                        request.costPerUnit(),
+                                        request.currentPricePerUnit(),
+                                        request.interestRate())));
         return ResponseEntity.created(URI.create(ApiPaths.V1 + "/assets/" + created.id())).body(created);
     }
 
@@ -293,8 +400,12 @@ class AssetController {
     @Operation(
             summary = "Replace an asset's editable metadata",
             description =
-                    "Replaces the name, liquidity and the optional common fields. An omitted optional field "
-                            + "is cleared, because this is a replacement rather than a patch. The current "
+                    "Replaces the name, liquidity, the optional common fields and the four instrument "
+                            + "fields. An omitted optional field "
+                            + "is cleared, because this is a replacement rather than a patch, which is how a "
+                            + "ticker recorded by mistake is removed. The instrument fields are judged against "
+                            + "the asset's stored category, because the category is not editable here. The "
+                            + "current "
                             + "value, its currency, the valuation date and the category are not editable "
                             + "here: a new value belongs in the valuation history issue #57 introduces, and "
                             + "the category is chosen once when the asset is created.")
@@ -310,8 +421,9 @@ class AssetController {
             responseCode = "400",
             description =
                     "The name or liquidity is missing, a value is negative or too precise, a quantity is "
-                            + "not positive, or the purchase date is in the future or later than the asset's "
-                            + "stored valuation date",
+                            + "not positive, the purchase date is in the future or later than the asset's "
+                            + "stored valuation date, or an instrument field was sent for an asset whose "
+                            + "stored category does not accept it",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "401",
@@ -348,7 +460,12 @@ class AssetController {
                                 request.purchaseDate(),
                                 request.quantity(),
                                 request.institution(),
-                                request.notes())));
+                                request.notes()),
+                        new AssetInstrumentDetails(
+                                request.symbol(),
+                                request.costPerUnit(),
+                                request.currentPricePerUnit(),
+                                request.interestRate())));
     }
 
     @Operation(
