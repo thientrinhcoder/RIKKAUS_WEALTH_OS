@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Slice feedback"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [1]

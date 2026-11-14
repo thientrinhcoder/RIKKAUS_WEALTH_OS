@@ -1,7 +1,7 @@
 ---
 title: "Issue #110 in-product feedback & privacy-safe observability"
 description: "Slice feedback (POST/GET /api/v1/feedback, bảng wealth.feedback_entries) và log vận hành có cấu trúc, không bao giờ ghi body, token, email, số tiền hay tên bản ghi tài chính."
-status: in-progress
+status: completed
 priority: P1
 effort: "2d"
 issue: 110
@@ -72,23 +72,23 @@ vào log group CloudWatch sẵn có).
 
 | Phase | Tên | Trạng thái | Phụ thuộc | Kết quả |
 |---|---|---|---|---|
-| 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Completed | — | 47 case feedback (F/P), 13 case log local (O), 7 case log JSON (J) |
-| 2 | [Slice feedback](./phase-02-feedback-slice.md) | Pending | 1 | V12, entity, repository, service, controller |
-| 3 | [Observability](./phase-03-observability.md) | Pending | 1 | Filter, MDC userId, redaction, logback-spring.xml, config |
-| 4 | [Contract và inventories](./phase-04-contract-and-inventories.md) | Pending | 2, 3 | `openapi.json`, inventories, docs; `clean verify` xanh |
-| 5 | [Manual verification](./phase-05-manual-verification.md) | Pending | 4 | Guide + report evidence hai lần chạy |
+| 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Completed | — | 44 case feedback (36 HTTP F, 8 PostgreSQL P), 13 case log `local` (O), 7 case log JSON (J) |
+| 2 | [Slice feedback](./phase-02-feedback-slice.md) | Completed | 1 | V12, entity, repository, service, controller |
+| 3 | [Observability](./phase-03-observability.md) | Completed | 1 | Filter, MDC userId, redaction, logback-spring.xml, config |
+| 4 | [Contract và inventories](./phase-04-contract-and-inventories.md) | Completed | 2, 3 | `openapi.json`, inventories, docs; `clean verify` xanh |
+| 5 | [Manual verification](./phase-05-manual-verification.md) | Completed | 4 | Guide + report evidence hai lần chạy |
 
 ## Acceptance Criteria
 
-- [ ] Feedback gắn user (từ token) và screen; body không gán được owner; B không thấy feedback của A.
-- [ ] Mọi input sai (F12–F25) trả 400 có tên field hoặc `malformed-request`; `U+0000` không thành 500.
-- [ ] 401 ba kiểu token giống nhau trừ `correlationId`; 405/404/415/400/406 đều problem+json.
-- [ ] CHECK trong PostgreSQL từ chối dữ liệu sai cho mọi caller.
-- [ ] Mỗi request có đúng một dòng log với correlationId, userId (khi có), method, route template, status, duration.
-- [ ] Grep toàn bộ log hai lần chạy: 0 dòng cho mọi mồi M1–M6, kể cả trong 500 có kiểm soát.
-- [ ] Log không `local` là JSON parse được từng dòng bằng `jq`; `local` vẫn là pattern đọc được.
-- [ ] `X-Correlation-Id` giữ nguyên semantics.
-- [ ] `./mvnw clean verify` xanh không flag.
+- [x] Feedback gắn user (từ token) và screen; body không gán được owner; B không thấy feedback của A.
+- [x] Mọi input sai (F12–F25) trả 400 có tên field hoặc `malformed-request`; `U+0000` không thành 500.
+- [x] 401 ba kiểu token giống nhau trừ `correlationId`; 405/404/415/400/406 đều problem+json.
+- [x] CHECK trong PostgreSQL từ chối dữ liệu sai cho mọi caller.
+- [x] Mỗi request có đúng một dòng log với correlationId, userId (khi có), method, route template, status, duration.
+- [x] Grep toàn bộ log hai lần chạy: 0 dòng cho mọi mồi M1–M6, kể cả trong 500 có kiểm soát.
+- [x] Log không `local` là JSON parse được từng dòng bằng `jq`; `local` vẫn là pattern đọc được.
+- [x] `X-Correlation-Id` giữ nguyên semantics.
+- [x] `./mvnw clean verify` xanh không flag.
 
 ## Verification gap
 
@@ -112,3 +112,14 @@ Các dòng JVM ghi thẳng ra stderr (cảnh báo của JVM) không đi qua Logb
 5. Ai đọc feedback? Không có route admin; hiện chỉ đọc được bằng truy vấn trực tiếp PostgreSQL.
 
 <!-- slug: issue-110-feedback-observability -->
+
+## Kết quả
+
+Code giao tại commit `5958f95`. `./services/api/mvnw -f services/api/pom.xml clean verify` xanh không flag:
+81 unit test, 50 integration test. Hành vi được ghi trong
+[`plans/reports/manual-verification-261114-1843-GH-110-feedback-observability.md`](../reports/manual-verification-261114-1843-GH-110-feedback-observability.md):
+64 case (36 HTTP feedback, 8 PostgreSQL, 13 log `local`, 7 log JSON) chạy trên jar của `5958f95`, tất cả
+pass; grep toàn bộ output của tiến trình API ở cả hai lần chạy cho 0 dòng với mọi mồi. Hai lỗi phát hiện
+khi smoke test trước lần chạy — mật khẩu sinh tự động của Spring Security bị in ra log, và `operationId`
+của resource khác bị lệch — đã sửa trong cùng commit.
+

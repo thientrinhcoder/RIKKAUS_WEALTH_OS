@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Contract và inventories"
-status: pending
+status: completed
 priority: P1
 effort: "0.25d"
 dependencies: [2, 3]
