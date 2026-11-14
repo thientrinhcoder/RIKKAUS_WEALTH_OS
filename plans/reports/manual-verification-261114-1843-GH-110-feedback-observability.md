@@ -200,3 +200,24 @@ trên xác nhận đã hết:
 
 Cả hai tiến trình API đã dừng (`kill` đúng PID nghe cổng 8110 do session này khởi động), container
 `rikkaus-pg-issue-110` đã `docker rm -f`.
+
+## Chạy lại sau khi merge `main` (`703f4e2`)
+
+Ngày chạy: 14/11/2026, 19:18–19:19 ICT, trên jar đóng gói từ merge commit `a8cfd9d` (nhánh này + `main`
+có #74 `GET /api/v1/cash-flow-occurrences` và #95 slice `onboarding`, `V11__onboarding_progress.sql`).
+Migration giữ số `V12`. PostgreSQL mới tinh trên `127.0.0.1:5410`, API cổng `8110`; Flyway áp dụng V1–V4,
+V6–V9, `11 - onboarding progress`, `12 - feedback entries` theo đúng thứ tự, context lên sau 3,312 s.
+`clean verify -Dopenapi.update=true` rồi `clean verify` không flag đều xanh (81 unit, 50 IT); contract
+regenerate không khác bản tự merge.
+
+Thêm ba case cho route vừa vào từ `main`, để chắc dòng log request ghi đúng template của chúng:
+N01 `GET /onboarding`, N02 `PATCH /onboarding {"currentStep":3}`, N03
+`GET /cash-flow-occurrences?from=2026-11-01&to=2027-01-31` — cả ba `200`.
+
+| Lượt | Kết quả |
+|---|---|
+| `local` | F01–F36, P01–P08, O01–O11 cho cùng status như lần đầu. 54 body được so với lần đầu sau khi che UUID, timestamp và correlationId: 41 giống byte, 13 body `validation-failed` chỉ khác **thứ tự hai key `field`/`message` trong mỗi phần tử `errors`** (`Map.of` không giữ thứ tự, hành vi sẵn có của mọi slice); so theo ngữ nghĩa thì 0 khác. P02 A `10`, B `1`; P04–P08 bị đúng constraint. 249 dòng stdout, 0 dòng stderr; 56 dòng `request completed` = 43 (F) + 10 (O) + 3 (N). N01–N03 log `GET /api/v1/onboarding`, `PATCH /api/v1/onboarding`, `GET /api/v1/cash-flow-occurrences` — không query string. |
+| JSON, không profile | O01–O11 và N01–N03: `201, 400, 404, 201, 500, 400, 401, 200, 401, 200, 200, 200, 200`. 44/44 dòng stdout parse được bằng `jq`, 0 dòng stderr, không banner. 13 dòng `request completed` đủ field; `stack_trace` của O05 chỉ có ba tên lớp `DataIntegrityViolationException` → `ConstraintViolationException` → `PSQLException` và frame |
+| Grep mồi, cả hai lượt | `ya29`, `fake-token-issue110`, access token thật, `eyJ`, `@example.com`, `4.200.000.000`, `4200000000`, `Thảo Điền` (cả dạng escape), `session-cookie-issue110`, `Failing row`, `generated security password`, `Bearer`, `Cookie`, secret của env: **0 dòng mỗi mồi**. `[redacted]` cũng 0 |
+
+**Kết quả sau merge: 64 case gốc + 3 case N, tất cả pass.** API đã dừng và container đã `docker rm -f`.
