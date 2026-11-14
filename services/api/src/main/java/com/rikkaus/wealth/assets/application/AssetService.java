@@ -5,12 +5,14 @@ import com.rikkaus.wealth.assets.domain.AssetCategory;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
 import com.rikkaus.wealth.assets.domain.AssetRepository;
 import com.rikkaus.wealth.assets.domain.AssetValuation;
+import com.rikkaus.wealth.assets.domain.AssetValuationRepository;
+import com.rikkaus.wealth.assets.domain.DeclaredValuation;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,27 +34,21 @@ import org.springframework.transaction.annotation.Transactional;
  * the client already reads the rate from {@code GET /api/v1/settings/exchange-rate}. Doing the
  * arithmetic here would also mean a stored asset carried a conversion made with whichever rate
  * happened to be current when it was written.
+ *
+ * <p>No method changes an asset's value. Creating one writes the first valuation record, and every
+ * later value is appended by {@code AssetValuationService}; this class never touches the snapshot
+ * after creation.
  */
 @Service
 public class AssetService {
 
-    /**
-     * The zone every user-entered date is judged in.
-     *
-     * <p>The {@link Clock} bean is UTC and a pilot user in Vietnam is seven hours ahead of it. Judging
-     * "is this date in the future" in UTC would refuse a user who records today's valuation at nine in
-     * the evening, because UTC still calls it yesterday and their date therefore looks like tomorrow.
-     * {@code SettingsService} judges the declared exchange-rate date the same way and for the same
-     * reason; the two must agree or the same calendar day would be valid on one resource and refused
-     * on the other.
-     */
-    private static final ZoneId ENTERED_DATE_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
-
     private final AssetRepository assets;
+    private final AssetValuationRepository valuations;
     private final Clock clock;
 
-    AssetService(AssetRepository assets, Clock clock) {
+    AssetService(AssetRepository assets, AssetValuationRepository valuations, Clock clock) {
         this.assets = assets;
+        this.valuations = valuations;
         this.clock = clock;
     }
 
@@ -79,36 +75,64 @@ public class AssetService {
     }
 
     /**
-     * Adds an asset to the owner's catalog.
+     * Adds an asset to the owner's catalog, together with the first record of its valuation history.
      *
-     * <p>The dates are checked together rather than one at a time, so a request with two date problems
-     * is one response naming both fields instead of two round trips.
+     * <p>Two rows in one transaction: the asset, whose three valuation columns are a snapshot, and the
+     * {@link AssetValuation} they are a snapshot of. Writing the record here rather than leaving the
+     * history to start at the first later update is what makes the history complete — the design's
+     * <em>initial</em> state is "only the first valuation", and a trend that omits the value an asset
+     * was created with starts one point short.
+     *
+     * <p>The dates and the rate snapshot are checked together rather than one at a time, so a request
+     * with two problems is one response naming both fields instead of two round trips.
      */
     @Transactional
     public Asset create(
-            UUID ownerId, AssetCategory category, AssetValuation valuation, AssetMetadata metadata) {
+            UUID ownerId, AssetCategory category, DeclaredValuation valuation, AssetMetadata metadata) {
         AssetMetadata normalized = normalize(metadata);
-        rejectImpossibleDates(valuation.valuationDate(), normalized.purchaseDate());
-        return assets.save(
-                Asset.create(ownerId, category, valuation, normalized, clock.instant()));
+        List<Map<String, String>> errors =
+                new ArrayList<>(dateErrors(valuation.effectiveDate(), normalized.purchaseDate()));
+        errors.addAll(InputRules.rateSnapshotErrors(valuation, InputRules.today(clock)));
+        if (!errors.isEmpty()) {
+            throw InputRules.validationFailed(errors);
+        }
+        Instant now = clock.instant();
+        Asset asset = assets.save(Asset.create(ownerId, category, valuation, normalized, now));
+        valuations.save(AssetValuation.recordedFor(asset.getId(), valuation, now));
+        return asset;
     }
 
     /**
      * Replaces the editable metadata of one of the owner's assets.
      *
      * <p>The valuation is not a parameter. The accepted design for issue #51 makes the current value
-     * read-only in the edit form and defers its update to issue #57's append-only history, so there is
-     * no argument here a caller could use to overwrite it — and {@link Asset} has no mutator for it
-     * either.
+     * read-only in the edit form; a new value is appended to the history by {@code
+     * AssetValuationService}, so there is no argument here a caller could use to overwrite it.
      *
-     * <p>The purchase date is re-checked against the asset's <em>stored</em> valuation date, because
-     * that is the one it has to precede and the edit cannot change it.
+     * <p>The row is locked for the whole method, with the same lock an append takes. Hibernate's
+     * {@code UPDATE} writes every column of the entity, the three snapshot columns among them, so an
+     * edit that read the asset before a concurrent append committed would write the old value, currency
+     * and date straight back over the new ones — and the catalog would then disagree with the history
+     * until the next append. Found by review, not by the manual run, which never sent an edit and an
+     * append at once. Taking the lock makes the edit wait for the append and read what it wrote.
+     *
+     * <p>The purchase date is checked against the <em>earliest</em> valuation ever recorded, not only
+     * the current one. A back-dated record may sit before the current valuation date, and a purchase
+     * dated after it would make the history say the asset was valued before it was owned — and would
+     * then refuse the correction of that very record. Reported under the message the catalog has always
+     * used, because for an asset with no back-dated history the earliest record <em>is</em> the stored
+     * valuation date.
      */
     @Transactional
     public Asset replaceMetadata(UUID ownerId, UUID assetId, AssetMetadata metadata) {
-        Asset asset = OwnershipGuard.requireOwned(assets.findById(assetId), ownerId);
+        Asset asset = OwnershipGuard.requireOwned(assets.findAndLockById(assetId), ownerId);
         AssetMetadata normalized = normalize(metadata);
-        rejectImpossibleDates(asset.getValuationDate(), normalized.purchaseDate());
+        LocalDate earliestValuation =
+                valuations
+                        .findFirstByAssetIdOrderByEffectiveDateAsc(asset.getId())
+                        .map(AssetValuation::getEffectiveDate)
+                        .orElse(asset.getValuationDate());
+        rejectImpossibleDates(earliestValuation, normalized.purchaseDate());
         asset.replaceMetadata(normalized, clock.instant());
         Asset saved = assets.save(asset);
         flushTreatingAVanishedRowAsNotFound();
@@ -172,123 +196,47 @@ public class AssetService {
      * slices produce, so a client has one error body to parse.
      */
     private void rejectImpossibleDates(LocalDate valuationDate, LocalDate purchaseDate) {
-        LocalDate today = LocalDate.now(clock.withZone(ENTERED_DATE_ZONE));
+        List<Map<String, String>> errors = dateErrors(valuationDate, purchaseDate);
+        if (!errors.isEmpty()) {
+            throw InputRules.validationFailed(errors);
+        }
+    }
+
+    private List<Map<String, String>> dateErrors(LocalDate valuationDate, LocalDate purchaseDate) {
+        LocalDate today = InputRules.today(clock);
         List<Map<String, String>> errors = new ArrayList<>();
         if (valuationDate.isAfter(today)) {
-            errors.add(Map.of("field", "valuationDate", "message", "must not be in the future"));
+            errors.add(InputRules.error("valuationDate", "must not be in the future"));
         }
         if (purchaseDate != null && purchaseDate.isAfter(today)) {
-            errors.add(Map.of("field", "purchaseDate", "message", "must not be in the future"));
+            errors.add(InputRules.error("purchaseDate", "must not be in the future"));
         }
         // Only when neither is already rejected for being in the future. A request dated next year in
         // both fields is one mistake, and reporting a third error about their order would describe a
         // problem the user does not have.
         if (errors.isEmpty() && purchaseDate != null && purchaseDate.isAfter(valuationDate)) {
             errors.add(
-                    Map.of("field", "purchaseDate", "message", "must not be later than the valuation date"));
+                    InputRules.error("purchaseDate", "must not be later than the valuation date"));
         }
-        if (!errors.isEmpty()) {
-            throw new ApiException(
-                    ProblemType.VALIDATION_FAILED,
-                    ProblemType.VALIDATION_FAILED.safeDetail(),
-                    Map.of("errors", List.copyOf(errors)));
-        }
+        return errors;
     }
 
     /**
-     * Cleans the three free-text fields, and refuses the two things neither bean validation nor the
-     * table can catch.
+     * Cleans the three free-text fields.
      *
-     * <p>An institution submitted as {@code "   "} is a user who typed nothing into an optional field,
-     * not a user whose institution is three spaces. Storing it verbatim would make the field look
-     * answered in the catalog and would make "has an institution" untrue of a row that has one. So
-     * surrounding blank space is removed and an optional field left with nothing becomes {@code null}.
-     *
-     * <p>What counts as blank is wider than any of the three obvious answers, which is why this is
-     * written out rather than delegated. {@code trim()} removes only code points at or below
-     * {@code U+0020}. {@code strip()} removes what {@code Character.isWhitespace} accepts, and that
-     * method deliberately rejects the non-breaking spaces — {@code U+00A0} among them — because they
-     * are not line-breaking opportunities. {@code btrim} in the table's check constraint removes the
-     * ASCII space alone. A name of a single {@code U+00A0}, which a Vietnamese or CJK input method
-     * emits with nothing visibly unusual about it, therefore passes {@code @NotBlank}, survives either
-     * standard trim and satisfies the check constraint, and creates an asset that renders as an empty
-     * row in the catalog. {@link #isBlankToAReader} is the union: whitespace as Java defines it, plus
-     * every Unicode space separator.
+     * <p>What "clean" means — surrounding blank space in the widest sense removed, an optional field
+     * left with nothing stored as {@code null}, a null character refused — is defined once in {@link
+     * InputRules#cleaned}, because the valuation history has a free-text note that has to be judged by
+     * the same rule.
      */
     private static AssetMetadata normalize(AssetMetadata metadata) {
         return new AssetMetadata(
-                requireName(metadata.name()),
+                InputRules.requireName(metadata.name()),
                 metadata.liquidity(),
                 metadata.purchaseValue(),
                 metadata.purchaseDate(),
                 metadata.quantity(),
-                cleaned(metadata.institution(), "institution"),
-                cleaned(metadata.notes(), "notes"));
-    }
-
-    /** The name with surrounding blank space removed, refusing one that was nothing else. */
-    private static String requireName(String name) {
-        String value = cleaned(name, "name");
-        if (value == null) {
-            throw validationFailed("name", "must not be blank");
-        }
-        return value;
-    }
-
-    /**
-     * One free-text value, stripped, with a blank one reported as absent, and a null character
-     * refused.
-     *
-     * <p><strong>The null character is the reason this method rejects rather than only cleans.</strong> PostgreSQL
-     * cannot store {@code U+0000} in a {@code text} column at all, so a name of
-     * {@code "Tiền\u0000mặt"} — which is legal JSON, satisfies {@code @NotBlank} and {@code @Size},
-     * and would satisfy every check constraint on the table — fails inside the driver and reaches the
-     * client as {@code internal-error} with a stack trace in the log. That contradicts this slice's
-     * own stated contract, which is that a client input error is a named {@code validation-failed} and
-     * not a 500 from PostgreSQL, and it hands an authenticated caller a one-line way to fill the error
-     * log.
-     *
-     * <p>It is refused rather than silently stripped because the two are not equally honest: dropping
-     * a character the client sent and answering 201 would store something other than what was asked
-     * for, without saying so. Refusing names the field.
-     *
-     * <p>This was found by review and then measured. Before the fix, the trailing-null case answered
-     * 201 because {@code trim()} happened to remove it, which is exactly why the first probe of it was
-     * inconclusive; a null character anywhere else was always a 500.
-     *
-     * <p>An unpaired surrogate is deliberately not refused. It was tested and PostgreSQL stores and
-     * returns it without complaint, so there is nothing here to protect against; refusing it would be
-     * a rule invented for its own sake.
-     */
-    private static String cleaned(String value, String field) {
-        if (value == null) {
-            return null;
-        }
-        if (value.indexOf('\u0000') >= 0) {
-            throw validationFailed(field, "must not contain a null character");
-        }
-        int start = 0;
-        int end = value.length();
-        while (start < end && isBlankToAReader(value.codePointAt(start))) {
-            start += Character.charCount(value.codePointAt(start));
-        }
-        while (end > start && isBlankToAReader(value.codePointBefore(end))) {
-            end -= Character.charCount(value.codePointBefore(end));
-        }
-        String stripped = value.substring(start, end);
-        return stripped.isEmpty() ? null : stripped;
-    }
-
-    /** Whitespace as Java defines it, plus the space separators it deliberately excludes. */
-    private static boolean isBlankToAReader(int codePoint) {
-        return Character.isWhitespace(codePoint)
-                || Character.getType(codePoint) == Character.SPACE_SEPARATOR;
-    }
-
-    private static ApiException validationFailed(String field, String message) {
-        return new ApiException(
-                ProblemType.VALIDATION_FAILED,
-                ProblemType.VALIDATION_FAILED.safeDetail(),
-                Map.of("errors", List.of(Map.of("field", field, "message", message))));
+                InputRules.cleaned(metadata.institution(), "institution"),
+                InputRules.cleaned(metadata.notes(), "notes"));
     }
 }
