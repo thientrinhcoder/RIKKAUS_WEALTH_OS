@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>No method converts a USD amount into VND, sums a month, or expands a recurring entry into the
  * months it falls in. The rate belongs to {@code settings}, the totals to issue #77 and the expansion
- * to issue #74. An entry is the user's statement of an amount and when it applies, and that is all
+ * to {@link CashFlowOccurrenceService}. An entry is the user's statement of an amount and when it applies, and that is all
  * this class stores.
  *
  * <p>No date here is compared with today. An expected salary starting next January is a legitimate

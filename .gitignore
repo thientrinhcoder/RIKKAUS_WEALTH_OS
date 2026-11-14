@@ -98,6 +98,9 @@ plans/**/*
 !plans/261114-1740-GH-86-generic-financial-goals-templates/
 !plans/261114-1740-GH-86-generic-financial-goals-templates/**
 !plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md
+!plans/261114-1843-GH-95-onboarding-checklist/
+!plans/261114-1843-GH-95-onboarding-checklist/**
+!plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md
 !plans/261114-1843-GH-110-feedback-observability/
 !plans/261114-1843-GH-110-feedback-observability/**
 !plans/reports/manual-verification-261114-1843-GH-110-feedback-observability.md

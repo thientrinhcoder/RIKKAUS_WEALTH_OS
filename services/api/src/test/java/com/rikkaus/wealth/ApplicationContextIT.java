@@ -83,6 +83,7 @@ class ApplicationContextIT extends AbstractPostgresIntegrationTest {
                             "feedback_entries",
                             "goals",
                             "liabilities",
+                            "onboarding_progress",
                             "refresh_tokens",
                             "user_settings",
                             "users");

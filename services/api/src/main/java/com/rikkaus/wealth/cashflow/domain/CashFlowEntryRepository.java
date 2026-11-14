@@ -1,5 +1,6 @@
 package com.rikkaus.wealth.cashflow.domain;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +28,22 @@ import org.springframework.data.repository.query.Param;
 public interface CashFlowEntryRepository extends Repository<CashFlowEntry, UUID> {
 
     List<CashFlowEntry> findByUserIdOrderByEffectiveDateDescCreatedAtDesc(UUID userId);
+
+    /**
+     * The owner's entries that can have an occurrence between {@code from} and {@code to}, both
+     * included: those that start no later than {@code to} and have not ended before {@code from}.
+     *
+     * <p>A coarse filter, not the answer. A quarterly entry can overlap the window and still fall in
+     * none of its days; {@code CashFlowSchedule} decides that. The filter only keeps a request for one
+     * month from loading entries that ended years ago or start next decade. A one-time entry has no end
+     * date, so it passes on its effective date alone and the schedule drops it if it is before
+     * {@code from}.
+     */
+    @Query(
+            "SELECT e FROM CashFlowEntry e WHERE e.userId = :ownerId AND e.effectiveDate <= :to"
+                    + " AND (e.endDate IS NULL OR e.endDate >= :from)")
+    List<CashFlowEntry> findActiveBetween(
+            @Param("ownerId") UUID ownerId, @Param("from") LocalDate from, @Param("to") LocalDate to);
 
     Optional<CashFlowEntry> findById(UUID id);
 

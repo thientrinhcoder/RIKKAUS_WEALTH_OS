@@ -77,6 +77,7 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                         "/api/v1/auth/session",
                         "/api/v1/cash-flow-entries",
                         "/api/v1/cash-flow-entries/{entryId}",
+                        "/api/v1/cash-flow-occurrences",
                         "/api/v1/feedback",
                         "/api/v1/goal-templates",
                         "/api/v1/goals",
@@ -84,6 +85,7 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                         "/api/v1/liabilities",
                         "/api/v1/liabilities/{liabilityId}",
                         "/api/v1/meta",
+                        "/api/v1/onboarding",
                         "/api/v1/profile",
                         "/api/v1/settings/exchange-rate");
     }
