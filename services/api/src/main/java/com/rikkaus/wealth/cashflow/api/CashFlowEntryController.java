@@ -64,7 +64,8 @@ class CashFlowEntryController {
                             + "then newest created first. An empty catalog is an empty array and a 200, not a "
                             + "404. Amounts are reported in each entry's own currency; converting a USD entry "
                             + "to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. "
-                            + "A recurring entry is one row, not one row per month: expansion is issue #74.")
+                            + "A recurring entry is one row, not one row per month: the dates it falls on are "
+                            + "GET /api/v1/cash-flow-occurrences.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "200",

@@ -786,8 +786,95 @@ silently dropped, as on every other route.
 
 An entry reports the amount the user entered and the currency they entered it in. Converting a USD
 entry to VND is the client's, with the rate from `GET /api/v1/settings/exchange-rate`. Monthly totals
-are issue #77, expanding a recurring entry into its months is issue #74, the forecast is issue #80,
-and search or filter parameters are issue #101. `GET` on the collection takes no query parameter.
+are issue #77, the forecast is issue #80, and search or filter parameters are issue #101. `GET` on the
+collection takes no query parameter. The dates a recurring entry falls on are a separate read-only
+resource, described next.
+
+## Cash-flow occurrences — implemented
+
+A read-only, derived resource (issue #74). One route, under `bearerAuth`, owner-scoped by the token.
+It expands every entry the viewer owns into the dates it falls on within a window of days. Nothing is
+stored: occurrences are computed on every read, so editing or deleting an entry changes its
+occurrences on the next request. There is no migration and no table.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/cash-flow-occurrences` | `from`, `to`, both required, `YYYY-MM-DD` | 200, the occurrences as an array, earliest `occurrenceDate` first, then `sourceEntryId` as text; `[]` when none |
+
+### Fields
+
+| Field | Meaning |
+|---|---|
+| `sourceEntryId` | The entry this occurrence comes from. `GET /api/v1/cash-flow-entries/{sourceEntryId}` reads it |
+| `occurrenceDate` | The calendar date it falls on |
+| `sequence` | Its position in the entry's series counted from `effectiveDate`, starting at 1. Always 1 for a one-time entry |
+| `shiftedToMonthEnd` | `true` when the entry's day of month does not exist in this month and the occurrence was moved to the month's last day |
+| `entryType`, `category`, `amount`, `currency`, `recurrence` | Copied from the entry as it stands. `amount` is in the entry's own currency, two decimals, never converted; `recurrence` is `null` for a one-time entry |
+
+An occurrence has **no identifier of its own**. The pair (`sourceEntryId`, `occurrenceDate`) is unique and
+stable as long as the entry's rule does not change; `sequence` is stable under the same condition.
+
+### Boundary rules
+
+These are the rules that decide whether an occurrence is counted twice, so they are stated exactly.
+
+1. **`effectiveDate` is included.** The first occurrence of a recurring entry falls on it. A one-time
+   entry has exactly one occurrence, on it.
+2. **`endDate` is included.** An occurrence that falls on the end date is produced; nothing after it is.
+   An end date the day before an occurrence ends the series one occurrence earlier.
+3. **A missing day moves back to the month's last day, never into the next month.** Occurrence *n* is
+   `effectiveDate` plus *n* × 1, 3 or 12 months, always counted from `effectiveDate` and never from the
+   previous occurrence. A salary from 31/01/2026 falls on 31/01, 28/02 (`shiftedToMonthEnd`), 31/03,
+   30/04 (`shiftedToMonthEnd`), and on 29/02 in 2028. A yearly entry from 29/02/2028 falls on
+   28/02/2029 (`shiftedToMonthEnd`) and on 29/02/2032 again.
+4. **Each occurrence belongs to the month containing its date.** Rule 3 never moves a date across a
+   month boundary, so no month gains or loses an occurrence by it.
+5. **The window is closed: `from` and `to` are both included.** Dates carry no time, so `2026-01-01..
+   2026-03-31` and `2026-04-01..2026-06-30` share no day and leave none out; every occurrence in the
+   half-year is in exactly one of the two. A monthly report asks for the 1st to the last day of the month.
+
+### Time zone
+
+None. `from`, `to`, `effectiveDate`, `endDate` and `occurrenceDate` are all calendar dates with no
+time-of-day and no offset, and the expansion never consults the server clock or "today". The answer is
+the same in whatever zone the server runs and at whatever moment it is asked. The dates are the
+user's calendar dates, which the product takes to be `Asia/Ho_Chi_Minh` days; a client deciding which
+window is "this month" uses that zone, as the API does nowhere.
+
+### Validation
+
+Every rejection is `validation-failed` with the problems collected in `errors`; the value sent is never
+echoed.
+
+| Input | `errors` entry |
+|---|---|
+| `from` or `to` missing or blank | `{field, "must be present"}` |
+| Not `YYYY-MM-DD` with a four-digit year, or not a real date (`2026-02-29`, `2026-1-5`, a date-time, a second value of the same parameter) | `{field, "must be a calendar date in the form YYYY-MM-DD"}` |
+| `to` before `from` | `{to, "must not be before from"}` |
+| `to` on or after `from` plus 24 months | `{to, "must be less than 24 months after from"}` |
+
+Order and length are only judged when both dates parse. The limit allows `2026-01-01..2027-12-31` and
+refuses `2026-01-01..2028-01-01`; it follows the longest horizon in the accepted design (24 monthly
+occurrences). The known consumers ask for one month (#77) and three (#80).
+
+The parameters are parsed by the slice rather than bound as dates by Spring, because Spring answers a
+missing or unparseable parameter with `malformed-request` and no field name. The contract still
+publishes both as required `format: date` strings.
+
+### Not here
+
+No converted VND amount, no totals, no forecast (#77, #80). No editing of a single occurrence and no
+split of a series: those are open questions for the feature contract #20. No preview of an unsaved
+rule: the endpoint expands stored entries only. A liability's own repayment schedule is not expanded
+here.
+
+### Verified by hand, not by the suite
+
+The route and the expansion shipped on Product Owner direction with no automated test. The scenarios,
+written before the code, are in
+`plans/261114-1843-GH-74-recurring-schedule-expansion/phase-01-test-scenarios.md`; the run is recorded in
+`plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md` and is reproduced by
+`docs/manual-test-guide-cash-flow-occurrences.md`.
 
 ## Financial goals — implemented
 
@@ -910,8 +997,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   agreed is worse than returning all of them.
 - **The remaining domain resources.** Assets, liabilities, cash-flow entries and goals are described
   above. Insights are still later work.
-- **Recurring-entry expansion, monthly totals and the forecast.** Issues #74, #77 and #80. A recurring
-  cash-flow entry is one row and the API never says which months it falls in.
+- **Monthly totals and the forecast.** Issues #77 and #80. The dates a recurring entry falls on are
+  published by `GET /api/v1/cash-flow-occurrences`, but nothing sums them.
 - **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and
   interest rate or expected yield are issue #54's. The asset table has no column for any of them,
   deliberately: a nullable column nobody writes reads as a promise.
@@ -934,12 +1021,13 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow and goal routes.** All
-  six resources shipped on Product Owner direction with manual verification only, recorded in
+- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence and goal
+  routes.** All seven resources shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
   `plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md` and
-  `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md` and
+  `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`,
+  `plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md` and
   `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a

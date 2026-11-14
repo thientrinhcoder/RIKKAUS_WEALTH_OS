@@ -1743,7 +1743,7 @@
       "get" : {
         "tags" : [ "cash-flow-entry-controller" ],
         "summary" : "List the signed-in user's cash-flow entries",
-        "description" : "Returns every income and expense entry the viewer owns, newest effective date first and then newest created first. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each entry's own currency; converting a USD entry to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. A recurring entry is one row, not one row per month: expansion is issue #74.",
+        "description" : "Returns every income and expense entry the viewer owns, newest effective date first and then newest created first. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each entry's own currency; converting a USD entry to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. A recurring entry is one row, not one row per month: the dates it falls on are GET /api/v1/cash-flow-occurrences.",
         "operationId" : "list_2",
         "responses" : {
           "200" : {
@@ -2797,6 +2797,158 @@
           },
           "405" : {
             "description" : "Wrong HTTP method; the templates are read-only",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/cash-flow-occurrences" : {
+      "get" : {
+        "tags" : [ "cash-flow-occurrence-controller" ],
+        "summary" : "List the occurrences of the signed-in user's cash-flow entries in a window",
+        "description" : "Expands every one-time and recurring entry the viewer owns into the dates it falls on from `from` to `to`, both included. A recurring entry's first occurrence is its effective date and its last is on or before its end date, both included. A day of month the month does not have moves back to that month's last day and is marked shiftedToMonthEnd; the next month returns to the entry's own day. Each occurrence belongs to the month containing its date, so two windows that meet without sharing a day count every occurrence exactly once. Dates are calendar dates with no time or zone, so the answer does not depend on when or where it is asked. Occurrences are computed on every read and never stored; editing or deleting an entry changes its occurrences immediately. Ordered by date, then by sourceEntryId. An empty window is an empty array.",
+        "operationId" : "list_6",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "description" : "The first day of the window, included.",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-01-01"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "description" : "The last day of the window, included. Not before from, and less than 24 months after it.",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-03-31"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The occurrences in the window, possibly none",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CashFlowOccurrenceResponse"
+                  }
+                },
+                "examples" : {
+                  "a window with no occurrence" : {
+                    "description" : "a window with no occurrence",
+                    "value" : [ ]
+                  },
+                  "February 2026: a salary anchored on the 31st and a quarterly fee anchored on the 30th" : {
+                    "description" : "February 2026: a salary anchored on the 31st and a quarterly fee anchored on the 30th",
+                    "value" : [ {
+                      "sourceEntryId" : "5c0e2b7a-91d4-4f3b-8a6e-2d7f1c9b4e30",
+                      "occurrenceDate" : "2026-02-28",
+                      "sequence" : 2,
+                      "shiftedToMonthEnd" : true,
+                      "entryType" : "EXPENSE",
+                      "category" : "EDUCATION",
+                      "amount" : 1.25E7,
+                      "currency" : "VND",
+                      "recurrence" : "QUARTERLY"
+                    }, {
+                      "sourceEntryId" : "9b4d6f12-7e3a-4c58-b1d9-0a2e5c7f8d61",
+                      "occurrenceDate" : "2026-02-28",
+                      "sequence" : 2,
+                      "shiftedToMonthEnd" : true,
+                      "entryType" : "INCOME",
+                      "category" : "SALARY",
+                      "amount" : 4.5E7,
+                      "currency" : "VND",
+                      "recurrence" : "MONTHLY"
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "from or to is missing, blank, not a calendar date in the form YYYY-MM-DD, to is before from, or the window is 24 months or longer. Every problem is reported at once in the errors array.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "to before from" : {
+                    "description" : "to before from",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/cash-flow-occurrences",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "to",
+                        "message" : "must not be before from"
+                      } ]
+                    }
+                  },
+                  "from not a date and to missing" : {
+                    "description" : "from not a date and to missing",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/cash-flow-occurrences",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "from",
+                        "message" : "must be a calendar date in the form YYYY-MM-DD"
+                      }, {
+                        "field" : "to",
+                        "message" : "must be present"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -4096,6 +4248,64 @@
             "description" : "Which amount the form should suggest, and from what figure the client already holds.",
             "enum" : [ "NONE", "TARGET_FROM_SIX_MONTHS_OF_EXPENSES", "ALLOCATED_FROM_CURRENT_NET_WORTH", "TARGET_FROM_TOTAL_LIABILITIES" ],
             "example" : "TARGET_FROM_SIX_MONTHS_OF_EXPENSES"
+          }
+        }
+      },
+      "CashFlowOccurrenceResponse" : {
+        "type" : "object",
+        "description" : "A date on which one of the signed-in user's cash-flow entries applies.",
+        "properties" : {
+          "sourceEntryId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The entry this occurrence comes from; GET /api/v1/cash-flow-entries/{id} reads it.",
+            "example" : "9b4d6f12-7e3a-4c58-b1d9-0a2e5c7f8d61"
+          },
+          "occurrenceDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The calendar date the occurrence falls on.",
+            "example" : "2026-02-28"
+          },
+          "sequence" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "The occurrence's position in its entry's series, counted from the effective date. Always 1 for a one-time entry.",
+            "example" : 2
+          },
+          "shiftedToMonthEnd" : {
+            "type" : "boolean",
+            "description" : "True when the entry's day of month does not exist in this month, so the occurrence was moved back to the month's last day.",
+            "example" : true
+          },
+          "entryType" : {
+            "type" : "string",
+            "description" : "INCOME or EXPENSE, as on the entry.",
+            "enum" : [ "INCOME", "EXPENSE" ],
+            "example" : "INCOME"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "The entry's category.",
+            "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ],
+            "example" : "SALARY"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The entry's amount, in its own currency. Always positive.",
+            "example" : 4.5E7
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the amount is expressed in.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "recurrence" : {
+            "type" : "string",
+            "description" : "MONTHLY, QUARTERLY or YEARLY for a recurring entry. Null for a one-time one.",
+            "enum" : [ "MONTHLY", "QUARTERLY", "YEARLY" ],
+            "example" : "MONTHLY"
           }
         }
       }
