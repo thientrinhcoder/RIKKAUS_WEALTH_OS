@@ -26,7 +26,7 @@ import java.util.UUID;
  * <p>The owner and the collateral are bare {@link UUID}s, never a {@code UserAccount} or an {@code
  * Asset}. The slice rule in {@code ArchitectureRulesTest} forbids {@code liabilities} from depending
  * on {@code identity} or {@code assets}, so both relationships live in the foreign keys {@code
- * V6__liabilities.sql} declares and nowhere in Java — the shape {@code Asset} already uses for its
+ * V7__liabilities.sql} declares and nowhere in Java — the shape {@code Asset} already uses for its
  * owner.
  *
  * <p>The identifier is assigned in application code so the {@code Location} header can be written

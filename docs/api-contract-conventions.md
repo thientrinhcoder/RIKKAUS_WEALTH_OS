@@ -370,20 +370,25 @@ than a sign convention on this one. `quantity` must be strictly positive when pr
 Dates are judged as Vietnamese civil dates in `Asia/Ho_Chi_Minh`, exactly as the declared
 exchange-rate date is: `valuationDate` and `purchaseDate` may not be in the future, and `purchaseDate`
 may not be later than `valuationDate`. A request with two date problems returns both in one `errors`
-array.
+array. On `PUT`, the purchase date is judged against the **earliest valuation ever recorded** for the
+asset, not only the current one, so a back-dated record in the history can never end up before the
+purchase; the message is the same `must not be later than the valuation date`.
 
-### The valuation is read-only after creation
+### The valuation is not edited; it is recorded
 
 `PUT` accepts `name`, `liquidity`, `purchaseValue`, `purchaseDate`, `quantity`, `institution` and
 `notes`. It does **not** accept `currentValue`, `currency`, `valuationDate` or `category`.
 
-That is the accepted design for issue #51 — the current value is read-only in the edit form, with its
-update deferred to the append-only valuation history issue #57 introduces — and it is enforced three
-times over: those members are absent from `UpdateAssetMetadataRequest`, `Asset` has no mutator for
-them, and the columns are mapped `updatable = false` so Hibernate omits them from every `UPDATE`.
+That is the accepted design for issue #51 — the current value is read-only in the edit form — and a new
+value goes through the valuation history below instead. `currentValue`, `currency` and `valuationDate`
+on an asset are a copy of its **current valuation record**, written in the same transaction as that
+record; nothing else writes them. Those members are absent from `UpdateAssetMetadataRequest`, and the
+only mutator `Asset` has for them takes a stored record rather than loose values.
 
-**One consequence to plan for:** until #57 ships there is no way to correct a mistyped value. The
-escape hatch is to delete the asset and create it again.
+Creating an asset also writes the first record of its history, so `POST /api/v1/assets` now accepts two
+optional members alongside `valuationDate`: `usdToVndRate` and `rateEffectiveDate`, the rate snapshot
+for that first record. They obey the rules the history section states, and they are the only change to
+the catalog's contract since it shipped.
 
 Two further things about `PUT`:
 
@@ -428,6 +433,10 @@ here would also mean storing or recomputing a figure whose rate nobody could see
 - **There is no row version and no edit-conflict detection.** Two overlapping `PUT`s both succeed and
   the last writer wins, silently. One pilot user on one device makes that acceptable for now;
   introducing a conflict response is a product decision about concurrent editing, not a defect here.
+  What a `PUT` can **not** do is roll back a valuation: it takes the same row lock an append takes, so
+  an edit and an append that overlap are applied one after the other and the catalog's value stays the
+  current record's. This was a review finding, measured as ten rounds of one `PUT` against one `POST`
+  with the snapshot correct after every round.
 - `GET` on the collection takes **no query parameter**. Search, filter and sort are issue #99's, and
   there is no pagination.
 
@@ -446,6 +455,122 @@ with manual verification only:
 `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` is what it returned
 on the implementing run — 70 cases, 64 through HTTP and 6 straight into PostgreSQL.
 
+## Asset valuation history — implemented
+
+Every change to an asset's value is a new record, and no record is ever changed or removed. Three
+routes, all under `bearerAuth`, all reached through an asset the viewer owns.
+
+| Route | Body | Success |
+|---|---|---|
+| `GET /api/v1/assets/{assetId}/valuations` | — | 200, every record, current first |
+| `POST /api/v1/assets/{assetId}/valuations` | `value`, `currency`, `effectiveDate`, and optionally `usdToVndRate`, `rateEffectiveDate`, `note`, `correctsValuationId` | 201, the record, with `Location` |
+| `GET /api/v1/assets/{assetId}/valuations/{valuationId}` | — | 200, the record |
+
+There is **no `PUT`, `PATCH` or `DELETE`** on either path; each answers `method-not-allowed`. The table
+behind them refuses an `UPDATE` and a direct `DELETE` with a trigger, so the rule holds for callers that
+are not the API too. The history goes only with its asset: deleting an asset still cascades, exactly as
+issue #53's plain delete did.
+
+A record:
+
+```json
+{
+  "id": "adaafe49-77f5-45d2-b70b-cfcef3871311",
+  "assetId": "0422ee6a-d5c0-4922-b881-165401371cb1",
+  "value": 21250.00,
+  "currency": "USD",
+  "effectiveDate": "2026-09-14",
+  "usdToVndRate": 25100.000000,
+  "rateEffectiveDate": "2026-09-12",
+  "note": "Cập nhật số dư sau khi đối chiếu sao kê.",
+  "correctsValuationId": null,
+  "current": true,
+  "recordedAt": "2026-11-14T10:42:38.031962Z"
+}
+```
+
+### Which record is current
+
+Exactly one record of an asset carries `current: true`: the one with the **latest `effectiveDate`**,
+and between two on the same date the **later `recordedAt`**. The list is returned in that order, so the
+current record is always first. The asset's `currentValue`, `currency` and `valuationDate` are a copy of
+that record's, written in the same transaction, so reading the catalog and reading the history can never
+disagree. Appends to one asset are serialised by a row lock, and this was measured: four concurrent
+appends, five rounds, the snapshot equal to the marked record every time.
+
+Three consequences a client should rely on:
+
+- **A back-dated record changes nothing but the history.** Posting a value dated before the current
+  record's date answers `201` with `current: false`, and the asset is not written — its `updatedAt`
+  does not move. This is how last year's values are entered for a trend.
+- **A same-day record supersedes.** Two records on one date are a correction and its original; the
+  later recorded is current. The design's "Hiện tại" mark is this flag, not a position the client works
+  out.
+- **The first record is written when the asset is.** An asset always has at least one record, with the
+  asset's `createdAt` as its `recordedAt`. Assets that existed before this resource did were given
+  theirs by the migration, from their own snapshot, with no rate — the *partial* state below.
+
+### Corrections
+
+To correct a record, post the right value with `correctsValuationId` naming the wrong one and the reason
+in `note`. The original stays exactly as it was and stays readable; the new record points at it. A
+correction **requires a note** — `note` / `must be given when correcting a valuation` — because the
+accepted design makes *Lý do điều chỉnh* mandatory. `correctsValuationId` must name a record **of this
+asset**; a missing identifier, a record of another of the viewer's assets and a record of another user's
+asset all answer the same `must identify a valuation of this asset`, byte-identical apart from
+`correlationId`. The table enforces the same rule with a composite foreign key.
+
+### The rate snapshot
+
+`usdToVndRate` and `rateEffectiveDate` are the rate **the user applied** when recording this value —
+the design's *Tỷ giá USD/VND đã dùng* — sent by the client, not read from the settings resource. The
+assets slice may not depend on settings, and a stored rate is an audit fact about this record rather than
+a pointer to whatever the settings rate later becomes.
+
+- **Both or neither.** A rate without its date is `rateEffectiveDate` / `must be given together with
+  usdToVndRate`; a date without its rate is the mirror image.
+- **Only on a USD record.** On a VND record both are refused with `must be absent for a VND valuation`.
+- **Both may be absent on a USD record.** That is the design's *partial* state, not an error, and it is
+  the state of every USD asset created before this resource existed. The client renders it as the
+  design's *Thiếu rate metadata* row.
+- `usdToVndRate` must be greater than zero and fit `NUMERIC(19, 6)`; `rateEffectiveDate` must not be in
+  the future.
+
+There is still **no converted VND figure** anywhere. The client multiplies `value` by `usdToVndRate`
+and shows the chain, as the design's reconciliation table does: 21.250 USD × 25.100 = 533.375.000 VND.
+
+### Validation, each a named `validation-failed`
+
+- `value` is required, not negative, at most 17 integer digits and 2 decimals. Zero is accepted.
+- `currency` is required and **must be the asset's** — `must match the asset's currency`. A holding's
+  currency is a property of the holding and `purchaseValue` is denominated in it. The record still
+  stores the currency, as the backbone requires, so relaxing this later needs no migration.
+- `effectiveDate` is required, must not be in the future (judged in `Asia/Ho_Chi_Minh`, as every date
+  here is) and `must not be earlier than the purchase date` when the asset has one.
+- `note` is at most 2000 characters, trimmed of blank space in the wide sense the catalog already uses,
+  stored as `null` when nothing is left, and refused with `must not contain a null character` for a
+  `\u0000`.
+- An unrecognised `currency` is `malformed-request`, as on the catalog.
+- Several problems come back in one `errors` array. A VND currency on a USD asset with a future date and
+  a rate produced four entries in one response.
+
+### Ownership
+
+Ownership is decided on the asset, by the same guard the catalog uses, and a record is reachable only
+through its own asset. Another user's asset answers `not-found` on all three routes with the body a
+missing asset produces. A record identifier under the **wrong asset** — another of the viewer's own, or
+anybody else's — is `not-found` too, so a valuation identifier is never a way around the ownership of
+the asset it belongs to. Seven such bodies were compared in the run and differed only in `instance` and
+`correlationId`.
+
+### Verified by hand, not by the suite
+
+No automated test exercises these three routes, on the same Product Owner direction as the catalog.
+[`docs/manual-test-guide-asset-valuations.md`](manual-test-guide-asset-valuations.md) is the
+reproducible procedure and
+`plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md` is what it returned on
+the implementing run — 84 cases, 71 through HTTP, 2 concurrency probes and 11 straight into PostgreSQL.
+
 ## Liability catalog — implemented
 
 The second domain resource, built on the asset catalog's shape. Five routes, all under `bearerAuth`,
@@ -462,7 +587,7 @@ all owner-scoped by the token.
 ### The six categories
 
 `BANK_LOAN`, `PERSONAL_LOAN`, `MARGIN_LOAN`, `CREDIT_CARD_BALANCE`, `GUARANTEE_OBLIGATION`,
-`OTHER_LIABILITY`. The same six are a check constraint in `V6__liabilities.sql`. No Vietnamese label is
+`OTHER_LIABILITY`. The same six are a check constraint in `V7__liabilities.sql`. No Vietnamese label is
 published; the client maps each constant to the accepted design's copy.
 
 **The category drives no server-side rule.** The accepted design lets the form offer *không áp dụng*
@@ -587,9 +712,12 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and
   interest rate or expected yield are issue #54's. The asset table has no column for any of them,
   deliberately: a nullable column nobody writes reads as a promise.
-- **Asset valuation history.** There is no history table and no way to change an asset's current
-  value. Issue #57 owns both, and the asset resource is shaped so that it can add them without
-  reopening this contract.
+- **Editing or deleting a valuation.** The history is append-only by design and by trigger. A wrong
+  record is corrected by a new one that points at it; there is no route and no table path that changes
+  or removes a record while its asset exists.
+- **A converted VND figure on a valuation record, and any freshness judgement about its rate.** The
+  record publishes the value and the rate the user applied; the arithmetic and the staleness rule are
+  the client's, per the accepted designs for issues #48 and #57.
 - **Hardened deletion.** `DELETE` removes the row. There is no undo, no soft delete, no retention
   window and no handling of records that will later reference an asset. Issue #102 owns all of it.
 - **Search, filter and sort over the catalog.** Issue #99's.
@@ -599,10 +727,11 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile, exchange-rate and asset routes.** All three resources shipped on
-  Product Owner direction with manual verification only, recorded in
-  `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md` and
-  `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`. Every other route
+- **Automated tests for the profile, exchange-rate, asset and valuation routes.** All four resources
+  shipped on Product Owner direction with manual verification only, recorded in
+  `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
+  `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` and
+  `plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and

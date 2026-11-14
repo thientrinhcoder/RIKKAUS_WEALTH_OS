@@ -34,11 +34,19 @@ public record AssetResponse(
         @Schema(description = "What the user calls this asset.", example = "Tài khoản USD") String name,
         @Schema(description = "One of the eleven asset categories.", example = "BANK_ACCOUNT")
                 AssetCategory category,
-        @Schema(description = "What the asset is worth, in its own currency.", example = "20000.00")
+        @Schema(
+                        description =
+                                "What the asset is worth, in its own currency: the value of the current record "
+                                        + "in its valuation history.",
+                        example = "20000.00")
                 BigDecimal currentValue,
         @Schema(description = "The currency the values are expressed in.", example = "USD")
                 AssetCurrency currency,
-        @Schema(description = "The date the user states the value was accurate.", example = "2026-09-12")
+        @Schema(
+                        description =
+                                "The date the user states the value was accurate: the effective date of the "
+                                        + "current valuation record.",
+                        example = "2026-09-12")
                 LocalDate valuationDate,
         @Schema(description = "How readily the user judges it can be turned into cash.", example = "HIGH")
                 AssetLiquidity liquidity,

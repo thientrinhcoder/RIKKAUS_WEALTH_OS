@@ -69,6 +69,8 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                 .containsExactlyInAnyOrder(
                         "/api/v1/assets",
                         "/api/v1/assets/{assetId}",
+                        "/api/v1/assets/{assetId}/valuations",
+                        "/api/v1/assets/{assetId}/valuations/{valuationId}",
                         "/api/v1/auth/google",
                         "/api/v1/auth/logout",
                         "/api/v1/auth/refresh",

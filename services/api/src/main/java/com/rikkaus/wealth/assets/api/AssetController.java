@@ -2,7 +2,7 @@ package com.rikkaus.wealth.assets.api;
 
 import com.rikkaus.wealth.assets.application.AssetService;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
-import com.rikkaus.wealth.assets.domain.AssetValuation;
+import com.rikkaus.wealth.assets.domain.DeclaredValuation;
 import com.rikkaus.wealth.shared.api.ApiPaths;
 import com.rikkaus.wealth.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -143,10 +143,12 @@ class AssetController {
     @Operation(
             summary = "Add an asset to the catalog",
             description =
-                    "Creates an asset owned by the signed-in user. All prices are manually entered; there is "
-                            + "no market-price integration in MVP 1A. The valuation date must not be in the "
-                            + "future and a purchase date must not be later than it, both judged as Vietnamese "
-                            + "civil dates.")
+                    "Creates an asset owned by the signed-in user, and the first record of its valuation "
+                            + "history with the same value, currency, date and optional rate snapshot. All "
+                            + "prices are manually entered; there is no market-price integration in MVP 1A. "
+                            + "The valuation date must not be in the future and a purchase date must not be "
+                            + "later than it, both judged as Vietnamese civil dates. A later value is recorded "
+                            + "through POST /api/v1/assets/{assetId}/valuations, never by editing this one.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "201",
@@ -169,8 +171,9 @@ class AssetController {
             responseCode = "400",
             description =
                     "A required field is missing, a value is negative or too precise, a quantity is not "
-                            + "positive, or a date is impossible. An unrecognised category, currency or "
-                            + "liquidity is a malformed-request instead, because the body cannot be parsed.",
+                            + "positive, a date is impossible, or the rate snapshot is incomplete or given for "
+                            + "a VND asset. An unrecognised category, currency or liquidity is a "
+                            + "malformed-request instead, because the body cannot be parsed.",
             content =
                     @Content(
                             mediaType = PROBLEM_JSON,
@@ -238,8 +241,12 @@ class AssetController {
                         assetService.create(
                                 CurrentUser.require(),
                                 request.category(),
-                                new AssetValuation(
-                                        request.currentValue(), request.currency(), request.valuationDate()),
+                                DeclaredValuation.initial(
+                                        request.currentValue(),
+                                        request.currency(),
+                                        request.valuationDate(),
+                                        request.usdToVndRate(),
+                                        request.rateEffectiveDate()),
                                 new AssetMetadata(
                                         request.name(),
                                         request.liquidity(),
@@ -296,8 +303,9 @@ class AssetController {
                     "Replaces the name, liquidity and the optional common fields. An omitted optional field "
                             + "is cleared, because this is a replacement rather than a patch. The current "
                             + "value, its currency, the valuation date and the category are not editable "
-                            + "here: a new value belongs in the valuation history issue #57 introduces, and "
-                            + "the category is chosen once when the asset is created.")
+                            + "here: a new value is recorded through POST /api/v1/assets/{assetId}/valuations "
+                            + "and the asset follows it, and the category is chosen once when the asset is "
+                            + "created.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "200",

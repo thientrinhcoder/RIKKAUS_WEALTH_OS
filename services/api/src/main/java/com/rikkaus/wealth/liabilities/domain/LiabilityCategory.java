@@ -4,7 +4,7 @@ package com.rikkaus.wealth.liabilities.domain;
  * The six liability categories the MVP Backbone names, and no others.
  *
  * <p>An enum rather than free text, and the same six are a check constraint in {@code
- * V6__liabilities.sql}: the enum stops the API, the constraint stops everything else. Persisted by
+ * V7__liabilities.sql}: the enum stops the API, the constraint stops everything else. Persisted by
  * name, never by ordinal, so inserting a seventh in the middle of this list cannot reinterpret a row
  * already stored.
  *

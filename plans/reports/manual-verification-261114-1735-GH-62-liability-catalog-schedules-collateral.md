@@ -333,10 +333,29 @@ hai case protocol là harness.
   của #53; frontend switch theo `type`, không theo `detail`.
 - `detail` của `405`/`406`/`415` phản chiếu method/media type của client (`Method 'PATCH' is not
   supported.`). Đây là hành vi sẵn có của `ApiExceptionHandler` cho mọi resource, không riêng slice này.
-- Flyway báo `applied 5 migrations ... now at version v6` vì nhánh này chưa có V5 của PR #147. Khi merge
-  theo thứ tự coordinator định, V6 sẽ được đánh số lại thành `max(main)+1`.
+- Lượt 1 và 2 chạy khi migration còn là `V6__liabilities.sql`; Flyway báo `applied 5 migrations ... now at
+  version v6`. Khi merge, `main` đã có `V6__asset_valuations.sql` (#59) và không có V5, nên migration được
+  đánh số lại thành `V7__liabilities.sql` và chạy lại lượt 3 (dưới đây).
 - `assets` echo create body như gửi (`20000.00` nếu gửi `20000.00`, `20000` nếu gửi `20000`), còn
   `liabilities` echo ở scale cột. Đồng nhất hóa `assets` là follow-up ngoài phạm vi #62.
+
+## Lượt 3 — sau khi merge `main` (`74829ee`, có #59 asset valuation history)
+
+Chạy lúc 18:15 ICT trên tree đã merge, migration đổi thành `V7__liabilities.sql`, DB mới, cùng script.
+
+| | |
+|---|---|
+| Migration | `Successfully applied 6 migrations to schema "public", now at version v7`; `ddl-auto: validate` chấp nhận, context start 3,625 s |
+| `verify` | `clean verify` không update flag: 81 unit + 50 IT, `BUILD SUCCESS` |
+| HTTP | chuỗi status của 82 request **giống hệt lượt 2, từng case** |
+| X05 | 10/10 vòng `204 404 404 404` |
+| K05/K09 | xóa asset (giờ cascade sang `asset_valuations`) vẫn `204`; công nợ còn, `collateral_asset_id` = `NULL` |
+| S05–S11 | 0 dòng probe; S12 `2400000000.00 | 8.5000 | 23500000.00` |
+| `500` | 0 |
+
+Lần `verify` đầu sau merge fail 50/50 IT với `Found more than one migration with version 6`: file
+`V6__liabilities.sql` cũ còn trong `target/classes` vì build không `clean`. Không phải lỗi code; `clean
+verify` xanh.
 
 ## Verification gap
 

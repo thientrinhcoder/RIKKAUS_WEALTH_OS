@@ -71,9 +71,18 @@ class ApplicationContextIT extends AbstractPostgresIntegrationTest {
                     tableNames.add(tables.getString("table_name"));
                 }
             }
+            // In any order rather than in the ORDER BY's order: the relative position of asset_valuations
+            // and assets depends on how the container's collation treats an underscore, and the set is
+            // what the assertion exists to check.
             assertThat(tableNames)
                     .as("the wealth schema must hold exactly the tables the migrations declare")
-                    .containsExactly("assets", "liabilities", "refresh_tokens", "user_settings", "users");
+                    .containsExactlyInAnyOrder(
+                            "asset_valuations",
+                            "assets",
+                            "liabilities",
+                            "refresh_tokens",
+                            "user_settings",
+                            "users");
         }
     }
 }

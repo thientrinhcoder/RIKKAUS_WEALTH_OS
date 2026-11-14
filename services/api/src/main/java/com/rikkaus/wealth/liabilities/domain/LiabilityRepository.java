@@ -43,7 +43,7 @@ public interface LiabilityRepository extends Repository<Liability, UUID> {
      * <p>This is how the slice checks the collateral without depending on {@code assets}. The
      * ArchUnit slice rule forbids importing {@code Asset} or {@code AssetRepository}; a port in {@code
      * shared} would have made {@code shared} know what an asset is and required a change inside the
-     * {@code assets} slice to implement it. The foreign key {@code V6__liabilities.sql} declares
+     * {@code assets} slice to implement it. The foreign key {@code V7__liabilities.sql} declares
      * already couples the two tables at the schema level, so a read of that table scoped by owner
      * adds no coupling that does not exist.
      *

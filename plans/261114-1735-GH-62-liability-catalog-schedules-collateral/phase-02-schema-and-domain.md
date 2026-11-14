@@ -7,7 +7,7 @@ bean validation ở biên API (field được đặt tên) và CHECK trong bản
 
 ## Files
 
-- `services/api/src/main/resources/db/migration/V6__liabilities.sql`
+- `services/api/src/main/resources/db/migration/V7__liabilities.sql`
 - `services/api/src/main/java/com/rikkaus/wealth/liabilities/domain/Liability.java`
 - `.../domain/LiabilityCategory.java` — 6 giá trị
 - `.../domain/PaymentFrequency.java` — `MONTHLY`, `QUARTERLY`, `SEMIANNUAL`, `YEARLY`

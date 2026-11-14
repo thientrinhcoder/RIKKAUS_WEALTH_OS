@@ -26,7 +26,7 @@ VND); B có `Nhà phố Gò Vấp` (`REAL_ESTATE`, `4200000000.00` VND).
 
 | # | Case | Mong đợi |
 |---|---|---|
-| S01 | Khởi động API trên DB trống | Flyway `Successfully applied 6 migrations ... now at version v6`; `ddl-auto: validate` chấp nhận entity, context start |
+| S01 | Khởi động API trên DB trống | Flyway `... now at version v7`; `ddl-auto: validate` chấp nhận entity, context start |
 | S02 | `information_schema.columns` của `wealth.liabilities` | `outstanding_balance numeric(19,2) NOT NULL`, `recurring_payment_amount numeric(19,2)`, `interest_rate numeric(7,4)`, các cột `*_date` là `date`, không có `double precision` |
 | S03 | `pg_constraint` của bảng | Có đúng các CHECK: `liabilities_category_is_known`, `liabilities_currency_is_supported`, `liabilities_outstanding_balance_is_not_negative`, `liabilities_interest_rate_is_not_negative`, `liabilities_recurring_payment_amount_is_positive`, `liabilities_recurring_payment_frequency_is_known`, `liabilities_recurring_payment_is_complete`, `liabilities_maturity_not_before_start`, `liabilities_next_payment_within_term`, `liabilities_name_is_present_and_bounded`, `liabilities_notes_are_bounded` |
 | S04 | FK `collateral_asset_id` | `confrelid = 'wealth.assets'`, `confdeltype = 'n'` (SET NULL); FK `user_id` `confdeltype = 'c'` |

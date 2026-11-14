@@ -34,7 +34,7 @@ publish cho frontend (#61).
   viết trước khi code; phase 5 chạy thật qua HTTP vào PostgreSQL Docker và ghi evidence. Hai inventory
   test sẵn có (`ApplicationContextIT` liệt kê bảng, `OpenApiContractIT` liệt kê path) phải mở rộng để
   `verify` xanh.
-- Migration là `V6__liabilities.sql` (V5 thuộc PR #147). Khi merge đánh số lại thành `max(main)+1`.
+- Migration ban đầu là `V6__liabilities.sql`; khi merge đã đánh số lại thành `V7__liabilities.sql` = `max(main)+1`, vì `main` đã có `V6__asset_valuations.sql` (#59) và không có V5.
 - Tiền chỉ VND/USD, không chuyển đổi tỷ giá trong slice.
 
 ## Non-goals
@@ -63,7 +63,7 @@ publish cho frontend (#61).
 
 ## Deliverables
 
-- `services/api/src/main/resources/db/migration/V6__liabilities.sql`
+- `services/api/src/main/resources/db/migration/V7__liabilities.sql`
 - `services/api/src/main/java/com/rikkaus/wealth/liabilities/{api,application,domain}/**`
 - `services/api/openapi/openapi.json` regenerate; `OpenApiContractIT`, `ApplicationContextIT` mở rộng
 - `docs/api-contract-conventions.md` thêm mục Liability catalog

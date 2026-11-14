@@ -41,8 +41,8 @@ DB_URL=jdbc:postgresql://localhost:5462/rikkaus /opt/homebrew/opt/openjdk@25/lib
 ```
 
 Two lines in the startup log are part of the verification (case S01). Flyway must report `now at
-version v6`, and the context must then start: `spring.jpa.hibernate.ddl-auto: validate` is what proves
-`V6__liabilities.sql` and the `Liability` entity agree about every column.
+version v7`, and the context must then start: `spring.jpa.hibernate.ddl-auto: validate` is what proves
+`V7__liabilities.sql` and the `Liability` entity agree about every column.
 
 ### 3. Two users and three assets
 
@@ -360,7 +360,7 @@ reveals.
 docker exec -i rikkaus-pg-issue-62 psql -U rikkaus -d rikkaus -c "SELECT conname, contype, confrelid::regclass, confdeltype FROM pg_constraint WHERE conrelid='wealth.liabilities'::regclass ORDER BY conname;"   # S03, S04
 ```
 
-The eleven named `CHECK`s from `V6__liabilities.sql` must all appear, `liabilities_collateral_asset_id_fkey`
+The eleven named `CHECK`s from `V7__liabilities.sql` must all appear, `liabilities_collateral_asset_id_fkey`
 must point at `wealth.assets` with `confdeltype = n` (SET NULL), and `liabilities_user_id_fkey` at
 `wealth.users` with `c` (CASCADE).
 
