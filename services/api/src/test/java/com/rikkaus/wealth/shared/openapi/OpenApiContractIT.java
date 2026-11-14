@@ -84,6 +84,7 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                         "/api/v1/liabilities",
                         "/api/v1/liabilities/{liabilityId}",
                         "/api/v1/meta",
+                        "/api/v1/onboarding",
                         "/api/v1/profile",
                         "/api/v1/settings/exchange-rate");
     }
