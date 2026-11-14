@@ -151,5 +151,6 @@ xanh không dùng flag cập nhật: 81 unit test và 50 integration test. Hành
 [`plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md`](../reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md):
 60 case (HTTP và PostgreSQL). Lần chạy đầu trên working tree có **1 case fail (O27)**: Jackson cắt
 `currentStep: 2.5` thành 2 và trả 200; đã sửa bằng `WholeNumberDeserializer` trước khi commit. Lần chạy
-thứ hai trên working tree và lần thứ ba trên commit đều 60/60. Năm câu hỏi sản phẩm ở mục phía trên
+thứ hai trên working tree và lần thứ ba trên commit đều 60/60. Sau khi merge `main` `3bd5f9d` (#74, không có migration) tại `26120c5`, `clean verify` xanh và 60/60
+case pass lại trên jar đã merge. Năm câu hỏi sản phẩm ở mục phía trên
 chờ Product Owner và design #93.

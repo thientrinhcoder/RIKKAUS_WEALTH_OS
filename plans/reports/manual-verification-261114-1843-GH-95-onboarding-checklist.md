@@ -12,9 +12,20 @@ commit và pass ở cả hai lần chạy sau.
 | 1 | working tree trước khi sửa (base `d9abcd8`) | PostgreSQL mới, migrate tới V11 | 59 pass, **1 fail (O27)** |
 | 2 | working tree sau khi sửa O27 | PostgreSQL mới | 60 pass |
 | 3 | commit `bf72d18`, tree sạch | PostgreSQL mới | 60 pass |
+| 4 | merge commit `26120c5` (`origin/main` `3bd5f9d` có #74), tree sạch | PostgreSQL mới | 60 pass |
 
 Lần 2 và lần 3 cho cùng status và cùng body ở cả 60 case sau khi che id và timestamp; khác biệt duy nhất
 là dòng log của O54 (thời điểm và thời gian chạy migration).
+
+## Lần chạy 4: sau khi merge `main`
+
+#74 (PR #152) vào `main` tại `3bd5f9d`, thêm `GET /api/v1/cash-flow-occurrences` và sửa slice
+`cashflow`, không thêm migration nên onboarding giữ `V11`. Merge commit `26120c5`; `clean verify` không
+flag xanh (81 unit test, 50 integration test), `openapi.json` regenerate không đổi so với kết quả merge.
+Toàn bộ 60 case chạy lại trên jar build từ merge commit, PostgreSQL mới: **60/60 pass**. So với lần 3 sau
+khi che id và timestamp, khác biệt duy nhất là thứ tự hai key `field` và `message` trong phần tử
+`errors` của O23–O25 (cùng nội dung, JSON object không có thứ tự) và dòng log của O54. Bảng từng case
+bên dưới vẫn là của lần 3.
 
 ## Môi trường
 
