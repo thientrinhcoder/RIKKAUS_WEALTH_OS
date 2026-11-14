@@ -1,7 +1,7 @@
 ---
 title: "Issue #95 guided onboarding & financial-profile checklist"
 description: "Xây slice onboarding: bảng wealth.onboarding_progress lưu tối thiểu tiến độ, resource /api/v1/onboarding trả checklist bảy bước suy ra từ record thật, ghi bước đang xem, đã xem dashboard, hoàn tất hoặc bỏ qua."
-status: in-progress
+status: completed
 priority: P1
 effort: "1.5d"
 issue: 95
@@ -104,20 +104,20 @@ Response mẫu:
 | 2 | [Schema và domain](./phase-02-schema-and-domain.md) | Completed | 1 | `V11`, `OnboardingProgress`, `OnboardingStep`, repository với native query |
 | 3 | [Service và HTTP](./phase-03-service-and-http.md) | Completed | 2 | `GET`/`PATCH /api/v1/onboarding` |
 | 4 | [Contract và inventories](./phase-04-contract-and-inventories.md) | Completed | 3 | `openapi.json`, hai inventory, conventions doc; `verify` xanh |
-| 5 | [Manual verification](./phase-05-manual-verification.md) | Pending | 4 | Guide chạy lại được và evidence |
+| 5 | [Manual verification](./phase-05-manual-verification.md) | Completed | 4 | Guide chạy lại được và evidence |
 
 ## Acceptance Criteria
 
-- [ ] User mới `GET` được 7 bước chưa xong, không lỗi, không có dòng nào trong `onboarding_progress`.
-- [ ] Mỗi bước 1, 2, 3, 4, 5, 7 chuyển sang `done` sau khi tạo record thật qua API của slice tương ứng,
+- [x] User mới `GET` được 7 bước chưa xong, không lỗi, không có dòng nào trong `onboarding_progress`.
+- [x] Mỗi bước 1, 2, 3, 4, 5, 7 chuyển sang `done` sau khi tạo record thật qua API của slice tương ứng,
       và quay về `done: false` khi record cuối cùng của loại đó bị xóa.
-- [ ] Bước 6, `currentStep`, hoàn tất, bỏ qua, mở lại ghi được và đọc lại đúng (resume đúng bước).
-- [ ] `currentStep` ngoài 1–7 → `validation-failed` nêu `currentStep`; kiểu sai → `malformed-request`.
-- [ ] User B không thấy và không đổi được tiến độ của A; record của A không làm bước của B `done`.
-- [ ] 401 giống nhau cho không header / hết hạn / sai chữ ký; 405, 415, 406, JSON cụt đều problem+json.
-- [ ] `psql`: bảng chỉ có cột tiến độ (không `numeric`, không `text`), CHECK từ chối bước ngoài 1–7 và
+- [x] Bước 6, `currentStep`, hoàn tất, bỏ qua, mở lại ghi được và đọc lại đúng (resume đúng bước).
+- [x] `currentStep` ngoài 1–7 → `validation-failed` nêu `currentStep`; kiểu sai → `malformed-request`.
+- [x] User B không thấy và không đổi được tiến độ của A; record của A không làm bước của B `done`.
+- [x] 401 giống nhau cho không header / hết hạn / sai chữ ký; 405, 415, 406, JSON cụt đều problem+json.
+- [x] `psql`: bảng chỉ có cột tiến độ (không `numeric`, không `text`), CHECK từ chối bước ngoài 1–7 và
       hoàn tất + bỏ qua cùng lúc.
-- [ ] `./mvnw verify` xanh không flag.
+- [x] `./mvnw verify` xanh không flag.
 
 ## Verification gap
 
@@ -143,3 +143,13 @@ category, không có compile error nào; chỉ `GET /api/v1/onboarding` lỗi l�
    `Khai báo tỷ giá USD/VND`.
 
 <!-- slug: issue-95-onboarding-checklist -->
+
+## Kết quả
+
+Giao ngày 14/11/2026 tại commit `bf72d18`. `./services/api/mvnw -f services/api/pom.xml clean verify`
+xanh không dùng flag cập nhật: 81 unit test và 50 integration test. Hành vi được ghi trong
+[`plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md`](../reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md):
+60 case (HTTP và PostgreSQL). Lần chạy đầu trên working tree có **1 case fail (O27)**: Jackson cắt
+`currentStep: 2.5` thành 2 và trả 200; đã sửa bằng `WholeNumberDeserializer` trước khi commit. Lần chạy
+thứ hai trên working tree và lần thứ ba trên commit đều 60/60. Năm câu hỏi sản phẩm ở mục phía trên
+chờ Product Owner và design #93.
