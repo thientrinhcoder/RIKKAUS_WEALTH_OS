@@ -302,6 +302,55 @@ aws ecs update-service --cluster <cluster> --service <service> \
 The service's deployment circuit breaker also rolls back on its own when new tasks never become
 healthy, so a broken image does not leave the environment down.
 
+## Log format and what is never logged
+
+The task definition sets no Spring profile, so the API writes **one JSON object per line** to stdout
+(Logstash layout, chosen in `services/api/src/main/resources/logback-spring.xml`), and the `awslogs`
+driver already ships stdout to the log group above. No infrastructure changed for this; only the format
+did. The `local` profile keeps the readable one-line pattern.
+
+Every request produces exactly one `INFO` line, `request completed`, with these members:
+
+| Member | Example | Notes |
+|---|---|---|
+| `correlationId` | `8f14e45f-ea8b-4c2d-9a3e-5b7c1d0f2a96` | Same value as the `X-Correlation-Id` header and the `correlationId` of an error body |
+| `userId` | `0f2c8d14-6b3a-4c7e-9f51-8ad2e6b40c93` | The UUID only, and only when an access token was verified |
+| `httpMethod`, `httpStatus`, `durationMs` | `POST`, `201`, `18` | |
+| `httpRoute` | `/api/v1/assets/{assetId}` | The route **template**; `unmatched` when the request never reached a handler (a 401 from the security chain, an unknown path) |
+
+`/actuator/health` probes are logged at `DEBUG`, so the load balancer's checks do not appear. Any line
+logged while a request is served also carries `correlationId` and `userId`. An exception appears as a
+`stack_trace` member holding class names and stack frames only.
+
+Never written to the log, by any profile:
+
+- request or response bodies, query strings, raw request paths, and any header value — `Authorization`
+  and `Cookie` included;
+- access tokens, refresh tokens, Google tokens or codes, and the generated fallback password (the
+  auto-configuration that printed one is excluded);
+- email addresses or display names;
+- amounts, and the names or notes of assets, liabilities, goals, cash-flow entries, or feedback text;
+- the message of any exception — a parse error quotes the body and a constraint violation quotes the
+  row, so only the class name and frames are printed, and the PostgreSQL driver runs with
+  `logServerErrorDetail=false` so a row never reaches an exception message in the first place.
+
+As a safety net, every message and string member is scanned and JWT-, Google-token-, `Bearer`- and
+email-shaped substrings are replaced with `[redacted]`. That net catches only what has a shape;
+amounts and record names are kept out at the source. Anyone adding a log statement must log
+identifiers and counts, never a request, an entity or a field the user typed. The rules live in
+`shared/observability` (`RequestLogFields`, `LogRedaction`), and the procedure that proved them —
+grepping the whole process output for planted tokens, an email, `4.200.000.000` and
+`Căn hộ Thảo Điền` — is
+[`manual-test-guide-feedback-observability.md`](manual-test-guide-feedback-observability.md).
+
+Query a request by its correlation identifier:
+
+```bash
+aws logs filter-log-events --log-group-name "$(cd infra/aws && tofu output -raw log_group)" --filter-pattern '{ $.correlationId = "8f14e45f-ea8b-4c2d-9a3e-5b7c1d0f2a96" }'
+```
+
+Lines the JVM itself writes to stderr before Logback starts, or outside it, are plain text, not JSON.
+
 ## When something is wrong
 
 **Targets never become healthy.** Read the log group. The usual cause is the application failing to
