@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  * name. Keeping the defaults here is what lets {@code GET /api/v1/goal-templates} publish them from
  * one source rather than the client hard-coding product numbers.
  *
- * <p>The same seven constants are a check constraint in {@code V8__goals.sql}: the enum stops the API,
+ * <p>The same seven constants are a check constraint in {@code V9__goals.sql}: the enum stops the API,
  * the constraint stops everything else. Persisted by name, never by ordinal, so inserting an eighth
  * template anywhere but the end cannot reinterpret rows already written.
  *

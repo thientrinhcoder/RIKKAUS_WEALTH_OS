@@ -22,7 +22,7 @@ import java.util.UUID;
  *
  * <p>The owner is a bare {@link UUID}, never a {@code UserAccount}. The slice rule in {@code
  * ArchitectureRulesTest} forbids {@code goals} from depending on {@code identity}, so the relationship
- * lives in the foreign key {@code V8__goals.sql} declares and nowhere in Java — the shape {@code Asset}
+ * lives in the foreign key {@code V9__goals.sql} declares and nowhere in Java — the shape {@code Asset}
  * and {@code UserSettings} already use.
  *
  * <p>The currency is the shared {@link Currency} and is always {@link Currency#REPORTING}. It is a

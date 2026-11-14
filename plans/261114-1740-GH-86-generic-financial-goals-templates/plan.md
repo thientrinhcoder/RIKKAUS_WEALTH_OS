@@ -33,8 +33,8 @@ làm việc. Bảy template cùng giá trị gợi ý mặc định của design
   scenario viết trước khi code; verification là chạy thật qua HTTP vào PostgreSQL Docker và ghi
   evidence. Hai inventory sẵn có (`ApplicationContextIT` bảng, `OpenApiContractIT` path) vẫn phải mở
   rộng vì chúng liệt kê chính xác và sẽ fail.
-- Migration là `V8__goals.sql` vì V5 thuộc PR #147, V6 thuộc #62, V7 thuộc #71. Đánh số lại thành
-  `max(main)+1` khi merge nếu cần.
+- Migration là `V9__goals.sql`. Ban đầu là `V8` (lúc đó `main` dừng ở V4 và V5–V7 đã dành cho các PR
+  khác); khi merge sau #59 (`V6`), #62 (`V7`) và #71 (`V8`) được đánh số lại thành `max(main)+1 = V9`.
 
 ## Non-goals
 
@@ -71,7 +71,7 @@ mục tiêu", "Bảy mẫu và thứ chúng điền sẵn") và `RIKKAUS_WEALTH_
 
 ## Deliverables
 
-- `services/api/src/main/resources/db/migration/V8__goals.sql`
+- `services/api/src/main/resources/db/migration/V9__goals.sql`
 - `services/api/src/main/java/com/rikkaus/wealth/goals/**`
 - `services/api/openapi/openapi.json` regenerate
 - `ApplicationContextIT` thêm bảng `goals`; `OpenApiContractIT` thêm ba path

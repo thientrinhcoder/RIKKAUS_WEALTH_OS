@@ -1,9 +1,13 @@
 package com.rikkaus.wealth.assets.domain;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Asset persistence, declaring only the operations the slice uses.
@@ -26,6 +30,24 @@ public interface AssetRepository extends Repository<Asset, UUID> {
     List<Asset> findByUserIdOrderByValuationDateDescNameAsc(UUID userId);
 
     Optional<Asset> findById(UUID id);
+
+    /**
+     * The asset, with its row locked until the transaction ends.
+     *
+     * <p>Declared for the one operation that reads an asset's current valuation and then writes it:
+     * appending to the history. Two appends that overlap would otherwise both read the same current
+     * date, both decide they supersede it, and both write the snapshot, leaving it equal to whichever
+     * {@code UPDATE} happened to run last rather than to the record the order says is current. A row
+     * lock makes the second wait for the first to commit and then read what it wrote. The same lock
+     * also serialises an append against a concurrent delete, so the history and the snapshot can never
+     * be written for an asset that is no longer there.
+     *
+     * <p>A JPQL query rather than a derived {@code findById} with {@code @Lock}, so the lock is visible
+     * at the declaration and cannot be dropped by a rename.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Asset a where a.id = :id")
+    Optional<Asset> findAndLockById(@Param("id") UUID id);
 
     Asset save(Asset asset);
 

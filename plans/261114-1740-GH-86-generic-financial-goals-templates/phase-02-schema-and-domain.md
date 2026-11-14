@@ -34,7 +34,7 @@ Java cho phần còn lại của slice.
 
 ## File tạo
 
-- `services/api/src/main/resources/db/migration/V8__goals.sql`
+- `services/api/src/main/resources/db/migration/V9__goals.sql`
 - `services/api/src/main/java/com/rikkaus/wealth/goals/domain/Goal.java`
 - `.../goals/domain/GoalType.java`, `GoalAmountPrefill.java`, `GoalFields.java` (record các field người
   dùng nhập), `GoalRepository.java`
