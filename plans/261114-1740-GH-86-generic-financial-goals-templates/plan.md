@@ -129,7 +129,7 @@ khác (`ArchitectureRulesTest`).
 
 ## Kết quả
 
-Giao ngày 14/11/2026 tại commit `056873f`. `./services/api/mvnw -f services/api/pom.xml verify` xanh
+Giao ngày 14/11/2026 tại commit `056873f`; merge với `main` tại `99614eb`, migration đổi thành `V9__goals.sql`, toàn bộ 81 case chạy lại trên jar đã merge và cho kết quả giống hệt. `./services/api/mvnw -f services/api/pom.xml verify` xanh
 không dùng flag cập nhật: 81 unit test và 50 integration test. Hành vi được ghi trong
 [`plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`](../reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md):
 81 case (70 HTTP, 11 PostgreSQL), tất cả đúng như thiết kế ở lần chạy đầu trên working tree và ở lần

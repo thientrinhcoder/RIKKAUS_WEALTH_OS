@@ -277,6 +277,30 @@ chạy lại theo cùng thứ tự.
 integration test xanh, nghĩa là `openapi.json` đã commit khớp ứng dụng đang chạy và hai inventory khớp
 schema và surface đã công bố.
 
+## Chạy lại sau khi merge `main` (migration đổi thành `V9`)
+
+`main` nhận thêm #59 (`V6__asset_valuations.sql`), #62 (`V7__liabilities.sql`) và #71
+(`V8__cash_flow_entries.sql`), nên migration của slice này được đánh số lại thành `V9__goals.sql` trong
+merge commit `99614eb`. Hai mục trên mô tả các lần chạy trước merge, khi migration còn là `V8` và Flyway
+áp 5 migration; chúng được giữ nguyên làm lịch sử.
+
+Lần chạy thứ ba, 14/11/2026 18:30 ICT, trên jar mà `clean verify` đóng gói từ đúng cây nguồn của
+`99614eb`, vào một container `rikkaus-pg-issue-86` mới và rỗng:
+
+- Flyway: `Successfully applied 8 migrations to schema "public", now at version v9`. Context lên sau
+  3,273 s với `ddl-auto: validate`, nên `V9__goals.sql` và entity `Goal` vẫn khớp từng cột khi đứng
+  cạnh ba bảng mới.
+- 81 case (70 HTTP, 11 PostgreSQL) đều pass. Chuỗi status của 84 request HTTP **trùng từng vị trí** với
+  lần 1, và mọi body **giống hệt** lần 1 sau khi bỏ UUID và timestamp, so bằng máy.
+- G68: 10 vòng, mỗi vòng `[204, 404, 404, 404]`, 0 lần 500.
+- G48/G49 và G53/G54/G55 vẫn bằng nhau từng byte sau khi bỏ `instance` và `correlationId`.
+- D01 vẫn ba cột `numeric(19,2)` và một `numeric(5,2)`; D02 `15000000000.00`; D03–D10 bị đúng 8
+  constraint có tên từ chối, `count(*)` 13 trước và 13 sau.
+
+`./services/api/mvnw -f services/api/pom.xml clean verify` không flag trên `99614eb`: 81 unit test và 50
+integration test xanh, với `ApplicationContextIT` mong đợi tám bảng và `OpenApiContractIT` mong đợi đường
+dẫn của cả bốn slice.
+
 ## Quan sát không phải defect của slice này
 
 **Lỗi bean-validation mang `detail` của Spring, lỗi service mang `detail` của taxonomy.** G10–G15,
@@ -287,7 +311,7 @@ ghi ở report #53; không sửa dưới issue này.
 
 **`operationId` của asset đổi tên trong `openapi.json`.** springdoc đặt `operationId` theo tên method
 và thêm hậu tố khi trùng; thêm controller goals có `list`/`create`/`read`/`delete` làm các operation
-của assets đổi thành `list_1`, `create_1`, `read_3`, `delete_1` Không client nào sinh code từ contract nên không
+của assets đổi thành `list_1`, `create_1`, `read_3`, `delete_1` (sau merge, hậu tố của assets, valuations và cash-flow lại dịch thêm một bậc; xem `docs/api-contract-conventions.md`) Không client nào sinh code từ contract nên không
 gì tiêu thụ các id này; đã ghi vào `docs/api-contract-conventions.md`.
 
 ## Lần chạy này không bao phủ
