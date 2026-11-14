@@ -11,3 +11,9 @@
 # matched its own documentation. The prose was rewritten to describe the shape rather than spell it
 # out, so no later commit matches, but this commit still contains it and history does not change.
 61a05e622ca17ab04b6919ed858b30eaff39852c:plans/260929-1826-GH-47-backend-cicd-aws-ecs/phase-05-security-scanning.md:jdbc-url-with-inline-password:85
+
+# The feedback-and-logging manual test guide inlined the throwaway signing secret its JSON-logging run
+# used, as a literal assigned to RIKKAUS_JWT_SECRET. The value only ever signed tokens for a local API
+# process that was stopped the same minute against a disposable database; no environment has used it.
+# The guide now generates the secret with openssl instead, so no later commit matches.
+a5d697d3c4991277d90ff48db1fb97260651b24d:docs/manual-test-guide-feedback-observability.md:rikkaus-jwt-signing-key:171

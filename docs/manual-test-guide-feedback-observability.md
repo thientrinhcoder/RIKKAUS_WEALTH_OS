@@ -165,10 +165,16 @@ status and duration. The `ERROR` line of O05 must show exception class names and
 ### The JSON run (J01–J07)
 
 Stop the API, then start it with **no profile** and a separate signing secret from the environment, and
-mint A's and B's tokens again with that secret:
+mint A's and B's tokens again with that secret. Generate the secret rather than writing one into a
+command: a literal assigned to `RIKKAUS_JWT_SECRET` is exactly what the repository's secret scan
+refuses, guide or not.
 
 ```bash
-mkdir -p /tmp/issue-110/run-json && RIKKAUS_JWT_SECRET=issue-110-json-run-only-signing-secret-not-for-reuse DB_URL=jdbc:postgresql://localhost:5410/rikkaus /opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home/bin/java -jar services/api/target/rikkaus-wealth-api-0.0.1-SNAPSHOT.jar --server.port=8110 > /tmp/issue-110/run-json/api.stdout 2> /tmp/issue-110/run-json/api.stderr
+export JSON_RUN_SECRET="$(openssl rand -hex 32)"
+```
+
+```bash
+mkdir -p /tmp/issue-110/run-json && RIKKAUS_JWT_SECRET="$JSON_RUN_SECRET" DB_URL=jdbc:postgresql://localhost:5410/rikkaus /opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home/bin/java -jar services/api/target/rikkaus-wealth-api-0.0.1-SNAPSHOT.jar --server.port=8110 > /tmp/issue-110/run-json/api.stdout 2> /tmp/issue-110/run-json/api.stderr
 ```
 
 Repeat O01–O11 with `issue110-json-oNN` identifiers (J01), then:
