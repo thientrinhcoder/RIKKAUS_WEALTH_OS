@@ -446,6 +446,87 @@ with manual verification only:
 `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` is what it returned
 on the implementing run — 70 cases, 64 through HTTP and 6 straight into PostgreSQL.
 
+## Cash-flow entries — implemented
+
+The second domain resource. Five routes, all under `bearerAuth`, all owner-scoped by the token. An entry
+is the user's statement of one income or expense and when it applies; a recurring entry is **one row**,
+not one row per month.
+
+| Route | Body | Success |
+|---|---|---|
+| `GET /api/v1/cash-flow-entries` | — | 200, the viewer's entries as an array, newest `effectiveDate` first, then newest `createdAt` |
+| `POST /api/v1/cash-flow-entries` | the six required fields, plus any of the four optional ones | 201, the entry, with `Location` |
+| `GET /api/v1/cash-flow-entries/{entryId}` | — | 200, the entry |
+| `PUT /api/v1/cash-flow-entries/{entryId}` | the same body as `POST` | 200, the entry as it now stands |
+| `DELETE /api/v1/cash-flow-entries/{entryId}` | — | 204 |
+
+### The sixteen categories, tied to their type
+
+Income: `SALARY`, `BUSINESS_INCOME`, `RENTAL_INCOME`, `DIVIDEND`, `DEPOSIT_INTEREST`,
+`BOND_OR_FUND_INCOME`, `OTHER_INCOME`. Expense: `LIVING_COSTS`, `HOUSING`, `EDUCATION`, `HEALTHCARE`,
+`INSURANCE`, `TAX_AND_FEES`, `DEBT_PRINCIPAL_PAYMENT`, `INTEREST_PAYMENT`, `OTHER_EXPENSE`.
+
+`category` must belong to `entryType`. `SALARY` under `EXPENSE` is a `validation-failed` naming
+`category` (`must belong to the entry type`), not a negative salary. The same pairing is a check
+constraint in `V7__cash_flow_entries.sql`. No Vietnamese label is published, for the reason the asset
+catalog gives.
+
+### Fields
+
+| | |
+|---|---|
+| Required | `entryType` (`INCOME` \| `EXPENSE`), `category`, `amount`, `currency` (`VND` \| `USD`), `timing` (`ONE_TIME` \| `RECURRING`), `effectiveDate` |
+| Conditional | `recurrence` (`MONTHLY` \| `QUARTERLY` \| `YEARLY`): **required** when `timing` is `RECURRING`, **refused** when it is `ONE_TIME` |
+| Optional | `endDate` (recurring only), `linkedAssetId`, `notes` (≤2000) |
+| Exact decimal | `amount` is `NUMERIC(19, 2)` and must be greater than zero; `@Digits` mirrors the column so an over-precise value is a named `validation-failed`. The response always carries two decimals, so `45000000` reads back as `45000000.00` on the create response and on every later read |
+
+There is **no `name`**. The MVP Backbone lists nine attributes for an entry and a name is not one; the
+accepted design's quick-entry form has no field for one. `notes` is where "Lương tháng" goes.
+
+### One-time and recurring
+
+`effectiveDate` is the one date a one-time entry has and the start date of a recurring one. **It may be
+in the future**: an expected salary from next January is a legitimate entry and is exactly the input
+the three-month forecast needs. This differs deliberately from `valuationDate` on an asset.
+
+A one-time entry carrying `recurrence` or `endDate` is refused, each as its own `errors` entry
+(`must be omitted for a one-time entry`). A recurring entry without `recurrence` is refused
+(`must be present for a recurring entry`). `endDate` may equal `effectiveDate` — a recurrence of one
+occurrence — but may not precede it (`must not be before the effective date`). Omitting `endDate` on a
+recurring entry means open-ended.
+
+**Every cross-field problem is reported at once.** A request with three mistakes returns one `errors`
+array with three entries, so the form can mark every field in one round trip.
+
+### The optional link
+
+`linkedAssetId` must be an asset the signed-in user owns. One that belongs to someone else and one that
+does not exist both return the **same** `validation-failed` entry — `linkedAssetId` /
+`must reference one of the signed-in user's assets` — for the reason ownership failures return
+`not-found`: a different answer would confirm which identifiers exist. The response carries the
+identifier only, never the asset's name or value.
+
+Deleting the asset does not delete the entry. The foreign key is `ON DELETE SET NULL`, so the entry
+survives with `linkedAssetId: null`. What the user should see when that happens is issue #104's
+question; this is the least surprising storage outcome in the meantime.
+
+`linkedLiabilityId` is **not yet in the contract**. It arrives once the liability catalog (issue #62)
+is merged, with the same ownership rule and a refusal when both links are sent together.
+
+### `PUT` replaces everything
+
+The body is the same record as `POST`, and nothing is frozen after creation — unlike an asset's
+valuation, no append-only history owns any of these values — so `entryType`, `category` and `amount`
+may all change. An optional member omitted from the body is cleared. An unknown member sent anyway is
+silently dropped, as on every other route.
+
+### No conversion, no totals, no expansion
+
+An entry reports the amount the user entered and the currency they entered it in. Converting a USD
+entry to VND is the client's, with the rate from `GET /api/v1/settings/exchange-rate`. Monthly totals
+are issue #77, expanding a recurring entry into its months is issue #74, the forecast is issue #80,
+and search or filter parameters are issue #101. `GET` on the collection takes no query parameter.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -472,10 +553,14 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile, exchange-rate and asset routes.** All three resources shipped on
-  Product Owner direction with manual verification only, recorded in
-  `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md` and
-  `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`. Every other route
+- **Liability links on cash-flow entries.** `linkedLiabilityId` is added when issue #62's table exists.
+- **Recurring-entry expansion, monthly totals and the forecast.** Issues #74, #77 and #80. A recurring
+  entry is one row and the API never says which months it falls in.
+- **Automated tests for the profile, exchange-rate, asset and cash-flow routes.** All four resources
+  shipped on Product Owner direction with manual verification only, recorded in
+  `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
+  `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` and
+  `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and

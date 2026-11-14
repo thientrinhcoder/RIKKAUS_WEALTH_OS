@@ -85,6 +85,9 @@ plans/**/*
 !plans/reports/pm-260927-issue-39-acceptance.md
 !plans/reports/pm-260927-2136-issue-42-acceptance.md
 !plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md
+!plans/261114-1735-GH-71-cash-flow-entry-catalog-crud/
+!plans/261114-1735-GH-71-cash-flow-entry-catalog-crud/**
+!plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md
 screenshots/*
 docs/screenshots/*
 logs.txt
