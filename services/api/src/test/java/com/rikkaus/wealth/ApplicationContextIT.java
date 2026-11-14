@@ -82,6 +82,7 @@ class ApplicationContextIT extends AbstractPostgresIntegrationTest {
                             "cash_flow_entries",
                             "goals",
                             "liabilities",
+                            "onboarding_progress",
                             "refresh_tokens",
                             "user_settings",
                             "users");

@@ -899,6 +899,103 @@ cash-flow operations by one (`list_2` became `list_3`, `read_4` became `read_5`,
 `openapi.json`. No client generates code from the contract, so nothing consumes those identifiers; a
 future generator should set explicit `operationId`s rather than rely on the derived ones.
 
+## Guided onboarding — implemented
+
+A singleton resource, like the exchange-rate settings: no identifier in the path, owner taken from the
+token. Two routes under `bearerAuth`.
+
+| Route | Body | Success |
+|---|---|---|
+| `GET /api/v1/onboarding` | — | 200, the checklist |
+| `PATCH /api/v1/onboarding` | any of `currentStep`, `dashboardReviewed`, `status` | 200, the checklist after recording |
+
+```json
+{
+  "status": "IN_PROGRESS",
+  "currentStep": 4,
+  "steps": [
+    {"step": 1, "key": "EXCHANGE_RATE", "done": true},
+    {"step": 2, "key": "CASH_AND_BANK_ACCOUNTS", "done": true},
+    {"step": 3, "key": "MAJOR_ASSETS", "done": true},
+    {"step": 4, "key": "LIABILITIES", "done": false},
+    {"step": 5, "key": "RECURRING_CASH_FLOWS", "done": false},
+    {"step": 6, "key": "DASHBOARD_REVIEW", "done": false},
+    {"step": 7, "key": "FIRST_GOAL", "done": false}
+  ],
+  "dashboardReviewedAt": null,
+  "completedAt": null,
+  "dismissedAt": null
+}
+```
+
+### Steps are read from the records, never stored
+
+`steps` is always seven elements in the backbone's order. Each `done` is computed on every request
+from the user's own rows, so it cannot disagree with them and deleting the last qualifying record makes
+the step `false` again:
+
+| Step | `key` | Done while |
+|---|---|---|
+| 1 | `EXCHANGE_RATE` | a USD/VND rate is declared. Reading `/settings/exchange-rate` creates a settings row with no rate; that is not a declaration |
+| 2 | `CASH_AND_BANK_ACCOUNTS` | an asset of category `CASH` or `BANK_ACCOUNT` exists |
+| 3 | `MAJOR_ASSETS` | an asset of any **other** category exists, `TERM_DEPOSIT` included |
+| 4 | `LIABILITIES` | any liability exists |
+| 5 | `RECURRING_CASH_FLOWS` | a cash-flow entry with `timing: RECURRING` exists, income or expense, ended or not |
+| 6 | `DASHBOARD_REVIEW` | the client has recorded `dashboardReviewed: true`. No record proves it |
+| 7 | `FIRST_GOAL` | any goal exists |
+
+The slice reads those four slices' tables with one native `EXISTS` query, the same route `cashflow`
+takes to check a linked asset, because the slice rule forbids importing them. The query selects no
+value, so no amount, name or note ever enters the slice or the response. No Vietnamese label is
+published; the client maps each `key` to the design's copy.
+
+### What is stored
+
+`wealth.onboarding_progress` holds one row per user and only what no record can tell: `current_step`
+(1–7), `dashboard_reviewed_at`, `completed_at`, `dismissed_at`, and the row's own timestamps. There is no
+`numeric` or `text` column. **`GET` never creates the row**; a user with none reads as step 1, in
+progress, nothing reviewed — the same state a new row holds. The row is created by the first `PATCH`
+that carries a member, with `INSERT ... ON CONFLICT DO NOTHING`, so simultaneous first writes all
+succeed.
+
+### Recording progress
+
+Every member of the `PATCH` body is optional; absent or `null` leaves that fact unchanged, and `{}`
+answers the checklist without writing anything.
+
+- `currentStep`: the step the client is showing, an integer from 1 to 7. Outside the range is
+  `validation-failed` naming `currentStep`. A fraction or a string (`2.5`, `"3"`) is
+  `malformed-request`: Jackson would otherwise truncate `2.5` to 2, so this member alone accepts only a
+  JSON integer. The server never advances it on its own; the client decides what to show next.
+- `dashboardReviewed`: `true` records the first review and keeps its moment when sent again; `false`
+  withdraws it.
+- `status`: `COMPLETED`, `DISMISSED` or `IN_PROGRESS`. Read back from which timestamp is set, and the
+  table refuses both at once, so completing clears a dismissal and the reverse. Repeating the current
+  status keeps its moment. `IN_PROGRESS` clears both, which is how a dismissed onboarding is reopened.
+  An unknown value is `malformed-request`.
+- **Completion is not gated on the steps.** A user with no debt can never finish step 4, so the API
+  accepts `COMPLETED` with steps still `false` and keeps reporting the records as they are. Which steps
+  may be skipped is the accepted design's decision once issue #93 is approved.
+
+There is no step-completion member and no owner member; a `userId` sent anyway is an unknown property
+Jackson drops. No row version: two overlapping `PATCH`es both succeed and the last writer wins.
+
+### Errors specific to this resource
+
+- Only `GET` and `PATCH` are mapped: `PUT`, `POST` and `DELETE` answer `method-not-allowed`.
+- A non-JSON body is `415`, truncated JSON `malformed-request`, an unsupported `Accept` `406`, all as
+  `application/problem+json`.
+
+### Verified by hand, not by the suite
+
+No automated test exercises these two routes; the resource shipped on Product Owner direction with
+scenario-first manual verification. [`docs/manual-test-guide-onboarding.md`](manual-test-guide-onboarding.md)
+is the reproducible procedure and
+`plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` is what it returned — 60
+cases through HTTP and PostgreSQL. Because the step query reads other slices' columns and category
+values by name, a rename in one of those migrations is not a compile error: rerun the guide whenever
+`user_settings`, `assets`, `liabilities`, `cash_flow_entries` or `goals` changes shape.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -934,13 +1031,14 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow and goal routes.** All
-  six resources shipped on Product Owner direction with manual verification only, recorded in
+- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, goal and onboarding
+  routes.** All seven resources shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
   `plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md` and
-  `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md` and
-  `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`. Every other route
+  `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`,
+  `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md` and
+  `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and
