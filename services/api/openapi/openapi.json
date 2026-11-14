@@ -1739,6 +1739,185 @@
         } ]
       }
     },
+    "/api/v1/feedback" : {
+      "get" : {
+        "tags" : [ "feedback-controller" ],
+        "summary" : "List the signed-in user's feedback",
+        "description" : "Returns every piece of feedback the viewer has sent, newest first. Nobody else's feedback is ever included. An empty list is an empty array and a 200.",
+        "operationId" : "listFeedback",
+        "responses" : {
+          "200" : {
+            "description" : "The viewer's feedback, possibly empty",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/FeedbackResponse"
+                  }
+                },
+                "examples" : {
+                  "no feedback yet" : {
+                    "description" : "no feedback yet",
+                    "value" : [ ]
+                  },
+                  "a bug report and an uncategorised wish" : {
+                    "description" : "a bug report and an uncategorised wish",
+                    "value" : [ {
+                      "id" : "4b7e2c19-8a3d-4f60-9e15-2c8d7a1f5b36",
+                      "screen" : "catalog/assets",
+                      "category" : "BUG",
+                      "message" : "Màn hình danh mục tài sản không hiển thị tỷ giá cập nhật 12/09/2026 sau khi lưu.",
+                      "createdAt" : "2026-11-14T11:52:07.318204Z"
+                    }, {
+                      "id" : "d2a91f47-3c6e-4b08-8f5d-71e0b9c4a623",
+                      "screen" : "dashboard",
+                      "category" : null,
+                      "message" : "Mong có biểu đồ dòng tiền theo quý.",
+                      "createdAt" : "2026-11-14T11:47:30.904117Z"
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "post" : {
+        "tags" : [ "feedback-controller" ],
+        "summary" : "Send feedback from a screen",
+        "description" : "Stores the viewer's feedback against the screen it was sent from. The author is taken from the access token; an id, author or timestamp in the body is ignored. The message is stored as written and returned to its author only; it is never written to an application log.",
+        "operationId" : "sendFeedback",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FeedbackRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "The feedback was stored. No Location header: there is no route for one entry.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeedbackResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "validation-failed when the screen is missing or not a screen code, or the message is missing, blank, longer than 2000 characters or contains U+0000; every problem is reported at once in the errors array. malformed-request when the body cannot be parsed, including an unknown category.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "a sentence where the screen code belongs, and an empty message" : {
+                    "description" : "a sentence where the screen code belongs, and an empty message",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Invalid request content.",
+                      "instance" : "/api/v1/feedback",
+                      "correlationId" : "8f14e45f-ea8b-4c2d-9a3e-5b7c1d0f2a96",
+                      "errors" : [ {
+                        "field" : "message",
+                        "message" : "must not be blank"
+                      }, {
+                        "field" : "screen",
+                        "message" : "must be a lowercase screen code such as dashboard or catalog/assets"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/cash-flow-entries" : {
       "get" : {
         "tags" : [ "cash-flow-entry-controller" ],
@@ -3759,6 +3938,68 @@
           }
         },
         "required" : [ "category", "currency", "name", "outstandingBalance" ]
+      },
+      "FeedbackRequest" : {
+        "type" : "object",
+        "description" : "Feedback sent from one screen of the app.",
+        "properties" : {
+          "screen" : {
+            "type" : "string",
+            "description" : "The screen the feedback was sent from, as a route-like code: lowercase ASCII letters and digits in segments joined by '-' or '/', at most 64 characters.",
+            "example" : "catalog/assets",
+            "maxLength" : 64,
+            "minLength" : 0,
+            "pattern" : "^[a-z0-9]+(?:[-/][a-z0-9]+)*$"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "What kind of feedback this is. Omit when the user did not choose one.",
+            "enum" : [ "BUG", "IDEA", "QUESTION", "OTHER" ],
+            "example" : "BUG"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "The user's own words. Surrounding blank space is removed; must not be blank, at most 2000 characters, and must not contain U+0000.",
+            "example" : "Màn hình danh mục tài sản không hiển thị tỷ giá cập nhật 12/09/2026 sau khi lưu.",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "message", "screen" ]
+      },
+      "FeedbackResponse" : {
+        "type" : "object",
+        "description" : "Feedback the signed-in user sent.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The feedback's identifier.",
+            "example" : "4b7e2c19-8a3d-4f60-9e15-2c8d7a1f5b36"
+          },
+          "screen" : {
+            "type" : "string",
+            "description" : "The screen code it was sent from.",
+            "example" : "catalog/assets"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "BUG, IDEA, QUESTION or OTHER; null when the user did not choose one.",
+            "enum" : [ "BUG", "IDEA", "QUESTION", "OTHER" ],
+            "example" : "BUG"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "The user's own words, as stored.",
+            "example" : "Màn hình danh mục tài sản không hiển thị tỷ giá cập nhật 12/09/2026 sau khi lưu."
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server stored it.",
+            "example" : "2026-11-14T11:52:07.318204Z"
+          }
+        }
       },
       "RefreshSessionRequest" : {
         "type" : "object",

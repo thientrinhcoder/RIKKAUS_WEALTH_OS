@@ -102,6 +102,11 @@ The header is returned on every response, including errors, and it is listed in
 `/actuator/health` the header is set but deliberately not exposed to script, because that mapping
 allows no custom or exposed headers.
 
+The same identifier is the `correlationId` field of every log line written while the request is
+served, and of the one `request completed` line written when it ends — quote it from an error body and
+an operator can find the request in the log. What else a log line holds, and what it never holds, is in
+[`backend-deployment.md`](backend-deployment.md#log-format-and-what-is-never-logged).
+
 ## CORS
 
 `API_ALLOWED_ORIGINS` is a comma-separated allowlist covering `/api/v1/**` and `/actuator/health`.
@@ -899,17 +904,65 @@ cash-flow operations by one (`list_2` became `list_3`, `read_4` became `read_5`,
 `openapi.json`. No client generates code from the contract, so nothing consumes those identifiers; a
 future generator should set explicit `operationId`s rather than rely on the derived ones.
 
+## In-product feedback — implemented
+
+Two routes under `/api/v1/feedback`. A pilot user sends feedback from a screen of the app, and reads
+back their own; nobody else's is ever returned. Issue #110 shipped it ahead of its design (#108), so the
+shape below is the backend's reading of the MVP Backbone and the issue, recorded in
+`plans/261114-1843-GH-110-feedback-observability/plan.md` with the questions it leaves for the Product
+Owner.
+
+| Route | Body | Answer |
+|---|---|---|
+| `GET /api/v1/feedback` | — | 200, the viewer's feedback as an array, newest first |
+| `POST /api/v1/feedback` | `screen`, `message`, optional `category` | 201, the stored feedback, **no `Location`** |
+
+There is no route that reads, edits or deletes one entry, and no administrative route. Because no
+single-entry URI exists, the 201 carries the entry in its body and no `Location` header; `GET` or
+`DELETE` on `/api/v1/feedback/{id}` is a plain `not-found`, and `PUT`, `PATCH` or `DELETE` on the
+collection is `method-not-allowed`.
+
+### Fields
+
+| Field | Rule |
+|---|---|
+| `screen` | Required. A route-like code: lowercase ASCII letters and digits in segments joined by `-` or `/`, at most 64 characters — `dashboard`, `catalog/assets`, `goals/new`. Deliberately unable to hold spaces, diacritics, `.`, `?` or `=`, so it cannot carry a sentence, an amount such as `4.200.000.000` or a query string. |
+| `message` | Required. Surrounding blank space is removed; blank in the Unicode sense (a lone `U+00A0` included) is refused; at most 2000 characters; `U+0000` is refused rather than becoming a 500. Stored as written. |
+| `category` | Optional: `BUG`, `IDEA`, `QUESTION` or `OTHER`. Omitted means `null` — "the user did not say", not `OTHER`. |
+| `id`, `createdAt` | Server-assigned, returned only. `createdAt` has microsecond precision, so the create response equals every later read. |
+
+There is no author field in either direction: the author is the access token's user, and a `userId`,
+`id` or `createdAt` sent in the body is ignored like any unknown member.
+
+### Errors specific to this resource
+
+- A missing or malformed `screen`, or a missing, blank or over-long `message`, is `validation-failed`
+  with every problem in `errors` at once. A blank-to-a-reader message or one carrying `U+0000` is
+  reported the same way, after the annotation checks pass.
+- An unrecognised `category`, lowercase included, is `malformed-request` with no `errors` array.
+- The message is the user's own words and may name an apartment or an amount. It is stored and shown
+  back to its author; it is never written to an application log.
+
+### Verified by hand, not by the suite
+
+No automated test exercises these routes, on Product Owner direction.
+[`docs/manual-test-guide-feedback-observability.md`](manual-test-guide-feedback-observability.md) is the
+reproducible procedure, including the log checks, and
+`plans/reports/manual-verification-261114-1843-GH-110-feedback-observability.md` is what it returned on
+the implementing run. The handler methods are named `listFeedback` and `sendFeedback` rather than
+`list` and `send`, so the derived `operationId`s of the other resources did not shift.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
 
-- CI pipeline, coverage thresholds, formatting enforcement, and JSON log encoding. The console log
-  pattern carries the correlation identifier but is readable text, not structured JSON.
+- CI pipeline, coverage thresholds and formatting enforcement. JSON log encoding now exists outside
+  the `local` profile (issue #110); log-based metrics, dashboards and alerting do not.
 - Pagination conventions, rate limiting and idempotency keys. The asset catalog returns an unpaginated
   array; a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has
   agreed is worse than returning all of them.
-- **The remaining domain resources.** Assets, liabilities, cash-flow entries and goals are described
-  above. Insights are still later work.
+- **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals and feedback are
+  described above. Insights are still later work.
 - **Recurring-entry expansion, monthly totals and the forecast.** Issues #74, #77 and #80. A recurring
   cash-flow entry is one row and the API never says which months it falls in.
 - **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and

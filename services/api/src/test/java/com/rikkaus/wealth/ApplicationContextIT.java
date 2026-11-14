@@ -80,6 +80,7 @@ class ApplicationContextIT extends AbstractPostgresIntegrationTest {
                             "asset_valuations",
                             "assets",
                             "cash_flow_entries",
+                            "feedback_entries",
                             "goals",
                             "liabilities",
                             "refresh_tokens",

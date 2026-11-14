@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  One console appender, in one of two formats chosen by profile.
+
+  - local: Spring Boot's readable pattern, from logging.pattern.console in application.yml.
+  - every other profile, including none at all: one JSON object per line in Logstash layout, which is
+    what the CloudWatch log group of the deployed service receives and can query field by field.
+
+  Choosing by profile rather than by the logging.structured.format.console property alone is
+  deliberate: a deployed environment runs without any profile, so JSON is what it gets unless somebody
+  opts out by name, never because somebody forgot a property.
+
+  This file exists for the two conversion rules. Spring Boot's programmatic default configuration
+  cannot register custom converters, and the local pattern needs %redactedMsg and %safeEx so that
+  the readable format obeys the same redaction rules as the JSON one (see LogRedaction).
+-->
+<configuration>
+    <conversionRule conversionWord="redactedMsg"
+                    class="com.rikkaus.wealth.shared.observability.RedactedMessageConverter"/>
+    <conversionRule conversionWord="safeEx"
+                    class="com.rikkaus.wealth.shared.observability.MessageFreeThrowableConverter"/>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProfile name="local">
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    </springProfile>
+    <springProfile name="!local">
+        <include resource="org/springframework/boot/logging/logback/structured-console-appender.xml"/>
+    </springProfile>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
