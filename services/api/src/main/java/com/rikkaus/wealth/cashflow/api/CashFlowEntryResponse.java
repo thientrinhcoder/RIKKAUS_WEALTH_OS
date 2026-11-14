@@ -21,7 +21,7 @@ import java.util.UUID;
  * <p>There is no converted VND amount, no exchange rate, no monthly total and no list of the months a
  * recurring entry falls in. A USD dividend reports {@code 150.00} and {@code "USD"}; the client
  * converts with the rate it already read from {@code GET /api/v1/settings/exchange-rate}. The totals
- * belong to issue #77 and the expansion to issue #74.
+ * belong to issue #77, and the dates a recurring entry falls on are {@code CashFlowOccurrenceController}'s.
  *
  * <p>{@code linkedAssetId} and {@code linkedLiabilityId} are identifiers and nothing more. The entry
  * does not carry the linked record's name, value or balance, because this slice may not read those
