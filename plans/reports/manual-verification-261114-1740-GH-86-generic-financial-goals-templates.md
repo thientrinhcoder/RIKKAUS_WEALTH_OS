@@ -260,6 +260,23 @@ insert gì; `count(*)` là 13 trước và 13 sau:
 
 D11 — `SELECT user_id, count(*) ... GROUP BY user_id`: A có 12, B có 1, khớp với G67 và G52b.
 
+## Chạy lại trên commit cuối
+
+Sau commit `056873f` (`feat(api): add generic financial goals and the seven templates`), container
+PostgreSQL được xóa và tạo lại rỗng, API được khởi động từ jar mà `verify` đóng gói từ đúng cây nguồn
+của commit đó (18:02 ICT, Flyway `now at version v8`, context lên sau 2,932 s), và toàn bộ 81 case được
+chạy lại theo cùng thứ tự.
+
+- Chuỗi status của 84 request HTTP (70 case + các request đọc-lại phụ) **trùng khớp từng vị trí** với
+  lần 1, so bằng máy sau khi bỏ id.
+- G68: 10 vòng, mỗi vòng `[204, 404, 404, 404]`, 0 lần 500 trên 40 request.
+- G48/G49 và G53/G54/G55 vẫn bằng nhau từng byte sau khi bỏ `instance` và `correlationId`.
+- D03–D10 bị đúng 8 constraint có tên từ chối; `count(*)` 13 trước và 13 sau; D11 A có 12, B có 1.
+
+`./services/api/mvnw -f services/api/pom.xml verify` không flag trên cùng commit: 81 unit test và 50
+integration test xanh, nghĩa là `openapi.json` đã commit khớp ứng dụng đang chạy và hai inventory khớp
+schema và surface đã công bố.
+
 ## Quan sát không phải defect của slice này
 
 **Lỗi bean-validation mang `detail` của Spring, lỗi service mang `detail` của taxonomy.** G10–G15,

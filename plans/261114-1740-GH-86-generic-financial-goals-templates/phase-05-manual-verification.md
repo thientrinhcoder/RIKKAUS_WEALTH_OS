@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Manual verification"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [4]

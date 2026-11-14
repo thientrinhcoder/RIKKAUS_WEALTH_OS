@@ -1,7 +1,7 @@
 ---
 title: "Issue #86 generic financial goals & templates"
 description: "Xây slice goals: bảng wealth.goals, một model chung cho bảy template, resource /api/v1/goals và /api/v1/goal-templates, ownership server-side, validation RFC 9457, contract OpenAPI."
-status: in-progress
+status: completed
 priority: P1
 effort: "3d"
 issue: 86
@@ -88,24 +88,24 @@ mục tiêu", "Bảy mẫu và thứ chúng điền sẵn") và `RIKKAUS_WEALTH_
 | 2 | [Schema và domain](./phase-02-schema-and-domain.md) | Completed | 1 | `wealth.goals` với CHECK; `Goal`, `GoalType` (mang mặc định template), `GoalAmountPrefill`, `GoalFields`, `GoalRepository` |
 | 3 | [Service và HTTP](./phase-03-service-and-http.md) | Completed | 2 | Năm route goals + một route templates, validation có tên field |
 | 4 | [Contract và inventories](./phase-04-contract-and-inventories.md) | Completed | 3 | `openapi.json`, hai inventory, conventions doc; `verify` xanh |
-| 5 | [Manual verification](./phase-05-manual-verification.md) | Pending | 4 | Guide chạy lại được và evidence của lần chạy này |
+| 5 | [Manual verification](./phase-05-manual-verification.md) | Completed | 4 | Guide chạy lại được và evidence của lần chạy này |
 
 ## Acceptance Criteria
 
-- [ ] Bảy type tạo được và có trong contract; không có type thứ tám qua API hay qua `psql`.
-- [ ] Từng field bắt buộc thiếu trả `validation-failed` nêu đúng field đó.
-- [ ] `targetAmount` 0/âm/quá precision, `currentAllocatedAmount` âm hoặc vượt target, contribution âm,
+- [x] Bảy type tạo được và có trong contract; không có type thứ tám qua API hay qua `psql`.
+- [x] Từng field bắt buộc thiếu trả `validation-failed` nêu đúng field đó.
+- [x] `targetAmount` 0/âm/quá precision, `currentAllocatedAmount` âm hoặc vượt target, contribution âm,
       return âm hoặc > 30, `targetDate` không sau hôm nay: mỗi cái 400 nêu tên field.
-- [ ] Record của user khác: read/update/delete trả `not-found` byte-identical (trừ `instance`,
+- [x] Record của user khác: read/update/delete trả `not-found` byte-identical (trừ `instance`,
       `correlationId`) với id không tồn tại; row không đổi.
-- [ ] Không header / token hết hạn / token sai chữ ký: 401 giống nhau trừ `correlationId`.
-- [ ] UUID sai, method sai, body không JSON, JSON cụt, Accept lạ: đều `application/problem+json`.
-- [ ] Xóa rồi đọc → 404; xóa lần hai → 404; 4 delete đồng thời → 1×204, còn lại 404, không 500.
-- [ ] `psql` xác nhận kiểu cột `numeric(19,2)`/`numeric(5,2)`, giá trị `15000000000.00` nguyên vẹn, và
+- [x] Không header / token hết hạn / token sai chữ ký: 401 giống nhau trừ `correlationId`.
+- [x] UUID sai, method sai, body không JSON, JSON cụt, Accept lạ: đều `application/problem+json`.
+- [x] Xóa rồi đọc → 404; xóa lần hai → 404; 4 delete đồng thời → 1×204, còn lại 404, không 500.
+- [x] `psql` xác nhận kiểu cột `numeric(19,2)`/`numeric(5,2)`, giá trị `15000000000.00` nguyên vẹn, và
       từng CHECK từ chối insert trực tiếp.
-- [ ] `GET /api/v1/goal-templates` trả đúng 7 template với giá trị mặc định khớp bảng design.
-- [ ] `./mvnw verify` xanh không dùng `-Dopenapi.update`.
-- [ ] Không có field tính toán nào của #89 trong response.
+- [x] `GET /api/v1/goal-templates` trả đúng 7 template với giá trị mặc định khớp bảng design.
+- [x] `./mvnw verify` xanh không dùng `-Dopenapi.update`.
+- [x] Không có field tính toán nào của #89 trong response.
 
 ## Verification gap
 
@@ -126,3 +126,12 @@ khác (`ArchitectureRulesTest`).
    quá hạn đầy đủ thuộc Feature Integrator (design ghi là câu hỏi mở).
 
 <!-- slug: issue-86-generic-financial-goals-templates -->
+
+## Kết quả
+
+Giao ngày 14/11/2026 tại commit `056873f`. `./services/api/mvnw -f services/api/pom.xml verify` xanh
+không dùng flag cập nhật: 81 unit test và 50 integration test. Hành vi được ghi trong
+[`plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`](../reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md):
+81 case (70 HTTP, 11 PostgreSQL), tất cả đúng như thiết kế ở lần chạy đầu trên working tree và ở lần
+chạy lại trên commit, không case nào phải sửa code. Ba quyết định sản phẩm nằm ngoài design đã duyệt
+được ghi ở mục "Câu hỏi còn mở" phía trên để Product Owner xác nhận.
