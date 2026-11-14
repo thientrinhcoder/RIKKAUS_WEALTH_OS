@@ -312,12 +312,257 @@
         } ]
       }
     },
+    "/api/v1/goals/{goalId}" : {
+      "get" : {
+        "tags" : [ "goal-controller" ],
+        "summary" : "Read one goal",
+        "description" : "Returns the goal when the signed-in user owns it. An identifier belonging to another user answers not-found with the same body a missing identifier produces, so the response cannot be used to discover which identifiers exist.",
+        "operationId" : "read_2",
+        "parameters" : [ {
+          "name" : "goalId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The goal",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such goal, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "tags" : [ "goal-controller" ],
+        "summary" : "Replace a goal",
+        "description" : "Replaces every user-entered field of the goal, the type included. An omitted optional field is cleared, because this is a replacement rather than a patch; an omitted allocated amount becomes 0.00. A target date that differs from the stored one must be after today; keeping the stored date is always allowed, so a goal whose date has passed can still be edited.",
+        "operationId" : "replace",
+        "parameters" : [ {
+          "name" : "goalId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GoalRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The goal as it now stands",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A required field is missing, an amount is negative, zero where it must be positive or too precise, the allocated amount exceeds the target, the return is outside 0 to 30, or a changed target date is not after today",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such goal, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "delete" : {
+        "tags" : [ "goal-controller" ],
+        "summary" : "Remove a goal",
+        "description" : "Deletes the goal when the signed-in user owns it. Asset, liability and cash-flow records are untouched, as the accepted design's confirmation dialog states. Undo and a retention window belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets; two deletes that overlap give one 204 and not-found to the rest rather than a server error.",
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "goalId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The goal no longer exists"
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such goal, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/assets/{assetId}" : {
       "get" : {
         "tags" : [ "asset-controller" ],
         "summary" : "Read one asset",
         "description" : "Returns the asset when the signed-in user owns it. An identifier belonging to another user answers not-found with the same body a missing identifier produces, so the response cannot be used to discover which identifiers exist.",
-        "operationId" : "read_2",
+        "operationId" : "read_3",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -497,7 +742,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "Remove an asset",
         "description" : "Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
-        "operationId" : "delete",
+        "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -543,6 +788,233 @@
           },
           "405" : {
             "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/goals" : {
+      "get" : {
+        "tags" : [ "goal-controller" ],
+        "summary" : "List the signed-in user's goals",
+        "description" : "Returns every goal the viewer owns, nearest target date first and then by name. An empty list is an empty array and a 200, not a 404. Every amount is in VND. No projection is included: completion, remaining amount, remaining time, required contribution and status arrive with issue #89.",
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "description" : "The viewer's goals, possibly empty",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/GoalResponse"
+                  }
+                },
+                "examples" : {
+                  "no goals yet" : {
+                    "description" : "no goals yet",
+                    "value" : [ ]
+                  },
+                  "two goals" : {
+                    "description" : "two goals",
+                    "value" : [ {
+                      "id" : "5c2e7d31-9a4f-4b8e-a1d6-3f7b2c9e8a40",
+                      "name" : "Quỹ dự phòng 6 tháng",
+                      "type" : "EMERGENCY_FUND",
+                      "currency" : "VND",
+                      "targetAmount" : 2.7E8,
+                      "currentAllocatedAmount" : 9.0E7,
+                      "targetDate" : "2027-06-30",
+                      "plannedMonthlyContribution" : 1.5E7,
+                      "expectedAnnualReturnPercent" : 3.0,
+                      "createdAt" : "2026-11-14T10:35:40.512Z",
+                      "updatedAt" : "2026-11-14T10:35:40.512Z"
+                    }, {
+                      "id" : "9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92",
+                      "name" : "Mua căn hộ",
+                      "type" : "HOME_PURCHASE",
+                      "currency" : "VND",
+                      "targetAmount" : 3.5E9,
+                      "currentAllocatedAmount" : 1.2E9,
+                      "targetDate" : "2030-12-31",
+                      "plannedMonthlyContribution" : 2.5E7,
+                      "expectedAnnualReturnPercent" : 7.0,
+                      "createdAt" : "2026-11-14T10:36:02.118Z",
+                      "updatedAt" : "2026-11-14T10:36:02.118Z"
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "post" : {
+        "tags" : [ "goal-controller" ],
+        "summary" : "Create a goal",
+        "description" : "Creates a goal owned by the signed-in user from any of the seven templates. The target amount must be greater than zero, the allocated amount may not exceed it, and the target date must be after today as a Vietnamese civil date. The expected return is the user's own assumption, 0 to 30 percent, and is informational only.",
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GoalRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "The goal was created",
+            "headers" : {
+              "Location" : {
+                "description" : "The new goal's URI, as /api/v1/goals/{goalId}.",
+                "style" : "simple",
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GoalResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A required field is missing, an amount is negative, zero where it must be positive or too precise, the allocated amount exceeds the target, the return is outside 0 to 30, or the target date is not after today. An unrecognised type is a malformed-request instead, because the body cannot be parsed.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "target amount of zero" : {
+                    "description" : "target amount of zero",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/goals",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "targetAmount",
+                        "message" : "must be greater than zero"
+                      } ]
+                    }
+                  },
+                  "allocated more than the target" : {
+                    "description" : "allocated more than the target",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/goals",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "currentAllocatedAmount",
+                        "message" : "must not exceed the target amount"
+                      } ]
+                    }
+                  },
+                  "target date not after today" : {
+                    "description" : "target date not after today",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/goals",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "targetDate",
+                        "message" : "must be after today"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -772,7 +1244,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "List the signed-in user's assets",
         "description" : "Returns every asset the viewer owns, newest valuation date first and then by name, so the catalog's order is the server's rather than the database's incidental one. An empty catalog is an empty array and a 200, not a 404. Values are reported in each asset's own currency; converting a USD holding to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate.",
-        "operationId" : "list",
+        "operationId" : "list_1",
         "responses" : {
           "200" : {
             "description" : "The viewer's catalog, possibly empty",
@@ -866,7 +1338,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "Add an asset to the catalog",
         "description" : "Creates an asset owned by the signed-in user. All prices are manually entered; there is no market-price integration in MVP 1A. The valuation date must not be in the future and a purchase date must not be later than it, both judged as Vietnamese civil dates.",
-        "operationId" : "create",
+        "operationId" : "create_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1043,6 +1515,62 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/goal-templates" : {
+      "get" : {
+        "tags" : [ "goal-template-controller" ],
+        "summary" : "List the seven goal templates",
+        "description" : "Returns every template with the defaults the accepted design suggests for a new goal of that type: an expected annual return, a horizon in months, and which amount the form should prefill from figures the client already holds. Every value is a suggestion the user may change. The list is fixed and identical for every user.",
+        "operationId" : "list_2",
+        "responses" : {
+          "200" : {
+            "description" : "The seven templates, in the backbone's order",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/GoalTemplateResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method; the templates are read-only",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
       }
     },
     "/api/v1/auth/session" : {
@@ -1228,6 +1756,124 @@
             "type" : "string",
             "description" : "The name the user chose, or the Google name if they never chose one.",
             "example" : "An Nguyễn"
+          }
+        }
+      },
+      "GoalRequest" : {
+        "type" : "object",
+        "description" : "Create or replace a goal. The same fields for every template.",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this goal.",
+            "example" : "Mua căn hộ",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Which of the seven templates this goal follows. Editable.",
+            "enum" : [ "EMERGENCY_FUND", "HOME_PURCHASE", "EDUCATION", "RETIREMENT", "NET_WORTH_GROWTH", "DEBT_REDUCTION", "OTHER_GOAL" ],
+            "example" : "HOME_PURCHASE"
+          },
+          "targetAmount" : {
+            "type" : "number",
+            "description" : "The amount to reach, in VND. Must be greater than zero.",
+            "example" : 3.5E9,
+            "exclusiveMinimum" : 0
+          },
+          "currentAllocatedAmount" : {
+            "type" : "number",
+            "description" : "What has already been set aside for this goal, in VND. Zero or more, and never above the target amount. Omit for nothing set aside yet, which is stored as 0.00.",
+            "example" : 1.2E9,
+            "minimum" : 0
+          },
+          "targetDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date to reach the goal by. When created, or when changed, it must be after today as a Vietnamese civil date; keeping a stored date is always allowed.",
+            "example" : "2030-12-31"
+          },
+          "plannedMonthlyContribution" : {
+            "type" : "number",
+            "description" : "What the user plans to add each month, in VND. Zero or more. Omit when not stated; that is kept distinct from zero.",
+            "example" : 2.5E7,
+            "minimum" : 0
+          },
+          "expectedAnnualReturnPercent" : {
+            "type" : "number",
+            "description" : "The user's own assumption for the annual return, in percent, from 0 to 30. Omit for no assumption. Informational only; never a promise.",
+            "example" : 7.0,
+            "maximum" : 30,
+            "minimum" : 0
+          }
+        },
+        "required" : [ "name", "targetAmount", "targetDate", "type" ]
+      },
+      "GoalResponse" : {
+        "type" : "object",
+        "description" : "A financial goal owned by the signed-in user. Inputs only; projections are issue #89.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The goal's identifier.",
+            "example" : "5c2e7d31-9a4f-4b8e-a1d6-3f7b2c9e8a40"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this goal.",
+            "example" : "Mua căn hộ"
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Which of the seven templates this goal follows.",
+            "enum" : [ "EMERGENCY_FUND", "HOME_PURCHASE", "EDUCATION", "RETIREMENT", "NET_WORTH_GROWTH", "DEBT_REDUCTION", "OTHER_GOAL" ],
+            "example" : "HOME_PURCHASE"
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency every amount is in. Always VND.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "targetAmount" : {
+            "type" : "number",
+            "description" : "The amount to reach.",
+            "example" : 3.5E9
+          },
+          "currentAllocatedAmount" : {
+            "type" : "number",
+            "description" : "What has been set aside so far. 0.00 when nothing yet.",
+            "example" : 1.2E9
+          },
+          "targetDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date to reach the goal by.",
+            "example" : "2030-12-31"
+          },
+          "plannedMonthlyContribution" : {
+            "type" : "number",
+            "description" : "Planned monthly contribution. Null when not stated.",
+            "example" : 2.5E7
+          },
+          "expectedAnnualReturnPercent" : {
+            "type" : "number",
+            "description" : "The user's assumed annual return in percent. Null when no assumption.",
+            "example" : 7.0
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server first stored this goal.",
+            "example" : "2026-11-14T10:35:40.512Z"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server last stored a change to it.",
+            "example" : "2026-11-14T10:35:40.512Z"
           }
         }
       },
@@ -1544,6 +2190,35 @@
           "serverTime" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "GoalTemplateResponse" : {
+        "type" : "object",
+        "description" : "A goal template: a type and the suggested defaults for a new goal of that type.",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "description" : "The type a goal created from this template carries.",
+            "enum" : [ "EMERGENCY_FUND", "HOME_PURCHASE", "EDUCATION", "RETIREMENT", "NET_WORTH_GROWTH", "DEBT_REDUCTION", "OTHER_GOAL" ],
+            "example" : "EMERGENCY_FUND"
+          },
+          "defaultExpectedAnnualReturnPercent" : {
+            "type" : "number",
+            "description" : "The suggested expected annual return, in percent. A suggestion, not a promise.",
+            "example" : 3.0
+          },
+          "defaultHorizonMonths" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "How many months from today to suggest as the target date.",
+            "example" : 18
+          },
+          "amountPrefill" : {
+            "type" : "string",
+            "description" : "Which amount the form should suggest, and from what figure the client already holds.",
+            "enum" : [ "NONE", "TARGET_FROM_SIX_MONTHS_OF_EXPENSES", "ALLOCATED_FROM_CURRENT_NET_WORTH", "TARGET_FROM_TOTAL_LIABILITIES" ],
+            "example" : "TARGET_FROM_SIX_MONTHS_OF_EXPENSES"
           }
         }
       }
