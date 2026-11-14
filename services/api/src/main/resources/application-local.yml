@@ -27,6 +27,12 @@ rikkaus:
       client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
       redirect-uris: ${GOOGLE_OAUTH_REDIRECT_URIS:http://localhost:8081/auth/callback}
 
+# The base configuration turns the banner off because it would break the JSON log stream; this
+# profile logs a readable pattern instead (logback-spring.xml), so the banner is harmless here.
+spring:
+  main:
+    banner-mode: console
+
 # The contract endpoint and Swagger UI are a developer convenience, enabled here only. Shipping them
 # elsewhere would advertise every route to anonymous callers.
 springdoc:
