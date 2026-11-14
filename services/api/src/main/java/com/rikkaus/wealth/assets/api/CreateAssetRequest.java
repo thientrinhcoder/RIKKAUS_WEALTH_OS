@@ -28,6 +28,12 @@ import java.time.LocalDate;
  * {@code malformed-request} rather than a {@code validation-failed}, because Jackson cannot construct
  * the record at all and the failure happens before bean validation runs. The real client chooses from
  * a picker, so the case arises only from a hand-written request.
+ *
+ * <p>{@code usdToVndRate} and {@code rateEffectiveDate} are the one addition since the catalog shipped.
+ * The value an asset is created with is the first record of its valuation history, and the backbone
+ * wants each record to keep the rate used when applicable; without these two members a USD asset's
+ * first record could never carry one. Both are optional and both are ignored by nothing: the rules on
+ * them are the same ones every later record obeys.
  */
 @Schema(description = "Create an asset with the fields every category shares.")
 public record CreateAssetRequest(
@@ -70,6 +76,21 @@ public record CreateAssetRequest(
                         requiredMode = Schema.RequiredMode.REQUIRED)
                 @NotNull(message = "must not be null")
                 LocalDate valuationDate,
+        @Schema(
+                        description =
+                                "The USD/VND rate the user applied to currentValue, kept with the first record "
+                                        + "of the valuation history as the rate used. Only for a USD asset, and "
+                                        + "only together with rateEffectiveDate.",
+                        example = "25100.000000")
+                @DecimalMin(value = "0", inclusive = false, message = "must be greater than zero")
+                @Digits(integer = 13, fraction = 6, message = "must have at most 13 integer digits and 6 decimals")
+                BigDecimal usdToVndRate,
+        @Schema(
+                        description =
+                                "The date the user states that rate took effect. Must not be in the future. "
+                                        + "Only together with usdToVndRate.",
+                        example = "2026-09-12")
+                LocalDate rateEffectiveDate,
         @Schema(
                         description = "How readily the user judges this asset can be turned into cash.",
                         example = "HIGH",

@@ -396,7 +396,7 @@
       "put" : {
         "tags" : [ "asset-controller" ],
         "summary" : "Replace an asset's editable metadata",
-        "description" : "Replaces the name, liquidity and the optional common fields. An omitted optional field is cleared, because this is a replacement rather than a patch. The current value, its currency, the valuation date and the category are not editable here: a new value belongs in the valuation history issue #57 introduces, and the category is chosen once when the asset is created.",
+        "description" : "Replaces the name, liquidity and the optional common fields. An omitted optional field is cleared, because this is a replacement rather than a patch. The current value, its currency, the valuation date and the category are not editable here: a new value is recorded through POST /api/v1/assets/{assetId}/valuations and the asset follows it, and the category is chosen once when the asset is created.",
         "operationId" : "replaceMetadata",
         "parameters" : [ {
           "name" : "assetId",
@@ -865,7 +865,7 @@
       "post" : {
         "tags" : [ "asset-controller" ],
         "summary" : "Add an asset to the catalog",
-        "description" : "Creates an asset owned by the signed-in user. All prices are manually entered; there is no market-price integration in MVP 1A. The valuation date must not be in the future and a purchase date must not be later than it, both judged as Vietnamese civil dates.",
+        "description" : "Creates an asset owned by the signed-in user, and the first record of its valuation history with the same value, currency, date and optional rate snapshot. All prices are manually entered; there is no market-price integration in MVP 1A. The valuation date must not be in the future and a purchase date must not be later than it, both judged as Vietnamese civil dates. A later value is recorded through POST /api/v1/assets/{assetId}/valuations, never by editing this one.",
         "operationId" : "create",
         "requestBody" : {
           "content" : {
@@ -898,7 +898,7 @@
             }
           },
           "400" : {
-            "description" : "A required field is missing, a value is negative or too precise, a quantity is not positive, or a date is impossible. An unrecognised category, currency or liquidity is a malformed-request instead, because the body cannot be parsed.",
+            "description" : "A required field is missing, a value is negative or too precise, a quantity is not positive, a date is impossible, or the rate snapshot is incomplete or given for a VND asset. An unrecognised category, currency or liquidity is a malformed-request instead, because the body cannot be parsed.",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -951,6 +951,308 @@
           },
           "405" : {
             "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/assets/{assetId}/valuations" : {
+      "get" : {
+        "tags" : [ "asset-valuation-controller" ],
+        "summary" : "List an asset's valuation history",
+        "description" : "Returns every valuation ever recorded for the asset, newest first: latest effective date, and between two records on one date the later recorded. Exactly one record is marked current, and it is the one the asset's currentValue, currency and valuationDate are taken from. Values are in the asset's own currency with the rate the user applied; converting to VND is the client's. An asset always has at least one record, written when it was created.",
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The history, current record first",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AssetValuationResponse"
+                  }
+                },
+                "examples" : {
+                  "a USD account with a correction in its history" : {
+                    "description" : "a USD account with a correction in its history",
+                    "value" : [ {
+                      "id" : "9c4e2b7a-1d35-4f68-a0c2-7e5b3d9f1a24",
+                      "assetId" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                      "value" : 20000.0,
+                      "currency" : "USD",
+                      "effectiveDate" : "2026-09-12",
+                      "usdToVndRate" : 25100.0,
+                      "rateEffectiveDate" : "2026-09-12",
+                      "note" : null,
+                      "correctsValuationId" : null,
+                      "current" : true,
+                      "recordedAt" : "2026-09-12T02:42:11.503Z"
+                    }, {
+                      "id" : "e17b5c90-2f4a-4d83-b6e1-9c0d3f7a8b52",
+                      "assetId" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                      "value" : 18500.0,
+                      "currency" : "USD",
+                      "effectiveDate" : "2026-05-31",
+                      "usdToVndRate" : 25020.0,
+                      "rateEffectiveDate" : "2026-05-30",
+                      "note" : "Điều chỉnh số dư cuối tháng sau khi đối chiếu sao kê.",
+                      "correctsValuationId" : "6d2f8a41-3b9c-4e07-8f15-2a7c4e9b0d63",
+                      "current" : false,
+                      "recordedAt" : "2026-06-03T08:20:05.117Z"
+                    }, {
+                      "id" : "6d2f8a41-3b9c-4e07-8f15-2a7c4e9b0d63",
+                      "assetId" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                      "value" : 18000.0,
+                      "currency" : "USD",
+                      "effectiveDate" : "2026-05-31",
+                      "usdToVndRate" : 25020.0,
+                      "rateEffectiveDate" : "2026-05-30",
+                      "note" : "Số dư cuối tháng được nhập ban đầu.",
+                      "correctsValuationId" : null,
+                      "current" : false,
+                      "recordedAt" : "2026-05-31T13:02:48.330Z"
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The asset identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such asset, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method. The history cannot be edited or deleted",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "post" : {
+        "tags" : [ "asset-valuation-controller" ],
+        "summary" : "Record a valuation",
+        "description" : "Appends a record to the asset's history. Nothing already recorded changes. When the new record's effective date is on or after the current record's, the asset's currentValue, currency and valuationDate become this record's in the same transaction and the response marks it current; a record dated earlier is kept as history and marks nothing. Two records on one date are a correction and its original, and the later recorded is current. To correct an earlier record, send its identifier in correctsValuationId with the reason in note; the original stays readable. The currency must be the asset's. A USD record may carry the USD/VND rate the user applied and its date, both or neither; a VND record carries neither.",
+        "operationId" : "record",
+        "parameters" : [ {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecordValuationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "The record was appended",
+            "headers" : {
+              "Location" : {
+                "description" : "The new record's URI, as /api/v1/assets/{assetId}/valuations/{valuationId}.",
+                "style" : "simple",
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetValuationResponse"
+                },
+                "examples" : {
+                  "a newer value, now current" : {
+                    "description" : "a newer value, now current",
+                    "value" : {
+                      "id" : "4b8e1f36-7c2d-4a95-b0e3-1d6f9a2c5e78",
+                      "assetId" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                      "value" : 21250.0,
+                      "currency" : "USD",
+                      "effectiveDate" : "2026-09-14",
+                      "usdToVndRate" : 25100.0,
+                      "rateEffectiveDate" : "2026-09-12",
+                      "note" : "Cập nhật số dư sau khi đối chiếu sao kê.",
+                      "correctsValuationId" : null,
+                      "current" : true,
+                      "recordedAt" : "2026-09-14T03:11:47.902Z"
+                    }
+                  },
+                  "a correction of an older record, kept as history" : {
+                    "description" : "a correction of an older record, kept as history",
+                    "value" : {
+                      "id" : "e17b5c90-2f4a-4d83-b6e1-9c0d3f7a8b52",
+                      "assetId" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                      "value" : 18500.0,
+                      "currency" : "USD",
+                      "effectiveDate" : "2026-05-31",
+                      "usdToVndRate" : 25020.0,
+                      "rateEffectiveDate" : "2026-05-30",
+                      "note" : "Điều chỉnh số dư cuối tháng sau khi đối chiếu sao kê.",
+                      "correctsValuationId" : "6d2f8a41-3b9c-4e07-8f15-2a7c4e9b0d63",
+                      "current" : false,
+                      "recordedAt" : "2026-06-03T08:20:05.117Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A required field is missing, the value is negative or too precise, the currency is not the asset's, a date is in the future or before the purchase date, the rate snapshot is incomplete or on a VND record, or a correction names a record that is not this asset's or carries no note. An unrecognised currency is a malformed-request instead, because the body cannot be parsed.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "rate without its date" : {
+                    "description" : "rate without its date",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/assets/3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10/valuations",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "rateEffectiveDate",
+                        "message" : "must be given together with usdToVndRate"
+                      } ]
+                    }
+                  },
+                  "correction without a reason" : {
+                    "description" : "correction without a reason",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/assets/3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10/valuations",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "note",
+                        "message" : "must be given when correcting a valuation"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such asset, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method. The history cannot be edited or deleted",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -1074,6 +1376,96 @@
           },
           "405" : {
             "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/assets/{assetId}/valuations/{valuationId}" : {
+      "get" : {
+        "tags" : [ "asset-valuation-controller" ],
+        "summary" : "Read one valuation record",
+        "description" : "Returns the record when the signed-in user owns the asset and the record belongs to it. An asset of another user, or a record of any other asset, answers not-found with the same body a missing identifier produces.",
+        "operationId" : "read_3",
+        "parameters" : [ {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "valuationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The record",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetValuationResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "An identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such asset or record, or the asset belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method. A record is never edited or deleted",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -1306,7 +1698,7 @@
           },
           "currentValue" : {
             "type" : "number",
-            "description" : "What the asset is worth, in its own currency.",
+            "description" : "What the asset is worth, in its own currency: the value of the current record in its valuation history.",
             "example" : 20000.0
           },
           "currency" : {
@@ -1318,7 +1710,7 @@
           "valuationDate" : {
             "type" : "string",
             "format" : "date",
-            "description" : "The date the user states the value was accurate.",
+            "description" : "The date the user states the value was accurate: the effective date of the current valuation record.",
             "example" : "2026-09-12"
           },
           "liquidity" : {
@@ -1488,6 +1880,18 @@
             "description" : "The date the user states this value was accurate. Must not be in the future, judged as a Vietnamese civil date.",
             "example" : "2026-09-12"
           },
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "The USD/VND rate the user applied to currentValue, kept with the first record of the valuation history as the rate used. Only for a USD asset, and only together with rateEffectiveDate.",
+            "example" : 25100.0,
+            "exclusiveMinimum" : 0
+          },
+          "rateEffectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states that rate took effect. Must not be in the future. Only together with usdToVndRate.",
+            "example" : "2026-09-12"
+          },
           "liquidity" : {
             "type" : "string",
             "description" : "How readily the user judges this asset can be turned into cash.",
@@ -1528,6 +1932,124 @@
           }
         },
         "required" : [ "category", "currency", "currentValue", "liquidity", "name", "valuationDate" ]
+      },
+      "RecordValuationRequest" : {
+        "type" : "object",
+        "description" : "Record what an asset is worth. Appended to the history; the asset's current value follows when this is the newest record.",
+        "properties" : {
+          "value" : {
+            "type" : "number",
+            "description" : "What the asset is worth, in the asset's own currency. The original amount, never a converted one. Zero is allowed, negative is not.",
+            "example" : 21250.0,
+            "minimum" : 0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency of the value. Must be the asset's currency.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "USD"
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states this value was true. Must not be in the future and not before the asset's purchase date, judged as a Vietnamese civil date. Decides whether this record becomes the current one.",
+            "example" : "2026-09-14"
+          },
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "The USD/VND rate the user applied to this value: a snapshot kept with the record, not a reference to the settings rate. Only on a USD record, and only together with rateEffectiveDate.",
+            "example" : 25100.0,
+            "exclusiveMinimum" : 0
+          },
+          "rateEffectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states that rate took effect. Must not be in the future. Only together with usdToVndRate.",
+            "example" : "2026-09-12"
+          },
+          "note" : {
+            "type" : "string",
+            "description" : "Why this record exists. Required when correcting an earlier record; otherwise optional.",
+            "example" : "Cập nhật số dư sau khi đối chiếu sao kê.",
+            "maxLength" : 2000,
+            "minLength" : 0
+          },
+          "correctsValuationId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The earlier record of this asset that this one corrects. The original is kept unchanged and stays readable; this record carries the reason in note.",
+            "example" : "6d2f8a41-3b9c-4e07-8f15-2a7c4e9b0d63"
+          }
+        },
+        "required" : [ "currency", "effectiveDate", "value" ]
+      },
+      "AssetValuationResponse" : {
+        "type" : "object",
+        "description" : "One record in an asset's valuation history.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The record's identifier.",
+            "example" : "9c4e2b7a-1d35-4f68-a0c2-7e5b3d9f1a24"
+          },
+          "assetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset this record belongs to.",
+            "example" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10"
+          },
+          "value" : {
+            "type" : "number",
+            "description" : "What the asset was worth, in its own currency.",
+            "example" : 21250.0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency of the value.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "USD"
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states the value was true.",
+            "example" : "2026-09-14"
+          },
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "The USD/VND rate the user applied when recording this value. Null on a VND record, and null when the user did not capture it.",
+            "example" : 25100.0
+          },
+          "rateEffectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states that rate took effect. Null whenever usdToVndRate is.",
+            "example" : "2026-09-12"
+          },
+          "note" : {
+            "type" : "string",
+            "description" : "The user's note, or the reason for a correction. Null when not given.",
+            "example" : "Cập nhật số dư sau khi đối chiếu sao kê."
+          },
+          "correctsValuationId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The record this one corrects, when it is a correction. Null otherwise.",
+            "example" : "6d2f8a41-3b9c-4e07-8f15-2a7c4e9b0d63"
+          },
+          "current" : {
+            "type" : "boolean",
+            "description" : "True on exactly one record of an asset: the one its current value, currency and valuation date are taken from. Latest effective date wins; between two on the same date, the later recorded.",
+            "example" : true
+          },
+          "recordedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server stored this record.",
+            "example" : "2026-09-14T03:11:47.902Z"
+          }
+        }
       },
       "MetaResponse" : {
         "type" : "object",

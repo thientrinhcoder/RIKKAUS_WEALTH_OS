@@ -13,13 +13,16 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * One asset a user owns: the common fields every category shares.
+ * One asset a user owns: the common fields every category shares, and a snapshot of its current
+ * valuation.
  *
- * <p>There is no setter. Creation goes through {@link #create}, an edit goes through {@link
- * #replaceMetadata}, and there is deliberately no third way in — so the valuation columns have no
- * mutator at all. That is the enforcement of the accepted design's boundary with issue #57: a new
- * value must be appended to a history rather than overwriting the current one, and this class makes
- * overwriting it unexpressible rather than merely discouraged.
+ * <p>There is no setter. Creation goes through {@link #create}, an edit of the metadata goes through
+ * {@link #replaceMetadata}, and the three valuation columns change through {@link #adoptValuation}
+ * and nothing else. That last method is the whole of the boundary with the valuation history: the
+ * value, currency and date on this row are a copy of the current {@link AssetValuation}, written in
+ * the same transaction that inserts it, so a reader of the catalog and a reader of the history can
+ * never disagree. No path exists that writes the snapshot without first writing the record it
+ * snapshots — {@code AssetValuationService} is the only caller, and it calls this after the insert.
  *
  * <p>The owner is a bare {@link UUID} and never a {@code UserAccount}. The slice rule in {@code
  * ArchitectureRulesTest} forbids {@code assets} from depending on {@code identity}, so the
@@ -51,14 +54,17 @@ public class Asset implements UserOwned {
     @Column(nullable = false, updatable = false)
     private AssetCategory category;
 
-    @Column(name = "current_value", nullable = false, updatable = false, precision = 19, scale = 2)
+    // The snapshot of the current valuation record. Not updatable = false, as they were before the
+    // history existed, because adoptValuation has to reach them; what keeps them honest now is that
+    // adoptValuation is their only writer and takes a stored record rather than loose values.
+    @Column(name = "current_value", nullable = false, precision = 19, scale = 2)
     private BigDecimal currentValue;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private AssetCurrency currency;
 
-    @Column(name = "valuation_date", nullable = false, updatable = false)
+    @Column(name = "valuation_date", nullable = false)
     private LocalDate valuationDate;
 
     @Enumerated(EnumType.STRING)
@@ -91,30 +97,52 @@ public class Asset implements UserOwned {
             UUID id,
             UUID userId,
             AssetCategory category,
-            AssetValuation valuation,
+            DeclaredValuation valuation,
             AssetMetadata metadata,
             Instant now) {
         this.id = id;
         this.userId = userId;
         this.category = category;
-        this.currentValue = valuation.currentValue();
+        this.currentValue = valuation.value();
         this.currency = valuation.currency();
-        this.valuationDate = valuation.valuationDate();
+        this.valuationDate = valuation.effectiveDate();
         this.createdAt = now;
         applyMetadata(metadata, now);
     }
 
     /**
-     * A new asset in the owner's catalog.
+     * A new asset in the owner's catalog, carrying the valuation it is created with.
      *
-     * <p>{@code updatable = false} on the category and the three valuation columns is not decoration:
-     * Hibernate omits them from every {@code UPDATE} it generates, so even a future field assignment
-     * inside this class could not reach the database with them. The table itself is the last line, and
-     * the absence of a mutator is the first.
+     * <p>The declaration is written here as the snapshot and, by the service, as the first row of the
+     * history in the same transaction. {@code updatable = false} on the category is not decoration:
+     * Hibernate omits it from every {@code UPDATE} it generates, so even a future field assignment
+     * inside this class could not reach the database with it.
      */
     public static Asset create(
-            UUID ownerId, AssetCategory category, AssetValuation valuation, AssetMetadata metadata, Instant now) {
+            UUID ownerId,
+            AssetCategory category,
+            DeclaredValuation valuation,
+            AssetMetadata metadata,
+            Instant now) {
         return new Asset(UUID.randomUUID(), ownerId, category, valuation, metadata, now);
+    }
+
+    /**
+     * Makes a stored valuation record the asset's current value.
+     *
+     * <p>Takes the record and not three loose values, so the snapshot can only ever be a copy of a row
+     * that exists in the history. The caller decides whether the record supersedes the current one —
+     * {@link AssetValuation#supersedesARecordDated} — because that decision needs the record and the
+     * snapshot side by side, and this method is only ever reached when it has been made.
+     *
+     * <p>{@code updatedAt} moves too: the asset as the catalog shows it has changed, even though none
+     * of the editable metadata has.
+     */
+    public void adoptValuation(AssetValuation valuation, Instant now) {
+        this.currentValue = valuation.getValue();
+        this.currency = valuation.getCurrency();
+        this.valuationDate = valuation.getEffectiveDate();
+        this.updatedAt = now;
     }
 
     /**

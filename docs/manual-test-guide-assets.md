@@ -40,10 +40,10 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@25 java -jar services/api/target/rikkaus-wea
 ```
 
 Two things in the startup log are part of the verification and worth reading rather than scrolling
-past. Flyway must report `Successfully applied 4 migrations ... now at version v4`, and the context
-must then start: `spring.jpa.hibernate.ddl-auto: validate` is what proves `V4__assets.sql` and the
-`Asset` entity agree about every column, and a mismatch stops the application instead of corrupting a
-row later.
+past. Flyway must report `Successfully applied 5 migrations ... now at version v6` — `V6` is the
+valuation history, and `V5` belongs to issue #56's branch — and the context must then start:
+`spring.jpa.hibernate.ddl-auto: validate` is what proves `V4__assets.sql` and the `Asset` entity agree
+about every column, and a mismatch stops the application instead of corrupting a row later.
 
 ### 3. Two users
 
@@ -224,8 +224,9 @@ api "$A" PUT /assets/<id> '{"name":"Tài khoản USD dự phòng","liquidity":"M
 
 `200`, and `currentValue`, `currency`, `valuationDate` and `category` must be **unchanged**. They are
 not members of the request record, so Jackson drops them — Spring Boot's own default for an unknown
-property. A value that moved here means the valuation has become overwritable and the boundary with
-issue #57's append-only history is broken.
+property. A value that moved here means the valuation has become overwritable through the edit route,
+and the only legitimate way to change it — `POST /api/v1/assets/{assetId}/valuations`, covered by
+[`manual-test-guide-asset-valuations.md`](manual-test-guide-asset-valuations.md) — has been bypassed.
 
 The same response also demonstrates the replacement semantics: the four optional members left out of
 that body are now `null`. Read it back with a `GET` to confirm it was stored that way and not merely
@@ -376,4 +377,5 @@ docker rm -f rikkaus-assets-check
   asset are not tested, and the last writer wins with no conflict reported — there is no row version,
   which is a product decision about edit conflicts rather than an oversight.
 - The mobile client. This is the API's behaviour only; the frontend task is issue #52.
-- Anything the `settings` or `identity` routes own. Those have their own coverage and their own guide.
+- Anything the `settings` or `identity` routes own, or the valuation history. The history has its own
+  guide, `manual-test-guide-asset-valuations.md`.

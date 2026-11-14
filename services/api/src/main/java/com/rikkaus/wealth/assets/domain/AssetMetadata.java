@@ -8,8 +8,8 @@ import java.time.LocalDate;
  *
  * <p>One type used by both create and edit, so the editable set is defined once and the two paths
  * cannot drift into accepting different fields. What it leaves out is as deliberate as what it holds:
- * the category is chosen once in the create flow, and the valuation triple is {@link AssetValuation},
- * read-only after creation and owned by issue #57.
+ * the category is chosen once in the create flow, and the value, currency and date are a {@link
+ * DeclaredValuation} on creation and an appended {@link AssetValuation} ever after — never an edit.
  *
  * <p>{@code liquidity} sits here rather than with the valuation because it is the user's standing
  * judgement about the holding, not a measurement taken on the valuation date, and the accepted design
