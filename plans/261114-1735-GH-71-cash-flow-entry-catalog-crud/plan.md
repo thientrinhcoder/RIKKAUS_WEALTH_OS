@@ -100,25 +100,25 @@ Quyết định đáng chú ý, ghi để reviewer không phải suy lại:
 | Phase | Tên | Trạng thái | Phụ thuộc | Kết quả |
 |---|---|---|---|---|
 | 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Hoàn tất | Không | Mọi hành vi cần kiểm chứng được viết ra trước khi có dòng code nào. |
-| 2 | [Schema và domain](./phase-02-schema-and-domain.md) | Đang làm | Phase 1 | `wealth.cash_flow_entries` với đủ check constraint; entity, 5 enum, repository hẹp. |
-| 3 | [Service và HTTP resource](./phase-03-service-and-http.md) | Chờ | Phase 2 | Năm route dưới `/api/v1/cash-flow-entries`, validation chéo trường, kiểm tra liên kết. |
-| 4 | [Contract và inventory](./phase-04-contract-and-inventories.md) | Chờ | Phase 3 | `openapi.json` regenerate, hai inventory test mở rộng, conventions doc cập nhật, `verify` xanh. |
-| 5 | [Xác minh thủ công](./phase-05-manual-verification.md) | Chờ | Phase 4 | Chạy hết scenario phase 1 qua HTTP, ghi evidence. |
+| 2 | [Schema và domain](./phase-02-schema-and-domain.md) | Hoàn tất | Phase 1 | `wealth.cash_flow_entries` với đủ check constraint; entity, 5 enum, repository hẹp. |
+| 3 | [Service và HTTP resource](./phase-03-service-and-http.md) | Hoàn tất | Phase 2 | Năm route dưới `/api/v1/cash-flow-entries`, validation chéo trường, kiểm tra liên kết. |
+| 4 | [Contract và inventory](./phase-04-contract-and-inventories.md) | Hoàn tất | Phase 3 | `openapi.json` regenerate, hai inventory test mở rộng, conventions doc cập nhật, `verify` xanh. |
+| 5 | [Xác minh thủ công](./phase-05-manual-verification.md) | Hoàn tất | Phase 4 | Chạy hết scenario phase 1 qua HTTP, ghi evidence. |
 | 6 | [Liên kết công nợ](./phase-06-liability-link.md) | Chờ #62 merge | Phase 5 | `linkedLiabilityId` cùng cách kiểm tra, chạy lại scenario, cập nhật PR. |
 
 ## Acceptance Criteria
 
-- [ ] Đủ 16 danh mục được chấp nhận đúng loại; sai cặp bị từ chối với `errors` nêu `category`.
-- [ ] Một lần và định kỳ tháng/quý/năm đều tạo được; `recurrence` thừa hoặc thiếu bị từ chối, `endDate`
+- [x] Đủ 16 danh mục được chấp nhận đúng loại; sai cặp bị từ chối với `errors` nêu `category`.
+- [x] Một lần và định kỳ tháng/quý/năm đều tạo được; `recurrence` thừa hoặc thiếu bị từ chối, `endDate`
       trước ngày bắt đầu bị từ chối.
-- [ ] `amount` là số thập phân chính xác, `> 0`, lưu `NUMERIC(19, 2)`; giá trị quá precision là
+- [x] `amount` là số thập phân chính xác, `> 0`, lưu `NUMERIC(19, 2)`; giá trị quá precision là
       `validation-failed` chứ không phải 500.
-- [ ] Liên kết tới tài sản của chính mình được lưu; của người khác và không tồn tại trả cùng một body.
-- [ ] Bản ghi của người khác trả `not-found` byte-identical với bản ghi không tồn tại, cho đọc và ghi.
-- [ ] Không có token, token hết hạn, token sai chữ ký đều `unauthorized` với body giống nhau.
-- [ ] `openapi.json` khớp ứng dụng đang chạy, có ví dụ; `./mvnw verify` xanh không dùng update flag.
-- [ ] Guide tái hiện được mọi case; evidence ghi status/body thật từng case và commit đang chạy.
-- [ ] Không có hành vi của #74/#77/#80/#101/#104 và không có dữ liệu giả.
+- [x] Liên kết tới tài sản của chính mình được lưu; của người khác và không tồn tại trả cùng một body.
+- [x] Bản ghi của người khác trả `not-found` byte-identical với bản ghi không tồn tại, cho đọc và ghi.
+- [x] Không có token, token hết hạn, token sai chữ ký đều `unauthorized` với body giống nhau.
+- [x] `openapi.json` khớp ứng dụng đang chạy, có ví dụ; `./mvnw verify` xanh không dùng update flag.
+- [x] Guide tái hiện được mọi case; evidence ghi status/body thật từng case và commit đang chạy.
+- [x] Không có hành vi của #74/#77/#80/#101/#104 và không có dữ liệu giả.
 
 ## Verification gap
 
@@ -129,3 +129,11 @@ không khai báo và một path chưa publish hoặc bị lộ; `ArchitectureRul
 và trường tiền kiểu float.
 
 <!-- slug: issue-71-cash-flow-entry-catalog-crud -->
+
+## Kết quả
+
+Phase 1–5 hoàn tất ngày 2026-11-14 tại commit `b6f4c9c` (code) và commit kế tiếp (evidence). `verify`
+xanh không dùng update flag: 81 unit test, 50 integration test. 92 scenario chạy thật, 92 đạt ở lần chạy
+2; lần chạy 1 có một lỗi code nhỏ (scale của `amount` trên body `POST`) và hai kỳ vọng viết sai, ghi ở
+[`manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`](../reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md).
+Phase 6 (liên kết công nợ) chờ #62 merge.
