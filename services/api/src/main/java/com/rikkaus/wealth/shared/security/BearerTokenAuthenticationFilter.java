@@ -2,6 +2,7 @@ package com.rikkaus.wealth.shared.security;
 
 import com.rikkaus.wealth.shared.error.ProblemDetailWriter;
 import com.rikkaus.wealth.shared.error.ProblemType;
+import com.rikkaus.wealth.shared.observability.RequestLogFields;
 import com.rikkaus.wealth.shared.security.AccessTokenVerifier.InvalidAccessTokenException;
 import com.rikkaus.wealth.shared.security.AccessTokenVerifier.VerifiedAccessToken;
 import jakarta.servlet.FilterChain;
@@ -80,12 +81,17 @@ class BearerTokenAuthenticationFilter extends OncePerRequestFilter {
                         null,
                         List.of());
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        // The user's UUID — never the email or display name — goes onto every log line written while
+        // this request is served, and back out to the request log line.
+        RequestLogFields.bindUser(request, principal.userId());
         try {
             filterChain.doFilter(request, response);
         } finally {
             // The chain is stateless and Tomcat reuses threads, so a context left behind would leak one
-            // request's identity into the next request served by the same thread.
+            // request's identity into the next request served by the same thread. The MDC entry is the
+            // same hazard for the log.
             SecurityContextHolder.clearContext();
+            RequestLogFields.unbindUser();
         }
     }
 }

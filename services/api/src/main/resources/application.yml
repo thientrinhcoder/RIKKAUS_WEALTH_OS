@@ -5,6 +5,25 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/rikkaus}
     username: ${POSTGRES_USER:rikkaus}
     password: ${POSTGRES_PASSWORD:rikkaus-local-only}
+    hikari:
+      data-source-properties:
+        # PgJDBC appends the server's DETAIL and WHERE text to every exception message by default, and
+        # for a constraint violation that text is "Failing row contains (...)" -- the whole row,
+        # amounts and asset names included. Turning it off keeps row values out of every exception
+        # message, and therefore out of any log line or trace that prints one. The SQLSTATE and the
+        # constraint name, which are what diagnosis needs, are still reported.
+        logServerErrorDetail: false
+  main:
+    # The banner is written straight to stdout, outside Logback, and is not JSON. The local profile
+    # turns it back on.
+    banner-mode: off
+  autoconfigure:
+    exclude:
+      # Boot's fallback in-memory user exists only when no UserDetailsService is defined, and it logs
+      # its generated password at WARN on every start -- a credential in the log, which the logging
+      # rules forbid. Nothing here authenticates with a username and password (Google OIDC and bearer
+      # tokens only, httpBasic and formLogin are disabled), so the fallback user is dead weight.
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -43,14 +62,28 @@ springdoc:
     enabled: false
   show-actuator: false
 
+# What a log line may contain is decided in shared/observability (RequestLogFields is the allowlist,
+# LogRedaction the rules) and summarised in docs/backend-deployment.md. logback-spring.xml picks the
+# format: this readable pattern for the local profile, JSON for every other profile.
 logging:
   pattern:
     # The :-no-correlation-id default makes a missing identifier visible rather than rendering an
-    # empty bracket, which distinguishes "outside a request" from "the filter did not run".
-    # This is a readable console pattern, not JSON. A structured encoder for log shipping is a
-    # deployment concern and belongs with the CI/CD task, so the structured-logging requirement is
-    # only partly met here and the acceptance report says so.
-    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%X{correlationId:-no-correlation-id}] %logger{40} - %msg%n"
+    # empty bracket, which distinguishes "outside a request" from "the filter did not run"; the userId
+    # default does the same for "no authenticated user". %redactedMsg and %safeEx are registered in
+    # logback-spring.xml: the message with credentials and emails masked, and exceptions printed
+    # without their messages.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%X{correlationId:-no-correlation-id}] [%X{userId:-no-user}] %logger{40} - %redactedMsg%n%safeEx"
+  structured:
+    format:
+      # Logstash layout: MDC entries (correlationId, userId) and key-value pairs (httpMethod,
+      # httpRoute, httpStatus, durationMs) become top-level members, and an exception becomes a single
+      # stack_trace member -- unlike ECS, which adds an error.message member carrying the exception's
+      # own text.
+      console: logstash
+    json:
+      stacktrace:
+        printer: com.rikkaus.wealth.shared.observability.MessageFreeStackTracePrinter
+      customizer: com.rikkaus.wealth.shared.observability.RedactingJsonMembersCustomizer
 
 rikkaus:
   auth:

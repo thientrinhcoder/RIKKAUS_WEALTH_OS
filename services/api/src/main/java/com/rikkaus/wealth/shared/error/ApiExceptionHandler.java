@@ -88,10 +88,17 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
      *
      * <p>It must stay last and must never catch {@link ApiException} or a Spring MVC exception, or it
      * would mask a specific status as a 500.
+     *
+     * <p>What the log line carries is the exception's class name in the message and its stack frames;
+     * never the request body, and never the exception's own message. The configured output prints a
+     * throwable without its message (see {@code LogRedaction}), because a message is where a
+     * constraint violation quotes the row and a parse error quotes the body. The class name is
+     * repeated in the message so that the line alone says what failed even where a log viewer folds
+     * the trace away.
      */
     @ExceptionHandler(Exception.class)
     ResponseEntity<Object> handleUnexpectedException(Exception ex, WebRequest request) {
-        log.error("Unhandled exception while serving a request", ex);
+        log.error("Unhandled exception while serving a request: {}", ex.getClass().getName(), ex);
         ProblemType type = ProblemType.INTERNAL_ERROR;
         ProblemDetail body = ProblemDetail.forStatusAndDetail(type.status(), type.safeDetail());
         classify(body, type);
