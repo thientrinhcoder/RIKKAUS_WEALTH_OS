@@ -1,7 +1,7 @@
 ---
 title: "Issue #62 liability catalog, schedules & collateral"
 description: "Xây slice liabilities: bảng wealth.liabilities, 6 category, lịch trả nợ, liên kết tài sản bảo đảm cùng chủ, resource /api/v1/liabilities theo hình mẫu slice assets."
-status: in-progress
+status: completed
 priority: P1
 effort: "3d"
 issue: 62
@@ -78,18 +78,18 @@ publish cho frontend (#61).
 | 2 | [Schema và domain](./phase-02-schema-and-domain.md) | Completed | 1 | `wealth.liabilities` với constraint; entity, enum, repository hẹp có native query sở hữu asset. |
 | 3 | [Service và HTTP](./phase-03-service-and-http.md) | Completed | 2 | 5 route, request/response record, validation không-annotation, collateral check. |
 | 4 | [Contract, inventory, docs](./phase-04-contract-inventories-docs.md) | Completed | 3 | `openapi.json`, hai inventory test, conventions doc; `verify` xanh không update flag. |
-| 5 | [Chạy scenario và evidence](./phase-05-manual-verification.md) | Pending | 4 | Guide curl + report ghi status/body thật. |
+| 5 | [Chạy scenario và evidence](./phase-05-manual-verification.md) | Completed | 4 | Guide curl + report ghi status/body thật. |
 
 ## Acceptance criteria
 
-- [ ] Đủ 6 category tạo được và nằm trong CHECK + enum + contract.
-- [ ] Name, category, outstandingBalance, currency bắt buộc; mọi trường còn lại optional và đọc lại là `null`.
-- [ ] Giá trị âm, quá precision, enum lạ, maturity trước start, next payment ngoài khoảng, lịch nửa vời bị từ chối đúng `ProblemType` và field.
-- [ ] Collateral của chính mình 201; của người khác hoặc không tồn tại là `validation-failed` byte-identical; xóa asset thì công nợ còn, `collateralAssetId` thành `null`.
-- [ ] Read/update/delete bản ghi người khác trả `not-found` byte-identical bản ghi không tồn tại.
-- [ ] Anonymous/expired/forged token → 401 không phân biệt được.
-- [ ] `openapi.json` khớp ứng dụng đang chạy, kèm ví dụ; `verify` xanh không `-Dopenapi.update`.
-- [ ] Guide tái hiện mọi case, report ghi kết quả thật từng case, case fail rồi fix ghi là đã fail.
+- [x] Đủ 6 category tạo được và nằm trong CHECK + enum + contract.
+- [x] Name, category, outstandingBalance, currency bắt buộc; mọi trường còn lại optional và đọc lại là `null`.
+- [x] Giá trị âm, quá precision, enum lạ, maturity trước start, next payment ngoài khoảng, lịch nửa vời bị từ chối đúng `ProblemType` và field.
+- [x] Collateral của chính mình 201; của người khác hoặc không tồn tại là `validation-failed` byte-identical; xóa asset thì công nợ còn, `collateralAssetId` thành `null`.
+- [x] Read/update/delete bản ghi người khác trả `not-found` byte-identical bản ghi không tồn tại.
+- [x] Anonymous/expired/forged token → 401 không phân biệt được.
+- [x] `openapi.json` khớp ứng dụng đang chạy, kèm ví dụ; `verify` xanh không `-Dopenapi.update`.
+- [x] Guide tái hiện mọi case, report ghi kết quả thật từng case, case fail rồi fix ghi là đã fail.
 
 ## Verification gap
 
@@ -100,3 +100,19 @@ báo và path lộ/thiếu trong contract; `ArchitectureRulesTest` vẫn bắt i
 kiểu float.
 
 <!-- slug: issue-62-liability-catalog-schedules-collateral -->
+
+## Result
+
+Giao ngày 14/11/2026. `./services/api/mvnw -f services/api/pom.xml verify` xanh không dùng update flag
+(50 integration test), tức `openapi.json` đã commit khớp ứng dụng đang chạy và hai inventory test khớp
+schema lẫn bề mặt API.
+
+Hành vi được ghi tại
+[`plans/reports/manual-verification-261114-1735-GH-62-liability-catalog-schedules-collateral.md`](../reports/manual-verification-261114-1735-GH-62-liability-catalog-schedules-collateral.md):
+95 case trên commit `f26f36b` — 82 request HTTP cộng 40 request đồng thời của X05, và 12 case đọc
+thẳng PostgreSQL — tất cả đúng như thiết kế, không `500`. Lượt 1 có hai case protocol sai do harness
+và một điểm bất nhất thật (lãi suất echo `8.5` ở POST, `8.5000` ở GET) đã sửa bằng cách đưa số về
+scale cột trong entity; cả ba được ghi trong report thay vì bỏ qua.
+
+Ba giả định cần Product Owner xác nhận (quyết định 1–3 ở trên): tần suất có `SEMIANNUAL`; dư nợ `0`
+được chấp nhận; lịch và đáo hạn optional với mọi category, quy tắc "không áp dụng" thuộc biểu mẫu.
