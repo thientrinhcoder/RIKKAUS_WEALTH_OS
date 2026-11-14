@@ -312,12 +312,257 @@
         } ]
       }
     },
+    "/api/v1/liabilities/{liabilityId}" : {
+      "get" : {
+        "tags" : [ "liability-controller" ],
+        "summary" : "Read one liability",
+        "description" : "Returns the liability when the signed-in user owns it. An identifier belonging to another user answers not-found with the same body a missing identifier produces.",
+        "operationId" : "read_2",
+        "parameters" : [ {
+          "name" : "liabilityId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The liability",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LiabilityResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such liability, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "tags" : [ "liability-controller" ],
+        "summary" : "Replace a liability's editable fields",
+        "description" : "Replaces every field except the category, which is chosen once when the liability is created. An omitted optional field is cleared, because this is a replacement rather than a patch: omitting collateralAssetId unlinks the collateral. The same rules as creation apply, and the collateral is re-checked against the signed-in user.",
+        "operationId" : "replace",
+        "parameters" : [ {
+          "name" : "liabilityId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateLiabilityRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The liability as it now stands",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LiabilityResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A required field is missing, an amount is negative or too precise, a recurring payment is not positive or is half-stated, a date is inconsistent, or the collateral is not an asset the signed-in user owns",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such liability, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "delete" : {
+        "tags" : [ "liability-controller" ],
+        "summary" : "Remove a liability",
+        "description" : "Deletes the liability when the signed-in user owns it. A plain removal; undo and a retention policy belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap give one 204 and not-found to the rest rather than a server error. The pledged asset, if any, is untouched.",
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "liabilityId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The liability no longer exists"
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such liability, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/assets/{assetId}" : {
       "get" : {
         "tags" : [ "asset-controller" ],
         "summary" : "Read one asset",
         "description" : "Returns the asset when the signed-in user owns it. An identifier belonging to another user answers not-found with the same body a missing identifier produces, so the response cannot be used to discover which identifiers exist.",
-        "operationId" : "read_2",
+        "operationId" : "read_3",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -497,7 +742,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "Remove an asset",
         "description" : "Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
-        "operationId" : "delete",
+        "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -543,6 +788,226 @@
           },
           "405" : {
             "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/liabilities" : {
+      "get" : {
+        "tags" : [ "liability-controller" ],
+        "summary" : "List the signed-in user's liabilities",
+        "description" : "Returns every liability the viewer owns, soonest next payment first, those with no next payment date after them, and then by name. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each liability's own currency; converting a USD balance to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate.",
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "description" : "The viewer's catalog, possibly empty",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LiabilityResponse"
+                  }
+                },
+                "examples" : {
+                  "an empty catalog" : {
+                    "description" : "an empty catalog",
+                    "value" : [ ]
+                  },
+                  "a mortgage with collateral and a card balance" : {
+                    "description" : "a mortgage with collateral and a card balance",
+                    "value" : [ {
+                      "id" : "9d2f4c81-0a6e-4b73-b5c2-3e8f1d7a6c45",
+                      "name" : "Thẻ tín dụng Techcombank",
+                      "category" : "CREDIT_CARD_BALANCE",
+                      "outstandingBalance" : 3.85E7,
+                      "currency" : "VND",
+                      "interestRate" : null,
+                      "startDate" : null,
+                      "maturityDate" : null,
+                      "recurringPaymentAmount" : null,
+                      "recurringPaymentFrequency" : null,
+                      "nextPaymentDate" : "2026-11-25",
+                      "collateralAssetId" : null,
+                      "notes" : null,
+                      "createdAt" : "2026-11-14T10:42:11.503Z",
+                      "updatedAt" : "2026-11-14T10:42:11.503Z"
+                    }, {
+                      "id" : "5c0e2b7a-91d4-4f3e-8a6b-7d2c1e9f4a30",
+                      "name" : "Vay mua nhà Vietcombank",
+                      "category" : "BANK_LOAN",
+                      "outstandingBalance" : 2.4E9,
+                      "currency" : "VND",
+                      "interestRate" : 8.5,
+                      "startDate" : "2024-03-15",
+                      "maturityDate" : "2044-03-15",
+                      "recurringPaymentAmount" : 2.35E7,
+                      "recurringPaymentFrequency" : "MONTHLY",
+                      "nextPaymentDate" : "2026-12-05",
+                      "collateralAssetId" : "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64",
+                      "notes" : "Thế chấp căn hộ Thảo Điền.",
+                      "createdAt" : "2026-11-14T10:40:02.117Z",
+                      "updatedAt" : "2026-11-14T10:40:02.117Z"
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "post" : {
+        "tags" : [ "liability-controller" ],
+        "summary" : "Add a liability to the catalog",
+        "description" : "Creates a liability owned by the signed-in user. Terms and schedule are recorded as stated and nothing is computed from them. The maturity date must not be before the start date, the next payment date must fall inside the term when the term is given, the recurring amount and frequency come as a pair, and a collateral must be an asset the signed-in user owns.",
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateLiabilityRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "The liability was created",
+            "headers" : {
+              "Location" : {
+                "description" : "The new liability's URI, as /api/v1/liabilities/{liabilityId}.",
+                "style" : "simple",
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LiabilityResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A required field is missing, an amount is negative or too precise, a recurring payment is not positive or is half-stated, a date is inconsistent, or the collateral is not an asset the signed-in user owns. An unrecognised category, currency or frequency is a malformed-request instead, because the body cannot be parsed.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "collateral the viewer does not own" : {
+                    "description" : "collateral the viewer does not own",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/liabilities",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "collateralAssetId",
+                        "message" : "must identify an asset the signed-in user owns"
+                      } ]
+                    }
+                  },
+                  "maturity before the start date" : {
+                    "description" : "maturity before the start date",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/liabilities",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "maturityDate",
+                        "message" : "must not be before the start date"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -772,7 +1237,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "List the signed-in user's assets",
         "description" : "Returns every asset the viewer owns, newest valuation date first and then by name, so the catalog's order is the server's rather than the database's incidental one. An empty catalog is an empty array and a 200, not a 404. Values are reported in each asset's own currency; converting a USD holding to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate.",
-        "operationId" : "list",
+        "operationId" : "list_1",
         "responses" : {
           "200" : {
             "description" : "The viewer's catalog, possibly empty",
@@ -866,7 +1331,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "Add an asset to the catalog",
         "description" : "Creates an asset owned by the signed-in user. All prices are manually entered; there is no market-price integration in MVP 1A. The valuation date must not be in the future and a purchase date must not be later than it, both judged as Vietnamese civil dates.",
-        "operationId" : "create",
+        "operationId" : "create_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1231,6 +1696,172 @@
           }
         }
       },
+      "UpdateLiabilityRequest" : {
+        "type" : "object",
+        "description" : "Replace a liability's editable fields. The category is not editable.",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this liability.",
+            "example" : "Vay mua nhà Vietcombank",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "outstandingBalance" : {
+            "type" : "number",
+            "description" : "What is still owed, as the user now states it. Zero is allowed, negative is not.",
+            "example" : 2.3765E9,
+            "minimum" : 0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the balance and the recurring payment are expressed in.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "interestRate" : {
+            "type" : "number",
+            "description" : "Nominal annual interest rate in percent. Omit to clear it.",
+            "example" : 8.5,
+            "minimum" : 0
+          },
+          "startDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When the liability began. Omit to clear it.",
+            "example" : "2024-03-15"
+          },
+          "maturityDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When it is due to be settled. Must not be before the start date. Omit to clear it.",
+            "example" : "2044-03-15"
+          },
+          "recurringPaymentAmount" : {
+            "type" : "number",
+            "description" : "The total due each period. Must be greater than zero and come with a frequency. Omit to clear the schedule.",
+            "example" : 2.35E7,
+            "exclusiveMinimum" : 0
+          },
+          "recurringPaymentFrequency" : {
+            "type" : "string",
+            "description" : "How often the recurring payment falls due. Must come with an amount.",
+            "enum" : [ "MONTHLY", "QUARTERLY", "SEMIANNUAL", "YEARLY" ],
+            "example" : "MONTHLY"
+          },
+          "nextPaymentDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The next date a payment is due, inside the term when the term is given. Omit to clear it.",
+            "example" : "2027-01-05"
+          },
+          "collateralAssetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset pledged against this liability; must be the signed-in user's. Omit to unlink.",
+            "example" : "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64"
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "Anything the user wants to remember. Omit to clear it.",
+            "example" : "Đã trả trước 23.500.000 ₫ tháng 12.",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "currency", "name", "outstandingBalance" ]
+      },
+      "LiabilityResponse" : {
+        "type" : "object",
+        "description" : "A liability in the signed-in user's catalog.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The liability's identifier.",
+            "example" : "5c0e2b7a-91d4-4f3e-8a6b-7d2c1e9f4a30"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this liability.",
+            "example" : "Vay mua nhà Vietcombank"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "One of the six liability categories.",
+            "enum" : [ "BANK_LOAN", "PERSONAL_LOAN", "MARGIN_LOAN", "CREDIT_CARD_BALANCE", "GUARANTEE_OBLIGATION", "OTHER_LIABILITY" ],
+            "example" : "BANK_LOAN"
+          },
+          "outstandingBalance" : {
+            "type" : "number",
+            "description" : "What is still owed, in its own currency.",
+            "example" : 2.4E9
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the amounts are expressed in.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "interestRate" : {
+            "type" : "number",
+            "description" : "Nominal annual rate in percent. Null when not recorded.",
+            "example" : 8.5
+          },
+          "startDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When the liability began. Null when not recorded.",
+            "example" : "2024-03-15"
+          },
+          "maturityDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When it is due to be settled. Null when not recorded.",
+            "example" : "2044-03-15"
+          },
+          "recurringPaymentAmount" : {
+            "type" : "number",
+            "description" : "The total due each period. Null when there is no recurring payment.",
+            "example" : 2.35E7
+          },
+          "recurringPaymentFrequency" : {
+            "type" : "string",
+            "description" : "How often it falls due. Null when there is no recurring payment.",
+            "enum" : [ "MONTHLY", "QUARTERLY", "SEMIANNUAL", "YEARLY" ],
+            "example" : "MONTHLY"
+          },
+          "nextPaymentDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The next date a payment is due. Null when not recorded.",
+            "example" : "2026-12-05"
+          },
+          "collateralAssetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The pledged asset, owned by the same user. Null when none, or when that asset was deleted.",
+            "example" : "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64"
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "The user's own note. Null when not recorded.",
+            "example" : "Thế chấp căn hộ Thảo Điền."
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server first stored this liability.",
+            "example" : "2026-11-14T10:42:11.503Z"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server last stored a change to it.",
+            "example" : "2026-11-14T10:42:11.503Z"
+          }
+        }
+      },
       "UpdateAssetMetadataRequest" : {
         "type" : "object",
         "description" : "Replace an asset's editable metadata. The valuation is not editable here.",
@@ -1366,6 +1997,87 @@
             "example" : "2026-09-12T02:42:11.503Z"
           }
         }
+      },
+      "CreateLiabilityRequest" : {
+        "type" : "object",
+        "description" : "Create a liability. The category is chosen here and cannot be changed later.",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "What the user calls this liability.",
+            "example" : "Vay mua nhà Vietcombank",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "One of the six liability categories.",
+            "enum" : [ "BANK_LOAN", "PERSONAL_LOAN", "MARGIN_LOAN", "CREDIT_CARD_BALANCE", "GUARANTEE_OBLIGATION", "OTHER_LIABILITY" ],
+            "example" : "BANK_LOAN"
+          },
+          "outstandingBalance" : {
+            "type" : "number",
+            "description" : "What is still owed, in this liability's currency, as the user states it. Zero is allowed, negative is not.",
+            "example" : 2.4E9,
+            "minimum" : 0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the balance and the recurring payment are expressed in. No conversion happens here; the client holds the declared rate.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "interestRate" : {
+            "type" : "number",
+            "description" : "Nominal annual interest rate in percent, as the user states it: 8.5 means 8.5 % per year. Recorded only; nothing accrues from it.",
+            "example" : 8.5,
+            "minimum" : 0
+          },
+          "startDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When the liability began.",
+            "example" : "2024-03-15"
+          },
+          "maturityDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "When it is due to be settled. Must not be before the start date.",
+            "example" : "2044-03-15"
+          },
+          "recurringPaymentAmount" : {
+            "type" : "number",
+            "description" : "The total due each period, in the liability's currency. Must be greater than zero, and must come with a frequency.",
+            "example" : 2.35E7,
+            "exclusiveMinimum" : 0
+          },
+          "recurringPaymentFrequency" : {
+            "type" : "string",
+            "description" : "How often the recurring payment falls due. Must come with an amount.",
+            "enum" : [ "MONTHLY", "QUARTERLY", "SEMIANNUAL", "YEARLY" ],
+            "example" : "MONTHLY"
+          },
+          "nextPaymentDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The next date a payment is due. Must fall between the start and maturity dates when those are given. May be in the past.",
+            "example" : "2026-12-05"
+          },
+          "collateralAssetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset pledged against this liability. Must identify an asset the signed-in user owns; any other identifier is refused with the field named.",
+            "example" : "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64"
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "Anything the user wants to remember about it.",
+            "example" : "Thế chấp căn hộ Thảo Điền.",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "category", "currency", "name", "outstandingBalance" ]
       },
       "RefreshSessionRequest" : {
         "type" : "object",

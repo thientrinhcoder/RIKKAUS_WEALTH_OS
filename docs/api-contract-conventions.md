@@ -446,6 +446,133 @@ with manual verification only:
 `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` is what it returned
 on the implementing run — 70 cases, 64 through HTTP and 6 straight into PostgreSQL.
 
+## Liability catalog — implemented
+
+The second domain resource, built on the asset catalog's shape. Five routes, all under `bearerAuth`,
+all owner-scoped by the token.
+
+| Route | Body | Success |
+|---|---|---|
+| `GET /api/v1/liabilities` | — | 200, the viewer's catalog as an array |
+| `POST /api/v1/liabilities` | the four required fields, plus any of the nine optional ones | 201, the liability, with `Location` |
+| `GET /api/v1/liabilities/{liabilityId}` | — | 200, the liability |
+| `PUT /api/v1/liabilities/{liabilityId}` | every field except `category` | 200, the liability as it now stands |
+| `DELETE /api/v1/liabilities/{liabilityId}` | — | 204 |
+
+### The six categories
+
+`BANK_LOAN`, `PERSONAL_LOAN`, `MARGIN_LOAN`, `CREDIT_CARD_BALANCE`, `GUARANTEE_OBLIGATION`,
+`OTHER_LIABILITY`. The same six are a check constraint in `V6__liabilities.sql`. No Vietnamese label is
+published; the client maps each constant to the accepted design's copy.
+
+**The category drives no server-side rule.** The accepted design lets the form offer *không áp dụng*
+for the schedule and the maturity only on a credit card balance and a guarantee obligation, and says
+in the same table *không tự suy đoán theo danh mục*. That is a rule about what the form shows. Every
+term and schedule field below is optional for every category, so a margin loan with no maturity and a
+bank loan whose schedule the user has not entered yet are both storable.
+
+### Fields
+
+| | |
+|---|---|
+| Required | `name` (≤120 chars), `category`, `outstandingBalance`, `currency` |
+| Terms, optional | `interestRate`, `startDate`, `maturityDate` |
+| Schedule, optional | `recurringPaymentAmount`, `recurringPaymentFrequency`, `nextPaymentDate` |
+| Also optional | `collateralAssetId`, `notes` (≤2000) |
+| Enumerated | `currency` is `VND` or `USD`; `recurringPaymentFrequency` is `MONTHLY`, `QUARTERLY`, `SEMIANNUAL` or `YEARLY` |
+| Exact decimals | `outstandingBalance` and `recurringPaymentAmount` are `NUMERIC(19, 2)`; `interestRate` is `NUMERIC(7, 4)`. The `@Digits` bounds mirror the columns, so an over-precise value is a named `validation-failed` |
+
+`outstandingBalance` of exactly `0` is accepted — a card paid down to nothing is a real state.
+Negative is refused. `interestRate` is a **percentage per year** as the user states it, `8.5` meaning
+8.5 % per annum; zero is accepted (an interest-free loan), negative is not, and nothing accrues from
+it. `recurringPaymentAmount` must be strictly positive when present and is the total due each period,
+not split into principal and interest.
+
+**Amounts come back at column scale on every response, including the 201.** A rate sent as `8.5` is
+echoed as `8.5000` and a balance sent as `2400000000` as `2400000000.00`, so the create response and a
+later read are the same document. (The asset catalog echoes the create body as sent; that difference
+is recorded here rather than hidden.)
+
+### Three rules that relate fields
+
+Each is `validation-failed` naming the offending field, and a request that breaks several gets them
+all in one `errors` array:
+
+- `maturityDate` must not be before `startDate` — `must not be before the start date`. Equal is allowed.
+- `nextPaymentDate` must fall inside the term when the term is given: `must not be before the start
+  date`, or `must not be after the maturity date`. It **may be in the past**; an overdue payment is a
+  state the design shows, not an input error. With no `startDate` or `maturityDate` it is unconstrained.
+- `recurringPaymentAmount` and `recurringPaymentFrequency` come as a pair. One without the other names
+  the missing one: `recurringPaymentFrequency: must be present when a recurring payment amount is
+  given`, or `recurringPaymentAmount: must be present when a recurring payment frequency is given`.
+
+No date is compared with today. A loan that starts next month is a signed contract, not a mistake.
+
+### The collateral
+
+`collateralAssetId` is the identifier of an asset from `GET /api/v1/assets`, and it **must be the
+signed-in user's**. Any other value — another user's asset or an identifier that exists nowhere — is
+`validation-failed` with `collateralAssetId: must identify an asset the signed-in user owns`, and the
+two cases produce the same body apart from `correlationId`. It is a `validation-failed` and not a
+`not-found` because the resource the request addresses, the liability, is fine; one value in the body is
+wrong. One message for both cases is deliberate: the alternative would make this field an oracle for
+which asset identifiers exist, the disclosure the ownership rule on the path refuses.
+
+The check is re-run on every `PUT`, not only when the link is first made.
+
+**Deleting the pledged asset does not fail and does not delete the liability.** The foreign key is
+`ON DELETE SET NULL`: the liability survives and reads back with `collateralAssetId: null`, the same as
+one that never had collateral. Refusing the asset's deletion would have changed the asset resource's
+behaviour from inside this slice, and the consequences of deleting a linked record are issue #104's. A
+client that shows "collateral: Căn hộ Thảo Điền" from its own asset list should expect that name to
+disappear when the asset does.
+
+### `PUT` replaces everything but the category
+
+`PUT` accepts every field of the create body except `category`, which is chosen once in the create
+flow's picker. The balance and the currency **are** editable here — there is no append-only balance
+history for liabilities the way issue #57 introduces one for asset valuations, and the accepted
+design's edit screen offers *Dư nợ hiện tại* directly.
+
+- **It is a replacement, not a patch.** An optional field omitted from the body is cleared. Omitting
+  `collateralAssetId` unlinks the collateral; omitting `recurringPaymentAmount` and
+  `recurringPaymentFrequency` together removes the schedule.
+- A `category` sent anyway is silently dropped, as an unknown property, and the stored category is
+  unchanged. Do not read a `200` as confirmation that it was applied.
+
+### Listing order
+
+`GET /api/v1/liabilities` returns the catalog **soonest `nextPaymentDate` first**, liabilities with no
+next payment date after all of those, and ties broken by `name`. The order is the server's so the
+"sắp đến hạn" rows the design surfaces are at the top without the client sorting. No query parameter,
+no pagination; search and filter are issue #101's.
+
+### Errors specific to this resource
+
+- An unrecognised `category`, `currency` or `recurringPaymentFrequency` is **`malformed-request`**,
+  as on the asset catalog, and a `collateralAssetId` that is not a UUID is `malformed-request` too.
+- `\u0000` in `name` or `notes`, and a `name` that is blank once Unicode space separators are
+  removed, are refused exactly as the asset catalog refuses them. `notes` is stripped and becomes
+  `null` when nothing is left.
+- Another user's liability identifier answers `not-found`, for reads and writes, with a body that
+  differs from a genuinely missing identifier's only in `instance` and `correlationId`.
+- A second `DELETE` answers `not-found`. Overlapping deletes give one `204` and `not-found` to the
+  rest, never a 500 — the flush-inside-the-transaction fix from the asset catalog is applied here too.
+- There is no row version and no edit-conflict detection, for the reason given under the asset catalog.
+- **Nothing is computed.** No amortisation table, no principal and interest split, no interest
+  accrual, no VND conversion of a USD balance, no total across liabilities. Those belong to issues
+  #74, #77 and #65, and to the client's own use of the declared rate.
+
+### Verified by hand, not by the suite
+
+No automated test exercises any of these five routes. The resource shipped on Product Owner
+direction with manual verification only:
+[`docs/manual-test-guide-liabilities.md`](manual-test-guide-liabilities.md) is the reproducible
+procedure and
+`plans/reports/manual-verification-261114-1735-GH-62-liability-catalog-schedules-collateral.md` is
+what it returned on the implementing run. The same caveat about money as bare JSON numbers above
+JavaScript's exact-integer range applies to `outstandingBalance` and `recurringPaymentAmount`.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
