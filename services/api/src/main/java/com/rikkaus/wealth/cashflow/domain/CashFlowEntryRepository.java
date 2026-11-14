@@ -52,7 +52,7 @@ public interface CashFlowEntryRepository extends Repository<CashFlowEntry, UUID>
      * <p>A native query against {@code wealth.assets} rather than a call into the {@code assets}
      * slice, because the slice rule in {@code ArchitectureRulesTest} forbids {@code cashflow} from
      * importing anything that slice declares. The relationship between the two tables is already a
-     * foreign key in {@code V7__cash_flow_entries.sql}; this query reads the same two columns that key
+     * foreign key in {@code V8__cash_flow_entries.sql}; this query reads the same two columns that key
      * depends on and nothing else, so it adds no coupling the schema does not already carry.
      *
      * <p>The alternative — a port in {@code shared} implemented by {@code assets} — would make {@code
@@ -67,4 +67,17 @@ public interface CashFlowEntryRepository extends Repository<CashFlowEntry, UUID>
                     "SELECT EXISTS (SELECT 1 FROM wealth.assets WHERE id = :assetId AND user_id = :ownerId)",
             nativeQuery = true)
     boolean assetBelongsTo(@Param("assetId") UUID assetId, @Param("ownerId") UUID ownerId);
+
+    /**
+     * Whether a liability exists and belongs to the given owner.
+     *
+     * <p>The same query against {@code wealth.liabilities}, for the same reasons as {@link
+     * #assetBelongsTo}: the slice may not import {@code liabilities}, the foreign key already ties the
+     * two tables, and "absent" and "someone else's" are deliberately one answer.
+     */
+    @Query(
+            value =
+                    "SELECT EXISTS (SELECT 1 FROM wealth.liabilities WHERE id = :liabilityId AND user_id = :ownerId)",
+            nativeQuery = true)
+    boolean liabilityBelongsTo(@Param("liabilityId") UUID liabilityId, @Param("ownerId") UUID ownerId);
 }

@@ -141,9 +141,11 @@ public class CashFlowEntryService {
      *       Both halves are stated, so a request cannot be half of each.
      *   <li>An end date may equal the effective date — a recurrence of one occurrence — but may not
      *       precede it.
-     *   <li>A linked asset must exist and belong to the owner. The two failures are one error with one
-     *       message on purpose: distinguishing them would let a caller confirm which asset identifiers
-     *       exist, which is the enumeration oracle {@code OwnershipGuard} closes on every other route.
+     *   <li>A linked asset or liability must exist and belong to the owner. The two failures are one
+     *       error with one message on purpose: distinguishing them would let a caller confirm which
+     *       identifiers exist, which is the enumeration oracle {@code OwnershipGuard} closes on every
+     *       other route.
+     *   <li>At most one link. The backbone says an entry may reference one asset or one liability.
      * </ul>
      */
     private CashFlowEntryDetails validated(UUID ownerId, CashFlowEntryDetails details) {
@@ -177,6 +179,17 @@ public class CashFlowEntryService {
                 && !entries.assetBelongsTo(details.linkedAssetId(), ownerId)) {
             errors.add(error("linkedAssetId", "must reference one of the signed-in user's assets"));
         }
+        if (details.linkedLiabilityId() != null) {
+            if (details.linkedAssetId() != null) {
+                // Judged before ownership, and the ownership query is not run: an entry that names two
+                // records is one mistake, and reporting whether the second one is the user's would
+                // describe a problem the user does not have.
+                errors.add(error("linkedLiabilityId", "must not be combined with linkedAssetId"));
+            } else if (!entries.liabilityBelongsTo(details.linkedLiabilityId(), ownerId)) {
+                errors.add(
+                        error("linkedLiabilityId", "must reference one of the signed-in user's liabilities"));
+            }
+        }
 
         String notes = details.notes();
         if (notes != null && notes.indexOf('\u0000') >= 0) {
@@ -206,6 +219,7 @@ public class CashFlowEntryService {
                 details.effectiveDate(),
                 details.endDate(),
                 details.linkedAssetId(),
+                details.linkedLiabilityId(),
                 notes);
     }
 

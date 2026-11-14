@@ -40,8 +40,8 @@ DB_URL=jdbc:postgresql://localhost:5471/rikkaus JAVA_HOME=/opt/homebrew/opt/open
 ```
 
 Hai dòng trong log khởi động là một phần của việc kiểm chứng. Flyway phải báo đã apply tới
-`V7__cash_flow_entries.sql` (`now at version v7` khi chạy trên nhánh này trước khi merge; số có thể cao
-hơn sau khi đánh số lại), và context phải khởi động: `spring.jpa.hibernate.ddl-auto: validate` là
+`V8__cash_flow_entries.sql` (`now at version v8`; số có thể cao hơn nếu migration sau này được thêm), và
+context phải khởi động: `spring.jpa.hibernate.ddl-auto: validate` là
 thứ chứng minh migration và entity `CashFlowEntry` khớp nhau từng cột.
 
 ### 3. Hai người dùng
@@ -88,16 +88,20 @@ Một helper giữ mỗi case dưới đây trong một dòng:
 api() { curl -s -i -H "Authorization: Bearer $1" -H 'Content-Type: application/json' -X "$2" "http://127.0.0.1:8071/api/v1$3" ${4:+-d "$4"}; }
 ```
 
-### 5. Hai tài sản để liên kết
+### 5. Tài sản và công nợ để liên kết
 
-Tạo qua resource của slice `assets`, không chèn thẳng, để không phụ thuộc vào cột của bảng khác.
+Tạo qua resource của slice `assets` và `liabilities`, không chèn thẳng, để không phụ thuộc vào cột của
+bảng khác.
 
 ```bash
 api "$A" POST /assets '{"name":"Căn hộ Thảo Điền","category":"REAL_ESTATE","currentValue":"6100000000.00","currency":"VND","valuationDate":"2026-08-02","liquidity":"LOW"}'
+api "$A" POST /assets '{"name":"Xe Volvo XC60","category":"VEHICLE_OR_VALUABLE_ASSET","currentValue":"1850000000.00","currency":"VND","valuationDate":"2026-09-01","liquidity":"MEDIUM"}'
 api "$B" POST /assets '{"name":"Tiền mặt của Bích","category":"CASH","currentValue":"5000000.00","currency":"VND","valuationDate":"2026-09-01","liquidity":"HIGH"}'
+api "$A" POST /liabilities '{"name":"Vay mua nhà Vietcombank","category":"BANK_LOAN","outstandingBalance":"2400000000.00","currency":"VND","recurringPaymentAmount":"23500000.00","recurringPaymentFrequency":"MONTHLY"}'
+api "$B" POST /liabilities '{"name":"Vay tiêu dùng FE Credit","category":"PERSONAL_LOAN","outstandingBalance":"120000000.00","currency":"VND"}'
 ```
 
-Giữ hai `id`, gọi là `$ASSET_A` và `$ASSET_B`.
+Giữ các `id`, gọi là `$ASSET_A` (căn hộ), `$CAR_A` (xe), `$ASSET_B`, `$LOAN_A` và `$LOAN_B`.
 
 ## Các case
 
@@ -227,6 +231,28 @@ api "$A" GET /cash-flow-entries/$LINKED   # 200, entry còn, linkedAssetId: null
 Dòng cuối là FK `ON DELETE SET NULL` đang làm việc: xóa tài sản không xóa khoản thu nhập ghi từ nó, chỉ
 bỏ liên kết. Hậu quả về sản phẩm thuộc #104.
 
+### P. Liên kết công nợ (case 93–98)
+
+Chạy ngay sau mục H. Số case theo thứ tự thêm vào plan, không theo thứ tự chạy.
+
+```bash
+api "$A" POST /cash-flow-entries '{"entryType":"EXPENSE","category":"INTEREST_PAYMENT","amount":"17000000.00","currency":"VND","timing":"RECURRING","recurrence":"MONTHLY","effectiveDate":"2026-01-05","linkedLiabilityId":"'$LOAN_A'","notes":"Lãi vay mua nhà"}'   # 93: 201, echo linkedLiabilityId, linkedAssetId null; giữ id là $INTEREST
+api "$A" POST /cash-flow-entries '{"entryType":"EXPENSE","category":"INTEREST_PAYMENT","amount":"17000000.00","currency":"VND","timing":"RECURRING","recurrence":"MONTHLY","effectiveDate":"2026-01-05","linkedLiabilityId":"'$LOAN_B'"}'   # 94: 400
+api "$A" POST /cash-flow-entries '{"entryType":"EXPENSE","category":"INTEREST_PAYMENT","amount":"17000000.00","currency":"VND","timing":"RECURRING","recurrence":"MONTHLY","effectiveDate":"2026-01-05","linkedLiabilityId":"00000000-0000-4000-8000-000000000000"}'   # 95: 400, giống 94
+api "$A" POST /cash-flow-entries '{"entryType":"EXPENSE","category":"INTEREST_PAYMENT","amount":"17000000.00","currency":"VND","timing":"RECURRING","recurrence":"MONTHLY","effectiveDate":"2026-01-05","linkedAssetId":"'$CAR_A'","linkedLiabilityId":"'$LOAN_A'"}'   # 96: 400
+```
+
+Case 94 và 95 phải `validation-failed` với `{field: linkedLiabilityId, message: "must reference one of the
+signed-in user's liabilities"}`, hai body giống nhau ngoài `correlationId`. Case 96 phải có **đúng một**
+entry, `linkedLiabilityId` / `must not be combined with linkedAssetId`, không kèm lỗi ownership nào.
+
+```bash
+api "$A" PUT /cash-flow-entries/$INTEREST '{"entryType":"EXPENSE","category":"INTEREST_PAYMENT","amount":"17000000.00","currency":"VND","timing":"RECURRING","recurrence":"MONTHLY","effectiveDate":"2026-01-05","linkedAssetId":"'$CAR_A'"}'   # 97: 200, linkedAssetId = xe, linkedLiabilityId null
+api "$A" PUT /cash-flow-entries/$INTEREST '{"entryType":"EXPENSE","category":"INTEREST_PAYMENT","amount":"17000000.00","currency":"VND","timing":"RECURRING","recurrence":"MONTHLY","effectiveDate":"2026-01-05","linkedLiabilityId":"'$LOAN_A'"}'   # liên kết lại
+api "$A" DELETE /liabilities/$LOAN_A          # 204
+api "$A" GET /cash-flow-entries/$INTEREST     # 98: 200, entry còn, linkedLiabilityId null
+```
+
 ### I. Liệt kê (case 54–56)
 
 ```bash
@@ -333,6 +359,8 @@ docker exec -i rikkaus-pg-issue-71 psql -U rikkaus -d rikkaus -c "INSERT INTO we
 | `RECURRING` không `recurrence` | `cash_flow_entries_recurrence_matches_timing` |
 | `end_date` `2026-09-04` với `effective_date` `2026-09-05` | `cash_flow_entries_end_date_not_before_effective_date` |
 | `linked_asset_id` không tồn tại | `cash_flow_entries_linked_asset_id_fkey` |
+| 99: cả `linked_asset_id` và `linked_liability_id` có giá trị | `cash_flow_entries_links_at_most_one_record` |
+| 100: `linked_liability_id` không tồn tại | `cash_flow_entries_linked_liability_id_fkey` |
 
 `SELECT count(*)` sau cùng phải bằng trước đó.
 
@@ -350,7 +378,6 @@ docker rm -f rikkaus-pg-issue-71
 
 - Đăng nhập Google thật. Token được mint; filter và verifier là bản production, nhưng handoff Google không
   được chạy.
-- Liên kết công nợ (`linkedLiabilityId`) cho tới khi #62 merge; xem phase 6 của plan.
 - Hai lần sửa đồng thời cùng một entry: người ghi sau thắng, không báo xung đột — không có row version,
   là quyết định sản phẩm về xung đột sửa chứ không phải thiếu sót.
 - Client mobile (#70), expansion định kỳ (#74), báo cáo tháng (#77), forecast (#80).

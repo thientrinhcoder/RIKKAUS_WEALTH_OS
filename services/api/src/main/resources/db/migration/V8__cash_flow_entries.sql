@@ -25,10 +25,12 @@ CREATE TABLE wealth.cash_flow_entries (
     effective_date  DATE           NOT NULL,
     end_date        DATE,
 
-    -- Optional reference to the asset this money comes from or goes to: rent from an apartment,
-    -- dividends from a holding. A reference and nothing more -- nothing here schedules, forecasts or
-    -- revalues the asset.
-    linked_asset_id UUID           REFERENCES wealth.assets (id) ON DELETE SET NULL,
+    -- Optional reference to the one record this money comes from or goes to: rent from an apartment,
+    -- dividends from a holding, the interest on a mortgage. A reference and nothing more -- nothing
+    -- here schedules, forecasts or revalues the asset, and nothing derives the amount from the
+    -- liability's own recurring payment.
+    linked_asset_id     UUID       REFERENCES wealth.assets (id) ON DELETE SET NULL,
+    linked_liability_id UUID       REFERENCES wealth.liabilities (id) ON DELETE SET NULL,
 
     notes           TEXT,
 
@@ -97,6 +99,12 @@ CREATE TABLE wealth.cash_flow_entries (
     CONSTRAINT cash_flow_entries_end_date_not_before_effective_date
         CHECK (end_date IS NULL OR end_date >= effective_date),
 
+    -- At most one link. The backbone says an entry "may reference one asset or one liability", and
+    -- an entry pointing at both would be counted against two records by every report that follows
+    -- the link.
+    CONSTRAINT cash_flow_entries_links_at_most_one_record
+        CHECK (linked_asset_id IS NULL OR linked_liability_id IS NULL),
+
     -- Bounded text. TEXT with a length check rather than VARCHAR(n), because widening a check is a
     -- one-line migration while widening a VARCHAR rewrites the column's type.
     CONSTRAINT cash_flow_entries_notes_are_bounded
@@ -108,7 +116,7 @@ COMMENT ON TABLE wealth.cash_flow_entries IS
 
 -- The owner is a plain column with a foreign key and no Java association. ArchitectureRulesTest
 -- forbids the cashflow slice from depending on identity, so the relationship between the two tables
--- is expressed here and nowhere in application code -- the same shape V3 and V4 chose.
+-- is expressed here and nowhere in application code -- the same shape V3, V4 and V7 chose.
 COMMENT ON COLUMN wealth.cash_flow_entries.user_id IS
     'Owner. Every query is scoped to it server-side; no request ever carries it.';
 
@@ -148,6 +156,11 @@ COMMENT ON COLUMN wealth.cash_flow_entries.end_date IS
 COMMENT ON COLUMN wealth.cash_flow_entries.linked_asset_id IS
     'The asset this entry refers to, when any. Must belong to the same user; the API enforces that.';
 
+-- SET NULL for the same reasons as linked_asset_id, and the same choice V7 made for a liability's
+-- collateral asset.
+COMMENT ON COLUMN wealth.cash_flow_entries.linked_liability_id IS
+    'The liability this entry refers to, when any. Must belong to the same user; never set together with linked_asset_id.';
+
 COMMENT ON COLUMN wealth.cash_flow_entries.notes IS
     'The user''s own note, such as "Lương tháng" or "Tiền thuê căn hộ Thảo Điền". Free text, bounded.';
 
@@ -156,6 +169,7 @@ COMMENT ON COLUMN wealth.cash_flow_entries.notes IS
 CREATE INDEX idx_cash_flow_entries_owner_effective_date
     ON wealth.cash_flow_entries (user_id, effective_date DESC);
 
--- The foreign key column, so removing an asset does not scan the whole catalog to find the rows to
--- null out.
+-- The foreign key columns, so removing an asset or a liability does not scan the whole catalog to
+-- find the rows to null out.
 CREATE INDEX idx_cash_flow_entries_linked_asset ON wealth.cash_flow_entries (linked_asset_id);
+CREATE INDEX idx_cash_flow_entries_linked_liability ON wealth.cash_flow_entries (linked_liability_id);

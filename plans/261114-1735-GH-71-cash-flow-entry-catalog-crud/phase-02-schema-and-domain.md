@@ -27,7 +27,7 @@ còn lại của slice viết dựa trên.
 
 ## Files
 
-- `services/api/src/main/resources/db/migration/V7__cash_flow_entries.sql`
+- `services/api/src/main/resources/db/migration/V8__cash_flow_entries.sql` (viết là V7, đánh số lại khi merge `main`)
 - `services/api/src/main/java/com/rikkaus/wealth/cashflow/domain/CashFlowEntry.java`
 - `.../domain/CashFlowEntryType.java`, `CashFlowCategory.java` (mỗi hằng số mang entry type của nó),
   `CashFlowTiming.java`, `CashFlowRecurrence.java`
@@ -40,7 +40,7 @@ hai giá trị, serialize bằng tên.
 
 ## Validation
 
-- `V7__cash_flow_entries.sql` apply vào container sạch mà không cần bước tay; `ddl-auto: validate` chấp
+- `V8__cash_flow_entries.sql` apply vào container sạch mà không cần bước tay; `ddl-auto: validate` chấp
   nhận entity.
 - Các probe case 85–92 bị bảng từ chối độc lập với API.
 

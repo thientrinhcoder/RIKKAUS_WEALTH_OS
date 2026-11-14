@@ -21,11 +21,11 @@ import java.util.UUID;
  * half of one request and half of another.
  *
  * <p>The owner is a bare {@link UUID} and never a {@code UserAccount}, and the linked asset is a bare
- * {@link UUID} and never an {@code Asset}. The slice rule in {@code ArchitectureRulesTest} forbids
- * {@code cashflow} from depending on {@code identity} or {@code assets}, so both relationships live in
- * the foreign keys {@code V7__cash_flow_entries.sql} declares and nowhere in Java. Whether the linked
- * asset belongs to the same user is checked by {@code CashFlowEntryService} through a query on the
- * table, for the same reason.
+ * {@link UUID} and never an {@code Asset}, and the same for the linked liability. The slice rule in
+ * {@code ArchitectureRulesTest} forbids {@code cashflow} from depending on {@code identity}, {@code
+ * assets} or {@code liabilities}, so every relationship lives in the foreign keys {@code
+ * V8__cash_flow_entries.sql} declares and nowhere in Java. Whether a linked record belongs to the same
+ * user is checked by {@code CashFlowEntryService} through a query on its table, for the same reason.
  *
  * <p>The identifier is assigned in application code rather than by the database, as every entity here
  * does: the created row's identifier is needed to write a {@code Location} header, and a database
@@ -76,6 +76,9 @@ public class CashFlowEntry implements UserOwned {
     @Column(name = "linked_asset_id")
     private UUID linkedAssetId;
 
+    @Column(name = "linked_liability_id")
+    private UUID linkedLiabilityId;
+
     @Column private String notes;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -121,6 +124,7 @@ public class CashFlowEntry implements UserOwned {
         this.effectiveDate = details.effectiveDate();
         this.endDate = details.endDate();
         this.linkedAssetId = details.linkedAssetId();
+        this.linkedLiabilityId = details.linkedLiabilityId();
         this.notes = details.notes();
         this.updatedAt = now;
     }
@@ -168,6 +172,10 @@ public class CashFlowEntry implements UserOwned {
 
     public UUID getLinkedAssetId() {
         return linkedAssetId;
+    }
+
+    public UUID getLinkedLiabilityId() {
+        return linkedLiabilityId;
     }
 
     public String getNotes() {

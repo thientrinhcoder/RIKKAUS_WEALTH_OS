@@ -5,7 +5,7 @@ package com.rikkaus.wealth.cashflow.domain;
  *
  * <p>Each constant carries the entry type it belongs to, so "does this category fit this type" is a
  * lookup on the enum rather than a table somebody has to keep in step with it. The same pairing is a
- * check constraint in {@code V7__cash_flow_entries.sql}: the enum stops the API, the constraint stops
+ * check constraint in {@code V8__cash_flow_entries.sql}: the enum stops the API, the constraint stops
  * everything else.
  *
  * <p>Persisted by name, never by ordinal. Inserting a category in the middle of this list would

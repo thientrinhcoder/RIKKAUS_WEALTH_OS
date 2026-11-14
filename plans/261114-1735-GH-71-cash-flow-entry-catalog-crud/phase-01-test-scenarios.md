@@ -129,8 +129,7 @@ bean validation chạy. Hành vi này đã ghi trong conventions doc cho slice `
 | 52 | A `PUT` entry 47 bỏ `linkedAssetId` | `200`, `linkedAssetId: null` |
 | 53 | A liên kết lại căn hộ rồi `DELETE /api/v1/assets/<căn hộ>`, đọc lại entry | `204` rồi `200`, entry còn và `linkedAssetId: null` (FK `ON DELETE SET NULL`) |
 
-Case "gửi cả `linkedAssetId` và `linkedLiabilityId`" thuộc [phase 6](./phase-06-liability-link.md)
-vì bảng `wealth.liabilities` chưa có trên `main`.
+Các case liên kết công nợ ở mục P, thêm ở [phase 6](./phase-06-liability-link.md) sau khi #62 merge.
 
 ## I. Liệt kê (case 54–56)
 
@@ -208,9 +207,26 @@ Mọi case đều phải là `application/problem+json`.
 | 91 | `INSERT` `end_date < effective_date` | `cash_flow_entries_end_date_not_before_effective_date` |
 | 92 | `INSERT` `linked_asset_id` không tồn tại | vi phạm FK `cash_flow_entries_linked_asset_id_fkey` |
 
-Sau mỗi probe `count(*)` không đổi.
+Sau mỗi probe `count(*)` không đổi. Hai probe 99–100 của mục P cũng thuộc nhóm này.
+
+## P. Liên kết công nợ (case 93–100, thêm ở phase 6)
+
+Dữ liệu: công nợ của A `Vay mua nhà Vietcombank`, `BANK_LOAN`, dư nợ `2.400.000.000 ₫`, trả `23.500.000 ₫`
+hàng tháng; công nợ của B `Vay tiêu dùng FE Credit`, `PERSONAL_LOAN`, `120.000.000 ₫`. Tạo qua
+`POST /api/v1/liabilities`. Một tài sản thứ hai của A, `Xe Volvo XC60`, cho case 96–97.
+
+| # | Gửi | Kỳ vọng |
+|---|---|---|
+| 93 | A tạo `EXPENSE/INTEREST_PAYMENT` `17.000.000 ₫` `MONTHLY` với `linkedLiabilityId` = khoản vay của A, notes `Lãi vay mua nhà` | `201`, echo `linkedLiabilityId`, `linkedAssetId: null` |
+| 94 | A tạo với `linkedLiabilityId` = khoản vay của B | `400`, `linkedLiabilityId` / `must reference one of the signed-in user's liabilities` |
+| 95 | A tạo với `linkedLiabilityId` = `00000000-0000-4000-8000-000000000000` | `400`, body **giống case 94** ngoài `correlationId` |
+| 96 | A tạo với cả `linkedAssetId` (xe) và `linkedLiabilityId` (khoản vay của A) | `400`, đúng một entry `linkedLiabilityId` / `must not be combined with linkedAssetId` |
+| 97 | A `PUT` entry 93 đổi liên kết từ khoản vay sang xe | `200`, `linkedAssetId` là xe, `linkedLiabilityId: null` |
+| 98 | A liên kết lại entry 93 với khoản vay, rồi `DELETE /api/v1/liabilities/<khoản vay>` và đọc lại entry | `204` rồi `200`, entry còn và `linkedLiabilityId: null` (FK `ON DELETE SET NULL`) |
+| 99 | `INSERT` có cả `linked_asset_id` và `linked_liability_id` | `cash_flow_entries_links_at_most_one_record` |
+| 100 | `INSERT` `linked_liability_id` không tồn tại | `cash_flow_entries_linked_liability_id_fkey` |
 
 ## Validation
 
 Mọi case ở trên có một dòng status/body thật trong evidence report, và tổng số case trong report bằng
-tổng số ở đây (92 trước phase 6). Case nào fail rồi fix phải ghi là đã fail.
+tổng số ở đây (100 sau phase 6). Case nào fail rồi fix phải ghi là đã fail.

@@ -1,13 +1,13 @@
 ---
 title: "Issue #71 danh mục dòng tiền và CRUD"
 description: "Xây slice cashflow: bảng wealth.cash_flow_entries, resource /api/v1/cash-flow-entries cho 7 loại thu nhập và 9 loại chi phí, một lần hoặc định kỳ, liên kết tùy chọn tới tài sản/công nợ, ownership server-side."
-status: in-progress
+status: completed
 priority: P1
 effort: "4d"
 issue: 71
 branch: thientrinhcoder/feat/issue-71-cash-flow-entry-catalog-crud
 tags: [backend, api, migration, cash-flow]
-blockedBy: [62]
+blockedBy: []
 blocks: [70, 74, 77, 80]
 created: 2026-11-14
 ---
@@ -39,8 +39,8 @@ một công nợ) do chính họ sở hữu, lỗi RFC 9457, và contract OpenAP
   phải mở rộng để `./mvnw verify` xanh.
 - Tiền là `BigDecimal` / `NUMERIC(19, 2)`, currency chỉ `VND`/`USD` (dùng `shared.money.Currency`),
   không quy đổi tỷ giá trong slice này.
-- Migration là `V7__cash_flow_entries.sql` (V5 thuộc PR #147, V6 thuộc #62). Khi merge `origin/main`
-  thì đánh số lại thành `max(main) + 1` nếu cần.
+- Migration là `V8__cash_flow_entries.sql`: viết là V7, đánh số lại khi merge `main` (đã có
+  `V6__asset_valuations.sql` của #59 và `V7__liabilities.sql` của #62).
 
 ## Non-goals
 
@@ -63,7 +63,7 @@ một công nợ) do chính họ sở hữu, lỗi RFC 9457, và contract OpenAP
 | `effectiveDate` | date | có | ngày hiệu lực (một lần) hoặc ngày bắt đầu (định kỳ); **được phép ở tương lai** vì khoản dự kiến là đầu vào của forecast #80 |
 | `endDate` | date | không | chỉ với `RECURRING`; không trước `effectiveDate`; bằng `effectiveDate` được chấp nhận |
 | `linkedAssetId` | uuid | không | phải là tài sản của chính người dùng; của người khác và không tồn tại trả **cùng một** `validation-failed` |
-| `linkedLiabilityId` | uuid | không | **phase 6, sau khi #62 merge**; không được gửi cùng `linkedAssetId` |
+| `linkedLiabilityId` | uuid | không | phải là công nợ của chính người dùng, cùng quy tắc với `linkedAssetId`; không được gửi cùng `linkedAssetId` |
 | `notes` | text ≤ 2000 | không | strip khoảng trắng, chuỗi trống thành `null`, ký tự NUL bị từ chối |
 
 Danh mục thu nhập: `SALARY`, `BUSINESS_INCOME`, `RENTAL_INCOME`, `DIVIDEND`, `DEPOSIT_INTEREST`,
@@ -87,7 +87,7 @@ Quyết định đáng chú ý, ghi để reviewer không phải suy lại:
 
 ## Deliverables
 
-- `services/api/src/main/resources/db/migration/V7__cash_flow_entries.sql`
+- `services/api/src/main/resources/db/migration/V8__cash_flow_entries.sql`
 - `services/api/src/main/java/com/rikkaus/wealth/cashflow/**`
 - `services/api/openapi/openapi.json` regenerate
 - `OpenApiContractIT` và `ApplicationContextIT` mở rộng
@@ -104,7 +104,7 @@ Quyết định đáng chú ý, ghi để reviewer không phải suy lại:
 | 3 | [Service và HTTP resource](./phase-03-service-and-http.md) | Hoàn tất | Phase 2 | Năm route dưới `/api/v1/cash-flow-entries`, validation chéo trường, kiểm tra liên kết. |
 | 4 | [Contract và inventory](./phase-04-contract-and-inventories.md) | Hoàn tất | Phase 3 | `openapi.json` regenerate, hai inventory test mở rộng, conventions doc cập nhật, `verify` xanh. |
 | 5 | [Xác minh thủ công](./phase-05-manual-verification.md) | Hoàn tất | Phase 4 | Chạy hết scenario phase 1 qua HTTP, ghi evidence. |
-| 6 | [Liên kết công nợ](./phase-06-liability-link.md) | Chờ #62 merge | Phase 5 | `linkedLiabilityId` cùng cách kiểm tra, chạy lại scenario, cập nhật PR. |
+| 6 | [Liên kết công nợ](./phase-06-liability-link.md) | Hoàn tất | Phase 5 | `linkedLiabilityId` cùng cách kiểm tra, chạy lại scenario, cập nhật PR. |
 
 ## Acceptance Criteria
 
@@ -136,4 +136,5 @@ Phase 1–5 hoàn tất ngày 2026-11-14 tại commit `b6f4c9c` (code) và commi
 xanh không dùng update flag: 81 unit test, 50 integration test. 92 scenario chạy thật, 92 đạt ở lần chạy
 2; lần chạy 1 có một lỗi code nhỏ (scale của `amount` trên body `POST`) và hai kỳ vọng viết sai, ghi ở
 [`manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`](../reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md).
-Phase 6 (liên kết công nợ) chờ #62 merge.
+Phase 6 (liên kết công nợ) hoàn tất cùng ngày sau khi #62 merge: `main` được merge vào nhánh, migration
+đổi thành `V8`, 100 scenario chạy lại toàn bộ; kết quả ở cùng evidence report.

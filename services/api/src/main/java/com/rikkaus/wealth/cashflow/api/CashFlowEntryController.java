@@ -91,6 +91,7 @@ class CashFlowEntryController {
                                                     "effectiveDate": "2026-09-05",
                                                     "endDate": "2029-06-30",
                                                     "linkedAssetId": null,
+                                                    "linkedLiabilityId": null,
                                                     "notes": "Học phí",
                                                     "createdAt": "2026-11-14T10:42:11.503Z",
                                                     "updatedAt": "2026-11-14T10:42:11.503Z"
@@ -106,6 +107,7 @@ class CashFlowEntryController {
                                                     "effectiveDate": "2026-09-12",
                                                     "endDate": null,
                                                     "linkedAssetId": "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                                                    "linkedLiabilityId": null,
                                                     "notes": null,
                                                     "createdAt": "2026-11-14T10:40:02.117Z",
                                                     "updatedAt": "2026-11-14T10:40:02.117Z"
@@ -121,6 +123,7 @@ class CashFlowEntryController {
                                                     "effectiveDate": "2026-01-01",
                                                     "endDate": null,
                                                     "linkedAssetId": null,
+                                                    "linkedLiabilityId": null,
                                                     "notes": "Lương tháng",
                                                     "createdAt": "2026-11-14T10:38:45.902Z",
                                                     "updatedAt": "2026-11-14T10:38:45.902Z"
@@ -151,9 +154,10 @@ class CashFlowEntryController {
                     "Creates an income or expense entry owned by the signed-in user. The category must belong "
                             + "to the entry type. A one-time entry has an effective date and nothing else; a "
                             + "recurring one has a start date, a recurrence and an optional end date. Dates may "
-                            + "be in the future: an expected entry is a legitimate one. A linked asset must be "
-                            + "one of the viewer's own; one that is not, or that does not exist, is refused with "
-                            + "the same message either way.")
+                            + "be in the future: an expected entry is a legitimate one. An entry may link to one "
+                            + "of the viewer's assets or one of their liabilities, never both; a linked record "
+                            + "that is not the viewer's, or that does not exist, is refused with the same "
+                            + "message either way.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "201",
@@ -175,8 +179,8 @@ class CashFlowEntryController {
             description =
                     "A required field is missing, the amount is not positive or too precise, the category does "
                             + "not belong to the entry type, the recurrence or end date does not fit the timing, "
-                            + "the end date precedes the effective date, or the linked asset is not the "
-                            + "viewer's. Every problem is reported at once in the errors array. An unrecognised "
+                            + "the end date precedes the effective date, a linked asset or liability is not "
+                            + "the viewer's, or both links are sent together. Every problem is reported at once in the errors array. An unrecognised "
                             + "constant is a malformed-request instead, because the body cannot be parsed.",
             content =
                     @Content(
@@ -293,7 +297,8 @@ class CashFlowEntryController {
             summary = "Replace a cash-flow entry",
             description =
                     "Replaces every field of the entry with the body, which is the same shape as the create "
-                            + "body. An omitted optional member — recurrence, endDate, linkedAssetId, notes — is "
+                            + "body. An omitted optional member — recurrence, endDate, linkedAssetId, linkedLiabilityId, "
+                            + "notes — is "
                             + "cleared, because this is a replacement rather than a patch. Nothing is frozen "
                             + "after creation: the type, category and amount may all change.")
     @SecurityRequirement(name = "bearerAuth")

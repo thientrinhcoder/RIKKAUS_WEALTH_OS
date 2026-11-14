@@ -23,9 +23,10 @@ import java.util.UUID;
  * converts with the rate it already read from {@code GET /api/v1/settings/exchange-rate}. The totals
  * belong to issue #77 and the expansion to issue #74.
  *
- * <p>{@code linkedAssetId} is an identifier and nothing more. The entry does not carry the asset's
- * name or value, because this slice may not read that table through Java and because a client that
- * has the identifier already has the asset from its own catalog.
+ * <p>{@code linkedAssetId} and {@code linkedLiabilityId} are identifiers and nothing more. The entry
+ * does not carry the linked record's name, value or balance, because this slice may not read those
+ * tables through Java and because a client that has the identifier already has the record from its
+ * own catalog. At most one of the two is set.
  */
 @Schema(description = "A cash-flow entry in the signed-in user's catalog.")
 public record CashFlowEntryResponse(
@@ -46,6 +47,8 @@ public record CashFlowEntryResponse(
                 LocalDate endDate,
         @Schema(description = "The user's asset this entry refers to. Null when unlinked.", example = "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64")
                 UUID linkedAssetId,
+        @Schema(description = "The user's liability this entry refers to. Null when unlinked.", example = "7d3e9a14-2c6b-4f81-a0d5-6b8e1f4c2a97")
+                UUID linkedLiabilityId,
         @Schema(description = "The user's own note. Null when not recorded.", example = "Lương tháng") String notes,
         @Schema(description = "When the server first stored this entry.", example = "2026-11-14T10:42:11.503Z")
                 Instant createdAt,
@@ -64,6 +67,7 @@ public record CashFlowEntryResponse(
                 entry.getEffectiveDate(),
                 entry.getEndDate(),
                 entry.getLinkedAssetId(),
+                entry.getLinkedLiabilityId(),
                 entry.getNotes(),
                 entry.getCreatedAt(),
                 entry.getUpdatedAt());

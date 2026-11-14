@@ -15,8 +15,9 @@ import java.time.LocalDate;
  *
  * <p>What it leaves out is the point. There is no {@code currentValue}, {@code currency} or
  * {@code valuationDate}, because the accepted design for issue #51 makes the current value read-only
- * in the edit form — <em>Chỉ đọc. Cập nhật định giá thuộc #57.</em> — and a new value has to be
- * appended to the valuation history issue #57 introduces rather than overwrite the one on the row.
+ * in the edit form — <em>Chỉ đọc. Cập nhật định giá thuộc #57.</em> — and a new value is appended to
+ * the valuation history through {@code POST /api/v1/assets/{assetId}/valuations} rather than
+ * overwriting the one on the row.
  * There is no {@code category} either: it is chosen once, in the create flow's picker.
  *
  * <p>Those members are absent rather than ignored-with-a-warning, so the contract never describes a

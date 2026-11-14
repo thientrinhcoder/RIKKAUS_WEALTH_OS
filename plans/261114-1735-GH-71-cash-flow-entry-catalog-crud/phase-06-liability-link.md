@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Liên kết công nợ"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [5]
@@ -30,4 +30,7 @@ Hoàn tất nửa còn lại của "optional link to an asset or liability" khi 
 
 ## Trạng thái
 
-Chờ coordinator báo #62 đã merge. Nếu mọi phần khác xong trước: commit, mở PR draft nêu rõ phần thiếu này.
+Hoàn tất ngày 2026-11-14 sau khi #62 merge (`main` tại `f7e5fdb`). Vì migration của slice chưa từng chạy
+trên `main`, cột `linked_liability_id`, check `cash_flow_entries_links_at_most_one_record` và index được
+thêm thẳng vào `V8__cash_flow_entries.sql` (đổi số từ V7, vì `main` đã có `V6__asset_valuations.sql` và
+`V7__liabilities.sql`) thay vì một migration riêng. Scenario 93–100 ở phase 1, mục P.

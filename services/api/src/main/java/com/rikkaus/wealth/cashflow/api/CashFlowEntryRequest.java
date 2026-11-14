@@ -108,12 +108,29 @@ public record CashFlowEntryRequest(
                                         + "comes from. Omit to leave it unlinked, or to clear it on PUT.",
                         example = "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64")
                 UUID linkedAssetId,
+        @Schema(
+                        description =
+                                "A liability of the signed-in user this entry refers to, such as the mortgage an "
+                                        + "interest payment belongs to. Must not be sent together with "
+                                        + "linkedAssetId. Omit to leave it unlinked, or to clear it on PUT.",
+                        example = "7d3e9a14-2c6b-4f81-a0d5-6b8e1f4c2a97")
+                UUID linkedLiabilityId,
         @Schema(description = "Anything the user wants to remember about it. Omit to clear it on PUT.", example = "Lương tháng")
                 @Size(max = 2000, message = "must be at most 2000 characters")
                 String notes) {
 
     CashFlowEntryDetails toDetails() {
         return new CashFlowEntryDetails(
-                entryType, category, amount, currency, timing, recurrence, effectiveDate, endDate, linkedAssetId, notes);
+                entryType,
+                category,
+                amount,
+                currency,
+                timing,
+                recurrence,
+                effectiveDate,
+                endDate,
+                linkedAssetId,
+                linkedLiabilityId,
+                notes);
     }
 }
