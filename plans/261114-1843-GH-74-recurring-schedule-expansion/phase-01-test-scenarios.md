@@ -133,7 +133,9 @@ không chứa lại giá trị đã gửi.
 | 39 | `from=2026-01-01&to=2026-02-29` (2026 không nhuận) | `[{to, "must be a calendar date in the form YYYY-MM-DD"}]` |
 | 40 | `from=2026-1-5&to=2026-03-31` | lỗi định dạng trên `from` |
 | 41 | `from=2026-01-01T00:00:00%2B07:00&to=2026-03-31` | lỗi định dạng trên `from`: tham số là ngày, không nhận giờ hay múi giờ |
+| 41b | `from=2026-01-01&from=2026-02-01&to=2026-03-31` (lặp tham số) | lỗi định dạng trên `from`, không âm thầm lấy giá trị đầu |
 | 42 | `from=2026-01-01&to=2028-01-01` (24 tháng + 1 ngày) | `[{to, "must be less than 24 months after from"}]` |
+| 42b | `from=2026-01-01&to=2027-12-31` (đối chứng của 42) | `200` |
 | 43 | `from=abc&to=` | hai entry: `from` định dạng, `to` `must be present`; không có lỗi thứ tự |
 
 ## J. Xác thực, method, media type (case 44–48)
@@ -154,4 +156,5 @@ không chứa lại giá trị đã gửi.
 | 50 | `services/api/openapi/openapi.json` | path `/api/v1/cash-flow-occurrences` chỉ có `get`, `from`/`to` `required: true`, `format: date`, có ví dụ |
 | 51 | `\dt wealth.*` và `flyway_schema_history` | không bảng mới, version cao nhất vẫn `9` |
 
-Tổng: **51 case**.
+Tổng: **51 case**, cộng hai case phụ 41b và 42b thêm khi viết script chạy (trước lần chạy đầu) để kiểm
+chứng một câu trong conventions doc và làm đối chứng cho 42 — 53 dòng kết quả.

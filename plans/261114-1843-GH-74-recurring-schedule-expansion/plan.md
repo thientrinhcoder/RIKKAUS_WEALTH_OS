@@ -1,7 +1,7 @@
 ---
 title: "Issue #74 mở rộng lịch kỳ của dòng tiền định kỳ"
 description: "Service mở rộng xác định trong slice cashflow: từ entry một lần hoặc định kỳ tháng/quý/năm sinh các kỳ trong một khoảng ngày, qua GET /api/v1/cash-flow-occurrences, tính khi đọc, không lưu, không migration."
-status: in-progress
+status: completed
 priority: P1
 effort: "2d"
 issue: 74
@@ -89,20 +89,20 @@ lưu (#73).
 | Phase | Tên | Trạng thái | Kết quả |
 |---|---|---|---|
 | 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Hoàn tất | 51 case viết trước khi code |
-| 2 | [Thuật toán và HTTP](./phase-02-expansion-and-http.md) | Chưa bắt đầu | `CashFlowSchedule`, `OccurrenceWindow`, controller |
-| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Chưa bắt đầu | `openapi.json`, `OpenApiContractIT`, conventions, guide; `clean verify` xanh |
-| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Chưa bắt đầu | Chạy 51 case, ghi evidence |
+| 2 | [Thuật toán và HTTP](./phase-02-expansion-and-http.md) | Hoàn tất | `CashFlowSchedule`, `OccurrenceWindow`, controller |
+| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Hoàn tất | `openapi.json`, `OpenApiContractIT`, conventions, guide; `clean verify` xanh |
+| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Hoàn tất | Chạy 51 case, ghi evidence |
 
 ## Acceptance Criteria
 
-- [ ] Monthly/quarterly/yearly sinh đúng ngày, kể cả 31 → 28/29/30 và 29/02 → 28/02, và quay lại ngày neo.
-- [ ] `effectiveDate`, `endDate`, `from`, `to` đều tính vào; hai khoảng kề nhau không trùng, không hụt kỳ.
-- [ ] Entry một lần có đúng một kỳ tại `effectiveDate`.
-- [ ] Mỗi kỳ mang `sourceEntryId` đọc lại được, cùng `amount`, `currency`, `entryType`, `category`.
-- [ ] Không thấy entry của user khác.
-- [ ] Mọi input sai là `validation-failed` có `errors`; 401 ba kiểu token; 405 method khác.
-- [ ] Kết quả không đổi khi múi giờ JVM đổi.
-- [ ] `openapi.json` regenerate, `clean verify` xanh không flag.
+- [x] Monthly/quarterly/yearly sinh đúng ngày, kể cả 31 → 28/29/30 và 29/02 → 28/02, và quay lại ngày neo.
+- [x] `effectiveDate`, `endDate`, `from`, `to` đều tính vào; hai khoảng kề nhau không trùng, không hụt kỳ.
+- [x] Entry một lần có đúng một kỳ tại `effectiveDate`.
+- [x] Mỗi kỳ mang `sourceEntryId` đọc lại được, cùng `amount`, `currency`, `entryType`, `category`.
+- [x] Không thấy entry của user khác.
+- [x] Mọi input sai là `validation-failed` có `errors`; 401 ba kiểu token; 405 method khác.
+- [x] Kết quả không đổi khi múi giờ JVM đổi.
+- [x] `openapi.json` regenerate, `clean verify` xanh không flag.
 
 ## Verification gap
 
@@ -114,3 +114,11 @@ một unit test bảng (ngày neo × chu kỳ × năm nhuận) bảo vệ rẻ n
 đổi. `OpenApiContractIT` vẫn bắt path bị lộ hoặc thiếu, `ArchitectureRulesTest` vẫn bắt import chéo slice.
 
 <!-- slug: issue-74-recurring-schedule-expansion -->
+
+## Kết quả
+
+Hoàn tất ngày 2026-11-14 tại commit `13a23d8` (code) và commit kế tiếp (guide, evidence). `clean verify`
+xanh không dùng update flag: 81 unit test, 50 integration test. 51 case cộng hai case phụ (53 dòng) chạy
+thật qua HTTP vào PostgreSQL Docker, **53/53 đạt ngay lần chạy đầu**, kể cả case múi giờ chạy lại với JVM ở
+`Pacific/Pago_Pago`. Evidence ở
+[`manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md`](../reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md).
