@@ -92,6 +92,9 @@ plans/**/*
 !plans/reports/manual-verification-261114-1735-GH-62-liability-catalog-schedules-collateral.md
 !plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md
 !plans/reports/code-reviewer-261114-1716-GH-59-asset-valuation-history.md
+!plans/261114-1735-GH-71-cash-flow-entry-catalog-crud/
+!plans/261114-1735-GH-71-cash-flow-entry-catalog-crud/**
+!plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md
 screenshots/*
 docs/screenshots/*
 logs.txt

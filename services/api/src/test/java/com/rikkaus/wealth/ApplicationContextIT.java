@@ -79,6 +79,7 @@ class ApplicationContextIT extends AbstractPostgresIntegrationTest {
                     .containsExactlyInAnyOrder(
                             "asset_valuations",
                             "assets",
+                            "cash_flow_entries",
                             "liabilities",
                             "refresh_tokens",
                             "user_settings",

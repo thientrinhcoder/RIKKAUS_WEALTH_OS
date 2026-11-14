@@ -557,12 +557,257 @@
         } ]
       }
     },
+    "/api/v1/cash-flow-entries/{entryId}" : {
+      "get" : {
+        "tags" : [ "cash-flow-entry-controller" ],
+        "summary" : "Read one cash-flow entry",
+        "description" : "Returns the entry when the signed-in user owns it. An identifier belonging to another user answers not-found with the same body a missing identifier produces, so the response cannot be used to discover which identifiers exist.",
+        "operationId" : "read_3",
+        "parameters" : [ {
+          "name" : "entryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The entry",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashFlowEntryResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such entry, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "tags" : [ "cash-flow-entry-controller" ],
+        "summary" : "Replace a cash-flow entry",
+        "description" : "Replaces every field of the entry with the body, which is the same shape as the create body. An omitted optional member — recurrence, endDate, linkedAssetId, linkedLiabilityId, notes — is cleared, because this is a replacement rather than a patch. Nothing is frozen after creation: the type, category and amount may all change.",
+        "operationId" : "replace_1",
+        "parameters" : [ {
+          "name" : "entryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CashFlowEntryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The entry as it now stands",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashFlowEntryResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The same refusals as on create, or the identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such entry, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "delete" : {
+        "tags" : [ "cash-flow-entry-controller" ],
+        "summary" : "Remove a cash-flow entry",
+        "description" : "Deletes the entry when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo and a retention policy belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
+        "operationId" : "delete_1",
+        "parameters" : [ {
+          "name" : "entryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "The entry no longer exists"
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such entry, it belongs to another user, or a concurrent request removed it first",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/assets/{assetId}" : {
       "get" : {
         "tags" : [ "asset-controller" ],
         "summary" : "Read one asset",
         "description" : "Returns the asset when the signed-in user owns it. An identifier belonging to another user answers not-found with the same body a missing identifier produces, so the response cannot be used to discover which identifiers exist.",
-        "operationId" : "read_3",
+        "operationId" : "read_4",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -742,7 +987,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "Remove an asset",
         "description" : "Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
-        "operationId" : "delete_1",
+        "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -1022,6 +1267,242 @@
         } ]
       }
     },
+    "/api/v1/cash-flow-entries" : {
+      "get" : {
+        "tags" : [ "cash-flow-entry-controller" ],
+        "summary" : "List the signed-in user's cash-flow entries",
+        "description" : "Returns every income and expense entry the viewer owns, newest effective date first and then newest created first. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each entry's own currency; converting a USD entry to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. A recurring entry is one row, not one row per month: expansion is issue #74.",
+        "operationId" : "list_1",
+        "responses" : {
+          "200" : {
+            "description" : "The viewer's catalog, possibly empty",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CashFlowEntryResponse"
+                  }
+                },
+                "examples" : {
+                  "an empty catalog" : {
+                    "description" : "an empty catalog",
+                    "value" : [ ]
+                  },
+                  "a monthly salary, a quarterly tuition fee and a one-time USD dividend" : {
+                    "description" : "a monthly salary, a quarterly tuition fee and a one-time USD dividend",
+                    "value" : [ {
+                      "id" : "5c0e2b7a-91d4-4f3b-8a6e-2d7f1c9b4e30",
+                      "entryType" : "EXPENSE",
+                      "category" : "EDUCATION",
+                      "amount" : 1.25E7,
+                      "currency" : "VND",
+                      "timing" : "RECURRING",
+                      "recurrence" : "QUARTERLY",
+                      "effectiveDate" : "2026-09-05",
+                      "endDate" : "2029-06-30",
+                      "linkedAssetId" : null,
+                      "linkedLiabilityId" : null,
+                      "notes" : "Học phí",
+                      "createdAt" : "2026-11-14T10:42:11.503Z",
+                      "updatedAt" : "2026-11-14T10:42:11.503Z"
+                    }, {
+                      "id" : "e2a7c4d1-3b8f-4e6a-9c05-7d1b2f8a6c43",
+                      "entryType" : "INCOME",
+                      "category" : "DIVIDEND",
+                      "amount" : 150.0,
+                      "currency" : "USD",
+                      "timing" : "ONE_TIME",
+                      "recurrence" : null,
+                      "effectiveDate" : "2026-09-12",
+                      "endDate" : null,
+                      "linkedAssetId" : "3f1c9a52-8d4b-4f0e-9c21-5b7a8e6d4f10",
+                      "linkedLiabilityId" : null,
+                      "notes" : null,
+                      "createdAt" : "2026-11-14T10:40:02.117Z",
+                      "updatedAt" : "2026-11-14T10:40:02.117Z"
+                    }, {
+                      "id" : "9b4d6f12-7e3a-4c58-b1d9-0a2e5c7f8d61",
+                      "entryType" : "INCOME",
+                      "category" : "SALARY",
+                      "amount" : 4.5E7,
+                      "currency" : "VND",
+                      "timing" : "RECURRING",
+                      "recurrence" : "MONTHLY",
+                      "effectiveDate" : "2026-01-01",
+                      "endDate" : null,
+                      "linkedAssetId" : null,
+                      "linkedLiabilityId" : null,
+                      "notes" : "Lương tháng",
+                      "createdAt" : "2026-11-14T10:38:45.902Z",
+                      "updatedAt" : "2026-11-14T10:38:45.902Z"
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      },
+      "post" : {
+        "tags" : [ "cash-flow-entry-controller" ],
+        "summary" : "Add a cash-flow entry",
+        "description" : "Creates an income or expense entry owned by the signed-in user. The category must belong to the entry type. A one-time entry has an effective date and nothing else; a recurring one has a start date, a recurrence and an optional end date. Dates may be in the future: an expected entry is a legitimate one. An entry may link to one of the viewer's assets or one of their liabilities, never both; a linked record that is not the viewer's, or that does not exist, is refused with the same message either way.",
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CashFlowEntryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "The entry was created",
+            "headers" : {
+              "Location" : {
+                "description" : "The new entry's URI, as /api/v1/cash-flow-entries/{entryId}.",
+                "style" : "simple",
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashFlowEntryResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A required field is missing, the amount is not positive or too precise, the category does not belong to the entry type, the recurrence or end date does not fit the timing, the end date precedes the effective date, a linked asset or liability is not the viewer's, or both links are sent together. Every problem is reported at once in the errors array. An unrecognised constant is a malformed-request instead, because the body cannot be parsed.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "category of the wrong entry type" : {
+                    "description" : "category of the wrong entry type",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/cash-flow-entries",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "category",
+                        "message" : "must belong to the entry type"
+                      } ]
+                    }
+                  },
+                  "a one-time entry carrying a recurrence and an end date" : {
+                    "description" : "a one-time entry carrying a recurrence and an end date",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/cash-flow-entries",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "recurrence",
+                        "message" : "must be omitted for a one-time entry"
+                      }, {
+                        "field" : "endDate",
+                        "message" : "must be omitted for a one-time entry"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/auth/refresh" : {
       "post" : {
         "tags" : [ "authentication-controller" ],
@@ -1237,7 +1718,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "List the signed-in user's assets",
         "description" : "Returns every asset the viewer owns, newest valuation date first and then by name, so the catalog's order is the server's rather than the database's incidental one. An empty catalog is an empty array and a 200, not a 404. Values are reported in each asset's own currency; converting a USD holding to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate.",
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "responses" : {
           "200" : {
             "description" : "The viewer's catalog, possibly empty",
@@ -1331,7 +1812,7 @@
         "tags" : [ "asset-controller" ],
         "summary" : "Add an asset to the catalog",
         "description" : "Creates an asset owned by the signed-in user, and the first record of its valuation history with the same value, currency, date and optional rate snapshot. All prices are manually entered; there is no market-price integration in MVP 1A. The valuation date must not be in the future and a purchase date must not be later than it, both judged as Vietnamese civil dates. A later value is recorded through POST /api/v1/assets/{assetId}/valuations, never by editing this one.",
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1455,7 +1936,7 @@
         "tags" : [ "asset-valuation-controller" ],
         "summary" : "List an asset's valuation history",
         "description" : "Returns every valuation ever recorded for the asset, newest first: latest effective date, and between two records on one date the later recorded. Exactly one record is marked current, and it is the one the asset's currentValue, currency and valuationDate are taken from. Values are in the asset's own currency with the rate the user applied; converting to VND is the client's. An asset always has at least one record, written when it was created.",
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -1870,7 +2351,7 @@
         "tags" : [ "asset-valuation-controller" ],
         "summary" : "Read one valuation record",
         "description" : "Returns the record when the signed-in user owns the asset and the record belongs to it. An asset of another user, or a record of any other asset, answers not-found with the same body a missing identifier produces.",
-        "operationId" : "read_4",
+        "operationId" : "read_5",
         "parameters" : [ {
           "name" : "assetId",
           "in" : "path",
@@ -2244,6 +2725,168 @@
             "type" : "string",
             "format" : "date-time",
             "description" : "When the server first stored this liability.",
+            "example" : "2026-11-14T10:42:11.503Z"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server last stored a change to it.",
+            "example" : "2026-11-14T10:42:11.503Z"
+          }
+        }
+      },
+      "CashFlowEntryRequest" : {
+        "type" : "object",
+        "description" : "Create or replace a cash-flow entry. The same body serves both.",
+        "properties" : {
+          "entryType" : {
+            "type" : "string",
+            "description" : "Whether the money comes in or goes out. Decides the sign; the amount is always positive.",
+            "enum" : [ "INCOME", "EXPENSE" ],
+            "example" : "INCOME"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "One of the seven income or nine expense categories. Must belong to the entry type given.",
+            "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ],
+            "example" : "SALARY"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The amount, in this entry's currency. Greater than zero.",
+            "example" : 4.5E7,
+            "exclusiveMinimum" : 0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the amount is expressed in. No conversion is stored; the client converts with the rate from the settings resource.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "timing" : {
+            "type" : "string",
+            "description" : "ONE_TIME or RECURRING. Decides whether recurrence and endDate may be present.",
+            "enum" : [ "ONE_TIME", "RECURRING" ],
+            "example" : "RECURRING"
+          },
+          "recurrence" : {
+            "type" : "string",
+            "description" : "How often a recurring entry repeats. Required when timing is RECURRING and must be omitted when it is ONE_TIME.",
+            "enum" : [ "MONTHLY", "QUARTERLY", "YEARLY" ],
+            "example" : "MONTHLY"
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date a one-time entry applies, or the first date of a recurring one. May be in the future.",
+            "example" : "2026-01-01"
+          },
+          "endDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The last date a recurring entry applies. Only for RECURRING; omit for open-ended. Must not be before effectiveDate.",
+            "example" : "2029-06-30"
+          },
+          "linkedAssetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "An asset of the signed-in user this entry refers to, such as the apartment a rent comes from. Omit to leave it unlinked, or to clear it on PUT.",
+            "example" : "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64"
+          },
+          "linkedLiabilityId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "A liability of the signed-in user this entry refers to, such as the mortgage an interest payment belongs to. Must not be sent together with linkedAssetId. Omit to leave it unlinked, or to clear it on PUT.",
+            "example" : "7d3e9a14-2c6b-4f81-a0d5-6b8e1f4c2a97"
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "Anything the user wants to remember about it. Omit to clear it on PUT.",
+            "example" : "Lương tháng",
+            "maxLength" : 2000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "amount", "category", "currency", "effectiveDate", "entryType", "timing" ]
+      },
+      "CashFlowEntryResponse" : {
+        "type" : "object",
+        "description" : "A cash-flow entry in the signed-in user's catalog.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The entry's identifier.",
+            "example" : "5c0e2b7a-91d4-4f3b-8a6e-2d7f1c9b4e30"
+          },
+          "entryType" : {
+            "type" : "string",
+            "description" : "INCOME or EXPENSE.",
+            "enum" : [ "INCOME", "EXPENSE" ],
+            "example" : "INCOME"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "One of the sixteen categories, always of the entry's type.",
+            "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ],
+            "example" : "SALARY"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The amount, in the entry's own currency. Always positive.",
+            "example" : 4.5E7
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency the amount is expressed in.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "timing" : {
+            "type" : "string",
+            "description" : "ONE_TIME or RECURRING.",
+            "enum" : [ "ONE_TIME", "RECURRING" ],
+            "example" : "RECURRING"
+          },
+          "recurrence" : {
+            "type" : "string",
+            "description" : "MONTHLY, QUARTERLY or YEARLY for a recurring entry. Null for a one-time one.",
+            "enum" : [ "MONTHLY", "QUARTERLY", "YEARLY" ],
+            "example" : "MONTHLY"
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date a one-time entry applies, or the first date of a recurring one.",
+            "example" : "2026-01-01"
+          },
+          "endDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The last date a recurring entry applies. Null when open-ended or one-time.",
+            "example" : "2029-06-30"
+          },
+          "linkedAssetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The user's asset this entry refers to. Null when unlinked.",
+            "example" : "a81d4f27-6c3e-4b19-8f55-0d2e7c9a3b64"
+          },
+          "linkedLiabilityId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The user's liability this entry refers to. Null when unlinked.",
+            "example" : "7d3e9a14-2c6b-4f81-a0d5-6b8e1f4c2a97"
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "The user's own note. Null when not recorded.",
+            "example" : "Lương tháng"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When the server first stored this entry.",
             "example" : "2026-11-14T10:42:11.503Z"
           },
           "updatedAt" : {
