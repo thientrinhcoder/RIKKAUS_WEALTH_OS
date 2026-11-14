@@ -78,6 +78,18 @@ public class Asset implements UserOwned {
 
     @Column private String notes;
 
+    @Column(length = 32)
+    private String symbol;
+
+    @Column(name = "cost_per_unit", precision = 19, scale = 6)
+    private BigDecimal costPerUnit;
+
+    @Column(name = "current_price_per_unit", precision = 19, scale = 6)
+    private BigDecimal currentPricePerUnit;
+
+    @Column(name = "interest_rate", precision = 7, scale = 4)
+    private BigDecimal interestRate;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -93,6 +105,7 @@ public class Asset implements UserOwned {
             AssetCategory category,
             AssetValuation valuation,
             AssetMetadata metadata,
+            AssetInstrumentDetails instrumentDetails,
             Instant now) {
         this.id = id;
         this.userId = userId;
@@ -101,7 +114,7 @@ public class Asset implements UserOwned {
         this.currency = valuation.currency();
         this.valuationDate = valuation.valuationDate();
         this.createdAt = now;
-        applyMetadata(metadata, now);
+        applyMetadata(metadata, instrumentDetails, now);
     }
 
     /**
@@ -113,8 +126,13 @@ public class Asset implements UserOwned {
      * the absence of a mutator is the first.
      */
     public static Asset create(
-            UUID ownerId, AssetCategory category, AssetValuation valuation, AssetMetadata metadata, Instant now) {
-        return new Asset(UUID.randomUUID(), ownerId, category, valuation, metadata, now);
+            UUID ownerId,
+            AssetCategory category,
+            AssetValuation valuation,
+            AssetMetadata metadata,
+            AssetInstrumentDetails instrumentDetails,
+            Instant now) {
+        return new Asset(UUID.randomUUID(), ownerId, category, valuation, metadata, instrumentDetails, now);
     }
 
     /**
@@ -124,11 +142,26 @@ public class Asset implements UserOwned {
      * instead of leaving the old one in place. That is the semantics {@code PUT} promises, and the
      * alternative would make "remove my note" impossible to express without a sentinel value.
      */
-    public void replaceMetadata(AssetMetadata metadata, Instant now) {
-        applyMetadata(metadata, now);
+    public void replaceMetadata(
+            AssetMetadata metadata, AssetInstrumentDetails instrumentDetails, Instant now) {
+        applyMetadata(metadata, instrumentDetails, now);
     }
 
-    private void applyMetadata(AssetMetadata metadata, Instant now) {
+    /**
+     * The one write path, used by creation and by an edit alike.
+     *
+     * <p>Both halves are applied here rather than in two methods, so there is no way to replace the
+     * metadata and leave stale instrument details behind. The instrument fields are a replacement for
+     * the same reason the optional common fields are: an omitted {@code symbol} clears the stored one,
+     * which is what {@code PUT} promises and the only way to express removing a ticker.
+     *
+     * <p>Whether the category accepts these four fields at all is decided before this is reached, in
+     * {@code AssetService}, with {@code assets_instrument_pricing_suits_the_category} and {@code
+     * assets_interest_rate_suits_the_category} in {@code V5__asset_instrument_details.sql} as the
+     * backstop for any caller that is not the API. This method stores what it is given.
+     */
+    private void applyMetadata(
+            AssetMetadata metadata, AssetInstrumentDetails instrumentDetails, Instant now) {
         this.name = metadata.name();
         this.liquidity = metadata.liquidity();
         this.purchaseValue = metadata.purchaseValue();
@@ -136,6 +169,10 @@ public class Asset implements UserOwned {
         this.quantity = metadata.quantity();
         this.institution = metadata.institution();
         this.notes = metadata.notes();
+        this.symbol = instrumentDetails.symbol();
+        this.costPerUnit = instrumentDetails.costPerUnit();
+        this.currentPricePerUnit = instrumentDetails.currentPricePerUnit();
+        this.interestRate = instrumentDetails.interestRate();
         this.updatedAt = now;
     }
 
@@ -190,6 +227,23 @@ public class Asset implements UserOwned {
 
     public String getNotes() {
         return notes;
+    }
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public BigDecimal getCostPerUnit() {
+        return costPerUnit;
+    }
+
+    public BigDecimal getCurrentPricePerUnit() {
+        return currentPricePerUnit;
+    }
+
+    /** Interest rate or expected yield, as a percent per year: {@code 6.2500} is 6.25%. */
+    public BigDecimal getInterestRate() {
+        return interestRate;
     }
 
     public Instant getCreatedAt() {

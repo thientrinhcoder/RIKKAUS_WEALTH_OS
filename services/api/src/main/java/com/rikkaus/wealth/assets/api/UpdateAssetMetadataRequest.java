@@ -2,6 +2,7 @@ package com.rikkaus.wealth.assets.api;
 
 import com.rikkaus.wealth.assets.domain.AssetLiquidity;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -25,7 +26,12 @@ import java.time.LocalDate;
  * documented in {@code docs/api-contract-conventions.md} so a client is not surprised by it.
  *
  * <p>This is a replacement, not a patch: an optional field omitted from the body is cleared. That is
- * what makes "remove my note" expressible without a sentinel value.
+ * what makes "remove my note" expressible without a sentinel value, and it holds for the four
+ * instrument fields as well as for the common optional ones.
+ *
+ * <p>The instrument fields are checked against the asset's <em>stored</em> category, because the
+ * category is not editable and this body does not carry one. An edit that sends a field the stored
+ * category refuses is a {@code validation-failed} naming that field.
  */
 @Schema(description = "Replace an asset's editable metadata. The valuation is not editable here.")
 public record UpdateAssetMetadataRequest(
@@ -65,4 +71,41 @@ public record UpdateAssetMetadataRequest(
                 String institution,
         @Schema(description = "Anything the user wants to remember. Omit to clear it.", example = "Đã chuyển sang kỳ hạn 6 tháng.")
                 @Size(max = 2000, message = "must be at most 2000 characters")
-                String notes) {}
+                String notes,
+        @Schema(
+                        description =
+                                "Ticker, ISIN or fund code, as the user types it. Nothing resolves it against a "
+                                        + "market. Omit to clear it. Accepted for LISTED_SECURITIES, BOND, INVESTMENT_FUND and "
+                                        + "OTHER_ASSET; any other category refuses it.",
+                        example = "VCB")
+                @Size(max = 32, message = "must be at most 32 characters")
+                String symbol,
+        @Schema(
+                        description =
+                                "What one unit cost, in this asset's own currency. Entered by the user and never "
+                                        + "multiplied by the quantity. Accepted for the same four categories as "
+                                        + "the symbol.",
+                        example = "21800.000000")
+                @DecimalMin(value = "0", message = "must not be negative")
+                @Digits(integer = 13, fraction = 6, message = "must have at most 13 integer digits and 6 decimals")
+                BigDecimal costPerUnit,
+        @Schema(
+                        description =
+                                "What one unit is worth now, in this asset's own currency. Entered by the user; "
+                                        + "currentValue is a separate field and is never derived from this one. "
+                                        + "Accepted for the same four categories as the symbol.",
+                        example = "24150.000000")
+                @DecimalMin(value = "0", message = "must not be negative")
+                @Digits(integer = 13, fraction = 6, message = "must have at most 13 integer digits and 6 decimals")
+                BigDecimal currentPricePerUnit,
+        @Schema(
+                        description =
+                                "Interest rate or expected yield as a percent per year, so 6.2500 is 6.25%. No "
+                                        + "interest is accrued and no yield projected from it. Accepted for BOND, "
+                                        + "TERM_DEPOSIT and OTHER_ASSET only: a listed security has no rate, and a "
+                                        + "fund's expected return belongs in the notes.",
+                        example = "6.2500")
+                @DecimalMin(value = "0", message = "must not be negative")
+                @DecimalMax(value = "100", message = "must be at most 100")
+                @Digits(integer = 3, fraction = 4, message = "must have at most 3 integer digits and 4 decimals")
+                BigDecimal interestRate) {}

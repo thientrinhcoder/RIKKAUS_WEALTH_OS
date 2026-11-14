@@ -23,6 +23,16 @@ import java.util.UUID;
  * a figure whose rate nobody could see, and the slice rule forbids this package from reading the rate
  * at all.
  *
+ * <p>The four instrument fields are {@code null} on an asset that does not record them, which is
+ * every asset in a category the accepted design shows no instrument section for and most assets in
+ * the categories it does. A {@code null} here is the absence of an answer, not a missing one, and the
+ * client renders only the fields that carry a value — <em>Trường trống không tạo lỗi và không tạo
+ * dòng rỗng.</em>
+ *
+ * <p>There is no computed figure among them. An asset reporting {@code quantity} of {@code 500} and a
+ * {@code currentPricePerUnit} of {@code 24150.000000} may report any {@code currentValue} at all: the
+ * value is what the user entered and the server neither checks nor derives the product.
+ *
  * <p>{@code createdAt} and {@code updatedAt} are the server's own timestamps and are deliberately
  * distinct from {@code valuationDate}, which is the date the <em>user</em> states the value was
  * accurate. The catalog's stale-valuation warning is driven by the user's date, not by the row's.
@@ -52,6 +62,22 @@ public record AssetResponse(
                 String institution,
         @Schema(description = "The user's own note. Null when not recorded.", example = "Tiền gửi dự phòng bằng USD.")
                 String notes,
+        @Schema(description = "Ticker, ISIN or fund code. Null when not recorded.", example = "VCB")
+                String symbol,
+        @Schema(description = "What one unit cost. Null when not recorded.", example = "21800.000000")
+                BigDecimal costPerUnit,
+        @Schema(
+                        description =
+                                "What one unit is worth now. Null when not recorded. currentValue is not derived "
+                                        + "from it.",
+                        example = "24150.000000")
+                BigDecimal currentPricePerUnit,
+        @Schema(
+                        description =
+                                "Interest rate or expected yield as a percent per year, so 6.2500 is 6.25%. Null "
+                                        + "when not recorded.",
+                        example = "6.2500")
+                BigDecimal interestRate,
         @Schema(description = "When the server first stored this asset.", example = "2026-09-12T02:42:11.503Z")
                 Instant createdAt,
         @Schema(description = "When the server last stored a change to it.", example = "2026-09-12T02:42:11.503Z")
@@ -71,6 +97,10 @@ public record AssetResponse(
                 asset.getQuantity(),
                 asset.getInstitution(),
                 asset.getNotes(),
+                asset.getSymbol(),
+                asset.getCostPerUnit(),
+                asset.getCurrentPricePerUnit(),
+                asset.getInterestRate(),
                 asset.getCreatedAt(),
                 asset.getUpdatedAt());
     }

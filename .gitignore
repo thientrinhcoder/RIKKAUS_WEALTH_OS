@@ -81,10 +81,13 @@ plans/**/*
 !plans/260927-2136-issue-42-identity-session-ownership/**
 !plans/261103-2231-GH-53-asset-catalog-common-crud/
 !plans/261103-2231-GH-53-asset-catalog-common-crud/**
+!plans/261110-0844-GH-56-type-specific-asset-details/
+!plans/261110-0844-GH-56-type-specific-asset-details/**
 !plans/reports/
 !plans/reports/pm-260927-issue-39-acceptance.md
 !plans/reports/pm-260927-2136-issue-42-acceptance.md
 !plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md
+!plans/reports/manual-verification-261110-0844-GH-56-type-specific-asset-details.md
 screenshots/*
 docs/screenshots/*
 logs.txt

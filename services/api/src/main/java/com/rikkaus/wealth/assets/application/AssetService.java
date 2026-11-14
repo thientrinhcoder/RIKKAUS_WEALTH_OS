@@ -2,6 +2,7 @@ package com.rikkaus.wealth.assets.application;
 
 import com.rikkaus.wealth.assets.domain.Asset;
 import com.rikkaus.wealth.assets.domain.AssetCategory;
+import com.rikkaus.wealth.assets.domain.AssetInstrumentDetails;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
 import com.rikkaus.wealth.assets.domain.AssetRepository;
 import com.rikkaus.wealth.assets.domain.AssetValuation;
@@ -86,11 +87,18 @@ public class AssetService {
      */
     @Transactional
     public Asset create(
-            UUID ownerId, AssetCategory category, AssetValuation valuation, AssetMetadata metadata) {
+            UUID ownerId,
+            AssetCategory category,
+            AssetValuation valuation,
+            AssetMetadata metadata,
+            AssetInstrumentDetails instrumentDetails) {
         AssetMetadata normalized = normalize(metadata);
-        rejectImpossibleDates(valuation.valuationDate(), normalized.purchaseDate());
+        AssetInstrumentDetails normalizedDetails = normalize(instrumentDetails);
+        rejectWhatTheAnnotationsCannotJudge(
+                category, valuation.valuationDate(), normalized.purchaseDate(), normalizedDetails);
         return assets.save(
-                Asset.create(ownerId, category, valuation, normalized, clock.instant()));
+                Asset.create(
+                        ownerId, category, valuation, normalized, normalizedDetails, clock.instant()));
     }
 
     /**
@@ -102,14 +110,23 @@ public class AssetService {
      * either.
      *
      * <p>The purchase date is re-checked against the asset's <em>stored</em> valuation date, because
-     * that is the one it has to precede and the edit cannot change it.
+     * that is the one it has to precede and the edit cannot change it. The instrument fields are
+     * checked against the asset's <em>stored</em> category for the same reason: the category is chosen
+     * once in the create flow and no edit carries one, so a request cannot move an asset into a
+     * category that would accept the field it is sending.
      */
     @Transactional
-    public Asset replaceMetadata(UUID ownerId, UUID assetId, AssetMetadata metadata) {
+    public Asset replaceMetadata(
+            UUID ownerId,
+            UUID assetId,
+            AssetMetadata metadata,
+            AssetInstrumentDetails instrumentDetails) {
         Asset asset = OwnershipGuard.requireOwned(assets.findById(assetId), ownerId);
         AssetMetadata normalized = normalize(metadata);
-        rejectImpossibleDates(asset.getValuationDate(), normalized.purchaseDate());
-        asset.replaceMetadata(normalized, clock.instant());
+        AssetInstrumentDetails normalizedDetails = normalize(instrumentDetails);
+        rejectWhatTheAnnotationsCannotJudge(
+                asset.getCategory(), asset.getValuationDate(), normalized.purchaseDate(), normalizedDetails);
+        asset.replaceMetadata(normalized, normalizedDetails, clock.instant());
         Asset saved = assets.save(asset);
         flushTreatingAVanishedRowAsNotFound();
         return saved;
@@ -164,34 +181,95 @@ public class AssetService {
     }
 
     /**
-     * Refuses a date the calendar cannot support.
+     * Refuses the three rules that cannot be a bean-validation annotation, in one response.
      *
-     * <p>These two rules cannot be bean-validation annotations. The first depends on the injected
-     * clock, and the second is a comparison between two fields that for an edit do not even arrive in
-     * the same request. They produce the same {@code errors} extension shape the identity and settings
-     * slices produce, so a client has one error body to parse.
+     * <p>None of them is expressible as an annotation. Whether a date is in the future depends on the
+     * injected clock. Whether a purchase date precedes a valuation date is a comparison between two
+     * fields that, for an edit, do not even arrive in the same request. Whether an instrument field
+     * suits the asset's category is a relationship between a field and the category, which for an
+     * edit is read from the stored row rather than from the body.
+     *
+     * <p>They are collected and thrown once rather than checked one at a time, so a request that got
+     * three things wrong is one response naming all three instead of three round trips. The resulting
+     * {@code errors} extension has the same shape the identity and settings slices produce, so a
+     * client has one error body to parse.
      */
-    private void rejectImpossibleDates(LocalDate valuationDate, LocalDate purchaseDate) {
-        LocalDate today = LocalDate.now(clock.withZone(ENTERED_DATE_ZONE));
+    private void rejectWhatTheAnnotationsCannotJudge(
+            AssetCategory category,
+            LocalDate valuationDate,
+            LocalDate purchaseDate,
+            AssetInstrumentDetails instrumentDetails) {
         List<Map<String, String>> errors = new ArrayList<>();
-        if (valuationDate.isAfter(today)) {
-            errors.add(Map.of("field", "valuationDate", "message", "must not be in the future"));
-        }
-        if (purchaseDate != null && purchaseDate.isAfter(today)) {
-            errors.add(Map.of("field", "purchaseDate", "message", "must not be in the future"));
-        }
-        // Only when neither is already rejected for being in the future. A request dated next year in
-        // both fields is one mistake, and reporting a third error about their order would describe a
-        // problem the user does not have.
-        if (errors.isEmpty() && purchaseDate != null && purchaseDate.isAfter(valuationDate)) {
-            errors.add(
-                    Map.of("field", "purchaseDate", "message", "must not be later than the valuation date"));
-        }
+        addDateProblems(errors, valuationDate, purchaseDate);
+        addCategoryApplicabilityProblems(errors, category, instrumentDetails);
         if (!errors.isEmpty()) {
             throw new ApiException(
                     ProblemType.VALIDATION_FAILED,
                     ProblemType.VALIDATION_FAILED.safeDetail(),
                     Map.of("errors", List.copyOf(errors)));
+        }
+    }
+
+    /** A date the calendar cannot support. */
+    private void addDateProblems(
+            List<Map<String, String>> errors, LocalDate valuationDate, LocalDate purchaseDate) {
+        LocalDate today = LocalDate.now(clock.withZone(ENTERED_DATE_ZONE));
+        boolean anyDateIsInTheFuture = false;
+        if (valuationDate.isAfter(today)) {
+            errors.add(Map.of("field", "valuationDate", "message", "must not be in the future"));
+            anyDateIsInTheFuture = true;
+        }
+        if (purchaseDate != null && purchaseDate.isAfter(today)) {
+            errors.add(Map.of("field", "purchaseDate", "message", "must not be in the future"));
+            anyDateIsInTheFuture = true;
+        }
+        // Only when neither is already rejected for being in the future. A request dated next year in
+        // both fields is one mistake, and reporting a third error about their order would describe a
+        // problem the user does not have. Judged on these two dates alone rather than on whether the
+        // error list is empty, so an unrelated instrument problem cannot suppress this one.
+        if (!anyDateIsInTheFuture && purchaseDate != null && purchaseDate.isAfter(valuationDate)) {
+            errors.add(
+                    Map.of("field", "purchaseDate", "message", "must not be later than the valuation date"));
+        }
+    }
+
+    /**
+     * An instrument field sent for a category the accepted design never shows it on.
+     *
+     * <p>The matrix lives on {@link AssetCategory} and is enforced again by
+     * {@code assets_instrument_pricing_suits_the_category} and
+     * {@code assets_interest_rate_suits_the_category} in {@code V5__asset_instrument_details.sql}.
+     * This is the half that names the field, which is the difference between a user being told
+     * <em>symbol must not be set for this asset category</em> and a 500 from a check constraint.
+     *
+     * <p>Refused rather than quietly dropped. The two are not equally honest: storing nothing and
+     * answering 201 would discard a value the client sent without saying so, and a frontend bug would
+     * then be invisible until somebody wondered where the ticker went.
+     *
+     * <p>It runs after the symbol has been cleaned, so a symbol submitted as {@code "   "} is a user
+     * who typed nothing into an optional field and not a user sending a field their category refuses.
+     *
+     * <p>Fields are reported in the order the contract lists them, so two requests that are wrong in
+     * the same way produce the same body.
+     */
+    private static void addCategoryApplicabilityProblems(
+            List<Map<String, String>> errors,
+            AssetCategory category,
+            AssetInstrumentDetails instrumentDetails) {
+        if (!category.allowsInstrumentPricing()) {
+            refuseIfPresent(errors, "symbol", instrumentDetails.symbol());
+            refuseIfPresent(errors, "costPerUnit", instrumentDetails.costPerUnit());
+            refuseIfPresent(errors, "currentPricePerUnit", instrumentDetails.currentPricePerUnit());
+        }
+        if (!category.allowsRate()) {
+            refuseIfPresent(errors, "interestRate", instrumentDetails.interestRate());
+        }
+    }
+
+    private static void refuseIfPresent(
+            List<Map<String, String>> errors, String field, Object value) {
+        if (value != null) {
+            errors.add(Map.of("field", field, "message", "must not be set for this asset category"));
         }
     }
 
@@ -224,6 +302,28 @@ public class AssetService {
                 metadata.quantity(),
                 cleaned(metadata.institution(), "institution"),
                 cleaned(metadata.notes(), "notes"));
+    }
+
+    /**
+     * Cleans the one free-text instrument field.
+     *
+     * <p>{@code symbol} goes through the same {@link #cleaned} helper as the institution and the
+     * notes, for the same two reasons: a value of only blank space is an optional field the user left
+     * alone rather than a ticker made of spaces, and a null character cannot be stored in a
+     * PostgreSQL {@code text} column at all and would otherwise reach the client as a 500.
+     *
+     * <p>The three numeric fields are not touched. Their bounds are annotations on the request and
+     * check constraints on the table, and there is nothing about a {@link java.math.BigDecimal} to
+     * clean: a scale the column cannot hold is refused by {@code @Digits} before it arrives here,
+     * never rounded, because rounding a figure the user typed would store something other than what
+     * they said.
+     */
+    private static AssetInstrumentDetails normalize(AssetInstrumentDetails instrumentDetails) {
+        return new AssetInstrumentDetails(
+                cleaned(instrumentDetails.symbol(), "symbol"),
+                instrumentDetails.costPerUnit(),
+                instrumentDetails.currentPricePerUnit(),
+                instrumentDetails.interestRate());
     }
 
     /** The name with surrounding blank space removed, refusing one that was nothing else. */
