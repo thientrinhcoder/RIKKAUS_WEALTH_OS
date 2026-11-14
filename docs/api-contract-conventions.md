@@ -789,6 +789,116 @@ entry to VND is the client's, with the rate from `GET /api/v1/settings/exchange-
 are issue #77, expanding a recurring entry into its months is issue #74, the forecast is issue #80,
 and search or filter parameters are issue #101. `GET` on the collection takes no query parameter.
 
+## Financial goals — implemented
+
+A domain resource. Five routes under `/api/v1/goals` and one read-only route for the
+templates, all under `bearerAuth`, all owner-scoped by the token.
+
+| Route | Body | Success |
+|---|---|---|
+| `GET /api/v1/goals` | — | 200, the viewer's goals as an array, nearest `targetDate` first and then by name |
+| `POST /api/v1/goals` | the four required fields, plus any of the three optional ones | 201, the goal, with `Location` |
+| `GET /api/v1/goals/{goalId}` | — | 200, the goal |
+| `PUT /api/v1/goals/{goalId}` | the same seven fields | 200, the goal as it now stands |
+| `DELETE /api/v1/goals/{goalId}` | — | 204 |
+| `GET /api/v1/goal-templates` | — | 200, the seven templates with their suggested defaults |
+
+### One model, seven templates
+
+`EMERGENCY_FUND`, `HOME_PURCHASE`, `EDUCATION`, `RETIREMENT`, `NET_WORTH_GROWTH`, `DEBT_REDUCTION`,
+`OTHER_GOAL`. The same seven are a check constraint in `V9__goals.sql`.
+
+A template is nothing but a value of `type` plus the defaults the accepted design for issue #84
+suggests for a new goal of that type. There is no template table and no per-template field. The
+defaults are published so the client does not hard-code product numbers:
+
+```json
+{"type":"EMERGENCY_FUND","defaultExpectedAnnualReturnPercent":3.00,"defaultHorizonMonths":18,"amountPrefill":"TARGET_FROM_SIX_MONTHS_OF_EXPENSES"}
+```
+
+`amountPrefill` is one of `NONE`, `TARGET_FROM_SIX_MONTHS_OF_EXPENSES`,
+`ALLOCATED_FROM_CURRENT_NET_WORTH`, `TARGET_FROM_TOTAL_LIABILITIES`. It **names** the figure the form
+should suggest and from what; it never carries the figure. The goals slice may not read the cash-flow,
+asset or liability slices, and the client already holds those numbers. The horizon is in months from
+today, for the client to turn into a `targetDate`. Every default is a suggestion the user may change.
+No Vietnamese label is published; the client maps each constant to the accepted design's copy.
+
+### Fields
+
+| | |
+|---|---|
+| Required | `name` (≤120 chars), `type`, `targetAmount`, `targetDate` |
+| Optional | `currentAllocatedAmount`, `plannedMonthlyContribution`, `expectedAnnualReturnPercent` |
+| Read-only | `currency`, always `VND`; `createdAt`, `updatedAt` |
+| Exact decimals | the three amounts are `NUMERIC(19, 2)`; the return is `NUMERIC(5, 2)`. The `@Digits` bounds in `GoalRequest` mirror those columns, so an over-precise value is a named `validation-failed` rather than a 500 from PostgreSQL |
+
+Validation, each refused as `validation-failed` with the field named:
+
+- `targetAmount` must be greater than zero.
+- `currentAllocatedAmount` must not be negative and **must not exceed `targetAmount`**, the accepted
+  design's rule. Equal to the target is accepted. **Omitted, it is stored as `0.00`**, not `null`: a goal
+  nothing has been set aside for has zero allocated, and the column is `NOT NULL` so issue #89's
+  completion percentage never meets a null.
+- `plannedMonthlyContribution` must not be negative. Omitted, it is `null`, and that is deliberately
+  **not** the same as `0.00`: the accepted design renders a goal with no stated contribution as "status
+  unavailable" and a goal with a stated contribution of zero as a goal that is behind.
+- `expectedAnnualReturnPercent` is a percent from `0.00` to `30.00`, the design's bound, with at most two
+  decimals. Omitted, it is `null`. It is the user's own assumption and is published as such; nothing in
+  the API treats it as a forecast.
+- `targetDate` must be **after today** — strictly, as the design says "sau ngày tham chiếu" — judged in
+  `Asia/Ho_Chi_Minh` like every other user-entered date. On `PUT`, the rule applies only to a date that
+  **differs from the stored one**. Keeping the stored date is always allowed, so a goal whose date has
+  passed can still be edited; the issue ticket's "not in the past" wording was resolved towards the
+  design's stricter form.
+- A `name` that is blank once every Unicode space separator is removed, or that contains `\u0000`, is
+  refused exactly as the asset catalog refuses it.
+
+### Everything is editable, the type included
+
+`PUT` replaces all seven fields. Unlike an asset's category, a goal's `type` **can be changed**: no
+stored field depends on which template was chosen, so freezing it would protect nothing and would force
+a user who picked the wrong template to delete and start over. If the Product Owner wants it frozen,
+that is one line in `GoalRequest` and one in `Goal`.
+
+`PUT` is a replacement, not a patch. An optional field omitted from the body is cleared — the allocated
+amount to `0.00`, the other two to `null`. A `currency` or any computed member sent anyway is an unknown
+property Jackson drops; the response still says `"currency":"VND"`.
+
+### No projection, no conversion
+
+The response carries what the user entered and nothing derived from it. Completion percentage,
+remaining amount, remaining months, required monthly contribution and the on-track status are issue
+#89's and have no route yet. Publishing them here would fix a projection method in this contract before
+that task documents one. Every amount is VND; there is no exchange rate anywhere in this resource.
+
+### Errors specific to this resource
+
+- An unrecognised `type`, or a date that is not ISO 8601, is **`malformed-request`, not
+  `validation-failed`**, with no `errors` array. Jackson cannot construct the request record at all.
+- Another user's goal identifier answers `not-found`, for reads and writes, with a body that differs from
+  a genuinely missing identifier's only in `instance` and `correlationId`.
+- A second `DELETE` answers `not-found`. Overlapping deletes give one `204` and `not-found` to the rest,
+  never a 500; the slice flushes inside the transaction as the asset slice does.
+- There is no row version and no edit-conflict detection; two overlapping `PUT`s both succeed and the
+  last writer wins.
+- `GET` on the collection takes no query parameter. Search and filter are issue #101's; there is no
+  pagination.
+
+### Verified by hand, not by the suite
+
+No automated test exercises any of these six routes. The resource shipped on Product Owner direction
+with scenario-first manual verification only:
+[`docs/manual-test-guide-goals.md`](manual-test-guide-goals.md) is the reproducible procedure and
+`plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md` is what it
+returned on the implementing run — 70 cases through HTTP and 11 straight into PostgreSQL.
+
+One contract side effect worth knowing: springdoc derives `operationId` from the handler method name
+and suffixes collisions in an order it does not document. Adding the goals controller, whose methods are
+also `list`, `create`, `read`, `replace` and `delete`, shifted the suffixes of the asset, valuation and
+cash-flow operations by one (`list_2` became `list_3`, `read_4` became `read_5`, and so on) in
+`openapi.json`. No client generates code from the contract, so nothing consumes those identifiers; a
+future generator should set explicit `operationId`s rather than rely on the derived ones.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -798,8 +908,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - Pagination conventions, rate limiting and idempotency keys. The asset catalog returns an unpaginated
   array; a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has
   agreed is worse than returning all of them.
-- **The remaining domain resources.** Assets, liabilities and cash-flow entries are described above.
-  Goals and insights are still later work.
+- **The remaining domain resources.** Assets, liabilities, cash-flow entries and goals are described
+  above. Insights are still later work.
 - **Recurring-entry expansion, monthly totals and the forecast.** Issues #74, #77 and #80. A recurring
   cash-flow entry is one row and the API never says which months it falls in.
 - **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and
@@ -812,7 +922,11 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   record publishes the value and the rate the user applied; the arithmetic and the staleness rule are
   the client's, per the accepted designs for issues #48 and #57.
 - **Hardened deletion.** `DELETE` removes the row. There is no undo, no soft delete, no retention
-  window and no handling of records that will later reference an asset. Issue #102 owns all of it.
+  window and no handling of records that will later reference an asset. Issue #102 owns all of it for
+  assets and issue #104 for goals.
+- **Goal projections.** No completion percentage, remaining amount, remaining time, required monthly
+  contribution or status is computed or published anywhere. Issue #89 owns the projection method and
+  its documentation; the goals resource is shaped so it can add them without reopening this contract.
 - **Search, filter and sort over the catalog.** Issue #99's.
 - Account deletion, a second identity provider, household or shared access, and roles.
 - **Exchange-rate history.** Declaring a rate overwrites the previous one. There is no change log, no
@@ -820,12 +934,13 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile, exchange-rate, asset, valuation and cash-flow routes.** All five
-  resources shipped on Product Owner direction with manual verification only, recorded in
+- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow and goal routes.** All
+  six resources shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
   `plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md` and
-  `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`. Every other route
+  `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md` and
+  `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and

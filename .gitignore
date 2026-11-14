@@ -95,6 +95,9 @@ plans/**/*
 !plans/261114-1735-GH-71-cash-flow-entry-catalog-crud/
 !plans/261114-1735-GH-71-cash-flow-entry-catalog-crud/**
 !plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md
+!plans/261114-1740-GH-86-generic-financial-goals-templates/
+!plans/261114-1740-GH-86-generic-financial-goals-templates/**
+!plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md
 screenshots/*
 docs/screenshots/*
 logs.txt
