@@ -4,29 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rikkaus Wealth OS | Chi tiết tài sản theo loại</title>
+  <meta name="theme-color" content="#0A2240">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas: #F7F5EF;
+      --canvas:#F6F4EF;
       --surface: #FFFFFF;
-      --subtle: #EFEBE2;
-      --ink: #17212B;
-      --muted: #52606D;
-      --border: #D7D2C7;
-      --control: #8B877E;
-      --navy: #182B45;
-      --primary: #0F5C5A;
-      --primary-pressed: #0B4746;
-      --primary-soft: #D9EFEC;
-      --gold: #A87428;
-      --success: #1E6A45;
+      --subtle:#F1EEE7;
+      --ink:#121A26;
+      --muted:#5A6472;
+      --border:#DDD8CD;
+      --control:#8C909A;
+      --navy:#0A2240;
+      --primary:#0F2E57;
+      --primary-pressed:#0A2240;
+      --primary-soft:#E8EDF4;
+      --gold:#8A6A3F;
+      --success:#15803D;
       --warning: #8A5A00;
-      --error: #B42318;
-      --info: #2458A6;
-      --focus: #147D79;
-      --scrim: rgba(23, 33, 43, .56);
-      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
-      --display: "Noto Serif Display", Georgia, serif;
+      --error:#A6192E;
+      --info:#1F4E8C;
+      --focus:#1F4E8C;
+      --scrim:rgba(10,34,64,.62);
+      --font:"Inter","Segoe UI",system-ui,sans-serif;
+      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
       --s1: .25rem;
       --s2: .5rem;
       --s3: .75rem;
@@ -34,8 +38,8 @@
       --s6: 1.5rem;
       --s8: 2rem;
       --s12: 3rem;
-      --r-input: .625rem;
-      --r-card: .875rem;
+      --r-input:2px;
+      --r-card:2px;
       --r-dialog: 1.25rem;
       --line: 1px solid var(--border);
       --control-line: 1px solid var(--control);
@@ -43,8 +47,7 @@
       --ease: cubic-bezier(.25, 1, .5, 1);
       --motion: 200ms;
       --content: 78rem;
-      --reading: 45rem;
-    }
+      --reading: 45rem;--rule:#121A26;--gold-light:#C9A66B;}
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -217,7 +220,93 @@
       html { scroll-behavior: auto; }
       *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
     }
-  </style>
+  
+    /* ===== Private banking layer (đồng bộ các review #36–#90) ===== */
+    body{-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    .masthead,.hero{position:relative;isolation:isolate}
+    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:#0A2240;z-index:-1}
+    .masthead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;min-height:64px;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
+    .mast-brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
+    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
+    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A66B}
+    .hero{padding-top:4.5rem;padding-bottom:3rem;border-bottom:0 !important;color:#FFFFFF}
+    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:#C9A66B}
+    .hero h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em}
+    .hero p,.hero .meta{color:rgba(255,255,255,.76)}
+    .hero .kicker,.hero > div > .meta:first-child,.hero .eyebrow{color:#C9A66B;font-size:.6875rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+    .hero .notice,.hero-note{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.18);border-left:2px solid #C9A66B;border-radius:0;color:rgba(255,255,255,.8)}
+    .hero .notice strong,.hero-note strong{color:#FFFFFF;font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase}
+    h2{font-family:var(--display);font-weight:400;color:#0A2240;letter-spacing:-.01em}
+    h3{font-family:var(--display);font-weight:400;color:#0A2240}
+    .section-head{padding-bottom:1rem;border-bottom:1px solid #121A26}
+    .section-mark,.section-no{display:flex;align-items:center;gap:.75rem;color:#8A6A3F;font-size:.6875rem;font-weight:600;letter-spacing:.18em}
+    .section-mark::after,.section-no::after{content:"";width:2.5rem;height:1px;background:#8A6A3F}
+    .card{border-radius:0;border-top:2px solid #0A2240}
+    .callout{border-radius:0;border-left:2px solid #8A6A3F}
+    button{border-radius:2px;letter-spacing:.06em}
+    button:hover{transform:none}button:active{transform:none}
+    .primary{background:#0F2E57;border-color:#0F2E57;color:#FFFFFF}.primary:hover{background:#0A2240}
+    .tonal{background:transparent;border-color:#0F2E57;color:#0F2E57}
+    .switches,.segments,.toolbar{gap:0}
+    .switches button,.toolbar button{border-radius:0;margin:0 -1px -1px 0}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"],.toolbar button[aria-pressed="true"]{background:#0F2E57;border-color:#0F2E57;color:#FFFFFF}
+    th{background:transparent !important;font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-top:1px solid #121A26;border-bottom:1px solid #121A26}
+    caption{font-family:var(--display);color:#0A2240}
+    .stage,.device-wrap{border-radius:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),#F1EEE7}
+    .frame,.device{border-radius:6px;border:1px solid #C9CDD4;box-shadow:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08)}
+    .topbar{background:#0A2240 !important;border-bottom:2px solid #C9A66B !important;color:#FFFFFF}
+    .wordmark{font:500 1rem/1 var(--display) !important;letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF !important}
+    .avatar{background:transparent;border:1px solid rgba(255,255,255,.5);color:#FFFFFF;border-radius:50%}
+    .nav-btn,.nav-button{border-radius:0}
+    .nav-btn.active,.nav-button.active{background:#E8EDF4 !important;color:#0A2240 !important;box-shadow:inset 0 2px 0 #0A2240}
+    .tablet .nav-btn.active,.desktop .nav-btn.active,.tablet .nav-button.active,.desktop .nav-button.active{box-shadow:inset 2px 0 0 #0A2240}
+    input,select,textarea{border:0 !important;border-bottom:1px solid #8C909A !important;border-radius:0 !important;box-shadow:inset 0 0 0 1px #DDD8CD}
+    input:focus,select:focus,textarea:focus{border-bottom-color:#0F2E57 !important;box-shadow:inset 0 0 0 1px #0F2E57}
+    input[type=checkbox],input[type=radio]{box-shadow:none;accent-color:#0A2240}
+    .status{font-size:.6875rem;letter-spacing:.06em;font-weight:600}
+    dialog{border-radius:4px;border-top:3px solid #0A2240}
+    dialog::backdrop{backdrop-filter:blur(2px)}
+    .toast{border-radius:2px;border-left:3px solid #C9A66B}
+    .skeleton,.skeleton span{border-radius:0}
+    footer{border-top:1px solid #121A26}
+    @media(max-width:720px){.mast-sub{display:none}}
+
+    .instrument-section::before{width:1px;background:#8A6A3F}
+    .instrument-section::after{border-color:#8A6A3F;border-width:1.5px}
+    .specimen-sheet{border-top:2px solid #0A2240;box-shadow:0 1px 2px rgba(10,34,64,.05)}
+    .specimen-sheet header h3,.specimen-sheet header strong{font-family:var(--display);font-weight:400;color:#0A2240}
+    .specimen-list button{border-radius:0}
+    .specimen-list button[aria-pressed="true"]{background:#0F2E57;border-color:#0F2E57;color:#FFFFFF}
+    .detail-ledger{border-top:1px solid #121A26}
+    .detail-row dt{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase}
+    .detail-row dd{font-variant-numeric:tabular-nums}
+    .manual-note{border-radius:0;border-left:2px solid #8A6A3F;background:#FBF6EC}
+    .manual-note strong{color:#0A2240}
+    .scope-ledger{border-top:1px solid #121A26}
+    .scope-row strong{font-family:var(--display);font-weight:400;font-size:1.0625rem}
+    .boundary{border-radius:0;border-left:2px solid #8A6A3F}
+    .notice{border-radius:0;border-left:2px solid #0A2240;background:#E8EDF4}
+    .notice strong{color:#0A2240}
+    .form-group > header{border-bottom:1px solid #121A26}
+    .form-group > header h3{font-size:1.125rem}
+    .field label,legend{font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5A6472}
+    details{border-radius:0;border-top:2px solid #0A2240}
+    summary{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#0A2240}
+    .status{padding:3px 8px;border:1px solid}
+    .status::before{width:.5rem;height:.5rem;border:0;background:currentColor}
+    .status.success{background:#E3F1E8;border-color:#9FD0B1;color:#14532D}
+    .status.warning{background:#FBEFD9;border-color:#E8C98A;color:#7A4E00}
+    .status.error{background:#F8E1E4;border-color:#E3A3AD;color:#7F1424}
+    .status.info{background:#E8EDF4;border-color:#B9C4D4;color:#0A2240}
+    .yes{color:#15803D}.no{color:#A6192E}
+    .sticky-actions{border-top:1px solid #121A26}
+    .decision label:has(input:checked){border-color:#0A2240;box-shadow:inset 3px 0 0 #0A2240;background:#E8EDF4}
+
+    /* Ô chọn thanh khoản: vòng tròn nhỏ gọn */
+    input[type=radio],input[type=checkbox]{width:18px !important;height:18px !important;min-height:0 !important;padding:0 !important;margin:0;flex:none;box-shadow:none !important;border:0 !important;vertical-align:middle}
+    fieldset .toolbar label{display:inline-flex;align-items:center;gap:8px;min-height:40px}
+</style>
 </head>
 <body>
   <a class="skip" href="#main">Bỏ qua đến nội dung chính</a>
@@ -231,6 +320,7 @@
   </svg>
 
   <div class="page">
+    <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #54 · Chi tiết theo loại tài sản</span></div>
     <header class="hero">
       <p class="meta">Issue #54 | Hiện vật thiết kế | 14/09/2026</p>
       <h1>Chi tiết chỉ khi hữu ích</h1>

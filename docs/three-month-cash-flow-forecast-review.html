@@ -3,24 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#F7F5EF">
+  <meta name="theme-color" content="#0A2240">
   <title>Rikkaus Wealth OS | Three-month cash-flow forecast review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
-      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
-      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
-      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
-      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
-      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
-      --display:"Noto Serif Display",Georgia,serif;
+      --canvas:#F6F4EF; --surface:#FFFFFF; --surface-subtle:#F1EEE7;
+      --ink:#121A26; --ink-secondary:#5A6472; --border:#DDD8CD; --rule:#121A26; --control:#8C909A;
+      --navy:#0A2240; --primary:#0F2E57; --primary-pressed:#0A2240;
+      --primary-container:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D;
+      --warning:#8A5A00; --error:#A6192E; --info:#1F4E8C; --focus:#1F4E8C;
+      --scrim:rgba(10,34,64,.62); --font:"Inter","Segoe UI",system-ui,sans-serif;
+      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
       --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
-      --s8:2rem; --s12:3rem; --s16:4rem;
-      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --s8:2rem; --s12:3rem; --s16:4.5rem;
+      --r-input:2px; --r-card:2px; --r-sheet:4px;
       --line:1px solid var(--border); --control-line:1px solid var(--control);
-      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
-      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+      --raised:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --modal:0 24px 48px rgba(10,34,64,.28);
+      --motion:180ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth}
     body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
@@ -196,11 +199,172 @@
       *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
       html{scroll-behavior:auto}
     }
+    /* ===== Private banking layer (đồng bộ #36, #43, #48, #51, #57, #60, #66, #69, #72, #75, #81, #84, #90) ===== */
+    body{font:400 .9375rem/1.6 var(--font);-webkit-font-smoothing:antialiased}
+    button{border-color:var(--primary);color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
+    button:hover{transform:none;background:var(--primary-container)}button:active{transform:none}
+    button:disabled{border-color:var(--control);color:var(--ink-secondary);opacity:.5}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus)}
+    .primary{color:#FFFFFF}.primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
+    .tonal{background:transparent;border-color:var(--primary)}.tonal:hover{background:var(--primary-container)}
+    .danger{background:var(--surface)}.danger:hover{background:#FBEDEF}
+    .text-btn{border-color:transparent;padding-inline:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}.text-btn:hover{background:transparent;color:var(--navy)}
+    .page{padding:0 var(--s4) var(--s4)}
+    .masthead,.hero{position:relative;isolation:isolate}
+    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
+    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:4rem;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
+    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
+    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
+    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
+    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
+    .hero{padding:var(--s16) 0 var(--s12);border-bottom:0;color:#FFFFFF}
+    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:var(--gold-light)}
+    h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em}
+    .hero-copy{gap:var(--s6)}
+    .hero .meta{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65;max-width:40rem}
+    .hero .kicker{color:var(--gold-light)}
+    .hero-note{padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);border-radius:0;background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font-size:.875rem}
+    .hero-note strong{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF}
+    h2{font:400 1.75rem/1.25 var(--display);letter-spacing:-.01em;color:var(--navy)}
+    h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
+    .kicker{color:var(--gold);font-size:.6875rem;letter-spacing:.18em}
+    main > section{padding:var(--s16) 0}
+    main > section:last-of-type{border-bottom:0}
+    .section-head{margin-bottom:var(--s8);padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
+    .section-head > div{display:grid;gap:var(--s2)}
+    .section-mark{display:flex;align-items:center;gap:var(--s3);font-size:.6875rem;letter-spacing:.18em}
+    .section-mark::after{content:"";width:2.5rem;height:1px;background:var(--gold)}
+    .card{padding:var(--s6);border-top:2px solid var(--navy)}
+    .callout{padding:var(--s6);border:var(--line);border-left:2px solid var(--gold)}
+    .status{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase}
+    .status::before{width:.5rem;height:.5rem}
+    .switches{gap:0}
+    .switches button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--ink-secondary);min-width:3.25rem}
+    .switches button:hover{color:var(--primary);background:var(--surface)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{position:relative;z-index:1;color:#FFFFFF}
+    .flow{gap:0;border:var(--line);background:var(--surface);counter-reset:step}
+    .flow div{counter-increment:step;border-right:var(--line);border-top:2px solid var(--navy);display:grid;gap:var(--s1);align-content:start}
+    .flow div:last-child{border-right:0}
+    .flow div::before{content:counter(step,decimal-leading-zero);font:400 1.5rem/1 var(--display);color:var(--gold)}
+    .tokens{gap:0;border:var(--line);background:var(--surface)}
+    .token{border:0;border-right:var(--line);border-bottom:var(--line);border-radius:0}
+    .swatch{border-radius:0}
+    table{font-size:.875rem}
+    caption{font:400 1.125rem/1.3 var(--display);color:var(--navy);padding-bottom:var(--s3)}
+    th{font-size:.6875rem;font-weight:600;letter-spacing:.12em;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);white-space:nowrap}
+    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+    tbody tr:hover td{background:rgba(232,237,244,.45)}
+    .device-wrap{padding:var(--s8) var(--s4);border:var(--line);border-radius:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--surface-subtle)}
+    .device{border:1px solid #C9CDD4;border-radius:6px;box-shadow:var(--raised)}
+    .topbar{height:3.75rem;background:var(--navy);border-bottom:2px solid var(--gold-light)}
+    .wordmark{font:500 1rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
+    .avatar{width:40px;min-height:40px;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}.avatar:hover{background:rgba(255,255,255,.1)}
+    .nav-btn{background:transparent;border-top:2px solid transparent;font-size:.5625rem;letter-spacing:.08em}
+    .nav-btn:hover{background:var(--surface-subtle)}
+    .nav-btn.active{color:var(--navy);border-top-color:var(--navy)}
+    .ico{stroke-width:1.5}
+    .product-main{padding:var(--s6) var(--s4) 2rem}
+    .view h2{font-size:1.625rem}
+    .view .card,.view .callout{padding:var(--s4)}
+    .screen-head{padding-bottom:var(--s3);border-bottom:var(--line)}
+    input,select,textarea{border:0;border-bottom:1px solid var(--control);border-radius:0;box-shadow:inset 0 0 0 1px var(--border)}
+    input[type=checkbox],input[type=radio]{box-shadow:none;accent-color:var(--navy)}
+    .summary-box{border-left:2px solid var(--navy)}
+    .summary-box strong{color:var(--navy);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase}
+    .tag{border-radius:1px;font-size:.625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--surface)}
+    .tag.brand{color:var(--navy);border-color:#B9C4D4;background:var(--primary-container)}
+    .facts{gap:0}.fact{padding:var(--s2) 0;font-size:.875rem}
+    .fact dt{font-size:.75rem;letter-spacing:.04em}
+    .skeleton span{border-radius:0}
+    .period-bar{border-radius:0;border:0;border-top:2px solid var(--navy);border-bottom:var(--line);padding:var(--s3) 0;background:transparent}
+    .kpi-grid{gap:0;border-top:1px solid var(--rule)}
+    .kpi{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s2);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
+    button.kpi:hover{background:var(--surface-subtle);border-color:var(--border)}
+    .kpi.lead{border-left:0;box-shadow:inset 3px 0 0 var(--navy)}
+    .kpi-name{color:var(--navy)}
+    .kpi-value{font:300 2rem/1.1 var(--display);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
+    .kpi-value .unit{font:500 .875rem/1 var(--font);margin-left:.35rem}
+    .kpi-value.na{font:600 1rem/1.3 var(--font)}
+    .na-note{border-radius:0;border:1px dashed var(--control);background:var(--surface)}
+    .group-title{font:400 1.125rem/1.3 var(--display);letter-spacing:0;text-transform:none;color:var(--navy);padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
+    .group{gap:0}
+    .insight{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s3);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
+    button.insight:hover{background:var(--surface-subtle);border-color:var(--border)}
+    .insight.fired{border-left:0;box-shadow:inset 3px 0 0 #C98A16}
+    .insight.clear{border-left:0;box-shadow:inset 3px 0 0 var(--success)}
+    .insight.unknown{border-left:0;background:repeating-linear-gradient(180deg,var(--control) 0 4px,transparent 4px 8px) left/3px 100% no-repeat,var(--surface)}
+    .insight-title{color:var(--navy)}
+    .anatomy{gap:0;border-top:1px solid var(--rule)}
+    .anatomy-row{padding:var(--s3) 0;border-bottom:var(--line)}
+    .anatomy-row dt{font-size:.625rem;letter-spacing:.14em;color:var(--gold)}
+    .record-row{border:0;border-bottom:var(--line);border-radius:0;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
+    .record-row:hover{background:var(--surface-subtle);border-color:var(--border)}
+    .formula{border-radius:0;border-left:2px solid var(--navy)}
+    .check-row{border-bottom:var(--line);font-size:.875rem}
+    .review-list{gap:0;border-top:var(--line)}
+    .review-row{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s3) 0}
+    dialog{border-top:3px solid var(--navy);padding:var(--s8) var(--s6) var(--s6)}
+    dialog::backdrop{backdrop-filter:blur(2px)}
+    .dialog-actions{padding-top:var(--s4);border-top:var(--line)}
+    .toast{border-radius:2px;border-left:3px solid var(--gold-light)}
+    footer{border-top:1px solid var(--rule);font-size:.8125rem}
+    @container (min-width:44rem){
+      .kpi-grid{column-gap:var(--s4)}
+      .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
+      .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
+    }
+    @container (min-width:60rem){.nav-btn{font-size:.6875rem}}
+    @media (max-width:60rem){main > section{padding:var(--s12) 0}.mast-sub{display:none}}
+
+    .hero-note p{color:rgba(255,255,255,.78)}
+    .device[data-mode="tablet"] .nav-btn,.device[data-mode="desktop"] .nav-btn,.device[data-mode="wide"] .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
+    .device[data-mode="tablet"] .nav-btn.active,.device[data-mode="desktop"] .nav-btn.active,.device[data-mode="wide"] .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
+    /* ===== Dự báo: tín hiệu số dư thấp nhất, biểu đồ, tháng, nguồn ===== */
+    .signal{border-radius:0;border:1px solid var(--border);border-top:3px solid var(--control);border-left-width:1px;box-shadow:0 1px 2px rgba(10,34,64,.05)}
+    .signal.ok{border-top-color:#15803D;background:linear-gradient(#F2F9F4,#F2F9F4) top/100% 3.25rem no-repeat,var(--surface)}
+    .signal.warn{border-top-color:#C98A16;background:linear-gradient(#FDF7EC,#FDF7EC) top/100% 3.25rem no-repeat,var(--surface)}
+    .signal.bad{border-top-color:#B3263A;background:linear-gradient(#FCF1F3,#FCF1F3) top/100% 3.25rem no-repeat,var(--surface)}
+    .signal .status{justify-self:end;padding:2px 8px;font-size:.625rem;border:1px solid;background:var(--surface)}
+    .status.ok{border-color:#9FD0B1;color:#14532D}.status.warn{border-color:#E8C98A;color:#7A4E00}.status.bad{border-color:#E3A3AD;color:#7F1424}.status.info{border-color:#B9C4D4;color:var(--navy)}
+    .signal-amount{font:300 2.25rem/1.15 var(--display);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
+    .signal-amount.bad{color:#A6192E}
+    #gauge-track{display:none}
+    .scmp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px var(--s2);align-items:center;font-size:.75rem}
+    .scmp .c-l{color:var(--ink-secondary);white-space:nowrap}
+    .scmp .c-v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .scmp .c-bar{display:block;height:14px}.scmp .c-bar span{display:block;height:100%}
+    .scmp .you.ok{background:#15803D}.scmp .you.warn{background:#C98A16}.scmp .you.bad{background:#B3263A}
+    .scmp .ref{background:#FFFFFF;border:1.5px dashed #0F2E57}
+    .scmp .neg-note{color:#A6192E;font-weight:600}
+    .chart-card{border-radius:0;border-top:2px solid var(--navy)}
+    .chart .line{stroke:#0F2E57}
+    .chart .area{fill:#E8EDF4;opacity:.7}
+    .chart .pt{stroke:#0F2E57}
+    .chart .pt.low{fill:#C98A16;stroke:#C98A16}
+    .chart .threshold{stroke:#C98A16}
+    .chart .zero{stroke:#A6192E}
+    .chart g.point[aria-pressed="true"] .pt{fill:#0F2E57}
+    .low-flag{fill:#8A5A00}
+    .chart-readout{border-radius:0;border-left:2px solid var(--navy)}
+    .month-row{border-radius:0;border:1px solid var(--border);border-top:3px solid var(--navy);box-shadow:0 1px 2px rgba(10,34,64,.05);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none;transition:box-shadow var(--motion) var(--ease),transform var(--motion) var(--ease)}
+    .month-row:hover{background:var(--surface);border-color:#B9C4D4;border-top-color:var(--navy);box-shadow:0 2px 4px rgba(10,34,64,.06),0 12px 28px rgba(10,34,64,.12);transform:translateY(-2px)}
+    .month-name{font:400 1.125rem/1.3 var(--display);color:var(--navy)}
+    .net{color:var(--navy)}.net.in{color:#15803D}.net.out{color:#A6192E}
+    .line-row{border-radius:0}
+    .line-amount{color:#A6192E}.line-amount.in{color:#15803D}
+    .line-row .line-main strong{color:#8C1D2C}
+    .line-row:has(.line-amount.in) .line-main strong{color:#14633A}
+    .group-head{border-bottom:1px solid var(--rule)}
+    .assume-no{border-radius:0;background:transparent;border:1px solid var(--border);font:400 .9375rem/1 var(--display);color:var(--gold)}
+    .trace-chain span:not(:last-child)::after{color:var(--gold)}
+    .detail-amount{font:300 2.25rem/1.15 var(--display);font-variant-numeric:lining-nums tabular-nums}
+    tr.muted td{color:var(--ink-secondary)}
   </style>
 </head>
 <body>
 <a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
 <div class="page">
+  <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #78 · Dự báo dòng tiền</span></div>
   <header class="hero">
     <div class="hero-copy">
       <p class="kicker">MVP 1B · Issue #78 · Design review</p>
@@ -342,6 +506,7 @@
                           <span class="gauge-fill" id="gauge-fill"></span>
                           <span class="gauge-mark" id="gauge-mark"></span>
                         </div>
+                        <div id="signal-cmp"></div>
                         <p class="helper" id="signal-gauge-text">—</p>
                       </div>
                       <p id="signal-read">—</p>
@@ -812,7 +977,12 @@
     fill.className = "gauge-fill" + (tone === "ok" ? "" : tone === "warn" ? " warn" : " bad");
     fill.style.width = fillPct + "%";
     $("#gauge-mark").style.left = markPct + "%";
-    $("#signal-gauge-text").textContent = "Cột đánh dấu là ngưỡng tham chiếu " + money(avgExpense) + ", bằng một tháng chi phí dự báo trung bình. Phần tô là số dư thấp nhất " + money(low.balance) + ".";
+    $("#signal-gauge-text").textContent = "Ngưỡng tham chiếu bằng một tháng chi phí dự báo trung bình (" + money(avgExpense) + "). Đây là phép chiếu từ bản ghi đang hiển thị.";
+    var cmpMax = Math.max(Math.abs(low.balance), avgExpense) || 1;
+    $("#signal-cmp").innerHTML = '<span class="scmp" role="img" aria-label="Số dư thấp nhất ' + money(low.balance) + ', ngưỡng một tháng chi phí ' + money(avgExpense) + '">' +
+      '<span class="c-l">Số dư thấp nhất</span><span class="c-bar">' + (low.balance > 0 ? '<span class="you ' + tone + '" style="width:' + Math.max(1, low.balance / cmpMax * 100) + '%"></span>' : '') + '</span><span class="c-v' + (low.balance < 0 ? ' neg-note' : '') + '">' + money(low.balance) + '</span>' +
+      '<span class="c-l">1 tháng chi phí</span><span class="c-bar"><span class="ref" style="width:' + Math.max(1, avgExpense / cmpMax * 100) + '%"></span></span><span class="c-v">' + money(avgExpense) + '</span></span>' +
+      (low.balance < avgExpense ? '<p class="helper" style="margin-top:6px">Còn thiếu <b class="neg-note" style="color:#8A5A00">' + money(avgExpense - low.balance) + '</b> để điểm thấp nhất đạt một tháng chi phí.</p>' : '<p class="helper" style="margin-top:6px">Điểm thấp nhất cao hơn ngưỡng <b style="color:#15803D">' + money(low.balance - avgExpense) + '</b>.</p>');
 
     $("#horizon-note").textContent = "Tính đến " + viDate(TODAY) + " · Ba tháng dương lịch đầy đủ kế tiếp, " + months[0].label + " đến " + months[months.length-1].label + " · Tháng 09/2026 đang dở nên không thuộc dự báo.";
     $("#source-count").textContent = "Dự báo dùng " + countSources() + " bản ghi đang hiển thị và không dùng nguồn nào khác. Xem chi tiết ở màn hình Giả định.";
