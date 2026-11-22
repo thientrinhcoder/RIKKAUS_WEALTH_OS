@@ -119,6 +119,28 @@ where the web client's refresh cookie travels. Every other route keeps credentia
 headers are `Content-Type`, `Authorization` and `X-Correlation-Id`, plus `X-Rikkaus-Client` on the auth
 routes. The reasoning is in [CORS, cookies and CSRF](#cors-cookies-and-csrf).
 
+## Consuming the contract from `apps/mobile`
+
+The app calls the API only through [`apps/mobile/src/api`](../apps/mobile/src/api/index.ts):
+
+- **Types are generated, schemas are written.** `npm run api:generate` uses `openapi-typescript` to
+  turn this contract into `src/api/generated/openapi.ts`, and copies every response example into
+  `src/api/generated/contract-examples.ts`. Both files are committed. `npm run api:check` fails when
+  they differ from the contract, so run `api:generate` in the same change as any contract update.
+  Generation stays types-only: each response is validated at runtime by a hand-written Zod schema,
+  and the client requires that schema's output to be assignable to the generated type. A schema
+  that drifts from the contract therefore fails `npm run typecheck`.
+- **Errors switch on `type`.** `classifyApiError` maps each URN to Vietnamese copy, a retry decision
+  and `requiresSignIn`. `detail` and `errors[].message` are never displayed. A URN the client does
+  not know degrades by status instead of failing.
+- **Correlation.** Each request sends a generated `X-Correlation-Id`. The value the server returns
+  is shown in error states as `Mã tham chiếu: …`.
+- **Auth seam.** `createApiClient({ auth: { getAccessToken, onUnauthorized } })` attaches the token
+  and retries once after a 401 when `onUnauthorized` returns `'retry'`. The client stores no token.
+- **Operational routes.** `/actuator/health` is outside the contract. It is called through
+  `getOperational`, which sends no token and no custom header, because that endpoint's CORS mapping
+  rejects both.
+
 ## Testing conventions
 
 | Naming | Runner | Needs Docker | What belongs there |
