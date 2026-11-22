@@ -19,7 +19,6 @@ on:
   push:
     branches:
       - main
-      - claude/issue-46-frontend-ci-3aaf65
     paths:
       - "apps/mobile/**"
       - ".github/workflows/frontend.yml"
