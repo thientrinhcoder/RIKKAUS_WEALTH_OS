@@ -2,6 +2,7 @@ package com.rikkaus.wealth.goals.application;
 
 import com.rikkaus.wealth.goals.domain.Goal;
 import com.rikkaus.wealth.goals.domain.GoalFields;
+import com.rikkaus.wealth.goals.domain.GoalFilter;
 import com.rikkaus.wealth.goals.domain.GoalRepository;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
@@ -57,14 +58,15 @@ public class GoalService {
     }
 
     /**
-     * The owner's goals, nearest target date first and then by name.
+     * The owner's goals, narrowed and ordered by {@code filter}; by default nearest target date first
+     * and then by name. The owner is applied before any filter, inside the repository fragment.
      *
      * <p>Unpaginated, deliberately, as the asset catalog is: a pilot user has a handful of goals and the
      * API conventions list pagination as absent.
      */
     @Transactional(readOnly = true)
-    public List<Goal> listFor(UUID ownerId) {
-        return goals.findByUserIdOrderByTargetDateAscNameAsc(ownerId);
+    public List<Goal> listFor(UUID ownerId, GoalFilter filter) {
+        return goals.search(ownerId, filter);
     }
 
     /** One of the owner's goals, or {@code not-found} if it is absent or somebody else's. */

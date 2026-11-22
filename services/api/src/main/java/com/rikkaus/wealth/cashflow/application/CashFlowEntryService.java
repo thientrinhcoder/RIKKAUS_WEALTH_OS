@@ -2,6 +2,7 @@ package com.rikkaus.wealth.cashflow.application;
 
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntry;
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntryDetails;
+import com.rikkaus.wealth.cashflow.domain.CashFlowEntryFilter;
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntryRepository;
 import com.rikkaus.wealth.cashflow.domain.CashFlowTiming;
 import com.rikkaus.wealth.shared.error.ApiException;
@@ -45,18 +46,20 @@ public class CashFlowEntryService {
     }
 
     /**
-     * The owner's catalog, newest effective date first and then newest created first.
+     * The owner's catalog, narrowed and ordered by {@code filter}; by default newest effective date
+     * first and then newest created first.
      *
      * <p>Ordered by the repository rather than by the client, because an unordered result from
-     * PostgreSQL is not stable between runs and the catalog is rendered in arrival order.
+     * PostgreSQL is not stable between runs and the catalog is rendered in arrival order. The owner is
+     * applied before any filter, inside the repository fragment.
      *
      * <p>Unpaginated, deliberately. The API conventions list pagination as absent, a pilot user's
      * catalog is tens of rows, and inventing a page shape here would commit the frontend to one before
      * anybody agreed it.
      */
     @Transactional(readOnly = true)
-    public List<CashFlowEntry> listFor(UUID ownerId) {
-        return entries.findByUserIdOrderByEffectiveDateDescCreatedAtDesc(ownerId);
+    public List<CashFlowEntry> listFor(UUID ownerId, CashFlowEntryFilter filter) {
+        return entries.search(ownerId, filter);
     }
 
     /** One of the owner's entries, or {@code not-found} if it is absent or somebody else's. */

@@ -104,6 +104,9 @@ plans/**/*
 !plans/261114-1843-GH-110-feedback-observability/
 !plans/261114-1843-GH-110-feedback-observability/**
 !plans/reports/manual-verification-261114-1843-GH-110-feedback-observability.md
+!plans/261122-1538-GH-101-search-basic-filters/
+!plans/261122-1538-GH-101-search-basic-filters/**
+!plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md
 screenshots/*
 docs/screenshots/*
 logs.txt

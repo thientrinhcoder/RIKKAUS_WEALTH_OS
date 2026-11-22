@@ -25,7 +25,8 @@ import org.springframework.data.repository.query.Param;
  * would make "absent" and "someone else's" two different outcomes at this layer, and the single place
  * that decides they are indistinguishable is the guard.
  */
-public interface CashFlowEntryRepository extends Repository<CashFlowEntry, UUID> {
+public interface CashFlowEntryRepository
+        extends Repository<CashFlowEntry, UUID>, CashFlowEntrySearch {
 
     List<CashFlowEntry> findByUserIdOrderByEffectiveDateDescCreatedAtDesc(UUID userId);
 

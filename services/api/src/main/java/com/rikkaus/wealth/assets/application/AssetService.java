@@ -2,6 +2,7 @@ package com.rikkaus.wealth.assets.application;
 
 import com.rikkaus.wealth.assets.domain.Asset;
 import com.rikkaus.wealth.assets.domain.AssetCategory;
+import com.rikkaus.wealth.assets.domain.AssetFilter;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
 import com.rikkaus.wealth.assets.domain.AssetRepository;
 import com.rikkaus.wealth.assets.domain.AssetValuation;
@@ -53,19 +54,24 @@ public class AssetService {
     }
 
     /**
-     * The owner's catalog, newest valuation first and then by name.
+     * The owner's catalog, narrowed and ordered by {@code filter}; by default newest valuation first
+     * and then by name.
      *
      * <p>Ordered by the repository rather than by the client, because an unordered result from
      * PostgreSQL is not stable between runs and the catalog is rendered in arrival order. The name
-     * breaks the tie so two assets valued on the same day do not swap places between requests.
+     * breaks the tie so two assets valued on the same day do not swap places between requests, and
+     * the id breaks any tie left.
+     *
+     * <p>The owner is applied before any filter, inside the repository fragment, so a search can only
+     * ever narrow the owner's own catalog.
      *
      * <p>Unpaginated, deliberately. The API conventions list pagination as absent, a pilot user's
      * catalog is tens of rows, and inventing a page shape here would commit the frontend to one before
      * anybody agreed it.
      */
     @Transactional(readOnly = true)
-    public List<Asset> listFor(UUID ownerId) {
-        return assets.findByUserIdOrderByValuationDateDescNameAsc(ownerId);
+    public List<Asset> listFor(UUID ownerId, AssetFilter filter) {
+        return assets.search(ownerId, filter);
     }
 
     /** One of the owner's assets, or {@code not-found} if it is absent or somebody else's. */
