@@ -113,6 +113,15 @@ rikkaus:
       issuers:
         - https://accounts.google.com
         - accounts.google.com
+  goals:
+    projection:
+      # The system reference thresholds a goal's status is judged against: the planned monthly
+      # contribution as a percentage of the required one. At or above the first is ON_TRACK, at or above
+      # the second AT_RISK, below it BEHIND. The values the accepted design for issue #87 shows; every
+      # projection response states them, and GoalProjectionProperties refuses to start without both or
+      # with at-risk not below on-track.
+      on-track-min-coverage-percent: 100
+      at-risk-min-coverage-percent: 80
   api:
     # Fails closed. An unset or empty value registers no CORS mapping at all rather than guessing
     # an origin, as an explicit environment-specific allowlist requires. Comma-separated.
