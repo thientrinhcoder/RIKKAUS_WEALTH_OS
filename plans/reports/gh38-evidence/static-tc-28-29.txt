@@ -1,0 +1,21 @@
+$ npm run api:check   # committed contract
+src/api/generated matches the contract.
+exit=0
+
+$ temporary edit: add field "region" to MetaResponse in the contract, then api:check
+src/api/generated is out of date with the contract: openapi.ts.
+Run `npm run api:generate` and commit the result.
+exit=
+
+$ contract restored; api:check
+src/api/generated matches the contract.
+
+$ TC-29: MetaResponseSchema.apiVersion -> z.number(), then typecheck
+src/api/meta.ts(20,3): error TS2322: Type 'Promise<ApiResponse<{ application?: string | undefined; apiVersion?: string | undefined; buildVersion?: string | undefined; serverTime?: string | undefined; }>>' is not assignable to type 'Promise<ApiResponse<{ application: string; apiVersion: number; build
+  Type 'ApiResponse<{ application?: string | undefined; apiVersion?: string | undefined; buildVersion?: string | undefined; serverTime?: string | undefined; }>' is not assignable to type 'ApiResponse<{ application: string; apiVersion: number; buildVersion: string; serverTime: string; }>'.
+    Type '{ application?: string | undefined; apiVersion?: string | undefined; buildVersion?: string | undefined; serverTime?: string | undefined; }' is not assignable to type '{ application: string; apiVersion: number; buildVersion: string; serverTime: string; }'.
+      Types of property 'application' are incompatible.
+exit=
+
+$ reverted; typecheck
+typecheck clean

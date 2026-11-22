@@ -1,0 +1,10 @@
+{
+  "executedAt": "2026-11-22T09:49:03Z",
+  "page": "http://localhost:8091/diagnostics (Expo web, in-app browser)",
+  "api": "http://localhost:8180 (profile local, allowed origin http://localhost:8091)",
+  "TC20_meta": { "status": 200, "sent": "521c3105-c3e8-4253-87e8-e2c1513f09ea", "echoedHeaderReadable": "521c3105-c3e8-4253-87e8-e2c1513f09ea", "body": { "application": "rikkaus-wealth-api", "apiVersion": "v1", "buildVersion": "0.0.1-SNAPSHOT", "serverTime": "2026-11-22T09:49:03.057661Z" } },
+  "TC21_crossOriginProblem": { "status": 401, "header": "gh38-trace-0001", "bodyType": "urn:rikkaus:problem:unauthorized", "bodyCorrelationId": "gh38-trace-0001" },
+  "TC22_health": { "status": 200, "body": { "groups": ["liveness", "readiness"], "status": "UP" }, "correlationHeaderReadable": null },
+  "TC22_healthWithCustomHeader": "blocked by preflight: Failed to fetch",
+  "gap_authorizationHeader": "blocked by preflight: Failed to fetch"
+}

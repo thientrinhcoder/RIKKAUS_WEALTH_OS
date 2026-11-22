@@ -114,9 +114,32 @@ an operator can find the request in the log. What else a log line holds, and wha
 allowed, and that is the default in every environment. The `local` profile sets
 `http://localhost:8081`, which is the origin Expo web actually serves on.
 
-Credentials are refused. That is the correct posture only because no credential exists yet; enabling
-them is a real decision that belongs with the authentication design and must not be inherited from here
-as already settled.
+Credentials are allowed on `/api/v1/auth/**` only, for the exact allowlisted origins, because that is
+where the web client's refresh cookie travels. Every other route keeps credentials off. Allowed request
+headers are `Content-Type`, `Authorization` and `X-Correlation-Id`, plus `X-Rikkaus-Client` on the auth
+routes. The reasoning is in [CORS, cookies and CSRF](#cors-cookies-and-csrf).
+
+## Consuming the contract from `apps/mobile`
+
+The app calls the API only through [`apps/mobile/src/api`](../apps/mobile/src/api/index.ts):
+
+- **Types are generated, schemas are written.** `npm run api:generate` uses `openapi-typescript` to
+  turn this contract into `src/api/generated/openapi.ts`, and copies every response example into
+  `src/api/generated/contract-examples.ts`. Both files are committed. `npm run api:check` fails when
+  they differ from the contract, so run `api:generate` in the same change as any contract update.
+  Generation stays types-only: each response is validated at runtime by a hand-written Zod schema,
+  and the client requires that schema's output to be assignable to the generated type. A schema
+  that drifts from the contract therefore fails `npm run typecheck`.
+- **Errors switch on `type`.** `classifyApiError` maps each URN to Vietnamese copy, a retry decision
+  and `requiresSignIn`. `detail` and `errors[].message` are never displayed. A URN the client does
+  not know degrades by status instead of failing.
+- **Correlation.** Each request sends a generated `X-Correlation-Id`. The value the server returns
+  is shown in error states as `Mã tham chiếu: …`.
+- **Auth seam.** `createApiClient({ auth: { getAccessToken, onUnauthorized } })` attaches the token
+  and retries once after a 401 when `onUnauthorized` returns `'retry'`. The client stores no token.
+- **Operational routes.** `/actuator/health` is outside the contract. It is called through
+  `getOperational`, which sends no token and no custom header, because that endpoint's CORS mapping
+  rejects both.
 
 ## Testing conventions
 
@@ -146,19 +169,23 @@ issue #40), not an unfinished piece.
 | Route | Token needed | Body | Success |
 |---|---|---|---|
 | `POST /api/v1/auth/google` | none | `authorizationCode`, `codeVerifier`, `redirectUri` | 200, a session |
-| `POST /api/v1/auth/refresh` | none | `refreshToken` | 200, a new session |
-| `POST /api/v1/auth/logout` | none | `refreshToken` | 204 |
+| `POST /api/v1/auth/refresh` | none | `refreshToken` (native) — or none plus the cookie (web) | 200, a new session |
+| `POST /api/v1/auth/logout` | none | `refreshToken` (native) — or none plus the cookie (web) | 204, cookie cleared |
 | `GET /api/v1/auth/session` | **bearer** | — | 200, the signed-in user |
+
+A fifth route, `POST /api/v1/auth/dev-sign-in`, exists **only under the `local` Spring profile** and is not
+part of the published contract; see [Local development sign-in](#local-development-sign-in).
 
 The client performs the Google handoff and sends the **authorization code**, not an identity token. The
 backend redeems it with PKCE, so the Google client secret never reaches the browser and no Google token is
 ever held by the client. `redirectUri` must appear in the server's exact-match allowlist or the request is
 a 400 with an `errors` entry for `redirectUri`; an unregistered value is never forwarded to Google.
 
-Refresh and logout are deliberately **unauthenticated**. Their credential is the refresh token in the body.
-Requiring a live access token would make an expired session impossible to recover from.
+Refresh and logout are deliberately **unauthenticated**. Their credential is the refresh token — in the body
+for a native client, in the `rikkaus_refresh` cookie for the web client. Requiring a live access token would
+make an expired session impossible to recover from.
 
-A session response:
+A session response for a native client:
 
 ```json
 {
@@ -170,6 +197,7 @@ A session response:
 }
 ```
 
+For the web client the same response omits `refreshToken`; see [Web session cookie](#web-session-cookie).
 Send the access token as `Authorization: Bearer <accessToken>`. The published contract declares this as the
 `bearerAuth` security scheme, applied per route rather than globally, so sign-in and renewal are not
 described as needing a token they exist to provide.
@@ -188,6 +216,38 @@ described as needing a token they exist to provide.
 
 `GET /api/v1/auth/session` is how a client distinguishes a live session from an expired or revoked one
 without inferring it from a failed domain call.
+
+### Web session cookie
+
+A browser must not keep a token where page script can read it, so the web client never sees its refresh
+token. It declares itself with the request header **`X-Rikkaus-Client: web`** on `/auth/google`,
+`/auth/refresh` and `/auth/logout`. Without that header a request is a **native** request and behaves
+exactly as described above — the token in the body, no cookie.
+
+| | Native (no header) | Web (`X-Rikkaus-Client: web`) |
+|---|---|---|
+| Sign-in and renewal response body | includes `refreshToken` | **omits** `refreshToken` |
+| Refresh token delivered as | body field | `Set-Cookie: rikkaus_refresh=…` |
+| `/refresh`, `/logout` read the token from | body `refreshToken` | body if present, otherwise the cookie |
+| Access token | body `accessToken`, kept in memory, sent as `Authorization: Bearer` | same |
+
+The cookie is `rikkaus_refresh`, `HttpOnly`, `Secure` (except under the `local` profile, which serves plain
+http — `rikkaus.auth.refresh-cookie.secure`), `SameSite=Strict`, `Path=/api/v1/auth`, and
+`Max-Age=2592000` (the 30-day refresh lifetime). Every renewal replaces it; reuse of a replaced value
+revokes the whole session exactly as for a body token. Every `204` from `/logout` carries
+`Set-Cookie: rikkaus_refresh=; Max-Age=0` so the browser drops it, even if the token was already revoked.
+
+The web client calls the auth routes with `credentials: 'include'` and sends `{}` or no body to `/refresh`
+and `/logout`. After a reload it has no access token, so its first call is `/refresh`; a `401` there means
+signed out. Because the cookie is `SameSite=Strict`, the web app and the API must be **same-site** (same
+scheme and registrable domain — `localhost:8081` and `localhost:8380` are; `app.rikkaus.vn` and
+`api.rikkaus.vn` would be). A deployment that splits them across sites must revisit this.
+
+| Request | Answer |
+|---|---|
+| Neither a body token nor a cookie | 400 `validation-failed`, `errors[0].field = refreshToken` |
+| Cookie sent **without** `X-Rikkaus-Client: web` | 403 `forbidden`; the token is not read, so the session is untouched |
+| `X-Rikkaus-Client: web` from an `Origin` not on the allowlist | 403 — `Invalid CORS request` (plain text) when a CORS mapping exists, `forbidden` problem otherwise; the token is not read |
 
 **One limitation, stated plainly:** signing out revokes the ability to renew, not the access token already
 issued. The access token is self-contained and verified without a database lookup, so it stays valid for the
@@ -209,11 +269,13 @@ bad token is rejected rather than silently treated as anonymous, so clock skew o
 one clear rejection instead of a confusing success.
 
 The publicly reachable routes are exactly: `GET /api/v1/meta`, the three `POST /api/v1/auth/*` routes above,
-`GET /actuator/health`, and — under the `local` profile only — `/v3/api-docs` and `/swagger-ui/**`.
+`GET /actuator/health`, and — under the `local` profile only — `/v3/api-docs`, `/swagger-ui/**` and
+`POST /api/v1/auth/dev-sign-in`.
 `SecurityConfigurationIT` asserts each one individually, so widening the list requires editing a test.
 
-`unauthorized` and `forbidden` are no longer reserved; `unauthorized` is now reachable. `forbidden` remains
-unreachable in practice because MVP 0 has one role and ownership failures return `not-found` — see below.
+`unauthorized` and `forbidden` are no longer reserved; both are reachable. `forbidden` is returned only by the
+CSRF controls on the web session cookie above. MVP 0 has one role, and ownership failures still return
+`not-found` — see below.
 
 ### Error detail language
 
@@ -222,13 +284,45 @@ each state — expired session, revoked session, cancelled Google handoff, cross
 the accepted identity design and is mapped by the client from the `type` URN. Do not parse or display
 `detail` as user copy; switch on `type`.
 
-### CORS and credentials
+### CORS, cookies and CSRF
 
-`allowCredentials(false)` stays correct and is not an oversight now that authentication exists. The access
-token travels in an `Authorization` header the client sets explicitly, not in a cookie, so no credential is
-attached by the browser and none needs to be allowed. That is also why CSRF protection is disabled: there is
-no cookie-borne credential to forge. If a cookie session is ever introduced, both decisions must be revisited
-together.
+This was revisited together, as the earlier text required, when the web refresh cookie was introduced (issue
+#41, Product Owner decision of 2026-11-22).
+
+**CORS.** `/api/v1/auth/**` allows credentials for the exact allowlisted origins, because a browser drops a
+credentialed cross-origin response otherwise. Every other route keeps `allowCredentials(false)`: the access
+token travels in an `Authorization` header the client sets itself, so nothing there needs a cookie. The
+allowlist is never a wildcard — the code takes configured values only, and an empty value registers no CORS
+mapping at all. The auth mapping is registered before the general one because the first matching pattern
+wins.
+
+**CSRF.** The refresh cookie is the only credential a browser attaches on its own, so the only routes a
+forged cross-site request could abuse are `/auth/refresh` and `/auth/logout`. Three independent controls
+cover them:
+
+1. `SameSite=Strict` — a browser never sends the cookie on a cross-site request.
+2. The cookie is honoured only with `X-Rikkaus-Client: web`. An HTML form cannot set a custom header, and a
+   script that sets one cross-origin triggers a preflight that only an allowlisted origin passes.
+3. A web-mode request whose `Origin` is present and not allowlisted is refused before any token is read, so
+   a refused request can neither rotate nor revoke a session.
+
+Spring Security's synchronizer-token CSRF therefore stays disabled: it would need a second, script-readable
+cookie or an extra round trip and would protect nothing these three do not.
+
+### Local development sign-in
+
+`POST /api/v1/auth/dev-sign-in` issues a real session — same token services, same rotation, same web cookie
+— for a development account, without Google. It exists so developers and agents can test a client against
+real data on a machine with no Google OAuth client.
+
+- Registered **only under the `local` profile** (`@Profile("local")`), and hidden from every OpenAPI
+  document. Under any other profile the path is unknown: 401 to an anonymous caller, 404 with a valid token.
+- Body `{"email":"an.nguyen@example.com","displayName":"An Nguyễn"}`. `email` is required and must be an
+  address; `displayName` is optional. The account is created on first use with the synthetic subject
+  `local-dev|<email>`, which can never collide with a Google `sub`.
+- Honours `X-Rikkaus-Client: web` exactly like `/auth/google`.
+
+Step-by-step use is in [`manual-test-guide-auth.md`](manual-test-guide-auth.md).
 
 ## Ownership enforcement — implemented
 
