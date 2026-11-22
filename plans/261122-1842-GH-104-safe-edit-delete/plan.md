@@ -1,7 +1,7 @@
 ---
 title: "Issue #104 safe edit & delete flows"
 description: "Thêm deletion-impact preview cho bốn domain và guard 409 linked-records khi xóa asset/liability còn record khác trỏ tới; giữ nguyên ngữ nghĩa PUT thay thế và hành vi xóa đồng thời."
-status: in_progress
+status: completed
 priority: P1
 effort: "1.5d"
 issue: 104
@@ -68,9 +68,9 @@ Nếu client bấm xóa mà chưa xác nhận các hệ quả đó, backend tr�
 | # | Phase | File | Status |
 |---|---|---|---|
 | 1 | Danh sách test scenario | [phase-01-test-scenarios.md](phase-01-test-scenarios.md) | completed |
-| 2 | `shared/deletion` và bốn slice | [phase-02-shared-and-slices.md](phase-02-shared-and-slices.md) | pending |
-| 3 | Contract, inventory, docs | [phase-03-contract-and-docs.md](phase-03-contract-and-docs.md) | pending |
-| 4 | Chạy scenario thật, ghi evidence | [phase-04-manual-verification.md](phase-04-manual-verification.md) | pending |
+| 2 | `shared/deletion` và bốn slice | [phase-02-shared-and-slices.md](phase-02-shared-and-slices.md) | completed |
+| 3 | Contract, inventory, docs | [phase-03-contract-and-docs.md](phase-03-contract-and-docs.md) | completed |
+| 4 | Chạy scenario thật, ghi evidence | [phase-04-manual-verification.md](phase-04-manual-verification.md) | completed |
 
 ## Acceptance criteria
 
@@ -83,8 +83,45 @@ Nếu client bấm xóa mà chưa xác nhận các hệ quả đó, backend tr�
 
 ## Verification gap
 
-Điền ở phase 4.
+- Không có automated test nào chạm route preview hay guard (chỉ đạo PO). Regression chỉ bị bắt khi chạy
+  lại `docs/manual-test-guide-safe-delete.md`. `OpenApiContractIT` chỉ giữ inventory path, enum problem
+  type và property `impact`, không kiểm hành vi.
+- Race giữa "tính impact" và "xóa" chỉ được đóng cho hai delete chồng nhau. `PESSIMISTIC_WRITE` của
+  Hibernate trên PostgreSQL là `SELECT … FOR NO KEY UPDATE`, không xung đột với khóa `FOR KEY SHARE` mà
+  một `INSERT` liability/cash-flow mới trỏ tới asset đó lấy. Một record được link vào đúng khoảnh khắc
+  giữa lúc đọc impact và lúc `DELETE` vẫn bị `SET NULL` mà không có 409. Chưa tái hiện được bằng HTTP;
+  với một user trên một thiết bị, khả năng xảy ra rất thấp.
+- Chạy đồng thời chỉ ở mức 4 request một lần cho mỗi case (C01–C03), không lặp nhiều vòng như lần đo
+  của #53.
+- Chỉ chạy trên PostgreSQL 18.6 Alpine trong Docker; chưa chạy trên AWS RDS.
+- Chưa chạy cùng app mobile (#103) và chưa đối chiếu design #102 (chưa duyệt): nhãn tiếng Việt, cách
+  hiển thị danh sách bị ảnh hưởng và luồng hai bước là việc của frontend/design.
+- Thứ tự `records[]` là `created_at, id`; chưa có scenario hai record tạo cùng micro giây.
+
+## Kết quả
+
+45/45 scenario pass trên commit `c8dbeab` (lần 3, database sạch). Lần 1 44/45: U01 fail và U04 pass sai
+do lỗi script với bash 3.2; lần 2 45/45 nhưng G06 kiểm sai tên trường (`entryId` thay vì
+`sourceEntryId`) nên pass rỗng; cả hai đã sửa trong script, không đổi code. `clean verify` không flag
+xanh (131 test, 0 fail). Evidence:
+[`plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md`](../reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md).
 
 ## Câu hỏi cho PO / design #102
 
-Điền ở phase 4.
+1. **Lịch sử định giá có cần xác nhận không?** Hiện xóa `Căn hộ Thảo Điền` chỉ có 3 bản ghi định giá
+   (không có khoản vay hay dòng tiền nào trỏ tới) vẫn xóa ngay `204`; preview vẫn báo "3 bản ghi định
+   giá sẽ bị xóa". Nếu muốn bắt xác nhận khi có hơn 1 bản ghi định giá, đổi là một điều kiện trong
+   `DeletionImpact.of`, nhưng khi đó gần như mọi tài sản đã cập nhật giá đều thành xóa hai bước.
+2. **Tác động phái sinh khi xóa tài sản/khoản nợ.** Preview chỉ liệt kê view phái sinh cho dòng tiền.
+   Xóa `Tài khoản Vietcombank 85.000.000 ₫` làm số dư đầu kỳ của dự báo 3 tháng giảm, xóa căn hộ làm
+   dòng `Cho thuê căn hộ Thảo Điền 18.000.000 ₫/tháng` rời khỏi `passiveIncome.byAsset`, xóa khoản vay
+   có lịch trả làm dự báo bỏ khoản trả `28.500.000 ₫/tháng`. Có cần hộp thoại nói các điều này không?
+   Nếu có, backend sẽ thêm `CASH_FLOW_FORECAST`/`MONTHLY_CASH_FLOW_REPORTS` vào `derivedEffects` theo
+   đúng quy tắc của #77/#80 (và `WEALTH_SNAPSHOT` sau khi #65 merge).
+3. **Optimistic locking.** Không thêm `If-Match`/`version` vì không review HTML nào yêu cầu. Hai thiết bị
+   cùng sửa `Vay mua nhà Vietcombank` thì bản lưu sau thắng. Có cần màn hình xung đột không?
+4. **`PUT` bỏ trống liên kết.** Giữ ngữ nghĩa thay thế đã chốt ở #62/#71: `PUT` khoản dòng tiền không gửi
+   `linkedAssetId` sẽ gỡ liên kết với `Căn hộ Thảo Điền`. Frontend (#103) phải luôn gửi lại liên kết
+   hiện có. Có muốn đổi sang "không gửi = giữ nguyên" không? Đó là thay đổi contract của ba resource.
+5. **Hoàn tác.** Review goals ghi "Hủy, hoặc xóa kèm hoàn tác ngắn"; backend chưa có undo/soft delete
+   (non-goal của ticket này). Nếu design #102 chốt hoàn tác, cần một ticket riêng.
