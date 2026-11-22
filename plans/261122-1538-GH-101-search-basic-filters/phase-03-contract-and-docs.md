@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Contract, inventory, docs"
-status: pending
+status: completed
 priority: P1
 effort: "0.2d"
 dependencies: [2]

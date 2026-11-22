@@ -1,7 +1,7 @@
 ---
 title: "Issue #101 search & basic filters"
 description: "Thêm tham số query tùy chọn q, filter enum nhiều giá trị, khoảng effectiveDate và sort cho bốn list endpoint assets, liabilities, cash-flow-entries, goals; không tham số thì giữ nguyên hành vi."
-status: in-progress
+status: completed
 priority: P1
 effort: "1.5d"
 issue: 101
@@ -77,9 +77,9 @@ user B không bao giờ thấy record của A.
 | # | Phase | File | Status |
 |---|---|---|---|
 | 1 | Danh sách test scenario | [phase-01-test-scenarios.md](phase-01-test-scenarios.md) | completed |
-| 2 | `shared/search` và bốn slice | [phase-02-shared-and-slices.md](phase-02-shared-and-slices.md) | pending |
-| 3 | Contract, inventory, docs | [phase-03-contract-and-docs.md](phase-03-contract-and-docs.md) | pending |
-| 4 | Chạy scenario thật, ghi evidence | [phase-04-manual-verification.md](phase-04-manual-verification.md) | pending |
+| 2 | `shared/search` và bốn slice | [phase-02-shared-and-slices.md](phase-02-shared-and-slices.md) | completed |
+| 3 | Contract, inventory, docs | [phase-03-contract-and-docs.md](phase-03-contract-and-docs.md) | completed |
+| 4 | Chạy scenario thật, ghi evidence | [phase-04-manual-verification.md](phase-04-manual-verification.md) | completed |
 
 ## Acceptance criteria
 
@@ -100,6 +100,16 @@ user B không bao giờ thấy record của A.
   phụ thuộc collation của môi trường triển khai, chưa đối chiếu với AWS RDS.
 - Chưa đo hiệu năng với catalog lớn; không có index cho tìm chuỗi con.
 - Chưa chạy cùng app mobile (#100) và chưa đối chiếu design #99 (chưa duyệt).
+- Thứ tự key `field`/`message` trong mỗi phần tử `errors` đổi giữa hai lần khởi động JVM (`Map.of`), như
+  mọi slice hiện có. Client đọc theo tên nên không ảnh hưởng; body lỗi không ổn định từng byte.
+- Chỉ chạy trên PostgreSQL 18.6 Alpine (libc `en_US.utf8`); `lower()` với chữ hoa tiếng Việt đã kiểm
+  trên môi trường này, nhưng bảng `translate` không phụ thuộc locale nên phần bỏ dấu giống nhau ở mọi nơi.
+
+## Kết quả
+
+96 scenario (152 lượt kiểm tra) pass trên commit `ab1af04`; lần đầu 140/152 vì scenario X03–X05 ghi sai
+type 401, đã sửa scenario. Evidence:
+[`plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md`](../reports/manual-verification-261122-1538-GH-101-search-basic-filters.md).
 
 ## Câu hỏi cho PO / design #99
 
