@@ -1,7 +1,7 @@
 ---
 title: "Issue #77 báo cáo dòng tiền tháng và cơ cấu thu chi"
 description: "Route đọc GET /api/v1/cash-flow-reports/monthly trong slice cashflow: tổng thu, tổng chi, net, cơ cấu theo danh mục, thu nhập thụ động theo tài sản liên kết và danh sách kỳ nguồn để truy ngược, quy đổi USD bằng tỷ giá người dùng khai, mọi tổng cộng lại từ các dòng trong cùng response. Không migration."
-status: in-progress
+status: completed
 priority: P1
 effort: "2d"
 issue: 77
@@ -94,22 +94,22 @@ route này nhiều lần), gộp nhóm nhỏ thành "Khác", tỷ giá theo lị
 | Phase | Tên | Trạng thái | Kết quả |
 |---|---|---|---|
 | 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Hoàn tất | 40 case viết trước khi code |
-| 2 | [Báo cáo và HTTP](./phase-02-report-service-and-http.md) | Đang làm | `ReportMonth`, service tổng hợp, controller |
-| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Chờ | `openapi.json`, `OpenApiContractIT`, conventions, guide; `clean verify` xanh |
-| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Chờ | Chạy 40 case, ghi evidence |
+| 2 | [Báo cáo và HTTP](./phase-02-report-service-and-http.md) | Hoàn tất | `ReportMonth`, service tổng hợp, controller |
+| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Hoàn tất | `openapi.json`, `OpenApiContractIT`, conventions, guide; `clean verify` xanh |
+| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Hoàn tất | Chạy 40 case, ghi evidence |
 
 ## Acceptance Criteria
 
-- [ ] Tổng thu, tổng chi, net của tháng khớp các kỳ nguồn; net = thu − chi.
-- [ ] Composition thu và chi theo category, tỷ trọng cộng đúng `100.0`.
-- [ ] Thu nhập thụ động nhóm đúng theo tài sản liên kết; khoản thụ động chưa link hiện ở nhóm riêng.
-- [ ] Mỗi kỳ nguồn truy ngược về entry qua `sourceEntryId` và `occurrenceDate`.
-- [ ] USD quy đổi bằng tỷ giá đang khai, response mang tỷ giá và ngày hiệu lực; thiếu tỷ giá thì đánh dấu một
+- [x] Tổng thu, tổng chi, net của tháng khớp các kỳ nguồn; net = thu − chi.
+- [x] Composition thu và chi theo category, tỷ trọng cộng đúng `100.0`.
+- [x] Thu nhập thụ động nhóm đúng theo tài sản liên kết; khoản thụ động chưa link hiện ở nhóm riêng.
+- [x] Mỗi kỳ nguồn truy ngược về entry qua `sourceEntryId` và `occurrenceDate`.
+- [x] USD quy đổi bằng tỷ giá đang khai, response mang tỷ giá và ngày hiệu lực; thiếu tỷ giá thì đánh dấu một
       phần, không quy về 0.
-- [ ] Tháng rỗng trả đủ cấu trúc; không thấy dữ liệu user khác; input sai là `validation-failed`; 401 ba
+- [x] Tháng rỗng trả đủ cấu trúc; không thấy dữ liệu user khác; input sai là `validation-failed`; 401 ba
       kiểu token; 405 method khác.
-- [ ] Reconciliation kiểm bằng `jq` trên body thật cho mọi tổng.
-- [ ] `openapi.json` regenerate, `clean verify` xanh không flag.
+- [x] Reconciliation kiểm bằng `jq` trên body thật cho mọi tổng.
+- [x] `openapi.json` regenerate, `clean verify` xanh không flag.
 
 ## Verification gap
 
@@ -133,3 +133,13 @@ lộ hoặc thiếu, `ArchitectureRulesTest` vẫn bắt import chéo slice.
    không lẫn với forecast #80?
 
 <!-- slug: issue-77-monthly-cash-flow-reports -->
+
+## Kết quả
+
+Hoàn tất ngày 22/11/2026 tại commit `7683dee` (code, contract, plan) và commit kế tiếp (docs, guide,
+evidence). `clean verify` xanh không dùng update flag: 81 unit test, 50 integration test. 40 case (60 phép
+kiểm) chạy thật qua HTTP vào PostgreSQL Docker. Lần chạy đầu đạt 58/60: hai phép kiểm fail vì lỗi của script
+kiểm (`jq` cộng tỷ trọng bằng số thực; danh sách bảng kỳ vọng viết sai), không phải của API; sửa script, chạy
+lại trên database mới, **60/60 đạt**. Fixture tháng 09/2026 tái dựng đúng `180.000.000 ₫` thu,
+`92.000.000 ₫` chi, `88.000.000 ₫` net của design #75. Evidence ở
+[`manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md`](../reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md).
