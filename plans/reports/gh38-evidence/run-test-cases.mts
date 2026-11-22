@@ -121,7 +121,9 @@ async function tc(id: string, title: string, body: (expect: (label: string, actu
     failures.push(`threw: ${String(error)}`);
   }
   results.push({ id, title, pass: failures.length === 0, checks, failures, exchanges });
-  console.log(`${failures.length === 0 ? 'PASS' : 'FAIL'} ${id} ${title}${failures.length ? `\n   ${failures.join('\n   ')}` : ''}`);
+  // Only the count reaches the console; the failure details, which can echo request values, stay in the
+  // results file written at the end.
+  console.log(`${failures.length === 0 ? 'PASS' : 'FAIL'} ${id} ${title}${failures.length ? ` (${failures.length} failed checks)` : ''}`);
 }
 async function caught(promise: Promise<unknown>) {
   try {
