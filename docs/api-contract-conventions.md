@@ -868,7 +868,7 @@ publishes both as required `format: date` strings.
 
 ### Not here
 
-No converted VND amount, no totals, no forecast (#77, #80). No editing of a single occurrence and no
+No converted VND amount and no totals: those are the monthly report's, described next. No forecast (#80). No editing of a single occurrence and no
 split of a series: those are open questions for the feature contract #20. No preview of an unsaved
 rule: the endpoint expands stored entries only. A liability's own repayment schedule is not expanded
 here.
@@ -880,6 +880,98 @@ written before the code, are in
 `plans/261114-1843-GH-74-recurring-schedule-expansion/phase-01-test-scenarios.md`; the run is recorded in
 `plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md` and is reproduced by
 `docs/manual-test-guide-cash-flow-occurrences.md`.
+
+## Cash-flow monthly report — implemented
+
+A read-only, derived resource (issue #77). One route, under `bearerAuth`, owner-scoped by the token. It
+sums one calendar month of the viewer's cash flow from the occurrences described above. Nothing is
+stored and there is no migration: declaring a rate or editing an entry changes the next report.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/cash-flow-reports/monthly` | `month`, required, `YYYY-MM` | 200, the report; an empty month is the same structure with `0.00` and empty arrays, never a 404 |
+
+The month is a query parameter, like `from` and `to` above, so a malformed month is a
+`validation-failed` naming `month` rather than an unnamed 404. `/monthly` leaves room for another report
+under the same collection.
+
+### The lines and the formulas
+
+The report expands the month through the same service as `GET /api/v1/cash-flow-occurrences` with
+`from` the 1st and `to` the last day, so the two routes always agree about which occurrences fall in a
+month. Each occurrence becomes one entry of `occurrences`, in the same order (date, then
+`sourceEntryId`), carrying `sourceEntryId`, `occurrenceDate`, `sequence`, `shiftedToMonthEnd`,
+`entryType`, `category`, `recurrence`, `linkedAssetId`, `notes`, `originalAmount`, `originalCurrency`
+and `amount` in VND. **Every other number in the response is a sum over those lines**, so a client can
+add them up and arrive at each figure:
+
+```text
+totals.income   = Σ amount of INCOME lines            (lines with a null amount add nothing)
+totals.expense  = Σ amount of EXPENSE lines
+totals.net      = totals.income − totals.expense       (no other adjustment)
+composition row = Σ amount and count of the lines of one category, one row per category present
+passiveIncome.total        = Σ byAsset[].amount = Σ amount of INCOME lines with a linkedAssetId
+passiveIncome.unassigned   = INCOME lines in RENTAL_INCOME, DIVIDEND, DEPOSIT_INTEREST or
+                             BOND_OR_FUND_INCOME with no linkedAssetId; not counted in total
+```
+
+Composition rows are sorted by amount, largest first, then by category name; asset rows by amount, then
+`assetId`. The server does not fold small categories into an "other" row: that threshold is a display
+choice of the client.
+
+**Passive income is decided by the asset link alone**, as the accepted design for issue #75 states; the
+server never infers it from a category. The unassigned group exists so a deposit interest the user
+forgot to link is visible instead of silently counted as active income. The asset is published as
+`assetId` only; its name is read from `GET /api/v1/assets`.
+
+### Shares
+
+`sharePercent` is percent of its type's total at one decimal, **apportioned by largest remainder** so the
+rows of one composition sum to exactly `100.0`: each row first gets `floor(amount × 1000 / total)` tenths,
+and the tenths still missing from 1000 go one each to the rows with the largest remainder, ties to the
+earlier row. Rounding each row on its own would let September 2026's expense column add up to `100.1`;
+apportioned, `HEALTHCARE` reads `5.0` rather than `5.1`. `sharePercentOfIncome` on passive income and on
+each asset is a percent of total income, rounded half-up on its own, and is not forced to sum to
+anything. A share with a zero denominator is `null`, never `0`.
+
+### Currency conversion
+
+The report is in VND. A USD line is converted with the rate the user has declared in
+`GET /api/v1/settings/exchange-rate`, read by the slice with a native query on `wealth.user_settings`,
+through `ConversionTrace`: `originalAmount × usdToVndRate`, rounded half-up **once per occurrence** to whole
+dong and written at two decimals. Totals add the rounded lines, so they reconcile with what each line
+shows. `exchangeRate{usdToVndRate, effectiveDate}` returns the rate and date applied, as the backbone
+requires a conversion to retain them. The rate is the one currently declared; settings keep no history,
+so a past month is converted at today's declaration.
+
+**Without a declared rate** the report is still a 200. A USD line keeps `originalAmount`, its `amount` is
+`null` and it is left out of every sum; `exchangeRate` is `null`, `complete` is `false`, `unconverted`
+gives the number of such lines and their income and expense in USD, and each composition, asset or
+unassigned row holding one has `partial: true`, with a zero amount when every line of the row is
+unconverted. A missing rate is never counted as zero dong.
+
+### Validation
+
+| Input | `errors` entry |
+|---|---|
+| `month` missing or blank | `{month, "must be present"}` |
+| Not four digits, a hyphen and two digits, or not a month (`2026-9`, `2026-13`, `2026-00`, `09/2026`, `2026-09-01`, a second `month`) | `{month, "must be a calendar month in the form YYYY-MM"}` |
+
+The value sent is never echoed. A past, current or future month is accepted alike; nothing is compared
+with today.
+
+### Not here
+
+No forecast (#80), no financial-health indicators (#83), no insights, no export, no multi-month
+comparison in one request (the client asks once per month), no historical exchange rate.
+
+### Verified by hand, not by the suite
+
+The route shipped on Product Owner direction with no automated test. The scenarios, written before the
+code, are in `plans/261122-1538-GH-77-monthly-cash-flow-reports/phase-01-test-scenarios.md`; the run,
+including a `jq` reconciliation of every total against the lines of the same body, is recorded in
+`plans/reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md` and is reproduced by
+`docs/manual-test-guide-cash-flow-reports.md`.
 
 ## Financial goals — implemented
 
@@ -1147,8 +1239,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   agreed is worse than returning all of them.
 - **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding and
   feedback are described above. Insights are still later work.
-- **Monthly totals and the forecast.** Issues #77 and #80. The dates a recurring entry falls on are
-  published by `GET /api/v1/cash-flow-occurrences`, but nothing sums them.
+- **The forecast.** Issue #80. Occurrences are published by `GET /api/v1/cash-flow-occurrences` and one
+  month of them is summed by `GET /api/v1/cash-flow-reports/monthly`; nothing projects them forward.
 - **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and
   interest rate or expected yield are issue #54's. The asset table has no column for any of them,
   deliberately: a nullable column nobody writes reads as a promise.
@@ -1171,13 +1263,14 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, goal and
-  onboarding routes.** All eight resources shipped on Product Owner direction with manual verification only, recorded in
+- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
+  report, goal and onboarding routes.** All nine resources shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
   `plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md` and
   `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`,
   `plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md`,
+  `plans/reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md`,
   `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md` and
   `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
