@@ -244,7 +244,7 @@ The pipeline authenticates to AWS by OpenID Connect, assuming a least-privilege 
 - HTTPS is mandatory outside local development.
 - Identity is Google Account OIDC only. The application stores no password and has no app-managed credential, so there is no password to hash. This supersedes the earlier password-hashing control, per the Product Owner decision recorded in the accepted design for issue #40 and reconciled by issue #42.
 - Refresh tokens are stored only as a SHA-256 hash. An adaptive password hash is deliberately not used: the token is 256 bits from a cryptographic random source, so there is no low-entropy secret for a cost factor to protect.
-- Mobile tokens use Expo SecureStore; web authentication must avoid persistent tokens in browser local storage.
+- Mobile tokens use Expo SecureStore; web authentication must avoid persistent tokens in browser local storage. The web client therefore keeps its access token in memory only and receives its refresh token as the HttpOnly, `SameSite=Strict` cookie `rikkaus_refresh`, scoped to `/api/v1/auth`; credentialed CORS is limited to those routes, and the cookie is honoured only with the `X-Rikkaus-Client: web` header from an allowlisted origin (see `docs/api-contract-conventions.md`, "CORS, cookies and CSRF").
 - CORS uses an explicit environment-specific allowlist.
 - Database credentials, token signing keys, and AWS credentials are external secrets.
 - Containers run as a non-root user and expose only the application port.
