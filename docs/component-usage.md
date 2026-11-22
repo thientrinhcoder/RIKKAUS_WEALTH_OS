@@ -83,6 +83,30 @@ carry, not in structure, so `RecordRow` is configured by props rather than copie
 
 A value you do not have renders as unavailable, never as a zero. Pass `undefined`, not `0`.
 
+### Money, rates, percentages and time
+
+Money is a canonical decimal string (`DecimalString`) from the moment it leaves the API, and no code
+does binary-float arithmetic on it. Read every money, rate or percentage member with
+`fromApiValue` from `@/money`; it stringifies a JSON number without arithmetic and returns `null`
+for anything absent. The API publishes money as bare JSON numbers, so a value with more than about
+15 significant digits may already have been rounded by `JSON.parse`; `isPrecisionAtRisk` flags it.
+
+| Concern | Use | Renders |
+|---|---|---|
+| An amount | `MoneyText` | `12.002.000.000 ₫`, `1.250,50 USD`; `null` is unavailable with a reason |
+| A USD value in the reporting currency | `convertToReporting` + `ConvertedMoney` | VND first, then the USD original, the rate and its effective date |
+| The declared rate | `readExchangeRateSettings` + `ExchangeRateText` | `1 USD = 25.100 VND` with `hiệu lực 12/09/2026`, or the rate-needed state |
+| A percentage the backend computed | `PercentText` | `18,4%`; `null` is unavailable, never `0%` |
+| A business date | `parseIsoDate` + `DateText` | `12/09/2026`, never shifted by the device zone |
+| A system timestamp | `parseInstant` + `TimestampText` | `09:30, 13/09/2026 (GMT+7)`, relative time only as a supplement |
+| Whether a dated value is current | `FreshnessBadge` | Icon, text, absolute date and update path; you pass `maxAgeDays` |
+| Anything that cannot be shown | `UnavailableValue` | `— Không khả dụng` and the reason |
+| Typed input to the API | `parseVietnameseDecimal` or `fromFormValue` | `12.002.000.000` → `12002000000`, `1.250,50` → `1250.50`, or a named error |
+
+`FreshnessBadge` has no default threshold on purpose: the product has not fixed an N-day rule, and
+the backend makes no freshness judgement. "Today" is the civil date in `Asia/Ho_Chi_Minh`
+(`todayInProductZone`). The catalog at `/catalog/money` shows every state.
+
 ### States and feedback
 
 | Concern | Use | Section 11.1 requires |
