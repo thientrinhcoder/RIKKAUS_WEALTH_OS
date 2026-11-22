@@ -15,19 +15,18 @@ import org.springframework.data.repository.query.Param;
  * returns every user's entries would be one autocomplete away from a cross-user leak, and the only
  * legitimate listing is owner-scoped, so that is the only listing declared.
  *
- * <p>{@link #findByUserIdOrderByEffectiveDateDescCreatedAtDesc} carries the catalog's order in its
- * name rather than leaving it to the caller, because an unordered list from PostgreSQL is not stable
- * between runs and the client renders it in the order it arrives. {@code createdAt} breaks the tie so
- * two entries dated the same day do not swap places between requests.
+ * <p>The listing is {@link CashFlowEntrySearch#search}, which takes the owner as a required argument
+ * and always orders the result, because an unordered list from PostgreSQL is not stable between runs
+ * and the client renders it in the order it arrives. {@code createdAt} and then the id break the tie
+ * so two entries dated the same day do not swap places between requests.
  *
  * <p>{@link #findById} returns an {@link Optional} that the caller hands to {@code OwnershipGuard}.
  * It deliberately does <em>not</em> take an owner, because a repository method that filtered by owner
  * would make "absent" and "someone else's" two different outcomes at this layer, and the single place
  * that decides they are indistinguishable is the guard.
  */
-public interface CashFlowEntryRepository extends Repository<CashFlowEntry, UUID> {
-
-    List<CashFlowEntry> findByUserIdOrderByEffectiveDateDescCreatedAtDesc(UUID userId);
+public interface CashFlowEntryRepository
+        extends Repository<CashFlowEntry, UUID>, CashFlowEntrySearch {
 
     /**
      * The owner's entries that can have an occurrence between {@code from} and {@code to}, both

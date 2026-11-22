@@ -1,6 +1,5 @@
 package com.rikkaus.wealth.liabilities.domain;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.Query;
@@ -15,21 +14,7 @@ import org.springframework.data.repository.Repository;
  * "absent" and "someone else's" are the same outcome at this layer and {@code OwnershipGuard} is the
  * single place that decides they are indistinguishable.
  */
-public interface LiabilityRepository extends Repository<Liability, UUID> {
-
-    /**
-     * The owner's catalog, soonest payment first.
-     *
-     * <p>A JPQL query rather than a derived method name because the order needs {@code NULLS LAST}: a
-     * liability with no next payment date — a margin loan, a guarantee — belongs after the ones with
-     * a date, not before them, and PostgreSQL's default for {@code ASC} is nulls last but a derived
-     * query cannot state it. The name breaks the tie so two liabilities due the same day do not swap
-     * places between requests.
-     */
-    @Query(
-            "select l from Liability l where l.userId = :userId "
-                    + "order by l.nextPaymentDate asc nulls last, l.name asc")
-    List<Liability> findByOwnerOrderBySoonestPayment(UUID userId);
+public interface LiabilityRepository extends Repository<Liability, UUID>, LiabilitySearch {
 
     Optional<Liability> findById(UUID id);
 

@@ -1,12 +1,18 @@
 package com.rikkaus.wealth.liabilities.api;
 
 import com.rikkaus.wealth.liabilities.application.LiabilityService;
+import com.rikkaus.wealth.liabilities.domain.LiabilityCategory;
 import com.rikkaus.wealth.liabilities.domain.LiabilityDetails;
+import com.rikkaus.wealth.liabilities.domain.LiabilityFilter;
 import com.rikkaus.wealth.liabilities.domain.LiabilityTerms;
 import com.rikkaus.wealth.liabilities.domain.PaymentSchedule;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.money.Currency;
+import com.rikkaus.wealth.shared.search.QueryParameters;
+import com.rikkaus.wealth.shared.search.SearchText;
 import com.rikkaus.wealth.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,8 +45,9 @@ import org.springframework.web.bind.annotation.RestController;
  * path variable is the liability's id, never the owner's. Another user's identifier answers {@code
  * not-found} with the body a missing identifier produces, and a collateral the viewer does not own
  * answers {@code validation-failed} with the body a non-existent asset produces; neither response says
- * which of the two it was. {@code GET} on the collection takes no query parameter: search and filter
- * belong to issue #101.
+ * which of the two it was. {@code GET} on the collection takes optional search, filter and sort
+ * parameters, read as text and checked by {@code LiabilityFilter} so a rejected value is a {@code
+ * validation-failed} naming the parameter.
  */
 @RestController
 @RequestMapping(ApiPaths.V1 + "/liabilities")
@@ -61,7 +69,9 @@ class LiabilityController {
                             + "payment date after them, and then by name. An empty catalog is an empty array "
                             + "and a 200, not a 404. Amounts are reported in each liability's own currency; "
                             + "converting a USD balance to VND is the client's, using the rate from "
-                            + "GET /api/v1/settings/exchange-rate.")
+                            + "GET /api/v1/settings/exchange-rate. The optional q, category, currency and "
+                            + "sort parameters narrow and reorder the catalog; without them the response is "
+                            + "the whole catalog in the default order.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "200",
@@ -69,9 +79,12 @@ class LiabilityController {
             content =
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(schema = @Schema(implementation = LiabilityResponse.class)),
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = LiabilityResponse.class)),
                             examples = {
-                                @ExampleObject(name = "an empty catalog", value = "[]"),
+                                @ExampleObject(
+                                        name = "an empty catalog, or nothing matches the search",
+                                        value = "[]"),
                                 @ExampleObject(
                                         name = "a mortgage with collateral and a card balance",
                                         value =
@@ -115,6 +128,35 @@ class LiabilityController {
                                                 """)
                             }))
     @ApiResponse(
+            responseCode = "400",
+            description =
+                    "A search longer than 120 characters or containing U+0000, an unknown category or currency, or an unknown sort key. Every rejected parameter is named in errors, and the value sent is never "
+                            + "repeated.",
+            content =
+                    @Content(
+                            mediaType = PROBLEM_JSON,
+                            schema = @Schema(ref = PROBLEM_SCHEMA_REF),
+                            examples =
+                                    @ExampleObject(
+                                            name = "an unknown category",
+                                            value =
+                                                    """
+                                                    {
+                                                      "type": "urn:rikkaus:problem:validation-failed",
+                                                      "title": "Request validation failed",
+                                                      "status": 400,
+                                                      "detail": "Request validation failed.",
+                                                      "instance": "/api/v1/liabilities",
+                                                      "correlationId": "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                                                      "errors": [
+                                                        {
+                                                          "field": "category",
+                                                          "message": "must be one of BANK_LOAN, PERSONAL_LOAN, MARGIN_LOAN, CREDIT_CARD_BALANCE, GUARANTEE_OBLIGATION, OTHER_LIABILITY"
+                                                        }
+                                                      ]
+                                                    }
+                                                    """)))
+    @ApiResponse(
             responseCode = "401",
             description = "No access token, or it has expired or been revoked",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
@@ -127,8 +169,52 @@ class LiabilityController {
             description = "The requested media type cannot be produced",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @GetMapping
-    List<LiabilityResponse> list() {
-        return liabilityService.listFor(CurrentUser.require()).stream()
+    List<LiabilityResponse> list(
+            @Parameter(
+                            description = "Searches the name and notes." + SearchText.MATCHING_RULES,
+                            schema = @Schema(type = "string", maxLength = SearchText.MAX_LENGTH),
+                            example = "vietcombank")
+                    @RequestParam(name = "q", required = false)
+                    String q,
+            @Parameter(
+                            description =
+                                    "Keeps the liabilities in these categories."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = LiabilityCategory.class)),
+                            example = "BANK_LOAN")
+                    @RequestParam(name = "category", required = false)
+                    List<String> category,
+            @Parameter(
+                            description =
+                                    "Keeps the liabilities in these currencies."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array = @ArraySchema(schema = @Schema(implementation = Currency.class)),
+                            example = "VND")
+                    @RequestParam(name = "currency", required = false)
+                    List<String> currency,
+            @Parameter(
+                            description =
+                                    "nextPaymentDate (the default) lists the soonest payment "
+                                            + "first; -nextPaymentDate the latest first; name and "
+                                            + "-name by name. A liability with no next payment date is "
+                                            + "last in both date orders."
+                                            + QueryParameters.SORT_RULES,
+                            schema =
+                                    @Schema(
+                                            type = "string",
+                                            allowableValues = {
+                                                    "nextPaymentDate",
+                                                    "-nextPaymentDate",
+                                                    "name",
+                                                    "-name"
+                                            },
+                                            defaultValue = "nextPaymentDate"),
+                            example = "name")
+                    @RequestParam(name = "sort", required = false)
+                    String sort) {
+        LiabilityFilter filter = LiabilityFilter.of(q, category, currency, sort);
+        return liabilityService.listFor(CurrentUser.require(), filter).stream()
                 .map(LiabilityResponse::of)
                 .toList();
     }
@@ -148,7 +234,9 @@ class LiabilityController {
             headers =
                     @Header(
                             name = "Location",
-                            description = "The new liability's URI, as /api/v1/liabilities/{liabilityId}.",
+                            description =
+                                    "The new liability's URI, as "
+                                            + "/api/v1/liabilities/{liabilityId}.",
                             schema = @Schema(type = "string")),
             content =
                     @Content(

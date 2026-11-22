@@ -2,9 +2,14 @@ package com.rikkaus.wealth.goals.api;
 
 import com.rikkaus.wealth.goals.application.GoalService;
 import com.rikkaus.wealth.goals.domain.GoalFields;
+import com.rikkaus.wealth.goals.domain.GoalFilter;
+import com.rikkaus.wealth.goals.domain.GoalType;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.search.QueryParameters;
+import com.rikkaus.wealth.shared.search.SearchText;
 import com.rikkaus.wealth.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,6 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,8 +47,9 @@ import org.springframework.web.bind.annotation.RestController;
  * only in {@code instance} and {@code correlationId}. A 403 would turn a list of identifiers into an
  * enumeration oracle, and {@code OwnershipGuard} is where that is decided for every route here.
  *
- * <p>{@code GET} on the collection takes no query parameter. Search and filter belong to issue #101,
- * and pagination is listed as deliberately absent in the API conventions.
+ * <p>{@code GET} on the collection takes optional search, filter and sort parameters, read as text
+ * and checked by {@code GoalFilter} so a rejected value is a {@code validation-failed} naming the
+ * parameter. Pagination is listed as deliberately absent in the API conventions.
  */
 @RestController
 @RequestMapping(ApiPaths.V1 + "/goals")
@@ -63,7 +70,9 @@ class GoalController {
                     "Returns every goal the viewer owns, nearest target date first and then by name. An empty "
                             + "list is an empty array and a 200, not a 404. Every amount is in VND. No "
                             + "projection is included: completion, remaining amount, remaining time, required "
-                            + "contribution and status arrive with issue #89.")
+                            + "contribution and status arrive with issue #89. The optional q, type and sort "
+                            + "parameters narrow and reorder the list; without them the response is every "
+                            + "goal in the default order.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "200",
@@ -73,7 +82,9 @@ class GoalController {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             array = @ArraySchema(schema = @Schema(implementation = GoalResponse.class)),
                             examples = {
-                                @ExampleObject(name = "no goals yet", value = "[]"),
+                                @ExampleObject(
+                                        name = "no goals yet, or nothing matches the search",
+                                        value = "[]"),
                                 @ExampleObject(
                                         name = "two goals",
                                         value =
@@ -109,6 +120,36 @@ class GoalController {
                                                 """)
                             }))
     @ApiResponse(
+            responseCode = "400",
+            description =
+                    "A search longer than 120 characters or containing U+0000, an unknown type, or an "
+                            + "unknown sort key. Every rejected parameter is named in errors, and the value "
+                            + "sent is never repeated.",
+            content =
+                    @Content(
+                            mediaType = PROBLEM_JSON,
+                            schema = @Schema(ref = PROBLEM_SCHEMA_REF),
+                            examples =
+                                    @ExampleObject(
+                                            name = "an unknown type",
+                                            value =
+                                                    """
+                                                    {
+                                                      "type": "urn:rikkaus:problem:validation-failed",
+                                                      "title": "Request validation failed",
+                                                      "status": 400,
+                                                      "detail": "Request validation failed.",
+                                                      "instance": "/api/v1/goals",
+                                                      "correlationId": "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                                                      "errors": [
+                                                        {
+                                                          "field": "type",
+                                                          "message": "must be one of EMERGENCY_FUND, HOME_PURCHASE, EDUCATION, RETIREMENT, NET_WORTH_GROWTH, DEBT_REDUCTION, OTHER_GOAL"
+                                                        }
+                                                      ]
+                                                    }
+                                                    """)))
+    @ApiResponse(
             responseCode = "401",
             description = "No access token, or it has expired or been revoked",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
@@ -121,8 +162,43 @@ class GoalController {
             description = "The requested media type cannot be produced",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @GetMapping
-    List<GoalResponse> list() {
-        return goalService.listFor(CurrentUser.require()).stream().map(GoalResponse::of).toList();
+    List<GoalResponse> list(
+            @Parameter(
+                            description = "Searches the name." + SearchText.MATCHING_RULES,
+                            schema = @Schema(type = "string", maxLength = SearchText.MAX_LENGTH),
+                            example = "quy du phong")
+                    @RequestParam(name = "q", required = false)
+                    String q,
+            @Parameter(
+                            description =
+                                    "Keeps the goals created from these templates."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array = @ArraySchema(schema = @Schema(implementation = GoalType.class)),
+                            example = "EMERGENCY_FUND")
+                    @RequestParam(name = "type", required = false)
+                    List<String> type,
+            @Parameter(
+                            description =
+                                    "targetDate (the default) lists the nearest target date first and then by "
+                                            + "name; -targetDate the furthest first; name and -name by name."
+                                            + QueryParameters.SORT_RULES,
+                            schema =
+                                    @Schema(
+                                            type = "string",
+                                            allowableValues = {
+                                                    "targetDate",
+                                                    "-targetDate",
+                                                    "name",
+                                                    "-name"
+                                            },
+                                            defaultValue = "targetDate"),
+                            example = "name")
+                    @RequestParam(name = "sort", required = false)
+                    String sort) {
+        GoalFilter filter = GoalFilter.of(q, type, sort);
+        return goalService.listFor(CurrentUser.require(), filter).stream()
+                .map(GoalResponse::of)
+                .toList();
     }
 
     @Operation(
@@ -309,7 +385,9 @@ class GoalController {
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "404",
-            description = "No such goal, it belongs to another user, or a concurrent request removed it first",
+            description =
+                    "No such goal, it belongs to another user, or a concurrent request "
+                            + "removed it first",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "405",
@@ -348,7 +426,9 @@ class GoalController {
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "404",
-            description = "No such goal, it belongs to another user, or a concurrent request removed it first",
+            description =
+                    "No such goal, it belongs to another user, or a concurrent request "
+                            + "removed it first",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "405",

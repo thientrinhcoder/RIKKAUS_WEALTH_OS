@@ -3,6 +3,7 @@ package com.rikkaus.wealth.liabilities.application;
 import com.rikkaus.wealth.liabilities.domain.Liability;
 import com.rikkaus.wealth.liabilities.domain.LiabilityCategory;
 import com.rikkaus.wealth.liabilities.domain.LiabilityDetails;
+import com.rikkaus.wealth.liabilities.domain.LiabilityFilter;
 import com.rikkaus.wealth.liabilities.domain.LiabilityRepository;
 import com.rikkaus.wealth.liabilities.domain.LiabilityTerms;
 import com.rikkaus.wealth.liabilities.domain.PaymentSchedule;
@@ -45,10 +46,14 @@ public class LiabilityService {
         this.clock = clock;
     }
 
-    /** The owner's catalog, soonest payment first, undated ones last, then by name. Unpaginated. */
+    /**
+     * The owner's catalog, narrowed and ordered by {@code filter}; by default soonest payment first,
+     * undated ones last, then by name. The owner is applied before any filter, inside the repository
+     * fragment. Unpaginated.
+     */
     @Transactional(readOnly = true)
-    public List<Liability> listFor(UUID ownerId) {
-        return liabilities.findByOwnerOrderBySoonestPayment(ownerId);
+    public List<Liability> listFor(UUID ownerId, LiabilityFilter filter) {
+        return liabilities.search(ownerId, filter);
     }
 
     /** One of the owner's liabilities, or {@code not-found} if it is absent or somebody else's. */

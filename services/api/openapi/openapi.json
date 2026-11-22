@@ -1296,8 +1296,56 @@
       "get" : {
         "tags" : [ "liability-controller" ],
         "summary" : "List the signed-in user's liabilities",
-        "description" : "Returns every liability the viewer owns, soonest next payment first, those with no next payment date after them, and then by name. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each liability's own currency; converting a USD balance to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate.",
+        "description" : "Returns every liability the viewer owns, soonest next payment first, those with no next payment date after them, and then by name. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each liability's own currency; converting a USD balance to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. The optional q, category, currency and sort parameters narrow and reorder the catalog; without them the response is the whole catalog in the default order.",
         "operationId" : "list",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "description" : "Searches the name and notes. Substring match that ignores letter case and Vietnamese diacritics, so \"thao dien\" finds \"Căn hộ Thảo Điền\". Surrounding spaces are ignored and an empty value means no search. % and _ are literal characters, not wildcards. At most 120 characters; a longer value or one containing U+0000 is rejected as validation-failed naming q.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 120
+          },
+          "example" : "vietcombank"
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Keeps the liabilities in these categories. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "BANK_LOAN", "PERSONAL_LOAN", "MARGIN_LOAN", "CREDIT_CARD_BALANCE", "GUARANTEE_OBLIGATION", "OTHER_LIABILITY" ]
+            }
+          },
+          "example" : "BANK_LOAN"
+        }, {
+          "name" : "currency",
+          "in" : "query",
+          "description" : "Keeps the liabilities in these currencies. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VND", "USD" ]
+            }
+          },
+          "example" : "VND"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "nextPaymentDate (the default) lists the soonest payment first; -nextPaymentDate the latest first; name and -name by name. A liability with no next payment date is last in both date orders. One key; a leading - sorts descending. Ties are broken by the default order and then by id, so the order is stable between requests. Any other key, or more than one, is rejected as validation-failed naming sort.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "nextPaymentDate",
+            "enum" : [ "nextPaymentDate", "-nextPaymentDate", "name", "-name" ]
+          },
+          "example" : "name"
+        } ],
         "responses" : {
           "200" : {
             "description" : "The viewer's catalog, possibly empty",
@@ -1310,8 +1358,8 @@
                   }
                 },
                 "examples" : {
-                  "an empty catalog" : {
-                    "description" : "an empty catalog",
+                  "an empty catalog, or nothing matches the search" : {
+                    "description" : "an empty catalog, or nothing matches the search",
                     "value" : [ ]
                   },
                   "a mortgage with collateral and a card balance" : {
@@ -1349,6 +1397,33 @@
                       "createdAt" : "2026-11-14T10:40:02.117Z",
                       "updatedAt" : "2026-11-14T10:40:02.117Z"
                     } ]
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A search longer than 120 characters or containing U+0000, an unknown category or currency, or an unknown sort key. Every rejected parameter is named in errors, and the value sent is never repeated.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "an unknown category" : {
+                    "description" : "an unknown category",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/liabilities",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "category",
+                        "message" : "must be one of BANK_LOAN, PERSONAL_LOAN, MARGIN_LOAN, CREDIT_CARD_BALANCE, GUARANTEE_OBLIGATION, OTHER_LIABILITY"
+                      } ]
+                    }
                   }
                 }
               }
@@ -1516,8 +1591,43 @@
       "get" : {
         "tags" : [ "goal-controller" ],
         "summary" : "List the signed-in user's goals",
-        "description" : "Returns every goal the viewer owns, nearest target date first and then by name. An empty list is an empty array and a 200, not a 404. Every amount is in VND. No projection is included: completion, remaining amount, remaining time, required contribution and status arrive with issue #89.",
+        "description" : "Returns every goal the viewer owns, nearest target date first and then by name. An empty list is an empty array and a 200, not a 404. Every amount is in VND. No projection is included: completion, remaining amount, remaining time, required contribution and status arrive with issue #89. The optional q, type and sort parameters narrow and reorder the list; without them the response is every goal in the default order.",
         "operationId" : "list_1",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "description" : "Searches the name. Substring match that ignores letter case and Vietnamese diacritics, so \"thao dien\" finds \"Căn hộ Thảo Điền\". Surrounding spaces are ignored and an empty value means no search. % and _ are literal characters, not wildcards. At most 120 characters; a longer value or one containing U+0000 is rejected as validation-failed naming q.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 120
+          },
+          "example" : "quy du phong"
+        }, {
+          "name" : "type",
+          "in" : "query",
+          "description" : "Keeps the goals created from these templates. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "EMERGENCY_FUND", "HOME_PURCHASE", "EDUCATION", "RETIREMENT", "NET_WORTH_GROWTH", "DEBT_REDUCTION", "OTHER_GOAL" ]
+            }
+          },
+          "example" : "EMERGENCY_FUND"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "targetDate (the default) lists the nearest target date first and then by name; -targetDate the furthest first; name and -name by name. One key; a leading - sorts descending. Ties are broken by the default order and then by id, so the order is stable between requests. Any other key, or more than one, is rejected as validation-failed naming sort.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "targetDate",
+            "enum" : [ "targetDate", "-targetDate", "name", "-name" ]
+          },
+          "example" : "name"
+        } ],
         "responses" : {
           "200" : {
             "description" : "The viewer's goals, possibly empty",
@@ -1530,8 +1640,8 @@
                   }
                 },
                 "examples" : {
-                  "no goals yet" : {
-                    "description" : "no goals yet",
+                  "no goals yet, or nothing matches the search" : {
+                    "description" : "no goals yet, or nothing matches the search",
                     "value" : [ ]
                   },
                   "two goals" : {
@@ -1561,6 +1671,33 @@
                       "createdAt" : "2026-11-14T10:36:02.118Z",
                       "updatedAt" : "2026-11-14T10:36:02.118Z"
                     } ]
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A search longer than 120 characters or containing U+0000, an unknown type, or an unknown sort key. Every rejected parameter is named in errors, and the value sent is never repeated.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "an unknown type" : {
+                    "description" : "an unknown type",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/goals",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "type",
+                        "message" : "must be one of EMERGENCY_FUND, HOME_PURCHASE, EDUCATION, RETIREMENT, NET_WORTH_GROWTH, DEBT_REDUCTION, OTHER_GOAL"
+                      } ]
+                    }
                   }
                 }
               }
@@ -1922,8 +2059,115 @@
       "get" : {
         "tags" : [ "cash-flow-entry-controller" ],
         "summary" : "List the signed-in user's cash-flow entries",
-        "description" : "Returns every income and expense entry the viewer owns, newest effective date first and then newest created first. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each entry's own currency; converting a USD entry to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. A recurring entry is one row, not one row per month: the dates it falls on are GET /api/v1/cash-flow-occurrences.",
+        "description" : "Returns every income and expense entry the viewer owns, newest effective date first and then newest created first. An empty catalog is an empty array and a 200, not a 404. Amounts are reported in each entry's own currency; converting a USD entry to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. A recurring entry is one row, not one row per month: the dates it falls on are GET /api/v1/cash-flow-occurrences. The optional q, entryType, category, timing, recurrence, currency, effectiveFrom, effectiveTo and sort parameters narrow and reorder the catalog; without them the response is the whole catalog in the default order.",
         "operationId" : "list_2",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "description" : "Searches the notes, the entry's one free-text field. Substring match that ignores letter case and Vietnamese diacritics, so \"thao dien\" finds \"Căn hộ Thảo Điền\". Surrounding spaces are ignored and an empty value means no search. % and _ are literal characters, not wildcards. At most 120 characters; a longer value or one containing U+0000 is rejected as validation-failed naming q.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 120
+          },
+          "example" : "hoc phi"
+        }, {
+          "name" : "entryType",
+          "in" : "query",
+          "description" : "Keeps the entries of these types. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "INCOME", "EXPENSE" ]
+            }
+          },
+          "example" : "EXPENSE"
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Keeps the entries in these categories. A category that does not belong to a type kept by entryType simply matches nothing. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ]
+            }
+          },
+          "example" : "EDUCATION"
+        }, {
+          "name" : "timing",
+          "in" : "query",
+          "description" : "Keeps one-time or recurring entries. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ONE_TIME", "RECURRING" ]
+            }
+          },
+          "example" : "RECURRING"
+        }, {
+          "name" : "recurrence",
+          "in" : "query",
+          "description" : "Keeps the recurring entries with these recurrences; a one-time entry has none and is never kept by this filter. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "MONTHLY", "QUARTERLY", "YEARLY" ]
+            }
+          },
+          "example" : "MONTHLY"
+        }, {
+          "name" : "currency",
+          "in" : "query",
+          "description" : "Keeps the entries in these currencies. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VND", "USD" ]
+            }
+          },
+          "example" : "VND"
+        }, {
+          "name" : "effectiveFrom",
+          "in" : "query",
+          "description" : "Keeps the entries whose stored effective date is on or after this date, as YYYY-MM-DD. It filters the start date of a recurring entry, not the dates it falls on; those are GET /api/v1/cash-flow-occurrences.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "example" : "2026-09-01"
+        }, {
+          "name" : "effectiveTo",
+          "in" : "query",
+          "description" : "Keeps the entries whose stored effective date is on or before this date, as YYYY-MM-DD. Must not be before effectiveFrom.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "example" : "2026-09-30"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "-effectiveDate (the default) lists the newest effective date first and then the newest created; effectiveDate the oldest first. One key; a leading - sorts descending. Ties are broken by the default order and then by id, so the order is stable between requests. Any other key, or more than one, is rejected as validation-failed naming sort.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "-effectiveDate",
+            "enum" : [ "-effectiveDate", "effectiveDate" ]
+          },
+          "example" : "effectiveDate"
+        } ],
         "responses" : {
           "200" : {
             "description" : "The viewer's catalog, possibly empty",
@@ -1936,8 +2180,8 @@
                   }
                 },
                 "examples" : {
-                  "an empty catalog" : {
-                    "description" : "an empty catalog",
+                  "an empty catalog, or nothing matches the search" : {
+                    "description" : "an empty catalog, or nothing matches the search",
                     "value" : [ ]
                   },
                   "a monthly salary, a quarterly tuition fee and a one-time USD dividend" : {
@@ -1988,6 +2232,36 @@
                       "createdAt" : "2026-11-14T10:38:45.902Z",
                       "updatedAt" : "2026-11-14T10:38:45.902Z"
                     } ]
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A search longer than 120 characters or containing U+0000, an unknown entry type, category, timing, recurrence or currency, a date that is not a calendar date in the form YYYY-MM-DD, effectiveTo before effectiveFrom, or an unknown sort key. Every rejected parameter is named in errors, and the value sent is never repeated.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "an unknown entry type and a reversed range" : {
+                    "description" : "an unknown entry type and a reversed range",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/cash-flow-entries",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "entryType",
+                        "message" : "must be one of INCOME, EXPENSE"
+                      }, {
+                        "field" : "effectiveTo",
+                        "message" : "must not be before effectiveFrom"
+                      } ]
+                    }
                   }
                 }
               }
@@ -2368,8 +2642,69 @@
       "get" : {
         "tags" : [ "asset-controller" ],
         "summary" : "List the signed-in user's assets",
-        "description" : "Returns every asset the viewer owns, newest valuation date first and then by name, so the catalog's order is the server's rather than the database's incidental one. An empty catalog is an empty array and a 200, not a 404. Values are reported in each asset's own currency; converting a USD holding to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate.",
+        "description" : "Returns every asset the viewer owns, newest valuation date first and then by name, so the catalog's order is the server's rather than the database's incidental one. An empty catalog is an empty array and a 200, not a 404. Values are reported in each asset's own currency; converting a USD holding to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. The optional q, category, currency, liquidity and sort parameters narrow and reorder the catalog; without them the response is the whole catalog in the default order.",
         "operationId" : "list_3",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "description" : "Searches the name, institution and notes. Substring match that ignores letter case and Vietnamese diacritics, so \"thao dien\" finds \"Căn hộ Thảo Điền\". Surrounding spaces are ignored and an empty value means no search. % and _ are literal characters, not wildcards. At most 120 characters; a longer value or one containing U+0000 is rejected as validation-failed naming q.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 120
+          },
+          "example" : "thao dien"
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "description" : "Keeps the assets in these categories. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "CASH", "BANK_ACCOUNT", "TERM_DEPOSIT", "LISTED_SECURITIES", "BOND", "INVESTMENT_FUND", "REAL_ESTATE", "PRIVATE_BUSINESS_EQUITY", "VEHICLE_OR_VALUABLE_ASSET", "COLLECTIBLE", "OTHER_ASSET" ]
+            }
+          },
+          "example" : "BANK_ACCOUNT"
+        }, {
+          "name" : "currency",
+          "in" : "query",
+          "description" : "Keeps the assets valued in these currencies. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "VND", "USD" ]
+            }
+          },
+          "example" : "VND"
+        }, {
+          "name" : "liquidity",
+          "in" : "query",
+          "description" : "Keeps the assets with these liquidity levels. Repeat the parameter or separate values with commas; a record matching any of them is kept, and different parameters must all match. Values are the exact constant names. An empty value is ignored; any other unknown value is rejected as validation-failed naming this parameter.",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "HIGH", "MEDIUM", "LOW" ]
+            }
+          },
+          "example" : "HIGH"
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "-valuationDate (the default) lists the newest valuation first and then by name; valuationDate the oldest first; name and -name by name. One key; a leading - sorts descending. Ties are broken by the default order and then by id, so the order is stable between requests. Any other key, or more than one, is rejected as validation-failed naming sort.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "-valuationDate",
+            "enum" : [ "-valuationDate", "valuationDate", "name", "-name" ]
+          },
+          "example" : "name"
+        } ],
         "responses" : {
           "200" : {
             "description" : "The viewer's catalog, possibly empty",
@@ -2382,8 +2717,8 @@
                   }
                 },
                 "examples" : {
-                  "an empty catalog" : {
-                    "description" : "an empty catalog",
+                  "an empty catalog, or nothing matches the search" : {
+                    "description" : "an empty catalog, or nothing matches the search",
                     "value" : [ ]
                   },
                   "two assets, one in USD" : {
@@ -2427,6 +2762,36 @@
                       "createdAt" : "2026-08-02T01:15:03.221Z",
                       "updatedAt" : "2026-08-02T01:15:03.221Z"
                     } ]
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "A search longer than 120 characters or containing U+0000, an unknown category, currency or liquidity, or an unknown sort key. Every rejected parameter is named in errors, and the value sent is never repeated.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "an unknown category and sort key" : {
+                    "description" : "an unknown category and sort key",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/assets",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "category",
+                        "message" : "must be one of CASH, BANK_ACCOUNT, TERM_DEPOSIT, LISTED_SECURITIES, BOND, INVESTMENT_FUND, REAL_ESTATE, PRIVATE_BUSINESS_EQUITY, VEHICLE_OR_VALUABLE_ASSET, COLLECTIBLE, OTHER_ASSET"
+                      }, {
+                        "field" : "sort",
+                        "message" : "must be one of -valuationDate, valuationDate, name, -name"
+                      } ]
+                    }
                   }
                 }
               }

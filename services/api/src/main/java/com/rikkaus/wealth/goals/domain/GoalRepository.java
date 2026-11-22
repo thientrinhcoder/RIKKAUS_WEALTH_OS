@@ -1,6 +1,5 @@
 package com.rikkaus.wealth.goals.domain;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.repository.Repository;
@@ -20,9 +19,7 @@ import org.springframework.data.repository.Repository;
  * <p>{@link #flush} exists so the service can catch a zero-row {@code UPDATE} or {@code DELETE} inside
  * the method, where it can become {@code not-found}, rather than at commit where it becomes a 500.
  */
-public interface GoalRepository extends Repository<Goal, UUID> {
-
-    List<Goal> findByUserIdOrderByTargetDateAscNameAsc(UUID userId);
+public interface GoalRepository extends Repository<Goal, UUID>, GoalSearch {
 
     Optional<Goal> findById(UUID id);
 

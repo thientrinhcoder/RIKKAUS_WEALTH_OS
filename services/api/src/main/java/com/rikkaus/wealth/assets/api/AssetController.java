@@ -1,12 +1,19 @@
 package com.rikkaus.wealth.assets.api;
 
 import com.rikkaus.wealth.assets.application.AssetService;
+import com.rikkaus.wealth.assets.domain.AssetCategory;
+import com.rikkaus.wealth.assets.domain.AssetCurrency;
+import com.rikkaus.wealth.assets.domain.AssetFilter;
 import com.rikkaus.wealth.assets.domain.AssetInstrumentDetails;
+import com.rikkaus.wealth.assets.domain.AssetLiquidity;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
 import com.rikkaus.wealth.assets.domain.DeclaredValuation;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.search.QueryParameters;
+import com.rikkaus.wealth.shared.search.SearchText;
 import com.rikkaus.wealth.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,6 +35,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,9 +55,10 @@ import org.springframework.web.bind.annotation.RestController;
  * would turn a list of identifiers into an enumeration oracle; {@code OwnershipGuard} is where that is
  * decided, for every route here.
  *
- * <p>{@code GET} on the collection takes no query parameter. Search, filter and sort belong to issue
- * #99, and pagination is listed as deliberately absent in the API conventions, so accepting a
- * parameter now would publish a shape nobody has agreed to.
+ * <p>{@code GET} on the collection takes optional search, filter and sort parameters, all read as text
+ * and checked by {@code AssetFilter} so a rejected value is a {@code validation-failed} naming the
+ * parameter. Without any of them the response is the whole catalog in its default order. Pagination
+ * is listed as deliberately absent in the API conventions.
  */
 @RestController
 @RequestMapping(ApiPaths.V1 + "/assets")
@@ -71,7 +80,9 @@ class AssetController {
                             + "the catalog's order is the server's rather than the database's incidental one. "
                             + "An empty catalog is an empty array and a 200, not a 404. Values are reported in "
                             + "each asset's own currency; converting a USD holding to VND is the client's, "
-                            + "using the rate from GET /api/v1/settings/exchange-rate.")
+                            + "using the rate from GET /api/v1/settings/exchange-rate. The optional q, "
+                            + "category, currency, liquidity and sort parameters narrow and reorder the "
+                            + "catalog; without them the response is the whole catalog in the default order.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "200",
@@ -79,10 +90,11 @@ class AssetController {
             content =
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(schema = @Schema(implementation = AssetResponse.class)),
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = AssetResponse.class)),
                             examples = {
                                 @ExampleObject(
-                                        name = "an empty catalog",
+                                        name = "an empty catalog, or nothing matches the search",
                                         value = "[]"),
                                 @ExampleObject(
                                         name = "two assets, one in USD",
@@ -133,6 +145,40 @@ class AssetController {
                                                 """)
                             }))
     @ApiResponse(
+            responseCode = "400",
+            description =
+                    "A search longer than 120 characters or containing U+0000, an unknown category, "
+                            + "currency or liquidity, or an unknown sort key. Every rejected parameter is "
+                            + "named in errors, and the value sent is never repeated.",
+            content =
+                    @Content(
+                            mediaType = PROBLEM_JSON,
+                            schema = @Schema(ref = PROBLEM_SCHEMA_REF),
+                            examples =
+                                    @ExampleObject(
+                                            name = "an unknown category and sort key",
+                                            value =
+                                                    """
+                                                    {
+                                                      "type": "urn:rikkaus:problem:validation-failed",
+                                                      "title": "Request validation failed",
+                                                      "status": 400,
+                                                      "detail": "Request validation failed.",
+                                                      "instance": "/api/v1/assets",
+                                                      "correlationId": "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                                                      "errors": [
+                                                        {
+                                                          "field": "category",
+                                                          "message": "must be one of CASH, BANK_ACCOUNT, TERM_DEPOSIT, LISTED_SECURITIES, BOND, INVESTMENT_FUND, REAL_ESTATE, PRIVATE_BUSINESS_EQUITY, VEHICLE_OR_VALUABLE_ASSET, COLLECTIBLE, OTHER_ASSET"
+                                                        },
+                                                        {
+                                                          "field": "sort",
+                                                          "message": "must be one of -valuationDate, valuationDate, name, -name"
+                                                        }
+                                                      ]
+                                                    }
+                                                    """)))
+    @ApiResponse(
             responseCode = "401",
             description = "No access token, or it has expired or been revoked",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
@@ -145,8 +191,62 @@ class AssetController {
             description = "The requested media type cannot be produced",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @GetMapping
-    List<AssetResponse> list() {
-        return assetService.listFor(CurrentUser.require()).stream().map(AssetResponse::of).toList();
+    List<AssetResponse> list(
+            @Parameter(
+                            description =
+                                    "Searches the name, institution and notes."
+                                            + SearchText.MATCHING_RULES,
+                            schema = @Schema(type = "string", maxLength = SearchText.MAX_LENGTH),
+                            example = "thao dien")
+                    @RequestParam(name = "q", required = false)
+                    String q,
+            @Parameter(
+                            description =
+                                    "Keeps the assets in these categories."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = AssetCategory.class)),
+                            example = "BANK_ACCOUNT")
+                    @RequestParam(name = "category", required = false)
+                    List<String> category,
+            @Parameter(
+                            description =
+                                    "Keeps the assets valued in these currencies." + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = AssetCurrency.class)),
+                            example = "VND")
+                    @RequestParam(name = "currency", required = false)
+                    List<String> currency,
+            @Parameter(
+                            description =
+                                    "Keeps the assets with these liquidity levels." + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = AssetLiquidity.class)),
+                            example = "HIGH")
+                    @RequestParam(name = "liquidity", required = false)
+                    List<String> liquidity,
+            @Parameter(
+                            description =
+                                    "-valuationDate (the default) lists the newest valuation first and then by "
+                                            + "name; valuationDate the oldest first; name and -name by name."
+                                            + QueryParameters.SORT_RULES,
+                            schema =
+                                    @Schema(
+                                            type = "string",
+                                            allowableValues = {
+                                                    "-valuationDate",
+                                                    "valuationDate",
+                                                    "name",
+                                                    "-name"
+                                            },
+                                            defaultValue = "-valuationDate"),
+                            example = "name")
+                    @RequestParam(name = "sort", required = false)
+                    String sort) {
+        AssetFilter filter = AssetFilter.of(q, category, currency, liquidity, sort);
+        return assetService.listFor(CurrentUser.require(), filter).stream()
+                .map(AssetResponse::of)
+                .toList();
     }
 
     @Operation(

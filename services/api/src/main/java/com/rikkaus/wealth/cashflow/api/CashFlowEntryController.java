@@ -1,9 +1,18 @@
 package com.rikkaus.wealth.cashflow.api;
 
 import com.rikkaus.wealth.cashflow.application.CashFlowEntryService;
+import com.rikkaus.wealth.cashflow.domain.CashFlowCategory;
+import com.rikkaus.wealth.cashflow.domain.CashFlowEntryFilter;
+import com.rikkaus.wealth.cashflow.domain.CashFlowEntryType;
+import com.rikkaus.wealth.cashflow.domain.CashFlowRecurrence;
+import com.rikkaus.wealth.cashflow.domain.CashFlowTiming;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.money.Currency;
+import com.rikkaus.wealth.shared.search.QueryParameters;
+import com.rikkaus.wealth.shared.search.SearchText;
 import com.rikkaus.wealth.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,8 +51,9 @@ import org.springframework.web.bind.annotation.RestController;
  * caller already sent, and in {@code correlationId}, which is fresh on every response. {@code
  * OwnershipGuard} is where that is decided, for every route here.
  *
- * <p>{@code GET} on the collection takes no query parameter. Search and filter belong to issue #101,
- * and pagination is listed as deliberately absent in the API conventions.
+ * <p>{@code GET} on the collection takes optional search, filter and sort parameters, read as text
+ * and checked by {@code CashFlowEntryFilter} so a rejected value is a {@code validation-failed} naming
+ * the parameter. Pagination is listed as deliberately absent in the API conventions.
  */
 @RestController
 @RequestMapping(ApiPaths.V1 + "/cash-flow-entries")
@@ -65,7 +76,10 @@ class CashFlowEntryController {
                             + "404. Amounts are reported in each entry's own currency; converting a USD entry "
                             + "to VND is the client's, using the rate from GET /api/v1/settings/exchange-rate. "
                             + "A recurring entry is one row, not one row per month: the dates it falls on are "
-                            + "GET /api/v1/cash-flow-occurrences.")
+                            + "GET /api/v1/cash-flow-occurrences. The optional q, entryType, category, "
+                            + "timing, recurrence, currency, effectiveFrom, effectiveTo and sort parameters "
+                            + "narrow and reorder the catalog; without them the response is the whole catalog "
+                            + "in the default order.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
             responseCode = "200",
@@ -73,9 +87,12 @@ class CashFlowEntryController {
             content =
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(schema = @Schema(implementation = CashFlowEntryResponse.class)),
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = CashFlowEntryResponse.class)),
                             examples = {
-                                @ExampleObject(name = "an empty catalog", value = "[]"),
+                                @ExampleObject(
+                                        name = "an empty catalog, or nothing matches the search",
+                                        value = "[]"),
                                 @ExampleObject(
                                         name = "a monthly salary, a quarterly tuition fee and a one-time USD dividend",
                                         value =
@@ -133,6 +150,39 @@ class CashFlowEntryController {
                                                 """)
                             }))
     @ApiResponse(
+            responseCode = "400",
+            description =
+                    "A search longer than 120 characters or containing U+0000, an unknown entry type, category, timing, recurrence or currency, a date that is not a calendar date in the form YYYY-MM-DD, effectiveTo before effectiveFrom, or an unknown sort key. Every rejected parameter is named in errors, and the value sent is never "
+                            + "repeated.",
+            content =
+                    @Content(
+                            mediaType = PROBLEM_JSON,
+                            schema = @Schema(ref = PROBLEM_SCHEMA_REF),
+                            examples =
+                                    @ExampleObject(
+                                            name = "an unknown entry type and a reversed range",
+                                            value =
+                                                    """
+                                                    {
+                                                      "type": "urn:rikkaus:problem:validation-failed",
+                                                      "title": "Request validation failed",
+                                                      "status": 400,
+                                                      "detail": "Request validation failed.",
+                                                      "instance": "/api/v1/cash-flow-entries",
+                                                      "correlationId": "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                                                      "errors": [
+                                                        {
+                                                          "field": "entryType",
+                                                          "message": "must be one of INCOME, EXPENSE"
+                                                        },
+                                                        {
+                                                          "field": "effectiveTo",
+                                                          "message": "must not be before effectiveFrom"
+                                                        }
+                                                      ]
+                                                    }
+                                                    """)))
+    @ApiResponse(
             responseCode = "401",
             description = "No access token, or it has expired or been revoked",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
@@ -145,8 +195,110 @@ class CashFlowEntryController {
             description = "The requested media type cannot be produced",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @GetMapping
-    List<CashFlowEntryResponse> list() {
-        return service.listFor(CurrentUser.require()).stream().map(CashFlowEntryResponse::of).toList();
+    List<CashFlowEntryResponse> list(
+            @Parameter(
+                            description =
+                                    "Searches the notes, the entry's one free-text field."
+                                            + SearchText.MATCHING_RULES,
+                            schema = @Schema(type = "string", maxLength = SearchText.MAX_LENGTH),
+                            example = "hoc phi")
+                    @RequestParam(name = "q", required = false)
+                    String q,
+            @Parameter(
+                            description =
+                                    "Keeps the entries of these types."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = CashFlowEntryType.class)),
+                            example = "EXPENSE")
+                    @RequestParam(name = "entryType", required = false)
+                    List<String> entryType,
+            @Parameter(
+                            description =
+                                    "Keeps the entries in these categories. A category that "
+                                            + "does not belong to a type kept by entryType simply "
+                                            + "matches nothing."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = CashFlowCategory.class)),
+                            example = "EDUCATION")
+                    @RequestParam(name = "category", required = false)
+                    List<String> category,
+            @Parameter(
+                            description =
+                                    "Keeps one-time or recurring entries."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = CashFlowTiming.class)),
+                            example = "RECURRING")
+                    @RequestParam(name = "timing", required = false)
+                    List<String> timing,
+            @Parameter(
+                            description =
+                                    "Keeps the recurring entries with these recurrences; a "
+                                            + "one-time entry has none and is never kept by this "
+                                            + "filter."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array =
+                                    @ArraySchema(schema = @Schema(implementation = CashFlowRecurrence.class)),
+                            example = "MONTHLY")
+                    @RequestParam(name = "recurrence", required = false)
+                    List<String> recurrence,
+            @Parameter(
+                            description =
+                                    "Keeps the entries in these currencies."
+                                            + QueryParameters.MULTI_VALUE_RULES,
+                            array = @ArraySchema(schema = @Schema(implementation = Currency.class)),
+                            example = "VND")
+                    @RequestParam(name = "currency", required = false)
+                    List<String> currency,
+            @Parameter(
+                            description =
+                                    "Keeps the entries whose stored effective date is on or "
+                                            + "after this date, as YYYY-MM-DD. It filters the start "
+                                            + "date of a recurring entry, not the dates it falls on; "
+                                            + "those are GET /api/v1/cash-flow-occurrences.",
+                            schema = @Schema(type = "string", format = "date"),
+                            example = "2026-09-01")
+                    @RequestParam(name = "effectiveFrom", required = false)
+                    String effectiveFrom,
+            @Parameter(
+                            description =
+                                    "Keeps the entries whose stored effective date is on or "
+                                            + "before this date, as YYYY-MM-DD. Must not be before "
+                                            + "effectiveFrom.",
+                            schema = @Schema(type = "string", format = "date"),
+                            example = "2026-09-30")
+                    @RequestParam(name = "effectiveTo", required = false)
+                    String effectiveTo,
+            @Parameter(
+                            description =
+                                    "-effectiveDate (the default) lists the newest effective "
+                                            + "date first and then the newest created; effectiveDate "
+                                            + "the oldest first."
+                                            + QueryParameters.SORT_RULES,
+                            schema =
+                                    @Schema(
+                                            type = "string",
+                                            allowableValues = {"-effectiveDate", "effectiveDate"},
+                                            defaultValue = "-effectiveDate"),
+                            example = "effectiveDate")
+                    @RequestParam(name = "sort", required = false)
+                    String sort) {
+        CashFlowEntryFilter filter =
+                CashFlowEntryFilter.of(
+                        q,
+                        entryType,
+                        category,
+                        timing,
+                        recurrence,
+                        currency,
+                        effectiveFrom,
+                        effectiveTo,
+                        sort);
+        return service.listFor(CurrentUser.require(), filter).stream()
+                .map(CashFlowEntryResponse::of)
+                .toList();
     }
 
     @Operation(
@@ -169,7 +321,9 @@ class CashFlowEntryController {
             headers =
                     @Header(
                             name = "Location",
-                            description = "The new entry's URI, as /api/v1/cash-flow-entries/{entryId}.",
+                            description =
+                                    "The new entry's URI, as "
+                                            + "/api/v1/cash-flow-entries/{entryId}.",
                             schema = @Schema(type = "string")),
             content =
                     @Content(

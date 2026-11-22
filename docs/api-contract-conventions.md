@@ -503,8 +503,8 @@ here would also mean storing or recomputing a figure whose rate nobody could see
   an edit and an append that overlap are applied one after the other and the catalog's value stays the
   current record's. This was a review finding, measured as ten rounds of one `PUT` against one `POST`
   with the snapshot correct after every round.
-- `GET` on the collection takes **no query parameter**. Search, filter and sort are issue #99's, and
-  there is no pagination.
+- `GET` on the collection takes the optional search, filter and sort parameters described in
+  [Search & basic filters](#search--basic-filters--implemented). There is no pagination.
 
 ### Verified by hand, not by the suite
 
@@ -744,8 +744,8 @@ design's edit screen offers *Dư nợ hiện tại* directly.
 
 `GET /api/v1/liabilities` returns the catalog **soonest `nextPaymentDate` first**, liabilities with no
 next payment date after all of those, and ties broken by `name`. The order is the server's so the
-"sắp đến hạn" rows the design surfaces are at the top without the client sorting. No query parameter,
-no pagination; search and filter are issue #101's.
+"sắp đến hạn" rows the design surfaces are at the top without the client sorting. No pagination;
+search, filter and other orders are in [Search & basic filters](#search--basic-filters--implemented).
 
 ### Errors specific to this resource
 
@@ -861,8 +861,9 @@ silently dropped, as on every other route.
 
 An entry reports the amount the user entered and the currency they entered it in. Converting a USD
 entry to VND is the client's, with the rate from `GET /api/v1/settings/exchange-rate`. Monthly totals
-are issue #77, the forecast is issue #80, and search or filter parameters are issue #101. `GET` on the
-collection takes no query parameter. The dates a recurring entry falls on are a separate read-only
+are issue #77 and the forecast is issue #80. Search and filter parameters on the collection are
+described in [Search & basic filters](#search--basic-filters--implemented). The dates a recurring
+entry falls on are a separate read-only
 resource, described next.
 
 ## Cash-flow occurrences — implemented
@@ -1264,8 +1265,8 @@ that task documents one. Every amount is VND; there is no exchange rate anywhere
   never a 500; the slice flushes inside the transaction as the asset slice does.
 - There is no row version and no edit-conflict detection; two overlapping `PUT`s both succeed and the
   last writer wins.
-- `GET` on the collection takes no query parameter. Search and filter are issue #101's; there is no
-  pagination.
+- `GET` on the collection takes the optional search, filter and sort parameters described in
+  [Search & basic filters](#search--basic-filters--implemented). There is no pagination.
 
 ### Verified by hand, not by the suite
 
@@ -1427,6 +1428,97 @@ reproducible procedure, including the log checks, and
 the implementing run. The handler methods are named `listFeedback` and `sendFeedback` rather than
 `list` and `send`, so the derived `operationId`s of the other resources did not shift.
 
+## Search & basic filters — implemented
+
+The four catalog lists take optional query parameters: `GET /api/v1/assets`, `/liabilities`,
+`/cash-flow-entries` and `/goals`. Without any of them each list returns exactly what it returned
+before — the same array, byte for byte, in the same order. Issue #101 shipped this ahead of its design
+(#99); the assumptions and the questions left for the Product Owner are in
+`plans/261122-1538-GH-101-search-basic-filters/plan.md`.
+
+| Route | Search `q` reads | Enum filters | Other | `sort` (default first) |
+|---|---|---|---|---|
+| `GET /api/v1/assets` | `name`, `institution`, `notes` | `category`, `currency`, `liquidity` | — | `-valuationDate`, `valuationDate`, `name`, `-name` |
+| `GET /api/v1/liabilities` | `name`, `notes` | `category`, `currency` | — | `nextPaymentDate`, `-nextPaymentDate`, `name`, `-name` |
+| `GET /api/v1/cash-flow-entries` | `notes` | `entryType`, `category`, `timing`, `recurrence`, `currency` | `effectiveFrom`, `effectiveTo` | `-effectiveDate`, `effectiveDate` |
+| `GET /api/v1/goals` | `name` | `type` | — | `targetDate`, `-targetDate`, `name`, `-name` |
+
+The response shape does not change: still the plain array of the resource, possibly empty, never a
+404 and never an envelope. There is still no pagination.
+
+### Matching
+
+- `q` is a substring match that ignores letter case and **Vietnamese diacritics**: `thao dien`,
+  `THẢO ĐIỀN` and `Thảo Điền` all find `Căn hộ Thảo Điền`, and `đ` matches `d`. Both sides are folded
+  by PostgreSQL's core `translate` with a table of the Vietnamese alphabet, built once in
+  `shared/search/SearchText`; no extension is needed. Text an input method stored decomposed (NFD)
+  matches too, because the eight Vietnamese combining marks are removed. Diacritics of other
+  languages (`ñ`, `ü`) are not folded.
+- Surrounding spaces are ignored and an empty or blank `q` is no search, so a cleared search box shows
+  the whole list. `%` and `_` are literal characters, not wildcards.
+- The search text is always a bound parameter; it never appears in the SQL statement.
+- A record whose searched columns are all empty is never matched by `q`, but is still kept by the enum
+  filters.
+
+### Filters
+
+- Several values: repeat the parameter (`category=CASH&category=BANK_ACCOUNT`) or separate with commas
+  (`category=CASH,BANK_ACCOUNT`). Values of one parameter are alternatives; different parameters must
+  all match.
+- Values are the exact constant names the resource returns (`BANK_ACCOUNT`, not `bank_account`). An
+  empty value (`category=`) is ignored, so a cleared chip does not have to be removed from the URL.
+- The cash-flow filter is named `entryType`, the field it filters, not `type`. A category that does not
+  belong to the requested type (`entryType=EXPENSE&category=SALARY`) is an empty result, not an error.
+- `recurrence` keeps only recurring entries; a one-time entry has none.
+- `effectiveFrom` and `effectiveTo` are `YYYY-MM-DD`, both included, either may be omitted. They filter
+  the **stored** effective date — the start date of a recurring entry — not the dates it falls on. A
+  monthly salary that began in January is not in a September range; which entries occur in a month is
+  `GET /api/v1/cash-flow-occurrences`.
+- Parameters the route does not know are ignored, as before (`?page=2` returns the whole list).
+
+### Order
+
+`sort` takes one key; a leading `-` is descending. Every order ends with the resource's default
+tie-breaks and then the `id`, so two records equal on every sort column keep the same order on every
+request. A liability without a next payment date is last in both date orders. There is no amount
+order: the lists mix VND and USD and comparing the bare numbers would be wrong. Ordering by `name`
+follows the database collation, which decides, for example, where `Đ` falls relative to `D`.
+
+### Errors
+
+Every rejected parameter is a `validation-failed` whose `errors` entry names the parameter; one
+response reports every problem in the request, and no message repeats the value sent.
+
+| Input | `field` | `message` |
+|---|---|---|
+| `q` longer than 120 characters (counted in characters, not bytes) | `q` | `must be at most 120 characters` |
+| `q` containing `U+0000` (`%00`) | `q` | `must not contain a null character` |
+| An unknown enum value, lowercase included | the parameter | `must be one of …`, listing every accepted value |
+| A date that is not a calendar date in the form `YYYY-MM-DD` | `effectiveFrom` / `effectiveTo` | `must be a calendar date in the form YYYY-MM-DD` |
+| `effectiveTo` before `effectiveFrom` | `effectiveTo` | `must not be before effectiveFrom` |
+| An unknown `sort` key, or more than one | `sort` | `must be one of …`, listing the route's keys |
+
+An unknown enum value is a `validation-failed` here, not the `malformed-request` an unknown enum in a
+JSON body produces, because the parameters are read as text and checked by the slice rather than
+converted by Spring.
+
+### Ownership and indexes
+
+Each slice builds its list in a repository fragment (`AssetSearch`, `LiabilitySearch`,
+`CashFlowEntrySearch`, `GoalSearch`) whose owner is a required argument and the first predicate;
+no filter can widen a list beyond the signed-in user's own records. There is no new migration: each
+query starts from the existing `(user_id, …)` index, a pilot user has tens of rows, and a substring
+match with a leading wildcard cannot use a B-tree index anyway (a trigram index would need the
+`pg_trgm` extension).
+
+### Verified by hand, not by the suite
+
+No automated test exercises the parameters, on Product Owner direction.
+[`docs/manual-test-guide-search-filters.md`](manual-test-guide-search-filters.md) is the reproducible
+procedure and
+`plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md` is what it returned,
+including the byte-for-byte comparison of the four parameterless lists against `main`.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -1454,7 +1546,9 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **Goal projections.** No completion percentage, remaining amount, remaining time, required monthly
   contribution or status is computed or published anywhere. Issue #89 owns the projection method and
   its documentation; the goals resource is shaped so it can add them without reopening this contract.
-- **Search, filter and sort over the catalog.** Issue #99's.
+- **Full-text search, saved filters and filters across domains.** The search above is a substring
+  match per resource; there is no ranking, no stemming, no search that spans assets and liabilities
+  in one request, and no stored filter. Goal status is not a filter because no status is stored.
 - Account deletion, a second identity provider, household or shared access, and roles.
 - **Exchange-rate history.** Declaring a rate overwrites the previous one. There is no change log, no
   history resource, no automatic or fetched rate, and no third currency.
@@ -1462,7 +1556,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
 - **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
-  report, forecast, goal and onboarding routes.** All ten resources shipped on Product Owner direction with manual verification only, recorded in
+  report, forecast, goal and onboarding routes, and for the search and filter parameters.** All of
+  them shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
   `plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md` and
@@ -1470,8 +1565,9 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md`,
   `plans/reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md`,
   `plans/reports/manual-verification-261122-1544-GH-80-three-month-forecast.md`,
-  `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md` and
-  `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md`. Every other route
+  `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`,
+  `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` and
+  `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and
