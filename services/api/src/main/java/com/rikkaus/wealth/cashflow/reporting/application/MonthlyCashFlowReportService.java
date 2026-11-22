@@ -64,7 +64,10 @@ public class MonthlyCashFlowReportService {
     private static final int AMOUNT_SCALE = 2;
 
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(AMOUNT_SCALE);
-    private static final BigDecimal TENTHS_OF_A_PERCENT = BigDecimal.valueOf(1000);
+    /** One hundred percent, counted in tenths of a percent. */
+    private static final int WHOLE_IN_TENTHS = 1000;
+
+    private static final BigDecimal TENTHS_OF_A_PERCENT = BigDecimal.valueOf(WHOLE_IN_TENTHS);
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final CashFlowOccurrenceService occurrences;
@@ -246,6 +249,10 @@ public class MonthlyCashFlowReportService {
      * <p>The amounts are not negative and sum to {@code total}, so the missing tenths are fewer than
      * the rows with a remainder and a row with a zero amount never receives one. When the total is
      * zero there is nothing to divide by and every share is {@code null}.
+     *
+     * <p>Counted in {@code int}: a row's tenths are at most 1000 because no amount
+     * exceeds the total. {@code intValueExact} turns a broken invariant into an exception rather than a
+     * silently wrapped count.
      */
     static List<BigDecimal> apportion(List<BigDecimal> amounts, BigDecimal total) {
         if (total.signum() == 0) {
@@ -253,12 +260,12 @@ public class MonthlyCashFlowReportService {
             amounts.forEach(amount -> unavailable.add(null));
             return unavailable;
         }
-        long[] tenths = new long[amounts.size()];
+        int[] tenths = new int[amounts.size()];
         BigDecimal[] remainders = new BigDecimal[amounts.size()];
-        long assigned = 0;
+        int assigned = 0;
         for (int i = 0; i < amounts.size(); i++) {
             BigDecimal[] division = amounts.get(i).multiply(TENTHS_OF_A_PERCENT).divideAndRemainder(total);
-            tenths[i] = division[0].longValueExact();
+            tenths[i] = division[0].intValueExact();
             remainders[i] = division[1];
             assigned += tenths[i];
         }
@@ -268,13 +275,13 @@ public class MonthlyCashFlowReportService {
         }
         // List.sort is stable, so equal remainders keep row order and the earlier row wins the tie.
         byRemainder.sort(Comparator.comparing((Integer i) -> remainders[i]).reversed());
-        long missing = TENTHS_OF_A_PERCENT.longValueExact() - assigned;
+        int missing = WHOLE_IN_TENTHS - assigned;
         for (int k = 0; k < missing; k++) {
             tenths[byRemainder.get(k)]++;
         }
 
         List<BigDecimal> shares = new ArrayList<>(amounts.size());
-        for (long share : tenths) {
+        for (int share : tenths) {
             shares.add(BigDecimal.valueOf(share, 1));
         }
         return shares;
