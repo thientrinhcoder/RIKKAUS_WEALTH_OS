@@ -3,6 +3,7 @@ package com.rikkaus.wealth.assets.application;
 import com.rikkaus.wealth.assets.domain.Asset;
 import com.rikkaus.wealth.assets.domain.AssetCategory;
 import com.rikkaus.wealth.assets.domain.AssetFilter;
+import com.rikkaus.wealth.assets.domain.AssetInstrumentDetails;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
 import com.rikkaus.wealth.assets.domain.AssetRepository;
 import com.rikkaus.wealth.assets.domain.AssetValuation;
@@ -89,21 +90,34 @@ public class AssetService {
      * <em>initial</em> state is "only the first valuation", and a trend that omits the value an asset
      * was created with starts one point short.
      *
-     * <p>The dates and the rate snapshot are checked together rather than one at a time, so a request
-     * with two problems is one response naming both fields instead of two round trips.
+     * <p>The dates, the rate snapshot and the category's acceptance of each instrument field are
+     * checked together rather than one at a time, so a request with three problems is one response
+     * naming every field instead of three round trips.
+     *
+     * <p>The instrument fields describe the holding, not a valuation, so they are stored on the asset
+     * row only. Nothing about them reaches the history record, and no figure in them feeds the
+     * snapshot: the current value is still the declared valuation and nothing else.
      */
     @Transactional
     public Asset create(
-            UUID ownerId, AssetCategory category, DeclaredValuation valuation, AssetMetadata metadata) {
+            UUID ownerId,
+            AssetCategory category,
+            DeclaredValuation valuation,
+            AssetMetadata metadata,
+            AssetInstrumentDetails instrumentDetails) {
         AssetMetadata normalized = normalize(metadata);
+        AssetInstrumentDetails normalizedDetails = normalize(instrumentDetails);
         List<Map<String, String>> errors =
                 new ArrayList<>(dateErrors(valuation.effectiveDate(), normalized.purchaseDate()));
         errors.addAll(InputRules.rateSnapshotErrors(valuation, InputRules.today(clock)));
+        errors.addAll(categoryApplicabilityErrors(category, normalizedDetails));
         if (!errors.isEmpty()) {
             throw InputRules.validationFailed(errors);
         }
         Instant now = clock.instant();
-        Asset asset = assets.save(Asset.create(ownerId, category, valuation, normalized, now));
+        Asset asset =
+                assets.save(
+                        Asset.create(ownerId, category, valuation, normalized, normalizedDetails, now));
         valuations.save(AssetValuation.recordedFor(asset.getId(), valuation, now));
         return asset;
     }
@@ -128,18 +142,33 @@ public class AssetService {
      * then refuse the correction of that very record. Reported under the message the catalog has always
      * used, because for an asset with no back-dated history the earliest record <em>is</em> the stored
      * valuation date.
+     *
+     * <p>The instrument fields are checked against the asset's <em>stored</em> category: the category
+     * is chosen once in the create flow and no edit carries one, so a request cannot move an asset into
+     * a category that would accept the field it is sending. They are a replacement like the optional
+     * common fields, so an omitted symbol clears the stored one.
      */
     @Transactional
-    public Asset replaceMetadata(UUID ownerId, UUID assetId, AssetMetadata metadata) {
+    public Asset replaceMetadata(
+            UUID ownerId,
+            UUID assetId,
+            AssetMetadata metadata,
+            AssetInstrumentDetails instrumentDetails) {
         Asset asset = OwnershipGuard.requireOwned(assets.findAndLockById(assetId), ownerId);
         AssetMetadata normalized = normalize(metadata);
+        AssetInstrumentDetails normalizedDetails = normalize(instrumentDetails);
         LocalDate earliestValuation =
                 valuations
                         .findFirstByAssetIdOrderByEffectiveDateAsc(asset.getId())
                         .map(AssetValuation::getEffectiveDate)
                         .orElse(asset.getValuationDate());
-        rejectImpossibleDates(earliestValuation, normalized.purchaseDate());
-        asset.replaceMetadata(normalized, clock.instant());
+        List<Map<String, String>> errors =
+                new ArrayList<>(dateErrors(earliestValuation, normalized.purchaseDate()));
+        errors.addAll(categoryApplicabilityErrors(asset.getCategory(), normalizedDetails));
+        if (!errors.isEmpty()) {
+            throw InputRules.validationFailed(errors);
+        }
+        asset.replaceMetadata(normalized, normalizedDetails, clock.instant());
         Asset saved = assets.save(asset);
         flushTreatingAVanishedRowAsNotFound();
         return saved;
@@ -194,20 +223,14 @@ public class AssetService {
     }
 
     /**
-     * Refuses a date the calendar cannot support.
+     * A date the calendar cannot support.
      *
      * <p>These two rules cannot be bean-validation annotations. The first depends on the injected
      * clock, and the second is a comparison between two fields that for an edit do not even arrive in
      * the same request. They produce the same {@code errors} extension shape the identity and settings
-     * slices produce, so a client has one error body to parse.
+     * slices produce, so a client has one error body to parse. The list is this method's own, so an
+     * unrelated instrument or rate problem in the same request cannot suppress the ordering rule.
      */
-    private void rejectImpossibleDates(LocalDate valuationDate, LocalDate purchaseDate) {
-        List<Map<String, String>> errors = dateErrors(valuationDate, purchaseDate);
-        if (!errors.isEmpty()) {
-            throw InputRules.validationFailed(errors);
-        }
-    }
-
     private List<Map<String, String>> dateErrors(LocalDate valuationDate, LocalDate purchaseDate) {
         LocalDate today = InputRules.today(clock);
         List<Map<String, String>> errors = new ArrayList<>();
@@ -228,6 +251,44 @@ public class AssetService {
     }
 
     /**
+     * An instrument field sent for a category the accepted design never shows it on.
+     *
+     * <p>The matrix lives on {@link AssetCategory} and is enforced again by
+     * {@code assets_instrument_pricing_suits_the_category} and
+     * {@code assets_interest_rate_suits_the_category} in {@code V14__asset_instrument_details.sql}.
+     * This is the half that names the field, which is the difference between a user being told
+     * <em>symbol must not be set for this asset category</em> and a 500 from a check constraint.
+     *
+     * <p>Refused rather than quietly dropped. The two are not equally honest: storing nothing and
+     * answering 201 would discard a value the client sent without saying so, and a frontend bug would
+     * then be invisible until somebody wondered where the ticker went.
+     *
+     * <p>It runs after the symbol has been cleaned, so a symbol submitted as {@code "   "} is a user
+     * who typed nothing into an optional field and not a user sending a field their category refuses.
+     * Fields are reported in the order the contract lists them, so two requests that are wrong in the
+     * same way produce the same body.
+     */
+    private static List<Map<String, String>> categoryApplicabilityErrors(
+            AssetCategory category, AssetInstrumentDetails instrumentDetails) {
+        List<Map<String, String>> errors = new ArrayList<>();
+        if (!category.allowsInstrumentPricing()) {
+            refuseIfPresent(errors, "symbol", instrumentDetails.symbol());
+            refuseIfPresent(errors, "costPerUnit", instrumentDetails.costPerUnit());
+            refuseIfPresent(errors, "currentPricePerUnit", instrumentDetails.currentPricePerUnit());
+        }
+        if (!category.allowsRate()) {
+            refuseIfPresent(errors, "interestRate", instrumentDetails.interestRate());
+        }
+        return errors;
+    }
+
+    private static void refuseIfPresent(List<Map<String, String>> errors, String field, Object value) {
+        if (value != null) {
+            errors.add(InputRules.error(field, "must not be set for this asset category"));
+        }
+    }
+
+    /**
      * Cleans the three free-text fields.
      *
      * <p>What "clean" means — surrounding blank space in the widest sense removed, an optional field
@@ -244,5 +305,26 @@ public class AssetService {
                 metadata.quantity(),
                 InputRules.cleaned(metadata.institution(), "institution"),
                 InputRules.cleaned(metadata.notes(), "notes"));
+    }
+
+    /**
+     * Cleans the one free-text instrument field.
+     *
+     * <p>{@code symbol} goes through {@link InputRules#cleaned} like the institution and the notes, for
+     * the same two reasons: a value of only blank space is an optional field the user left alone
+     * rather than a ticker made of spaces, and a null character cannot be stored in a PostgreSQL
+     * {@code text} column at all and would otherwise reach the client as a 500.
+     *
+     * <p>The three numeric fields are not touched. Their bounds are annotations on the request and
+     * check constraints on the table, and a scale the column cannot hold is refused by {@code @Digits}
+     * before it arrives here, never rounded, because rounding a figure the user typed would store
+     * something other than what they said.
+     */
+    private static AssetInstrumentDetails normalize(AssetInstrumentDetails instrumentDetails) {
+        return new AssetInstrumentDetails(
+                InputRules.cleaned(instrumentDetails.symbol(), "symbol"),
+                instrumentDetails.costPerUnit(),
+                instrumentDetails.currentPricePerUnit(),
+                instrumentDetails.interestRate());
     }
 }

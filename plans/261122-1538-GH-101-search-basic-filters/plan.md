@@ -107,7 +107,7 @@ user B không bao giờ thấy record của A.
 
 ## Kết quả
 
-96 scenario (152 lượt kiểm tra) pass trên commit `ab1af04`; lần đầu 140/152 vì scenario X03–X05 ghi sai
+96 scenario (152 lượt kiểm tra) pass trên commit `ab1af04` và lại pass sau khi merge `main` `becca58`; lần đầu 140/152 vì scenario X03–X05 ghi sai
 type 401, đã sửa scenario. Evidence:
 [`plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md`](../reports/manual-verification-261122-1538-GH-101-search-basic-filters.md).
 
@@ -121,3 +121,5 @@ type 401, đã sửa scenario. Evidence:
 3. Chip trạng thái mục tiêu (`Đúng kế hoạch` / `Có rủi ro` / `Chậm kế hoạch`) cần filter server-side
    không? Trạng thái được tính từ projection, không lưu, nên hiện client tự lọc.
 4. Tên tham số cash-flow là `entryType` (trùng field response) thay vì `type`. Có cần alias `type`?
+5. Sau #56, tài sản có thêm `symbol` (mã chứng khoán/quỹ, ví dụ `E1VFVN30`). `q` hiện chưa tìm trong
+   `symbol`; có muốn gõ `fpt` để ra `Cổ phiếu FPT` theo mã không? Thêm là một cột trong `AssetSearchImpl`.

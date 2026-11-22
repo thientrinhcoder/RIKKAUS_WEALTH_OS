@@ -26,9 +26,9 @@ Tạo trong `services/api/src/main/java/com/rikkaus/wealth/`:
 
 Sửa: `<X>Repository` thêm `extends <X>Search`; `<X>Service.listFor(owner, filter)`; controller list bind
 tham số thô (`String`, `List<String>`) với `@Parameter` có mô tả và ví dụ, cập nhật javadoc "takes no
-query parameter". Method repository cũ chỉ phục vụ list (assets, liabilities, goals) bị xóa vì không còn
-caller; `CashFlowEntryRepository.findByUserIdOrderByEffectiveDateDescCreatedAtDesc` giữ nguyên vì #77,
-#80 đang làm cùng slice.
+query parameter". Method repository cũ chỉ phục vụ list của cả bốn slice bị xóa vì không còn caller.
+`CashFlowEntryRepository.findByUserIdOrderByEffectiveDateDescCreatedAtDesc` được giữ ở commit đầu vì #77,
+#80 đang làm cùng slice; sau khi merge `main` (`becca58`) xác nhận không slice nào gọi nên đã xóa.
 
 ## Validation
 

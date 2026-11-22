@@ -344,9 +344,9 @@ The first domain resource. Five routes, all under `bearerAuth`, all owner-scoped
 | Route | Body | Success |
 |---|---|---|
 | `GET /api/v1/assets` | — | 200, the viewer's catalog as an array |
-| `POST /api/v1/assets` | the six required fields, plus any of the five optional ones | 201, the asset, with `Location` |
+| `POST /api/v1/assets` | the six required fields, plus any of the five optional common ones and any instrument field the category accepts | 201, the asset, with `Location` |
 | `GET /api/v1/assets/{assetId}` | — | 200, the asset |
-| `PUT /api/v1/assets/{assetId}` | the editable metadata | 200, the asset as it now stands |
+| `PUT /api/v1/assets/{assetId}` | the editable metadata and instrument fields | 200, the asset as it now stands |
 | `DELETE /api/v1/assets/{assetId}` | — | 204 |
 
 ### The eleven categories
@@ -364,13 +364,67 @@ keeps in step with the first.
 | | |
 |---|---|
 | Required | `name` (≤120 chars), `category`, `currentValue`, `currency`, `valuationDate`, `liquidity` |
-| Optional | `purchaseValue`, `purchaseDate`, `quantity`, `institution` (≤160), `notes` (≤2000) |
+| Optional, every category | `purchaseValue`, `purchaseDate`, `quantity`, `institution` (≤160), `notes` (≤2000) |
+| Optional, by category | `symbol` (≤32), `costPerUnit`, `currentPricePerUnit`, `interestRate` — see the matrix below |
 | Enumerated | `currency` is `VND` or `USD`; `liquidity` is `HIGH`, `MEDIUM` or `LOW` |
-| Exact decimals | `currentValue` and `purchaseValue` are `NUMERIC(19, 2)`; `quantity` is `NUMERIC(19, 6)`. The `@Digits` bounds in the request records mirror those columns, so an over-precise value is a named `validation-failed` rather than a 500 from PostgreSQL |
+| Exact decimals | `currentValue` and `purchaseValue` are `NUMERIC(19, 2)`; `quantity`, `costPerUnit` and `currentPricePerUnit` are `NUMERIC(19, 6)`; `interestRate` is `NUMERIC(7, 4)`. The `@Digits` bounds in the request records mirror those columns, so an over-precise value is a named `validation-failed` rather than a 500 from PostgreSQL |
 
 `currentValue` of exactly `0` is accepted — an emptied or fully depreciated holding is a real state.
 Negative is refused, because a negative asset is a liability and that is issue #16's own table rather
 than a sign convention on this one. `quantity` must be strictly positive when present.
+
+### The instrument fields, and which categories accept them
+
+Four optional fields serve the categories where an instrument position is meaningful. They arrived
+with issue #56 and their columns are in `V14__asset_instrument_details.sql`. They describe the
+holding, not a valuation: they live on the asset row only, never on a valuation record, and recording
+a valuation neither reads nor changes them.
+
+| Category | `symbol` | `costPerUnit` | `currentPricePerUnit` | `interestRate` |
+|---|---|---|---|---|
+| `LISTED_SECURITIES` | accepted | accepted | accepted | refused |
+| `BOND` | accepted | accepted | accepted | accepted |
+| `INVESTMENT_FUND` | accepted | accepted | accepted | refused |
+| `TERM_DEPOSIT` | refused | refused | refused | accepted |
+| `OTHER_ASSET` | accepted | accepted | accepted | accepted |
+| `CASH`, `BANK_ACCOUNT`, `REAL_ESTATE`, `PRIVATE_BUSINESS_EQUITY`, `VEHICLE_OR_VALUABLE_ASSET`, `COLLECTIBLE` | refused | refused | refused | refused |
+
+This is the accepted design's visibility matrix, enforced rather than only drawn, cell for cell. A
+refused field returns `validation-failed` with `{"field": "<the field>", "message": "must not be set
+for this asset category"}`, and every refused field in one body arrives in one response rather than
+one per round trip. The rule lives on `AssetCategory` as `allowsInstrumentPricing()` and
+`allowsRate()`, and again as two check constraints, so a caller that is not the API is refused too.
+
+Three cells read oddly enough to say out loud:
+
+- **`LISTED_SECURITIES` refuses `interestRate`.** A listed share has no rate, and a field here would
+  invite a dividend yield that nothing in MVP 1A calculates.
+- **`INVESTMENT_FUND` refuses `interestRate`.** The matrix cell is an optional note, not a rate field.
+  A fund's expected return belongs in `notes`, where no reader mistakes it for a computed figure.
+- **`OTHER_ASSET` accepts all four.** Its matrix cell is hidden-by-default, which is a statement about
+  the form and not a prohibition.
+
+`quantity` is not in that table on purpose. It is a common optional field accepted on every category
+since issue #53, and the backbone lists it in both the common-optional and the instrument sets because
+it is one datum; a second quantity would make "how many units" a question with two answers.
+
+`interestRate` is a **percent per year**, not a fraction: `6.2500` is 6.25%. It is bounded to `0`
+through `100` inclusive, because a rate above that is a data-entry error — a user who meant 6.25 and
+typed 625 — and the bound turns that into a named refusal rather than a figure a later report presents
+as real. The two per-unit prices accept `0` and refuse negatives, for the same reason `currentValue`
+does.
+
+**Nothing is derived from them.** `currentValue` is the asset's current valuation record — the figure
+the user declared, through `POST /api/v1/assets` or the valuation history — and is never `quantity ×
+currentPricePerUnit`. Changing `currentPricePerUnit` through `PUT` does not record a valuation. An asset reporting a quantity of `500`, a current price per unit of
+`24150.000000` and a current value of `12000000.00` is stored and returned exactly as sent, although
+the product is `12075000`. There is no accrued interest, no yield, no gain or loss and no performance
+figure anywhere in this resource, and no market-price integration in MVP 1A.
+
+A `symbol` of only blank space is cleaned to `null` before the category rule runs, so a user who
+typed nothing into an optional field is not told their category refuses it. A `symbol` containing a
+null character is refused by name rather than failing inside the PostgreSQL driver, as the three
+common free-text fields already are.
 
 Dates are judged as Vietnamese civil dates in `Asia/Ho_Chi_Minh`, exactly as the declared
 exchange-rate date is: `valuationDate` and `purchaseDate` may not be in the future, and `purchaseDate`
@@ -381,8 +435,14 @@ purchase; the message is the same `must not be later than the valuation date`.
 
 ### The valuation is not edited; it is recorded
 
-`PUT` accepts `name`, `liquidity`, `purchaseValue`, `purchaseDate`, `quantity`, `institution` and
-`notes`. It does **not** accept `currentValue`, `currency`, `valuationDate` or `category`.
+`PUT` accepts `name`, `liquidity`, `purchaseValue`, `purchaseDate`, `quantity`, `institution`,
+`notes` and the four instrument fields. It does **not** accept `currentValue`, `currency`,
+`valuationDate` or `category`.
+
+Because the body carries no category, the instrument fields are judged against the asset's **stored**
+one. An edit that sends a field the stored category refuses is a `validation-failed` naming it, and
+ownership is resolved first, so a non-owner's request answers `not-found` rather than revealing which
+category the asset is in.
 
 That is the accepted design for issue #51 — the current value is read-only in the edit form — and a new
 value goes through the valuation history below instead. `currentValue`, `currency` and `valuationDate`
@@ -392,13 +452,14 @@ only mutator `Asset` has for them takes a stored record rather than loose values
 
 Creating an asset also writes the first record of its history, so `POST /api/v1/assets` now accepts two
 optional members alongside `valuationDate`: `usdToVndRate` and `rateEffectiveDate`, the rate snapshot
-for that first record. They obey the rules the history section states, and they are the only change to
-the catalog's contract since it shipped.
+for that first record. They obey the rules the history section states. They and the four instrument fields
+above are the two additions to the catalog's contract since it shipped.
 
 Two further things about `PUT`:
 
-- **It is a replacement, not a patch.** An optional field omitted from the body is cleared. That is
-  what makes "remove my note" expressible without a sentinel value.
+- **It is a replacement, not a patch.** An optional field omitted from the body is cleared, the four
+  instrument fields included. That is what makes "remove my note" and "I recorded the wrong ticker"
+  expressible without a sentinel value.
 - **A frozen member sent anyway is silently dropped**, not rejected. It is an unknown property, and
   Spring Boot's own default is to ignore one. Nothing is applied and nothing is reported, so a client
   must not read a `200` as confirmation that a value it sent was stored.
@@ -454,11 +515,20 @@ JavaScript's exact-integer range of about `9.007e15`, so a value above that woul
 figures are several orders of magnitude below the boundary, so no string encoding was introduced for
 it; a client that ever needs the full column range should read these as strings.
 
-No automated test exercises any of these five routes. The resource shipped on Product Owner direction
-with manual verification only:
-[`docs/manual-test-guide-assets.md`](manual-test-guide-assets.md) is the reproducible procedure and
-`plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` is what it returned
-on the implementing run — 70 cases, 64 through HTTP and 6 straight into PostgreSQL.
+No automated test exercises any of these five routes, the instrument fields included. The resource
+shipped on Product Owner direction with manual verification only, in two companion procedures that
+together are a full regression run:
+
+- [`docs/manual-test-guide-assets.md`](manual-test-guide-assets.md) covers the common fields, the five
+  routes, ownership and the protocol cases. `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`
+  is what it returned on the implementing run — 70 cases, 64 through HTTP and 6 straight into
+  PostgreSQL.
+- [`docs/manual-test-guide-asset-instrument-details.md`](manual-test-guide-asset-instrument-details.md)
+  covers the four instrument fields and the category matrix.
+  `plans/reports/manual-verification-261110-0844-GH-56-type-specific-asset-details.md` is what it
+  returned on the implementing run, and `plans/reports/manual-verification-261122-1607-GH-56-type-specific-asset-details-rebased.md` is the
+  full rerun after the slice was rebased onto the valuation history — 118 cases, the instrument guide
+  in full plus a smoke pass over the valuation guide.
 
 ## Asset valuation history — implemented
 
@@ -869,7 +939,7 @@ publishes both as required `format: date` strings.
 
 ### Not here
 
-No converted VND amount, no totals, no forecast (#77, #80). No editing of a single occurrence and no
+No converted VND amount and no totals: those are the monthly report's, described next. No forecast (#80). No editing of a single occurrence and no
 split of a series: those are open questions for the feature contract #20. No preview of an unsaved
 rule: the endpoint expands stored entries only. A liability's own repayment schedule is not expanded
 here.
@@ -881,6 +951,227 @@ written before the code, are in
 `plans/261114-1843-GH-74-recurring-schedule-expansion/phase-01-test-scenarios.md`; the run is recorded in
 `plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md` and is reproduced by
 `docs/manual-test-guide-cash-flow-occurrences.md`.
+
+## Cash-flow monthly report — implemented
+
+A read-only, derived resource (issue #77). One route, under `bearerAuth`, owner-scoped by the token. It
+sums one calendar month of the viewer's cash flow from the occurrences described above. Nothing is
+stored and there is no migration: declaring a rate or editing an entry changes the next report.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/cash-flow-reports/monthly` | `month`, required, `YYYY-MM` | 200, the report; an empty month is the same structure with `0.00` and empty arrays, never a 404 |
+
+The month is a query parameter, like `from` and `to` above, so a malformed month is a
+`validation-failed` naming `month` rather than an unnamed 404. `/monthly` leaves room for another report
+under the same collection.
+
+### The lines and the formulas
+
+The report expands the month through the same service as `GET /api/v1/cash-flow-occurrences` with
+`from` the 1st and `to` the last day, so the two routes always agree about which occurrences fall in a
+month. Each occurrence becomes one entry of `occurrences`, in the same order (date, then
+`sourceEntryId`), carrying `sourceEntryId`, `occurrenceDate`, `sequence`, `shiftedToMonthEnd`,
+`entryType`, `category`, `recurrence`, `linkedAssetId`, `notes`, `originalAmount`, `originalCurrency`
+and `amount` in VND. **Every other number in the response is a sum over those lines**, so a client can
+add them up and arrive at each figure:
+
+```text
+totals.income   = Σ amount of INCOME lines            (lines with a null amount add nothing)
+totals.expense  = Σ amount of EXPENSE lines
+totals.net      = totals.income − totals.expense       (no other adjustment)
+composition row = Σ amount and count of the lines of one category, one row per category present
+passiveIncome.total        = Σ byAsset[].amount = Σ amount of INCOME lines with a linkedAssetId
+passiveIncome.unassigned   = INCOME lines in RENTAL_INCOME, DIVIDEND, DEPOSIT_INTEREST or
+                             BOND_OR_FUND_INCOME with no linkedAssetId; not counted in total
+```
+
+Composition rows are sorted by amount, largest first, then by category name; asset rows by amount, then
+`assetId`. The server does not fold small categories into an "other" row: that threshold is a display
+choice of the client.
+
+**Passive income is decided by the asset link alone**, as the accepted design for issue #75 states; the
+server never infers it from a category. The unassigned group exists so a deposit interest the user
+forgot to link is visible instead of silently counted as active income. The asset is published as
+`assetId` only; its name is read from `GET /api/v1/assets`.
+
+### Shares
+
+`sharePercent` is percent of its type's total at one decimal, **apportioned by largest remainder** so the
+rows of one composition sum to exactly `100.0`: each row first gets `floor(amount × 1000 / total)` tenths,
+and the tenths still missing from 1000 go one each to the rows with the largest remainder, ties to the
+earlier row. Rounding each row on its own would let September 2026's expense column add up to `100.1`;
+apportioned, `HEALTHCARE` reads `5.0` rather than `5.1`. `sharePercentOfIncome` on passive income and on
+each asset is a percent of total income, rounded half-up on its own, and is not forced to sum to
+anything. A share with a zero denominator is `null`, never `0`.
+
+### Currency conversion
+
+The report is in VND. A USD line is converted with the rate the user has declared in
+`GET /api/v1/settings/exchange-rate`, read by the slice with a native query on `wealth.user_settings`,
+through `ConversionTrace`: `originalAmount × usdToVndRate`, rounded half-up **once per occurrence** to whole
+dong and written at two decimals. Totals add the rounded lines, so they reconcile with what each line
+shows. `exchangeRate{usdToVndRate, effectiveDate}` returns the rate and date applied, as the backbone
+requires a conversion to retain them. The rate is the one currently declared; settings keep no history,
+so a past month is converted at today's declaration.
+
+**Without a declared rate** the report is still a 200. A USD line keeps `originalAmount`, its `amount` is
+`null` and it is left out of every sum; `exchangeRate` is `null`, `complete` is `false`, `unconverted`
+gives the number of such lines and their income and expense in USD, and each composition, asset or
+unassigned row holding one has `partial: true`, with a zero amount when every line of the row is
+unconverted. A missing rate is never counted as zero dong.
+
+### Validation
+
+| Input | `errors` entry |
+|---|---|
+| `month` missing or blank | `{month, "must be present"}` |
+| Not four digits, a hyphen and two digits, or not a month (`2026-9`, `2026-13`, `2026-00`, `09/2026`, `2026-09-01`, a second `month`) | `{month, "must be a calendar month in the form YYYY-MM"}` |
+
+The value sent is never echoed. A past, current or future month is accepted alike; nothing is compared
+with today.
+
+### Not here
+
+No forecast (#80), no financial-health indicators (#83), no insights, no export, no multi-month
+comparison in one request (the client asks once per month), no historical exchange rate.
+
+### Verified by hand, not by the suite
+
+The route shipped on Product Owner direction with no automated test. The scenarios, written before the
+code, are in `plans/261122-1538-GH-77-monthly-cash-flow-reports/phase-01-test-scenarios.md`; the run,
+including a `jq` reconciliation of every total against the lines of the same body, is recorded in
+`plans/reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md` and is reproduced by
+`docs/manual-test-guide-cash-flow-reports.md`.
+
+## Cash-flow forecast — implemented
+
+A read-only, derived resource (issue #80). One route, under `bearerAuth`, owner-scoped by the token,
+with no path variable. It projects the viewer's cash over three whole calendar months from the records
+they can see. Nothing is stored and there is no migration: the forecast is computed on every read, so
+editing or deleting a source changes it on the next request.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/cash-flow-forecast` | `from`, optional, `YYYY-MM` | 200, one forecast object; always three months, possibly with no items |
+
+### Horizon
+
+- Three whole calendar months: the 1st of `from` to the last day of `from` + 2 months, both included.
+- Without `from`, the first month is the month after today, today being read in `Asia/Ho_Chi_Minh`. That
+  is the only place the clock is consulted; `assumptions.asOfDate` reports the day used.
+- `from` may not be the current month or earlier, because the opening balance is today's recorded cash
+  and already reflects this month's payments. It may be at most 12 months after the current month.
+- The days from tomorrow to the day before the horizon are **not projected**. They are named in
+  `assumptions.notProjected` (`null` when there are none) instead of being folded into the opening
+  balance.
+
+### Sources
+
+Only records the viewer can see contribute, and nothing else is added: no growth, inflation or average.
+
+| Source | Contributes | Read through |
+|---|---|---|
+| Cash-flow entry, one-time or recurring | each occurrence in the horizon, with the rules of [Cash-flow occurrences](#cash-flow-occurrences--implemented) | `CashFlowOccurrenceService`, unchanged |
+| Liability with `recurringPaymentAmount`, `recurringPaymentFrequency` and `nextPaymentDate` | payment *n* on `nextPaymentDate` + *n* × 1, 3, 6 or 12 months, *n* ≥ 0, never after `maturityDate`; a missing day moves back to the month's last day, as for entries | native SQL on `wealth.liabilities` |
+| Asset in category `CASH` or `BANK_ACCOUNT` | its `currentValue`, as the opening balance, whatever its `liquidity` | native SQL on `wealth.assets` |
+| Declared USD/VND rate | the conversion of every USD amount | native SQL on `wealth.user_settings` |
+
+A `nextPaymentDate` in the past is still the anchor; payments it produces before the horizon are not
+added. A term deposit, a fund or a listed security does not enter the opening balance even when marked
+`HIGH`, because it is not what next month's payments are made from.
+
+**De-duplication.** A liability with at least one *recurring* cash-flow entry linked to it
+(`linkedLiabilityId`) that overlaps the horizon is counted through those entries only. Its own schedule
+is listed in `excludedSources` as `COVERED_BY_LINKED_ENTRIES` with the entries in `linkedEntryIds`, so
+both sides of the overlap stay visible. Deleting the last such entry brings the schedule back.
+
+### Amounts and conversion
+
+- Every amount is converted to VND one source amount at a time: VND as is, USD × the declared rate
+  through `ConversionTrace`, then rounded to whole đồng (`HALF_UP`, `Currency.VND`). Totals are sums of
+  those rounded numbers, so a month's `items` add up to its `income` and `expense` exactly.
+- VND amounts are written with two decimals, like every catalog amount (`45000000.00`). Each item and
+  opening source also carries its original `amount` and `currency`.
+- **No declared rate.** A USD occurrence, liability payment or account is not converted and not counted.
+  It is listed with `EXCHANGE_RATE_MISSING`; the months it would have contributed to are `partial`. The
+  request still succeeds, and `assumptions.exchangeRate` is `null`.
+
+### Balances and the minimum
+
+```text
+opening_balance          = sum(cash and bank accounts, in VND), applied at the start of the horizon's first day
+month.openingBalance     = previous month's closingBalance (the first month: opening_balance)
+month.net                = month.income - month.expense
+month.closingBalance     = month.openingBalance + month.net
+lowest position          = min(opening point, balance at the end of every day an amount lands)
+referenceThreshold       = (sum of the three months' expense) / 3, two decimals, HALF_UP
+```
+
+Amounts landing on the same day are netted: the forecast has no time of day to order them by. On a tie
+the earliest date wins. `month.lowestBalance` and `lowestBalanceDate` apply the same rule within the
+month, starting from its opening balance. `minimumBalance.status` is `INSUFFICIENT_DATA` when no cash or
+bank account was counted, else `NEGATIVE` below zero, `THIN` below `referenceThreshold`, `ADEQUATE`
+otherwise. The threshold is the design's "one month of projected expense"; whether a user may set their
+own is an open question for the feature contract.
+
+### Fields
+
+| Field | Meaning |
+|---|---|
+| `horizon` | `from`, `to` and the three `months` as `YYYY-MM` |
+| `openingBalance` | `amount`, `appliedOn` and `sources[]` (`sourceType: ASSET`, `sourceId`, `category`, `valuationDate`, `amount`, `currency`, `amountVnd`) |
+| `months[]` | `month`, `income`, `expense`, `net`, `openingBalance`, `closingBalance`, `lowestBalance`, `lowestBalanceDate`, `partial`, `items[]` |
+| `items[]` | `date`, `direction` (`INCOME`, `EXPENSE`), `sourceType` (`CASH_FLOW_ENTRY`, `LIABILITY`), `sourceId`, `category`, `amount`, `currency`, `amountVnd`, `cadence` (`null` for a one-time entry), `sequence`, `shiftedToMonthEnd` |
+| `minimumBalance` | `date`, `month`, `amount`, `negative`, `referenceThreshold`, `status` |
+| `excludedSources[]` | `sourceType` (`CASH_FLOW_ENTRY`, `LIABILITY`, `ASSET`), `sourceId`, `reason`, `affectedMonths`, `linkedEntryIds` |
+| `partial` | any month partial, or a cash or bank account left out of the opening balance |
+| `assumptions` | `asOfDate`, `timeZone`, `currency` (`VND`), `exchangeRate` (`usdToVndRate`, `effectiveDate`, or `null`), `openingBalanceCategories`, `notProjected` |
+
+Every `sourceId` is read back by `GET /api/v1/cash-flow-entries/{id}`, `/liabilities/{id}` or
+`/assets/{id}`. A liability item's `sequence` counts from `nextPaymentDate`; an entry item's from its
+`effectiveDate`.
+
+| `reason` | When |
+|---|---|
+| `NO_OCCURRENCE_IN_HORIZON` | a recurring entry overlapping the horizon with no date in it (a yearly premium due later) |
+| `NO_PAYMENT_SCHEDULE` | a liability without a payment amount and frequency; if its `maturityDate` is in the horizon, that month is `partial` and named in `affectedMonths` |
+| `NO_NEXT_PAYMENT_DATE` | a liability with an amount and frequency but no date to count from; partial as above |
+| `NO_PAYMENT_IN_HORIZON` | a liability whose schedule has no payment in the horizon |
+| `COVERED_BY_LINKED_ENTRIES` | see de-duplication |
+| `EXCHANGE_RATE_MISSING` | a USD source while no rate is declared |
+
+A past one-time entry and a recurring entry that ended before the horizon are not listed: they could not
+have contributed.
+
+### Order and determinism
+
+Items by `date`, then `CASH_FLOW_ENTRY` before `LIABILITY`, then `sourceId` as text. Exclusions by
+`sourceType` in the order above, then `sourceId`; opening sources by `sourceId`. The same records, day
+and `from` give the same bytes.
+
+### Validation
+
+`validation-failed` with one `errors` entry for `from`; the value sent is never echoed.
+
+| Input | `message` |
+|---|---|
+| present but not `YYYY-MM` with a four-digit year and a real month, or blank | `must be a month in the form YYYY-MM` |
+| the current month or earlier | `must not be before the month after today` |
+| more than 12 months after the current month | `must be at most 12 months after the current month` |
+
+### Not here
+
+The difference between a covered liability's schedule and its linked entries, as a number; a stale-rate
+judgement by the rate's age; a user-set threshold; projecting the days before the horizon; any horizon
+other than three months; financial-health indicators (#83) and insights.
+
+### Verified by hand, not by the suite
+
+Shipped on Product Owner direction with no automated test. The scenarios, written before the code, are
+in `plans/261122-1544-GH-80-three-month-forecast/phase-01-test-scenarios.md`; the run is recorded in
+`plans/reports/manual-verification-261122-1544-GH-80-three-month-forecast.md` and is reproduced by
+`docs/manual-test-guide-cash-flow-forecast.md`.
 
 ## Financial goals — implemented
 
@@ -1239,11 +1530,10 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   agreed is worse than returning all of them.
 - **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding and
   feedback are described above. Insights are still later work.
-- **Monthly totals and the forecast.** Issues #77 and #80. The dates a recurring entry falls on are
-  published by `GET /api/v1/cash-flow-occurrences`, but nothing sums them.
-- **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and
-  interest rate or expected yield are issue #54's. The asset table has no column for any of them,
-  deliberately: a nullable column nobody writes reads as a promise.
+- **Any calculation over the instrument fields.** The four fields are stored and returned; nothing
+  accrues interest, projects a yield, computes a gain or loss, or derives a current value from a
+  quantity and a unit price. A new unit price does not record a valuation either. Market-price
+  integration is out of scope for MVP 1A altogether.
 - **Editing or deleting a valuation.** The history is append-only by design and by trigger. A wrong
   record is corrected by a new one that points at it; there is no route and no table path that changes
   or removes a record while its asset exists.
@@ -1265,15 +1555,17 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
-- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, goal and
-  onboarding routes, and for the search and filter parameters.** All of them shipped on Product
-  Owner direction with manual verification only, recorded in
+- **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
+  report, forecast, goal and onboarding routes, and for the search and filter parameters.** All of
+  them shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
   `plans/reports/manual-verification-261114-1716-GH-59-asset-valuation-history.md` and
   `plans/reports/manual-verification-261114-1735-GH-71-cash-flow-entry-catalog-crud.md`,
   `plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md`,
-  `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md` and
+  `plans/reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md`,
+  `plans/reports/manual-verification-261122-1544-GH-80-three-month-forecast.md`,
+  `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`,
   `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` and
   `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
