@@ -7,8 +7,9 @@ Ngày: 2026-11-22. Nhánh `thientrinhcoder/feat/issue-80-three-month-forecast`, 
 |---|---|---|---|---|---|
 | 1 | 15:55 | cây làm việc chưa commit, cùng nội dung với `08a0ba4` | container mới | 55 | **55** |
 | 2 | 15:57 | `08a0ba4` | container tạo lại từ đầu | 55 | **55** |
+| 3 | 16:21 | `abdb54b`, merge `main` `a52b453` (báo cáo tháng #77) vào nhánh; jar đóng gói bởi `clean verify` chạy bằng `java -jar` | container tạo lại từ đầu | 55 | **55** |
 
-Không case nào fail; không có case fail rồi được sửa. Hai lần cho cùng kết quả từng case. Kỳ vọng là bảng
+Không case nào fail; không có case fail rồi được sửa. Ba lần cho cùng status và cùng kết luận từng case. Kỳ vọng là bảng
 tính tay viết trước khi code ở
 [`phase-01-test-scenarios.md`](../261122-1544-GH-80-three-month-forecast/phase-01-test-scenarios.md);
 quy trình tái hiện ở [`docs/manual-test-guide-cash-flow-forecast.md`](../../docs/manual-test-guide-cash-flow-forecast.md).
@@ -21,6 +22,18 @@ dòng xóa).
 
 Product Owner chỉ đạo task này ship **không có unit test hay integration test mới**. Status và bằng chứng
 dưới đây sinh từ lần chạy 2, không viết tay.
+
+## Lần chạy 3, sau khi merge `main`
+
+`main` nhận #77 (`cashflow/reporting`, `GET /api/v1/cash-flow-reports/monthly`), không có migration. Conflict
+duy nhất là `docs/api-contract-conventions.md`: giữ cả hai mục mới (báo cáo tháng trước, forecast sau) và bỏ
+hai gạch đầu dòng "What is not here" vốn ghi tính năng kia là còn thiếu. `openapi.json` và
+`OpenApiContractIT` tự merge; regenerate với `-Dopenapi.update=true` không đổi thêm byte nào. Trên cây
+`abdb54b`, `clean verify` có flag rồi không flag đều xanh (81 unit test, 50 integration test). Rà package
+`forecast` theo cảnh báo CodeQL `java/comparison-with-wider-type` mà #77 vừa sửa: vòng lặp duy nhất đếm bằng
+`long` và dừng bằng so ngày, không so biến hẹp với cận rộng, nên không cần sửa. Lần 3 chạy đúng 55 case trên
+database mới với jar vừa đóng gói (`now at version v12`), 55 đạt; status và kết luận từng case trùng lần 2.
+Bảng dưới vẫn là bằng chứng của lần 2; lần 3 chỉ khác các UUID sinh lúc chạy.
 
 ## Môi trường
 
