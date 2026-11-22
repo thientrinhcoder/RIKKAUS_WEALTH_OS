@@ -270,7 +270,7 @@ export interface paths {
         put?: never;
         /**
          * Renew a session
-         * @description Exchanges a refresh token for a new access token and a new refresh token. The presented token is single-use: presenting it again is treated as evidence that it leaked and revokes the whole session.
+         * @description Exchanges a refresh token for a new access token and a new refresh token. The presented token is single-use: presenting it again is treated as evidence that it leaked and revokes the whole session. A native client sends the token in the body. The web client sends no body token, the `rikkaus_refresh` cookie, and `X-Rikkaus-Client: web`; the rotated token comes back as a new cookie.
          */
         post: operations["renew"];
         delete?: never;
@@ -290,7 +290,7 @@ export interface paths {
         put?: never;
         /**
          * Sign out
-         * @description Revokes the session the refresh token belongs to. Returns 204 whether or not the token was still live, so the endpoint cannot be used to test whether a token is valid.
+         * @description Revokes the session the refresh token belongs to. Returns 204 whether or not the token was still live, so the endpoint cannot be used to test whether a token is valid. The token comes from the body, or for the web client from the `rikkaus_refresh` cookie with `X-Rikkaus-Client: web`. Every 204 also expires the cookie.
          */
         post: operations["signOut"];
         delete?: never;
@@ -1318,10 +1318,10 @@ export interface components {
         /** @description Carries the refresh token identifying the session to renew or end. */
         RefreshSessionRequest: {
             /**
-             * @description The refresh token returned by the most recent sign-in or renewal.
+             * @description The refresh token returned by the most recent sign-in or renewal. Required for native clients. The web client omits it (or the whole body) and sends the `rikkaus_refresh` cookie with `X-Rikkaus-Client: web` instead.
              * @example 1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE
              */
-            refreshToken: string;
+            refreshToken?: string;
         };
         /** @description The signed-in user. */
         AuthenticatedUserResponse: {
@@ -1351,7 +1351,7 @@ export interface components {
              */
             expiresInSeconds?: number;
             /**
-             * @description Single-use token for renewing the session. Rotated on every renewal.
+             * @description Single-use token for renewing the session. Rotated on every renewal. Present for native clients only; a request sent with `X-Rikkaus-Client: web` receives it in the HttpOnly `rikkaus_refresh` cookie and this field is omitted.
              * @example 1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE
              */
             refreshToken?: string;
@@ -3905,11 +3905,20 @@ export interface operations {
     renew: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description Send `web` from the browser client. The refresh token is then set as the HttpOnly, SameSite=Strict cookie `rikkaus_refresh` (Path=/api/v1/auth) and omitted from the body. Omit the header from a native client to keep the token in the body.
+                 * @example web
+                 */
+                "X-Rikkaus-Client"?: string;
+            };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                /** @description The web client's refresh token, set by a previous sign-in or renewal. */
+                rikkaus_refresh?: string;
+            };
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["RefreshSessionRequest"];
             };
@@ -3924,7 +3933,7 @@ export interface operations {
                     "application/json": components["schemas"]["SessionResponse"];
                 };
             };
-            /** @description The refresh token is missing from the body */
+            /** @description No refresh token in the body or in an honoured cookie */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3935,6 +3944,15 @@ export interface operations {
             };
             /** @description The refresh token is unknown, expired, already used, or revoked */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The refresh cookie was sent without `X-Rikkaus-Client: web`, or from an origin that is not allowlisted. Refused before the token is read, so the session is untouched. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3965,25 +3983,43 @@ export interface operations {
     signOut: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description Send `web` from the browser client. The refresh token is then set as the HttpOnly, SameSite=Strict cookie `rikkaus_refresh` (Path=/api/v1/auth) and omitted from the body. Omit the header from a native client to keep the token in the body.
+                 * @example web
+                 */
+                "X-Rikkaus-Client"?: string;
+            };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                /** @description The web client's refresh token, set by a previous sign-in or renewal. */
+                rikkaus_refresh?: string;
+            };
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["RefreshSessionRequest"];
             };
         };
         responses: {
-            /** @description The session is no longer usable */
+            /** @description The session is no longer usable and the cookie is cleared */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description The refresh token is missing from the body */
+            /** @description No refresh token in the body or in an honoured cookie */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The refresh cookie was sent without `X-Rikkaus-Client: web`, or from an origin that is not allowlisted */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4014,7 +4050,13 @@ export interface operations {
     signInWithGoogle: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /**
+                 * @description Send `web` from the browser client. The refresh token is then set as the HttpOnly, SameSite=Strict cookie `rikkaus_refresh` (Path=/api/v1/auth) and omitted from the body. Omit the header from a native client to keep the token in the body.
+                 * @example web
+                 */
+                "X-Rikkaus-Client"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -4044,6 +4086,15 @@ export interface operations {
             };
             /** @description Google rejected the code, or the identity could not be verified */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description `X-Rikkaus-Client: web` was sent from an origin that is not allowlisted */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
