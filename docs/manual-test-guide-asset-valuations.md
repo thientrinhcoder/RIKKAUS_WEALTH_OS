@@ -35,8 +35,9 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@25 java -jar services/api/target/rikkaus-wea
 ```
 
 Two lines of the startup log are part of the verification. Flyway must report
-`Successfully applied 5 migrations ... now at version v6` — five, not six, because `V5` belongs to
-issue #56's branch and is absent here — and the context must then start, which is `ddl-auto: validate`
+`Successfully applied 11 migrations ... now at version v14` on an empty database — `V5` and `V10` are
+unused, `V13` is held for issue #101, and `V14` is issue #56's instrument fields — and the context must
+then start, which is `ddl-auto: validate`
 accepting that `V6__asset_valuations.sql` and the `AssetValuation` entity agree on every column.
 
 ### 3. Two users
