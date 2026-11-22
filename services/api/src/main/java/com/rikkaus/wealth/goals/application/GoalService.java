@@ -4,6 +4,8 @@ import com.rikkaus.wealth.goals.domain.Goal;
 import com.rikkaus.wealth.goals.domain.GoalFields;
 import com.rikkaus.wealth.goals.domain.GoalFilter;
 import com.rikkaus.wealth.goals.domain.GoalRepository;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact.RecordType;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
@@ -107,11 +109,25 @@ public class GoalService {
     }
 
     /**
+     * What deleting one of the owner's goals would do, without doing it: nothing beyond the goal.
+     *
+     * <p>No table refers to a goal and a goal refers to no record, which is what the accepted design's
+     * dialog says ("Các bản ghi tài sản, công nợ và dòng tiền không thay đổi"). The route exists so a
+     * client asks the same question of every record type and gets an answer from the database rather
+     * than from an assumption that could go stale when a goal gains a link.
+     */
+    @Transactional(readOnly = true)
+    public DeletionImpact deletionImpact(UUID ownerId, UUID goalId) {
+        Goal goal = OwnershipGuard.requireOwned(goals.findById(goalId), ownerId);
+        return DeletionImpact.of(RecordType.GOAL, goal.getId(), List.of(), List.of());
+    }
+
+    /**
      * Removes one of the owner's goals.
      *
-     * <p>A plain delete, which is what the generic destructive confirmation in the accepted design
-     * promises. Undo and a retention window belong to issue #104. Ownership is resolved before anything
-     * is removed, so a non-owner's request returns {@code not-found} with the row untouched.
+     * <p>Nothing refers to a goal, so there is no linked-record confirmation; no undo and no retention
+     * window. Ownership is resolved before anything is removed, so a non-owner's request returns {@code
+     * not-found} with the row untouched.
      */
     @Transactional
     public void delete(UUID ownerId, UUID goalId) {

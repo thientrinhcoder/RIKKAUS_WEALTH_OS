@@ -5,6 +5,9 @@ import com.rikkaus.wealth.cashflow.domain.CashFlowEntryDetails;
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntryFilter;
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntryRepository;
 import com.rikkaus.wealth.cashflow.domain.CashFlowTiming;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact.DerivedEffect;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact.RecordType;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
@@ -92,10 +95,32 @@ public class CashFlowEntryService {
     }
 
     /**
+     * What deleting one of the owner's entries would do, without doing it.
+     *
+     * <p>No stored record refers to a cash-flow entry, so nothing is deleted with it or unlinked and no
+     * confirmation is ever required. What does change is every view computed from the catalog: the
+     * occurrences, the monthly report and the forecast simply stop including it. Those are named, not
+     * counted, and the same three are named for a one-time entry as for a recurring one. A link this
+     * entry holds to an asset or liability is the entry's own field and leaves that record untouched.
+     */
+    @Transactional(readOnly = true)
+    public DeletionImpact deletionImpact(UUID ownerId, UUID entryId) {
+        CashFlowEntry entry = OwnershipGuard.requireOwned(entries.findById(entryId), ownerId);
+        return DeletionImpact.of(
+                RecordType.CASH_FLOW_ENTRY,
+                entry.getId(),
+                List.of(),
+                List.of(
+                        DerivedEffect.CASH_FLOW_OCCURRENCES,
+                        DerivedEffect.MONTHLY_CASH_FLOW_REPORTS,
+                        DerivedEffect.CASH_FLOW_FORECAST));
+    }
+
+    /**
      * Removes one of the owner's entries.
      *
-     * <p>A plain delete. Undo and a retention policy belong to issue #104; what this does is exactly
-     * what the generic destructive confirmation in the approved design promises, and nothing more.
+     * <p>Nothing refers to an entry, so there is never a linked record to confirm and no guard; no undo
+     * and no retention window either.
      *
      * <p>Ownership is resolved before anything is removed, so a non-owner's request returns {@code
      * not-found} with the row untouched rather than deleting it and then failing a check.

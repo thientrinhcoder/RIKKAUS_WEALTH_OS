@@ -9,6 +9,7 @@ import com.rikkaus.wealth.assets.domain.AssetLiquidity;
 import com.rikkaus.wealth.assets.domain.AssetMetadata;
 import com.rikkaus.wealth.assets.domain.DeclaredValuation;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
 import com.rikkaus.wealth.shared.search.QueryParameters;
 import com.rikkaus.wealth.shared.search.SearchText;
 import com.rikkaus.wealth.shared.security.CurrentUser;
@@ -40,7 +41,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The asset catalog: list, add, read, edit the metadata, remove.
+ * The asset catalog: list, add, read, edit the metadata, preview a deletion, remove.
  *
  * <p>The collection is addressed by the access token and the members by their own identifier. The only
  * path variable is the asset's id, never the owner's: an ArchUnit rule fails the compilation gate on a
@@ -578,20 +579,84 @@ class AssetController {
     }
 
     @Operation(
+            summary = "Preview what deleting an asset would do",
+            description =
+                    "Reads, without changing anything, what DELETE /api/v1/assets/{assetId} would do now: the "
+                            + "valuation records removed with the asset (counted), the liabilities that would "
+                            + "lose it as collateral and the cash-flow entries that would lose their link "
+                            + "(listed). confirmationRequired is true when anything would be unlinked; the "
+                            + "valuation history alone never requires it. The same not-found as GET answers "
+                            + "another user's asset.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+            responseCode = "200",
+            description = "What the delete would do",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = DeletionImpact.class),
+                            examples =
+                                    @ExampleObject(
+                                            name = "Apartment pledged for a mortgage and rented out",
+                                            value =
+                                                    "{\"recordType\":\"ASSET\","
+                                                            + "\"recordId\":\"3f6b2a10-8c4d-4e5f-9a1b-2c3d4e5f6a7b\","
+                                                            + "\"confirmationRequired\":true,"
+                                                            + "\"linkedEffects\":["
+                                                            + "{\"recordType\":\"ASSET_VALUATION\",\"effect\":\"DELETED\","
+                                                            + "\"field\":null,\"count\":3,\"records\":[]},"
+                                                            + "{\"recordType\":\"LIABILITY\",\"effect\":\"UNLINKED\","
+                                                            + "\"field\":\"collateralAssetId\",\"count\":1,\"records\":["
+                                                            + "{\"id\":\"9d1e7c42-5b6a-4f3e-8d2c-1b0a9f8e7d6c\","
+                                                            + "\"label\":\"Vay mua nhà Vietcombank\",\"category\":\"BANK_LOAN\"}]},"
+                                                            + "{\"recordType\":\"CASH_FLOW_ENTRY\",\"effect\":\"UNLINKED\","
+                                                            + "\"field\":\"linkedAssetId\",\"count\":1,\"records\":["
+                                                            + "{\"id\":\"c2a4e6f8-1b3d-4f5a-8c7e-9d0b2a4c6e8f\","
+                                                            + "\"label\":\"Cho thuê căn hộ Thảo Điền\","
+                                                            + "\"category\":\"RENTAL_INCOME\"}]}],"
+                                                            + "\"derivedEffects\":[]}")))
+    @ApiResponse(
+            responseCode = "400",
+            description = "The identifier in the path is not a UUID",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "401",
+            description = "No access token, or it has expired or been revoked",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "No such asset, or it belongs to another user",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @GetMapping("/{assetId}/deletion-impact")
+    DeletionImpact deletionImpact(@PathVariable UUID assetId) {
+        return assetService.deletionImpact(CurrentUser.require(), assetId);
+    }
+
+    @Operation(
             summary = "Remove an asset",
             description =
-                    "Deletes the asset when the signed-in user owns it. This is the plain removal the generic "
-                            + "destructive confirmation in the accepted design promises; undo, linked-record "
-                            + "consequences and a retention policy belong to issue #102. A second delete of the "
-                            + "same identifier answers not-found, so the response is not idempotent and that is "
-                            + "deliberate: it is the same answer any unknown identifier gets. Two deletes that "
-                            + "overlap, which is what a double-tapped confirm button produces, give one 204 and "
-                            + "not-found to the rest rather than a server error.")
+                    "Deletes the asset and its valuation history when the signed-in user owns it. When a "
+                            + "liability uses the asset as collateral or a cash-flow entry is linked to it, "
+                            + "those records are kept with the reference cleared, and the delete is refused "
+                            + "with 409 linked-records, carrying the same impact GET .../deletion-impact "
+                            + "returns, unless the request says confirm=true. An asset nothing refers to "
+                            + "deletes without it. Nothing is recoverable afterwards. A second delete of the "
+                            + "same identifier answers not-found, the same answer any unknown identifier gets. "
+                            + "Two deletes that overlap, which is what a double-tapped confirm button "
+                            + "produces, give one 204 and not-found to the rest rather than a server error.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "204", description = "The asset no longer exists")
     @ApiResponse(
             responseCode = "400",
-            description = "The identifier in the path is not a UUID",
+            description = "The identifier in the path is not a UUID, or confirm is not a boolean",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "401",
@@ -606,9 +671,23 @@ class AssetController {
             responseCode = "405",
             description = "Wrong HTTP method",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "409",
+            description =
+                    "linked-records: other records would be unlinked and confirm=true was not sent. Nothing "
+                            + "was deleted; the impact member says what the confirmed delete would do",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @DeleteMapping("/{assetId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void delete(@PathVariable UUID assetId) {
-        assetService.delete(CurrentUser.require(), assetId);
+    void delete(
+            @PathVariable UUID assetId,
+            @Parameter(
+                            description =
+                                    "true once the user has seen and accepted the linked-record effects. "
+                                            + "Absent or false: an asset with linked records is not deleted.",
+                            example = "true")
+                    @RequestParam(name = "confirm", defaultValue = "false")
+                    boolean confirm) {
+        assetService.delete(CurrentUser.require(), assetId, confirm);
     }
 }
