@@ -1,0 +1,109 @@
+# Frontend pipeline for apps/mobile (Expo + React Native Web).
+#
+# Quality gates only. This workflow validates every pull request and every push to main, and it
+# deploys nothing: there is no AWS step, no `id-token` permission and no secret in this file. The
+# static web preview (S3 + CloudFront) named by ARCHITECTURE_TECHNOLOGY_DECISIONS.md section 7 is
+# deliberately deferred; when it lands it belongs in a separate job gated with `needs: verify` and an
+# `if` that excludes pull requests, the same shape backend.yml uses for `publish` and `deploy`.
+#
+# Action references are pinned to full commit SHAs, with the release they correspond to in a
+# trailing comment, so a moved or compromised tag cannot change what runs here.
+
+name: Frontend
+
+on:
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/frontend.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/frontend.yml"
+  workflow_dispatch:
+
+# A newer push supersedes an in-flight pull-request run on the same ref. Runs on main are not
+# cancelled, so every merge commit keeps a complete verdict.
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  verify:
+    name: Format, lint, typecheck, test, build and smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Read-only. The job runs untrusted pull-request code and has no path to any credential.
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The secret scan reads the branch history, not only the working tree.
+          fetch-depth: 0
+
+      # Same scanner, version and rules as backend.yml, scoped to the history of the ref being
+      # built so a finding on someone else's unmerged branch cannot fail this run. It runs first
+      # because a leaked credential is not made less leaked by a passing build.
+      - name: Scan for committed secrets
+        working-directory: .
+        run: |
+          docker run --rm -v "${GITHUB_WORKSPACE}:/repo" -w /repo \
+            zricethezav/gitleaks:v8.30.1 git \
+            --config=/repo/.gitleaks.toml --redact --no-banner --verbose \
+            --log-opts='--full-history HEAD'
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      # `npm ci` installs exactly the lockfile and fails if package.json and the lockfile disagree.
+      - name: Install pinned dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint -- --max-warnings 0
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit and component tests
+        run: npm test -- --passWithNoTests --ci
+
+      - name: Export the web build
+        run: npm run build:web
+
+      # Browser version follows the @playwright/test version in the lockfile.
+      - name: Install the Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # Serves the export produced above (not a dev server) and checks the shell renders with its
+      # Vietnamese navigation at phone and desktop widths.
+      - name: Smoke-test the web build
+        run: npm run test:e2e
+
+      # Uploaded unconditionally: a failing smoke test is exactly when the trace and screenshots
+      # are needed.
+      - name: Publish the Playwright report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-playwright-${{ github.run_id }}
+          path: |
+            apps/mobile/playwright-report/
+            apps/mobile/test-results/
+          retention-days: 14
+          if-no-files-found: ignore
