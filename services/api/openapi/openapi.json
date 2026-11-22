@@ -3544,6 +3544,357 @@
         } ]
       }
     },
+    "/api/v1/wealth-snapshot" : {
+      "get" : {
+        "tags" : [ "wealth-snapshot-controller" ],
+        "summary" : "Summarise the signed-in user's assets, liabilities and net worth",
+        "description" : "Every amount is in VND. A USD asset or liability is converted with the rate the user has declared, one line at a time, rounded half-up to whole dong; the rate and its effective date are returned in exchangeRate. totalAssets sums every asset's latest value, totalLiabilities every outstanding balance, netWorth is their difference, debtToAssetRatio is liabilities over assets as a six-decimal fraction, liquidAssets sums the assets marked HIGH. Without a declared rate a USD line keeps its original amount and its VND figure is null; every total containing it has a null amountVnd, the sum of what is known in knownAmountVnd and the count left out in excludedRecordCount; netWorth and debtToAssetRatio are null and complete is false. Nothing unavailable is ever reported as zero. debtToAssetRatio is also null when total assets are zero. assetsByCategory and assetsByLiquidity group the asset lines; largestAssets is the first five converted asset lines. upcomingLiabilityDues lists every next payment and maturity date on or before asOfDate + 30 days, past ones marked overdue. lastDataUpdate is the newest of sourceDates. Every total equals the sum of the lines returned. A user with no record gets the same structure with zeros and empty arrays. Nothing is stored.",
+        "operationId" : "snapshot",
+        "responses" : {
+          "200" : {
+            "description" : "The snapshot, possibly of a user with no record yet",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WealthSnapshotResponse"
+                },
+                "examples" : {
+                  "a USD account and a USD loan after declaring 1 USD = 25,100 VND" : {
+                    "description" : "a USD account and a USD loan after declaring 1 USD = 25,100 VND",
+                    "value" : {
+                      "asOfDate" : "2026-11-22",
+                      "timeZone" : "Asia/Ho_Chi_Minh",
+                      "currency" : "VND",
+                      "exchangeRate" : {
+                        "usdToVndRate" : 25100.0,
+                        "effectiveDate" : "2026-11-20"
+                      },
+                      "complete" : true,
+                      "kpis" : {
+                        "totalAssets" : {
+                          "amountVnd" : 6.5E8,
+                          "knownAmountVnd" : 6.5E8,
+                          "recordCount" : 2,
+                          "excludedRecordCount" : 0
+                        },
+                        "totalLiabilities" : {
+                          "amountVnd" : 1.255E8,
+                          "knownAmountVnd" : 1.255E8,
+                          "recordCount" : 1,
+                          "excludedRecordCount" : 0
+                        },
+                        "netWorth" : 5.245E8,
+                        "debtToAssetRatio" : 0.193077,
+                        "liquidAssets" : {
+                          "amountVnd" : 6.5E8,
+                          "knownAmountVnd" : 6.5E8,
+                          "recordCount" : 2,
+                          "excludedRecordCount" : 0
+                        },
+                        "lastDataUpdate" : "2026-11-22"
+                      },
+                      "assetsByCategory" : [ {
+                        "category" : "BANK_ACCOUNT",
+                        "amountVnd" : 5.02E8,
+                        "knownAmountVnd" : 5.02E8,
+                        "recordCount" : 1,
+                        "excludedRecordCount" : 0
+                      }, {
+                        "category" : "CASH",
+                        "amountVnd" : 1.48E8,
+                        "knownAmountVnd" : 1.48E8,
+                        "recordCount" : 1,
+                        "excludedRecordCount" : 0
+                      } ],
+                      "assetsByLiquidity" : [ {
+                        "liquidity" : "HIGH",
+                        "amountVnd" : 6.5E8,
+                        "knownAmountVnd" : 6.5E8,
+                        "recordCount" : 2,
+                        "excludedRecordCount" : 0
+                      } ],
+                      "largestAssets" : {
+                        "items" : [ {
+                          "assetId" : "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+                          "name" : "Tài khoản USD",
+                          "category" : "BANK_ACCOUNT",
+                          "liquidity" : "HIGH",
+                          "valueVnd" : 5.02E8,
+                          "valuationDate" : "2026-11-15"
+                        }, {
+                          "assetId" : "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                          "name" : "Tiền mặt dự phòng",
+                          "category" : "CASH",
+                          "liquidity" : "HIGH",
+                          "valueVnd" : 1.48E8,
+                          "valuationDate" : "2026-11-15"
+                        } ],
+                        "excludedRecordCount" : 0
+                      },
+                      "upcomingLiabilityDues" : {
+                        "windowDays" : 30,
+                        "windowEnd" : "2026-12-22",
+                        "items" : [ ]
+                      },
+                      "sourceDates" : [ {
+                        "sourceType" : "LIABILITY",
+                        "sourceId" : "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+                        "name" : "Khoản vay USD từ người thân",
+                        "date" : "2026-11-22"
+                      }, {
+                        "sourceType" : "EXCHANGE_RATE",
+                        "sourceId" : null,
+                        "name" : null,
+                        "date" : "2026-11-20"
+                      }, {
+                        "sourceType" : "ASSET",
+                        "sourceId" : "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+                        "name" : "Tài khoản USD",
+                        "date" : "2026-11-15"
+                      }, {
+                        "sourceType" : "ASSET",
+                        "sourceId" : "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                        "name" : "Tiền mặt dự phòng",
+                        "date" : "2026-11-15"
+                      } ],
+                      "assets" : [ {
+                        "id" : "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+                        "name" : "Tài khoản USD",
+                        "category" : "BANK_ACCOUNT",
+                        "liquidity" : "HIGH",
+                        "value" : 20000.0,
+                        "currency" : "USD",
+                        "valueVnd" : 5.02E8,
+                        "valuationDate" : "2026-11-15"
+                      }, {
+                        "id" : "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                        "name" : "Tiền mặt dự phòng",
+                        "category" : "CASH",
+                        "liquidity" : "HIGH",
+                        "value" : 1.48E8,
+                        "currency" : "VND",
+                        "valueVnd" : 1.48E8,
+                        "valuationDate" : "2026-11-15"
+                      } ],
+                      "liabilities" : [ {
+                        "id" : "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+                        "name" : "Khoản vay USD từ người thân",
+                        "category" : "PERSONAL_LOAN",
+                        "outstandingBalance" : 5000.0,
+                        "currency" : "USD",
+                        "outstandingBalanceVnd" : 1.255E8,
+                        "nextPaymentDate" : null,
+                        "maturityDate" : null,
+                        "recurringPaymentAmount" : null,
+                        "recurringPaymentFrequency" : null,
+                        "updatedOn" : "2026-11-22"
+                      } ]
+                    }
+                  },
+                  "the same records before any rate is declared" : {
+                    "description" : "the same records before any rate is declared",
+                    "value" : {
+                      "asOfDate" : "2026-11-22",
+                      "timeZone" : "Asia/Ho_Chi_Minh",
+                      "currency" : "VND",
+                      "exchangeRate" : null,
+                      "complete" : false,
+                      "kpis" : {
+                        "totalAssets" : {
+                          "amountVnd" : null,
+                          "knownAmountVnd" : 1.48E8,
+                          "recordCount" : 2,
+                          "excludedRecordCount" : 1
+                        },
+                        "totalLiabilities" : {
+                          "amountVnd" : null,
+                          "knownAmountVnd" : 0.0,
+                          "recordCount" : 1,
+                          "excludedRecordCount" : 1
+                        },
+                        "netWorth" : null,
+                        "debtToAssetRatio" : null,
+                        "liquidAssets" : {
+                          "amountVnd" : null,
+                          "knownAmountVnd" : 1.48E8,
+                          "recordCount" : 2,
+                          "excludedRecordCount" : 1
+                        },
+                        "lastDataUpdate" : "2026-11-22"
+                      },
+                      "assetsByCategory" : [ {
+                        "category" : "CASH",
+                        "amountVnd" : 1.48E8,
+                        "knownAmountVnd" : 1.48E8,
+                        "recordCount" : 1,
+                        "excludedRecordCount" : 0
+                      }, {
+                        "category" : "BANK_ACCOUNT",
+                        "amountVnd" : null,
+                        "knownAmountVnd" : 0.0,
+                        "recordCount" : 1,
+                        "excludedRecordCount" : 1
+                      } ],
+                      "assetsByLiquidity" : [ {
+                        "liquidity" : "HIGH",
+                        "amountVnd" : null,
+                        "knownAmountVnd" : 1.48E8,
+                        "recordCount" : 2,
+                        "excludedRecordCount" : 1
+                      } ],
+                      "largestAssets" : {
+                        "items" : [ {
+                          "assetId" : "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                          "name" : "Tiền mặt dự phòng",
+                          "category" : "CASH",
+                          "liquidity" : "HIGH",
+                          "valueVnd" : 1.48E8,
+                          "valuationDate" : "2026-11-15"
+                        } ],
+                        "excludedRecordCount" : 1
+                      },
+                      "upcomingLiabilityDues" : {
+                        "windowDays" : 30,
+                        "windowEnd" : "2026-12-22",
+                        "items" : [ ]
+                      },
+                      "sourceDates" : [ {
+                        "sourceType" : "LIABILITY",
+                        "sourceId" : "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+                        "name" : "Khoản vay USD từ người thân",
+                        "date" : "2026-11-22"
+                      }, {
+                        "sourceType" : "ASSET",
+                        "sourceId" : "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+                        "name" : "Tài khoản USD",
+                        "date" : "2026-11-15"
+                      }, {
+                        "sourceType" : "ASSET",
+                        "sourceId" : "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                        "name" : "Tiền mặt dự phòng",
+                        "date" : "2026-11-15"
+                      } ],
+                      "assets" : [ {
+                        "id" : "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                        "name" : "Tiền mặt dự phòng",
+                        "category" : "CASH",
+                        "liquidity" : "HIGH",
+                        "value" : 1.48E8,
+                        "currency" : "VND",
+                        "valueVnd" : 1.48E8,
+                        "valuationDate" : "2026-11-15"
+                      }, {
+                        "id" : "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+                        "name" : "Tài khoản USD",
+                        "category" : "BANK_ACCOUNT",
+                        "liquidity" : "HIGH",
+                        "value" : 20000.0,
+                        "currency" : "USD",
+                        "valueVnd" : null,
+                        "valuationDate" : "2026-11-15"
+                      } ],
+                      "liabilities" : [ {
+                        "id" : "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+                        "name" : "Khoản vay USD từ người thân",
+                        "category" : "PERSONAL_LOAN",
+                        "outstandingBalance" : 5000.0,
+                        "currency" : "USD",
+                        "outstandingBalanceVnd" : null,
+                        "nextPaymentDate" : null,
+                        "maturityDate" : null,
+                        "recurringPaymentAmount" : null,
+                        "recurringPaymentFrequency" : null,
+                        "updatedOn" : "2026-11-22"
+                      } ]
+                    }
+                  },
+                  "a user with no record yet" : {
+                    "description" : "a user with no record yet",
+                    "value" : {
+                      "asOfDate" : "2026-11-22",
+                      "timeZone" : "Asia/Ho_Chi_Minh",
+                      "currency" : "VND",
+                      "exchangeRate" : null,
+                      "complete" : true,
+                      "kpis" : {
+                        "totalAssets" : {
+                          "amountVnd" : 0.0,
+                          "knownAmountVnd" : 0.0,
+                          "recordCount" : 0,
+                          "excludedRecordCount" : 0
+                        },
+                        "totalLiabilities" : {
+                          "amountVnd" : 0.0,
+                          "knownAmountVnd" : 0.0,
+                          "recordCount" : 0,
+                          "excludedRecordCount" : 0
+                        },
+                        "netWorth" : 0.0,
+                        "debtToAssetRatio" : null,
+                        "liquidAssets" : {
+                          "amountVnd" : 0.0,
+                          "knownAmountVnd" : 0.0,
+                          "recordCount" : 0,
+                          "excludedRecordCount" : 0
+                        },
+                        "lastDataUpdate" : null
+                      },
+                      "assetsByCategory" : [ ],
+                      "assetsByLiquidity" : [ ],
+                      "largestAssets" : {
+                        "items" : [ ],
+                        "excludedRecordCount" : 0
+                      },
+                      "upcomingLiabilityDues" : {
+                        "windowDays" : 30,
+                        "windowEnd" : "2026-12-22",
+                        "items" : [ ]
+                      },
+                      "sourceDates" : [ ],
+                      "assets" : [ ],
+                      "liabilities" : [ ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/meta" : {
       "get" : {
         "tags" : [ "meta-controller" ],
@@ -5870,6 +6221,481 @@
             "type" : "boolean",
             "description" : "Whether the user's records satisfy this step right now. Deleting the last such record makes it false again.",
             "example" : true
+          }
+        }
+      },
+      "WealthSnapshotAsset" : {
+        "type" : "object",
+        "description" : "An asset as the snapshot counts it.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "example" : "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742"
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "Tài khoản USD"
+          },
+          "category" : {
+            "type" : "string",
+            "example" : "BANK_ACCOUNT"
+          },
+          "liquidity" : {
+            "type" : "string",
+            "example" : "HIGH"
+          },
+          "value" : {
+            "type" : "number",
+            "description" : "The current value in the asset's own currency.",
+            "example" : 20000.0
+          },
+          "currency" : {
+            "type" : "string",
+            "enum" : [ "VND", "USD" ],
+            "example" : "USD"
+          },
+          "valueVnd" : {
+            "type" : "number",
+            "description" : "value in VND; null when USD and no rate is declared.",
+            "example" : 5.02E8
+          },
+          "valuationDate" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-09-12"
+          }
+        }
+      },
+      "WealthSnapshotCategory" : {
+        "type" : "object",
+        "description" : "One asset category and the sum of its assets.",
+        "properties" : {
+          "category" : {
+            "type" : "string",
+            "description" : "The asset category code.",
+            "example" : "REAL_ESTATE"
+          },
+          "amountVnd" : {
+            "type" : "number",
+            "description" : "The sum, or null when a record is excluded.",
+            "example" : 6.1E9
+          },
+          "knownAmountVnd" : {
+            "type" : "number",
+            "description" : "The sum of the converted records.",
+            "example" : 6.1E9
+          },
+          "recordCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 1
+          },
+          "excludedRecordCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 0
+          }
+        }
+      },
+      "WealthSnapshotDue" : {
+        "type" : "object",
+        "description" : "One date a liability falls due.",
+        "properties" : {
+          "liabilityId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "GET /api/v1/liabilities/{id} reads it.",
+            "example" : "9c2e7b14-5d38-4a61-b0f9-3e8d1a6c2b57"
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "Khoản vay mua nhà"
+          },
+          "category" : {
+            "type" : "string",
+            "example" : "BANK_LOAN"
+          },
+          "dueKind" : {
+            "type" : "string",
+            "description" : "PAYMENT is nextPaymentDate; MATURITY is maturityDate.",
+            "enum" : [ "PAYMENT", "MATURITY" ],
+            "example" : "PAYMENT"
+          },
+          "dueDate" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-12-20"
+          },
+          "overdue" : {
+            "type" : "boolean",
+            "description" : "dueDate is before asOfDate.",
+            "example" : false
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The recurring payment for PAYMENT, the outstanding balance for MATURITY, in the liability's currency. Null when no recurring payment is stated.",
+            "example" : 1.875E7
+          },
+          "currency" : {
+            "type" : "string",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "amountVnd" : {
+            "type" : "number",
+            "description" : "amount in VND; null when amount is null or it is USD without a declared rate.",
+            "example" : 1.875E7
+          }
+        }
+      },
+      "WealthSnapshotExchangeRate" : {
+        "type" : "object",
+        "description" : "The declared rate, as used for every conversion in this snapshot.",
+        "properties" : {
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "VND for one USD.",
+            "example" : 25100.0
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states the rate took effect.",
+            "example" : "2026-09-12"
+          }
+        }
+      },
+      "WealthSnapshotKpis" : {
+        "type" : "object",
+        "description" : "The six KPIs of the dashboard.",
+        "properties" : {
+          "totalAssets" : {
+            "$ref" : "#/components/schemas/WealthSnapshotTotal",
+            "description" : "Every asset's latest value, converted to VND."
+          },
+          "totalLiabilities" : {
+            "$ref" : "#/components/schemas/WealthSnapshotTotal",
+            "description" : "Every liability's outstanding balance, converted to VND."
+          },
+          "netWorth" : {
+            "type" : "number",
+            "description" : "totalAssets minus totalLiabilities; may be negative. Null when either amountVnd is null.",
+            "example" : 1.047E10
+          },
+          "debtToAssetRatio" : {
+            "type" : "number",
+            "description" : "totalLiabilities / totalAssets as a fraction, six decimals, HALF_UP (0.127645 is 12.7645 %). Null when total assets are zero or either amountVnd is null.",
+            "example" : 0.127645
+          },
+          "liquidAssets" : {
+            "$ref" : "#/components/schemas/WealthSnapshotTotal",
+            "description" : "Assets whose liquidity is HIGH, converted to VND."
+          },
+          "lastDataUpdate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The newest date in sourceDates; null when there is no source.",
+            "example" : "2026-09-19"
+          }
+        }
+      },
+      "WealthSnapshotLargestAssets" : {
+        "type" : "object",
+        "description" : "The five largest assets by VND value.",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "description" : "At most five, in the order of assets: largest valueVnd, then Vietnamese name, then id.",
+            "items" : {
+              "$ref" : "#/components/schemas/WealthSnapshotRankedAsset"
+            },
+            "maxItems" : 5
+          },
+          "excludedRecordCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Assets that could not be ranked because they could not be converted.",
+            "example" : 0
+          }
+        }
+      },
+      "WealthSnapshotLiability" : {
+        "type" : "object",
+        "description" : "A liability as the snapshot counts it.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "example" : "9c2e7b14-5d38-4a61-b0f9-3e8d1a6c2b57"
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "Khoản vay mua nhà"
+          },
+          "category" : {
+            "type" : "string",
+            "example" : "BANK_LOAN"
+          },
+          "outstandingBalance" : {
+            "type" : "number",
+            "description" : "In the liability's own currency.",
+            "example" : 1.5E9
+          },
+          "currency" : {
+            "type" : "string",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "outstandingBalanceVnd" : {
+            "type" : "number",
+            "description" : "outstandingBalance in VND; null when USD and no rate is declared.",
+            "example" : 1.5E9
+          },
+          "nextPaymentDate" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-12-20"
+          },
+          "maturityDate" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2041-09-20"
+          },
+          "recurringPaymentAmount" : {
+            "type" : "number",
+            "example" : 1.875E7
+          },
+          "recurringPaymentFrequency" : {
+            "type" : "string",
+            "example" : "MONTHLY"
+          },
+          "updatedOn" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The day, in timeZone, the liability was last saved.",
+            "example" : "2026-11-22"
+          }
+        }
+      },
+      "WealthSnapshotLiquidity" : {
+        "type" : "object",
+        "description" : "One liquidity level and the sum of its assets.",
+        "properties" : {
+          "liquidity" : {
+            "type" : "string",
+            "description" : "HIGH, MEDIUM or LOW.",
+            "example" : "HIGH"
+          },
+          "amountVnd" : {
+            "type" : "number",
+            "description" : "The sum, or null when a record is excluded.",
+            "example" : 3.18E9
+          },
+          "knownAmountVnd" : {
+            "type" : "number",
+            "description" : "The sum of the converted records.",
+            "example" : 3.18E9
+          },
+          "recordCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 4
+          },
+          "excludedRecordCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 0
+          }
+        }
+      },
+      "WealthSnapshotRankedAsset" : {
+        "type" : "object",
+        "description" : "A ranked asset; the same figures as its row in assets.",
+        "properties" : {
+          "assetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "GET /api/v1/assets/{id} reads it.",
+            "example" : "6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531"
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "Căn hộ Thảo Điền"
+          },
+          "category" : {
+            "type" : "string",
+            "example" : "REAL_ESTATE"
+          },
+          "liquidity" : {
+            "type" : "string",
+            "example" : "LOW"
+          },
+          "valueVnd" : {
+            "type" : "number",
+            "example" : 6.1E9
+          },
+          "valuationDate" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-08-02"
+          }
+        }
+      },
+      "WealthSnapshotResponse" : {
+        "type" : "object",
+        "description" : "The signed-in user's assets, liabilities and net worth in VND, with every line they are summed from.",
+        "properties" : {
+          "asOfDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Today in timeZone; the day the due-date window starts.",
+            "example" : "2026-11-22"
+          },
+          "timeZone" : {
+            "type" : "string",
+            "description" : "The zone asOfDate is read in.",
+            "example" : "Asia/Ho_Chi_Minh"
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The reporting currency. Always VND.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "exchangeRate" : {
+            "$ref" : "#/components/schemas/WealthSnapshotExchangeRate",
+            "description" : "The declared USD/VND rate every USD line is converted with; null when none is declared."
+          },
+          "complete" : {
+            "type" : "boolean",
+            "description" : "False when at least one USD asset or liability could not be converted because no rate is declared. The affected totals are then null.",
+            "example" : true
+          },
+          "kpis" : {
+            "$ref" : "#/components/schemas/WealthSnapshotKpis"
+          },
+          "assetsByCategory" : {
+            "type" : "array",
+            "description" : "One row per category that has an asset, largest knownAmountVnd first, then by category. Not grouped into an other slice.",
+            "items" : {
+              "$ref" : "#/components/schemas/WealthSnapshotCategory"
+            }
+          },
+          "assetsByLiquidity" : {
+            "type" : "array",
+            "description" : "One row per liquidity level that has an asset, in the order HIGH, MEDIUM, LOW.",
+            "items" : {
+              "$ref" : "#/components/schemas/WealthSnapshotLiquidity"
+            }
+          },
+          "largestAssets" : {
+            "$ref" : "#/components/schemas/WealthSnapshotLargestAssets"
+          },
+          "upcomingLiabilityDues" : {
+            "$ref" : "#/components/schemas/WealthSnapshotUpcomingDues"
+          },
+          "sourceDates" : {
+            "type" : "array",
+            "description" : "The date every source contributes, for the freshness screen. Newest first; on one day ASSET, LIABILITY, EXCHANGE_RATE, then by Vietnamese name and id.",
+            "items" : {
+              "$ref" : "#/components/schemas/WealthSnapshotSourceDate"
+            }
+          },
+          "assets" : {
+            "type" : "array",
+            "description" : "Every asset, largest valueVnd first (unconverted last), then by Vietnamese name, then id. Every asset total sums these.",
+            "items" : {
+              "$ref" : "#/components/schemas/WealthSnapshotAsset"
+            }
+          },
+          "liabilities" : {
+            "type" : "array",
+            "description" : "Every liability, largest outstandingBalanceVnd first (unconverted last), then by Vietnamese name, then id.",
+            "items" : {
+              "$ref" : "#/components/schemas/WealthSnapshotLiability"
+            }
+          }
+        }
+      },
+      "WealthSnapshotSourceDate" : {
+        "type" : "object",
+        "description" : "The date one source contributes to the snapshot.",
+        "properties" : {
+          "sourceType" : {
+            "type" : "string",
+            "enum" : [ "ASSET", "LIABILITY", "EXCHANGE_RATE" ],
+            "example" : "ASSET"
+          },
+          "sourceId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset or liability; null for EXCHANGE_RATE.",
+            "example" : "6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Its name; null for EXCHANGE_RATE.",
+            "example" : "Danh mục cổ phiếu HOSE"
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "An asset's valuationDate, the day (in timeZone) a liability was last saved, or the rate's effectiveDate. The rate is listed only when it converted a line.",
+            "example" : "2026-09-19"
+          }
+        }
+      },
+      "WealthSnapshotTotal" : {
+        "type" : "object",
+        "description" : "A sum over records that may include unconverted USD ones. amountVnd is null when any record is excluded; knownAmountVnd is always the sum of the converted records.",
+        "properties" : {
+          "amountVnd" : {
+            "type" : "number",
+            "description" : "The total, or null when excludedRecordCount > 0.",
+            "example" : 1.2002E10
+          },
+          "knownAmountVnd" : {
+            "type" : "number",
+            "description" : "The sum of the records that were converted.",
+            "example" : 1.2002E10
+          },
+          "recordCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Every record in the set.",
+            "example" : 11
+          },
+          "excludedRecordCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Records left out for want of a declared rate.",
+            "example" : 0
+          }
+        }
+      },
+      "WealthSnapshotUpcomingDues" : {
+        "type" : "object",
+        "description" : "Liability dates on or before asOfDate + windowDays, past ones included.",
+        "properties" : {
+          "windowDays" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "How many days ahead of asOfDate count as upcoming.",
+            "example" : 30
+          },
+          "windowEnd" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "asOfDate + windowDays, included.",
+            "example" : "2026-12-22"
+          },
+          "items" : {
+            "type" : "array",
+            "description" : "By dueDate, PAYMENT before MATURITY, then Vietnamese name, then liabilityId.",
+            "items" : {
+              "$ref" : "#/components/schemas/WealthSnapshotDue"
+            }
           }
         }
       },
