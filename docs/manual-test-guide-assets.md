@@ -40,8 +40,8 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@25 java -jar services/api/target/rikkaus-wea
 ```
 
 Two things in the startup log are part of the verification and worth reading rather than scrolling
-past. Flyway must report `Successfully applied 5 migrations ... now at version v6` — `V6` is the
-valuation history, and `V5` belongs to issue #56's branch — and the context must then start:
+past. Flyway must report `Successfully applied 11 migrations ... now at version v14` on an empty
+database — `V5` and `V10` are unused and `V13` is held for issue #101 — and the context must then start:
 `spring.jpa.hibernate.ddl-auto: validate` is what proves `V4__assets.sql` and the `Asset` entity agree
 about every column, and a mismatch stops the application instead of corrupting a row later.
 

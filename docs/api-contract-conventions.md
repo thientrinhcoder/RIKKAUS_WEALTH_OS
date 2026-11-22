@@ -344,9 +344,9 @@ The first domain resource. Five routes, all under `bearerAuth`, all owner-scoped
 | Route | Body | Success |
 |---|---|---|
 | `GET /api/v1/assets` | — | 200, the viewer's catalog as an array |
-| `POST /api/v1/assets` | the six required fields, plus any of the five optional ones | 201, the asset, with `Location` |
+| `POST /api/v1/assets` | the six required fields, plus any of the five optional common ones and any instrument field the category accepts | 201, the asset, with `Location` |
 | `GET /api/v1/assets/{assetId}` | — | 200, the asset |
-| `PUT /api/v1/assets/{assetId}` | the editable metadata | 200, the asset as it now stands |
+| `PUT /api/v1/assets/{assetId}` | the editable metadata and instrument fields | 200, the asset as it now stands |
 | `DELETE /api/v1/assets/{assetId}` | — | 204 |
 
 ### The eleven categories
@@ -364,13 +364,67 @@ keeps in step with the first.
 | | |
 |---|---|
 | Required | `name` (≤120 chars), `category`, `currentValue`, `currency`, `valuationDate`, `liquidity` |
-| Optional | `purchaseValue`, `purchaseDate`, `quantity`, `institution` (≤160), `notes` (≤2000) |
+| Optional, every category | `purchaseValue`, `purchaseDate`, `quantity`, `institution` (≤160), `notes` (≤2000) |
+| Optional, by category | `symbol` (≤32), `costPerUnit`, `currentPricePerUnit`, `interestRate` — see the matrix below |
 | Enumerated | `currency` is `VND` or `USD`; `liquidity` is `HIGH`, `MEDIUM` or `LOW` |
-| Exact decimals | `currentValue` and `purchaseValue` are `NUMERIC(19, 2)`; `quantity` is `NUMERIC(19, 6)`. The `@Digits` bounds in the request records mirror those columns, so an over-precise value is a named `validation-failed` rather than a 500 from PostgreSQL |
+| Exact decimals | `currentValue` and `purchaseValue` are `NUMERIC(19, 2)`; `quantity`, `costPerUnit` and `currentPricePerUnit` are `NUMERIC(19, 6)`; `interestRate` is `NUMERIC(7, 4)`. The `@Digits` bounds in the request records mirror those columns, so an over-precise value is a named `validation-failed` rather than a 500 from PostgreSQL |
 
 `currentValue` of exactly `0` is accepted — an emptied or fully depreciated holding is a real state.
 Negative is refused, because a negative asset is a liability and that is issue #16's own table rather
 than a sign convention on this one. `quantity` must be strictly positive when present.
+
+### The instrument fields, and which categories accept them
+
+Four optional fields serve the categories where an instrument position is meaningful. They arrived
+with issue #56 and their columns are in `V14__asset_instrument_details.sql`. They describe the
+holding, not a valuation: they live on the asset row only, never on a valuation record, and recording
+a valuation neither reads nor changes them.
+
+| Category | `symbol` | `costPerUnit` | `currentPricePerUnit` | `interestRate` |
+|---|---|---|---|---|
+| `LISTED_SECURITIES` | accepted | accepted | accepted | refused |
+| `BOND` | accepted | accepted | accepted | accepted |
+| `INVESTMENT_FUND` | accepted | accepted | accepted | refused |
+| `TERM_DEPOSIT` | refused | refused | refused | accepted |
+| `OTHER_ASSET` | accepted | accepted | accepted | accepted |
+| `CASH`, `BANK_ACCOUNT`, `REAL_ESTATE`, `PRIVATE_BUSINESS_EQUITY`, `VEHICLE_OR_VALUABLE_ASSET`, `COLLECTIBLE` | refused | refused | refused | refused |
+
+This is the accepted design's visibility matrix, enforced rather than only drawn, cell for cell. A
+refused field returns `validation-failed` with `{"field": "<the field>", "message": "must not be set
+for this asset category"}`, and every refused field in one body arrives in one response rather than
+one per round trip. The rule lives on `AssetCategory` as `allowsInstrumentPricing()` and
+`allowsRate()`, and again as two check constraints, so a caller that is not the API is refused too.
+
+Three cells read oddly enough to say out loud:
+
+- **`LISTED_SECURITIES` refuses `interestRate`.** A listed share has no rate, and a field here would
+  invite a dividend yield that nothing in MVP 1A calculates.
+- **`INVESTMENT_FUND` refuses `interestRate`.** The matrix cell is an optional note, not a rate field.
+  A fund's expected return belongs in `notes`, where no reader mistakes it for a computed figure.
+- **`OTHER_ASSET` accepts all four.** Its matrix cell is hidden-by-default, which is a statement about
+  the form and not a prohibition.
+
+`quantity` is not in that table on purpose. It is a common optional field accepted on every category
+since issue #53, and the backbone lists it in both the common-optional and the instrument sets because
+it is one datum; a second quantity would make "how many units" a question with two answers.
+
+`interestRate` is a **percent per year**, not a fraction: `6.2500` is 6.25%. It is bounded to `0`
+through `100` inclusive, because a rate above that is a data-entry error — a user who meant 6.25 and
+typed 625 — and the bound turns that into a named refusal rather than a figure a later report presents
+as real. The two per-unit prices accept `0` and refuse negatives, for the same reason `currentValue`
+does.
+
+**Nothing is derived from them.** `currentValue` is the asset's current valuation record — the figure
+the user declared, through `POST /api/v1/assets` or the valuation history — and is never `quantity ×
+currentPricePerUnit`. Changing `currentPricePerUnit` through `PUT` does not record a valuation. An asset reporting a quantity of `500`, a current price per unit of
+`24150.000000` and a current value of `12000000.00` is stored and returned exactly as sent, although
+the product is `12075000`. There is no accrued interest, no yield, no gain or loss and no performance
+figure anywhere in this resource, and no market-price integration in MVP 1A.
+
+A `symbol` of only blank space is cleaned to `null` before the category rule runs, so a user who
+typed nothing into an optional field is not told their category refuses it. A `symbol` containing a
+null character is refused by name rather than failing inside the PostgreSQL driver, as the three
+common free-text fields already are.
 
 Dates are judged as Vietnamese civil dates in `Asia/Ho_Chi_Minh`, exactly as the declared
 exchange-rate date is: `valuationDate` and `purchaseDate` may not be in the future, and `purchaseDate`
@@ -381,8 +435,14 @@ purchase; the message is the same `must not be later than the valuation date`.
 
 ### The valuation is not edited; it is recorded
 
-`PUT` accepts `name`, `liquidity`, `purchaseValue`, `purchaseDate`, `quantity`, `institution` and
-`notes`. It does **not** accept `currentValue`, `currency`, `valuationDate` or `category`.
+`PUT` accepts `name`, `liquidity`, `purchaseValue`, `purchaseDate`, `quantity`, `institution`,
+`notes` and the four instrument fields. It does **not** accept `currentValue`, `currency`,
+`valuationDate` or `category`.
+
+Because the body carries no category, the instrument fields are judged against the asset's **stored**
+one. An edit that sends a field the stored category refuses is a `validation-failed` naming it, and
+ownership is resolved first, so a non-owner's request answers `not-found` rather than revealing which
+category the asset is in.
 
 That is the accepted design for issue #51 — the current value is read-only in the edit form — and a new
 value goes through the valuation history below instead. `currentValue`, `currency` and `valuationDate`
@@ -392,13 +452,14 @@ only mutator `Asset` has for them takes a stored record rather than loose values
 
 Creating an asset also writes the first record of its history, so `POST /api/v1/assets` now accepts two
 optional members alongside `valuationDate`: `usdToVndRate` and `rateEffectiveDate`, the rate snapshot
-for that first record. They obey the rules the history section states, and they are the only change to
-the catalog's contract since it shipped.
+for that first record. They obey the rules the history section states. They and the four instrument fields
+above are the two additions to the catalog's contract since it shipped.
 
 Two further things about `PUT`:
 
-- **It is a replacement, not a patch.** An optional field omitted from the body is cleared. That is
-  what makes "remove my note" expressible without a sentinel value.
+- **It is a replacement, not a patch.** An optional field omitted from the body is cleared, the four
+  instrument fields included. That is what makes "remove my note" and "I recorded the wrong ticker"
+  expressible without a sentinel value.
 - **A frozen member sent anyway is silently dropped**, not rejected. It is an unknown property, and
   Spring Boot's own default is to ignore one. Nothing is applied and nothing is reported, so a client
   must not read a `200` as confirmation that a value it sent was stored.
@@ -454,11 +515,20 @@ JavaScript's exact-integer range of about `9.007e15`, so a value above that woul
 figures are several orders of magnitude below the boundary, so no string encoding was introduced for
 it; a client that ever needs the full column range should read these as strings.
 
-No automated test exercises any of these five routes. The resource shipped on Product Owner direction
-with manual verification only:
-[`docs/manual-test-guide-assets.md`](manual-test-guide-assets.md) is the reproducible procedure and
-`plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md` is what it returned
-on the implementing run — 70 cases, 64 through HTTP and 6 straight into PostgreSQL.
+No automated test exercises any of these five routes, the instrument fields included. The resource
+shipped on Product Owner direction with manual verification only, in two companion procedures that
+together are a full regression run:
+
+- [`docs/manual-test-guide-assets.md`](manual-test-guide-assets.md) covers the common fields, the five
+  routes, ownership and the protocol cases. `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`
+  is what it returned on the implementing run — 70 cases, 64 through HTTP and 6 straight into
+  PostgreSQL.
+- [`docs/manual-test-guide-asset-instrument-details.md`](manual-test-guide-asset-instrument-details.md)
+  covers the four instrument fields and the category matrix.
+  `plans/reports/manual-verification-261110-0844-GH-56-type-specific-asset-details.md` is what it
+  returned on the implementing run, and `plans/reports/manual-verification-261122-1607-GH-56-type-specific-asset-details-rebased.md` is the
+  full rerun after the slice was rebased onto the valuation history — 118 cases, the instrument guide
+  in full plus a smoke pass over the valuation guide.
 
 ## Asset valuation history — implemented
 
@@ -1368,9 +1438,10 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   agreed is worse than returning all of them.
 - **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding and
   feedback are described above. Insights are still later work.
-- **Type-specific asset fields.** Symbol or instrument code, cost per unit, current price per unit and
-  interest rate or expected yield are issue #54's. The asset table has no column for any of them,
-  deliberately: a nullable column nobody writes reads as a promise.
+- **Any calculation over the instrument fields.** The four fields are stored and returned; nothing
+  accrues interest, projects a yield, computes a gain or loss, or derives a current value from a
+  quantity and a unit price. A new unit price does not record a valuation either. Market-price
+  integration is out of scope for MVP 1A altogether.
 - **Editing or deleting a valuation.** The history is append-only by design and by trigger. A wrong
   record is corrected by a new one that points at it; there is no route and no table path that changes
   or removes a record while its asset exists.
