@@ -3726,6 +3726,258 @@
         } ]
       }
     },
+    "/api/v1/cash-flow-forecast" : {
+      "get" : {
+        "tags" : [ "cash-flow-forecast-controller" ],
+        "summary" : "Project the signed-in user's cash over three whole months",
+        "description" : "Three calendar months starting at `from`, or at the month after today in Asia/Ho_Chi_Minh when it is absent. Only records the user can see contribute: the occurrences of their one-time and recurring cash-flow entries, expanded with the rules of /cash-flow-occurrences; the payments of their liabilities, counted from nextPaymentDate every recurringPaymentFrequency and never after maturityDate; and their CASH and BANK_ACCOUNT assets as the opening balance, applied at the start of the first day. A liability with a recurring entry linked to it that overlaps the horizon is counted through that entry only. USD amounts are converted with the user's declared rate and each amount is rounded to whole đồng before it is added, so a month's items add up to its totals exactly. The lowest position is judged on the opening balance and at the end of every day an amount lands. Every record that could have contributed and does not is listed in excludedSources with its reason; without a declared rate, USD records are excluded and the months they fall in are partial rather than the request failing. The days between today and the horizon are not projected and are named in assumptions.notProjected. Computed on every read and never stored. The same records, day and `from` give the same bytes.",
+        "operationId" : "forecast",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "description" : "The first month, YYYY-MM. Defaults to the month after today; from that month to 12 months after the current one.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "example" : "2026-12",
+            "pattern" : "^\\d{4}-\\d{2}$"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The forecast. Always three months, possibly with no items.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashFlowForecastResponse"
+                },
+                "examples" : {
+                  "a salary, a mortgage and a loan from family without a schedule" : {
+                    "description" : "a salary, a mortgage and a loan from family without a schedule",
+                    "value" : {
+                      "horizon" : {
+                        "from" : "2026-12-01",
+                        "to" : "2027-02-28",
+                        "months" : [ "2026-12", "2027-01", "2027-02" ]
+                      },
+                      "openingBalance" : {
+                        "amount" : 8.5E7,
+                        "appliedOn" : "2026-12-01",
+                        "sources" : [ {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "3d7a51c2-8f04-4b6e-9a21-c5e0f8b2d419",
+                          "category" : "BANK_ACCOUNT",
+                          "valuationDate" : "2026-11-20",
+                          "amount" : 8.5E7,
+                          "currency" : "VND",
+                          "amountVnd" : 8.5E7
+                        } ]
+                      },
+                      "months" : [ {
+                        "month" : "2026-12",
+                        "income" : 4.5E7,
+                        "expense" : 1.85E7,
+                        "net" : 2.65E7,
+                        "openingBalance" : 8.5E7,
+                        "closingBalance" : 1.115E8,
+                        "lowestBalance" : 8.5E7,
+                        "lowestBalanceDate" : "2026-12-01",
+                        "partial" : false,
+                        "items" : [ {
+                          "date" : "2026-12-05",
+                          "direction" : "INCOME",
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9b4d6f12-7e3a-4c58-b1d9-0a2e5c7f8d61",
+                          "category" : "SALARY",
+                          "amount" : 4.5E7,
+                          "currency" : "VND",
+                          "amountVnd" : 4.5E7,
+                          "cadence" : "MONTHLY",
+                          "sequence" : 12,
+                          "shiftedToMonthEnd" : false
+                        }, {
+                          "date" : "2026-12-15",
+                          "direction" : "EXPENSE",
+                          "sourceType" : "LIABILITY",
+                          "sourceId" : "8e2f4a90-1c37-4d5b-b6a8-0f9d3e7c2b14",
+                          "category" : "BANK_LOAN",
+                          "amount" : 1.85E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.85E7,
+                          "cadence" : "MONTHLY",
+                          "sequence" : 1,
+                          "shiftedToMonthEnd" : false
+                        } ]
+                      }, {
+                        "month" : "2027-01",
+                        "income" : 4.5E7,
+                        "expense" : 1.85E7,
+                        "net" : 2.65E7,
+                        "openingBalance" : 1.115E8,
+                        "closingBalance" : 1.38E8,
+                        "lowestBalance" : 1.115E8,
+                        "lowestBalanceDate" : "2027-01-01",
+                        "partial" : true,
+                        "items" : [ {
+                          "date" : "2027-01-05",
+                          "direction" : "INCOME",
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9b4d6f12-7e3a-4c58-b1d9-0a2e5c7f8d61",
+                          "category" : "SALARY",
+                          "amount" : 4.5E7,
+                          "currency" : "VND",
+                          "amountVnd" : 4.5E7,
+                          "cadence" : "MONTHLY",
+                          "sequence" : 13,
+                          "shiftedToMonthEnd" : false
+                        }, {
+                          "date" : "2027-01-15",
+                          "direction" : "EXPENSE",
+                          "sourceType" : "LIABILITY",
+                          "sourceId" : "8e2f4a90-1c37-4d5b-b6a8-0f9d3e7c2b14",
+                          "category" : "BANK_LOAN",
+                          "amount" : 1.85E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.85E7,
+                          "cadence" : "MONTHLY",
+                          "sequence" : 2,
+                          "shiftedToMonthEnd" : false
+                        } ]
+                      }, {
+                        "month" : "2027-02",
+                        "income" : 4.5E7,
+                        "expense" : 1.85E7,
+                        "net" : 2.65E7,
+                        "openingBalance" : 1.38E8,
+                        "closingBalance" : 1.645E8,
+                        "lowestBalance" : 1.38E8,
+                        "lowestBalanceDate" : "2027-02-01",
+                        "partial" : false,
+                        "items" : [ {
+                          "date" : "2027-02-05",
+                          "direction" : "INCOME",
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9b4d6f12-7e3a-4c58-b1d9-0a2e5c7f8d61",
+                          "category" : "SALARY",
+                          "amount" : 4.5E7,
+                          "currency" : "VND",
+                          "amountVnd" : 4.5E7,
+                          "cadence" : "MONTHLY",
+                          "sequence" : 14,
+                          "shiftedToMonthEnd" : false
+                        }, {
+                          "date" : "2027-02-15",
+                          "direction" : "EXPENSE",
+                          "sourceType" : "LIABILITY",
+                          "sourceId" : "8e2f4a90-1c37-4d5b-b6a8-0f9d3e7c2b14",
+                          "category" : "BANK_LOAN",
+                          "amount" : 1.85E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.85E7,
+                          "cadence" : "MONTHLY",
+                          "sequence" : 3,
+                          "shiftedToMonthEnd" : false
+                        } ]
+                      } ],
+                      "minimumBalance" : {
+                        "date" : "2026-12-01",
+                        "month" : "2026-12",
+                        "amount" : 8.5E7,
+                        "negative" : false,
+                        "referenceThreshold" : 1.85E7,
+                        "status" : "ADEQUATE"
+                      },
+                      "excludedSources" : [ {
+                        "sourceType" : "LIABILITY",
+                        "sourceId" : "c41b7e2d-6a95-4f08-8d3c-27e1b9f05a6e",
+                        "reason" : "NO_PAYMENT_SCHEDULE",
+                        "affectedMonths" : [ "2027-01" ],
+                        "linkedEntryIds" : [ ]
+                      } ],
+                      "partial" : true,
+                      "assumptions" : {
+                        "asOfDate" : "2026-11-22",
+                        "timeZone" : "Asia/Ho_Chi_Minh",
+                        "currency" : "VND",
+                        "exchangeRate" : {
+                          "usdToVndRate" : 25100.0,
+                          "effectiveDate" : "2026-09-12"
+                        },
+                        "openingBalanceCategories" : [ "BANK_ACCOUNT", "CASH" ],
+                        "notProjected" : {
+                          "from" : "2026-11-23",
+                          "to" : "2026-11-30"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "from is not a month in the form YYYY-MM, is before the month after today, or is more than 12 months after the current month.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "the current month" : {
+                    "description" : "the current month",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/cash-flow-forecast",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "from",
+                        "message" : "must not be before the month after today"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/auth/session" : {
       "get" : {
         "tags" : [ "authentication-controller" ],
@@ -5516,6 +5768,417 @@
             "description" : "MONTHLY, QUARTERLY or YEARLY for a recurring entry. Null for a one-time one.",
             "enum" : [ "MONTHLY", "QUARTERLY", "YEARLY" ],
             "example" : "MONTHLY"
+          }
+        }
+      },
+      "CashFlowForecastHorizon" : {
+        "type" : "object",
+        "description" : "The three whole calendar months the forecast covers.",
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The first day, included.",
+            "example" : "2026-12-01"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The last day, included.",
+            "example" : "2027-02-28"
+          },
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "example" : "2026-12",
+              "pattern" : "^\\d{4}-\\d{2}$"
+            },
+            "maxItems" : 3,
+            "minItems" : 3
+          }
+        }
+      },
+      "CashFlowForecastItem" : {
+        "type" : "object",
+        "description" : "One projected amount and the record it comes from.",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The day the amount lands.",
+            "example" : "2027-01-15"
+          },
+          "direction" : {
+            "type" : "string",
+            "description" : "INCOME raises the projected cash, EXPENSE lowers it.",
+            "enum" : [ "INCOME", "EXPENSE" ],
+            "example" : "EXPENSE"
+          },
+          "sourceType" : {
+            "type" : "string",
+            "description" : "CASH_FLOW_ENTRY or LIABILITY.",
+            "enum" : [ "CASH_FLOW_ENTRY", "LIABILITY", "ASSET" ],
+            "example" : "LIABILITY"
+          },
+          "sourceId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The record; GET /api/v1/cash-flow-entries/{id} or /api/v1/liabilities/{id} reads it.",
+            "example" : "8e2f4a90-1c37-4d5b-b6a8-0f9d3e7c2b14"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "The record's category.",
+            "example" : "BANK_LOAN"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The amount in the record's own currency.",
+            "example" : 1.85E7
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The record's currency.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "amountVnd" : {
+            "type" : "number",
+            "description" : "The amount in VND, rounded to whole đồng.",
+            "example" : 1.85E7
+          },
+          "cadence" : {
+            "type" : [ "string", "null" ],
+            "description" : "MONTHLY, QUARTERLY or YEARLY for an entry; MONTHLY, QUARTERLY, SEMIANNUAL or YEARLY for a liability; null for a one-time entry.",
+            "example" : "MONTHLY"
+          },
+          "sequence" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "The date's position in the record's series: counted from an entry's effective date, or from a liability's next payment date.",
+            "example" : 2
+          },
+          "shiftedToMonthEnd" : {
+            "type" : "boolean",
+            "description" : "True when the record's day of month does not exist in this month.",
+            "example" : false
+          }
+        }
+      },
+      "CashFlowForecastMonth" : {
+        "type" : "object",
+        "description" : "One calendar month of the horizon.",
+        "properties" : {
+          "month" : {
+            "type" : "string",
+            "example" : "2027-01",
+            "pattern" : "^\\d{4}-\\d{2}$"
+          },
+          "income" : {
+            "type" : "number",
+            "description" : "The VND sum of the month's INCOME items.",
+            "example" : 1.05E8
+          },
+          "expense" : {
+            "type" : "number",
+            "description" : "The VND sum of the month's EXPENSE items.",
+            "example" : 9.0E7
+          },
+          "net" : {
+            "type" : "number",
+            "description" : "income minus expense.",
+            "example" : 1.5E7
+          },
+          "openingBalance" : {
+            "type" : "number",
+            "description" : "Projected cash at the start of the month's first day.",
+            "example" : 1.24265E8
+          },
+          "closingBalance" : {
+            "type" : "number",
+            "description" : "Projected cash at the end of the month's last day.",
+            "example" : 1.39265E8
+          },
+          "lowestBalance" : {
+            "type" : "number",
+            "description" : "The lowest of the month's opening balance and every end-of-day balance on a day an amount lands.",
+            "example" : 8.9065E7
+          },
+          "lowestBalanceDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The earliest date the lowest balance is reached.",
+            "example" : "2027-01-20"
+          },
+          "partial" : {
+            "type" : "boolean",
+            "description" : "True when an excluded record would have contributed to this month: a liability falling due in it without a schedule, or a USD amount without a rate.",
+            "example" : true
+          },
+          "items" : {
+            "type" : "array",
+            "description" : "Ordered by date, then CASH_FLOW_ENTRY before LIABILITY, then sourceId.",
+            "items" : {
+              "$ref" : "#/components/schemas/CashFlowForecastItem"
+            }
+          }
+        }
+      },
+      "CashFlowForecastOpeningBalance" : {
+        "type" : "object",
+        "description" : "The cash the projection starts from, applied at the start of the horizon's first day.",
+        "properties" : {
+          "amount" : {
+            "type" : "number",
+            "description" : "The sum of the counted sources, in VND.",
+            "example" : 1.472E8
+          },
+          "appliedOn" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The first day of the horizon.",
+            "example" : "2026-12-01"
+          },
+          "sources" : {
+            "type" : "array",
+            "description" : "The cash and bank accounts counted, ordered by sourceId. A USD account without a declared rate is in excludedSources instead.",
+            "items" : {
+              "$ref" : "#/components/schemas/CashFlowForecastOpeningSource"
+            }
+          }
+        }
+      },
+      "CashFlowForecastOpeningSource" : {
+        "type" : "object",
+        "description" : "A cash or bank account counted in the opening balance.",
+        "properties" : {
+          "sourceType" : {
+            "type" : "string",
+            "description" : "Always ASSET.",
+            "enum" : [ "CASH_FLOW_ENTRY", "LIABILITY", "ASSET" ],
+            "example" : "ASSET"
+          },
+          "sourceId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset; GET /api/v1/assets/{id} reads it.",
+            "example" : "3d7a51c2-8f04-4b6e-9a21-c5e0f8b2d419"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "CASH or BANK_ACCOUNT.",
+            "example" : "BANK_ACCOUNT"
+          },
+          "valuationDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user states the value was true.",
+            "example" : "2026-11-20"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The value in the asset's own currency.",
+            "example" : 2000.0
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The asset's currency.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "USD"
+          },
+          "amountVnd" : {
+            "type" : "number",
+            "description" : "The value in VND.",
+            "example" : 5.02E7
+          }
+        }
+      },
+      "CashFlowForecastResponse" : {
+        "type" : "object",
+        "description" : "A three-month projection of the signed-in user's cash from the records they can see.",
+        "properties" : {
+          "horizon" : {
+            "$ref" : "#/components/schemas/CashFlowForecastHorizon"
+          },
+          "openingBalance" : {
+            "$ref" : "#/components/schemas/CashFlowForecastOpeningBalance"
+          },
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CashFlowForecastMonth"
+            },
+            "maxItems" : 3,
+            "minItems" : 3
+          },
+          "minimumBalance" : {
+            "$ref" : "#/components/schemas/CashFlowForecastMinimumBalance"
+          },
+          "excludedSources" : {
+            "type" : "array",
+            "description" : "Records that could have contributed and do not, each with its reason. Ordered by sourceType, then sourceId.",
+            "items" : {
+              "$ref" : "#/components/schemas/CashFlowForecastExclusion"
+            }
+          },
+          "partial" : {
+            "type" : "boolean",
+            "description" : "True when any month is partial or a cash or bank account could not be counted in the opening balance.",
+            "example" : true
+          },
+          "assumptions" : {
+            "$ref" : "#/components/schemas/CashFlowForecastAssumptions"
+          }
+        }
+      },
+      "CashFlowForecastAssumptions" : {
+        "type" : "object",
+        "description" : "The inputs the projection rests on.",
+        "properties" : {
+          "asOfDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The day the forecast was computed, in timeZone.",
+            "example" : "2026-11-22"
+          },
+          "timeZone" : {
+            "type" : "string",
+            "description" : "The zone today is read in.",
+            "example" : "Asia/Ho_Chi_Minh"
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency every total is expressed in.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "exchangeRate" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/CashFlowForecastExchangeRate",
+            "description" : "The rate USD amounts were converted with. Null when the user has declared none."
+          },
+          "openingBalanceCategories" : {
+            "type" : "array",
+            "description" : "The asset categories the opening balance is made of.",
+            "items" : {
+              "type" : "string",
+              "example" : "BANK_ACCOUNT"
+            }
+          },
+          "notProjected" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/CashFlowForecastDateRange",
+            "description" : "The days between today and the horizon that are not projected. Null when there are none."
+          }
+        }
+      },
+      "CashFlowForecastDateRange" : {
+        "type" : "object",
+        "description" : "A range of calendar days, both included.",
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-11-23"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-11-30"
+          }
+        }
+      },
+      "CashFlowForecastExchangeRate" : {
+        "type" : "object",
+        "description" : "The user-declared USD/VND rate the forecast used.",
+        "properties" : {
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "How many VND one USD buys.",
+            "example" : 25100.0
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user declares the rate took effect.",
+            "example" : "2026-09-12"
+          }
+        }
+      },
+      "CashFlowForecastExclusion" : {
+        "type" : "object",
+        "description" : "A record that could have contributed to the forecast and does not.",
+        "properties" : {
+          "sourceType" : {
+            "type" : "string",
+            "enum" : [ "CASH_FLOW_ENTRY", "LIABILITY", "ASSET" ],
+            "example" : "LIABILITY"
+          },
+          "sourceId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "example" : "c41b7e2d-6a95-4f08-8d3c-27e1b9f05a6e"
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "NO_OCCURRENCE_IN_HORIZON", "NO_PAYMENT_SCHEDULE", "NO_NEXT_PAYMENT_DATE", "NO_PAYMENT_IN_HORIZON", "COVERED_BY_LINKED_ENTRIES", "EXCHANGE_RATE_MISSING" ],
+            "example" : "NO_PAYMENT_SCHEDULE"
+          },
+          "affectedMonths" : {
+            "type" : "array",
+            "description" : "The horizon months it would have contributed to, when known. Each is marked partial.",
+            "items" : {
+              "type" : "string",
+              "example" : "2027-01",
+              "pattern" : "^\\d{4}-\\d{2}$"
+            }
+          },
+          "linkedEntryIds" : {
+            "type" : "array",
+            "description" : "For COVERED_BY_LINKED_ENTRIES, the recurring entries linked to the liability that count it instead. Empty otherwise.",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        }
+      },
+      "CashFlowForecastMinimumBalance" : {
+        "type" : "object",
+        "description" : "The lowest projected cash position in the horizon and how it reads.",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The earliest date the lowest position is reached.",
+            "example" : "2027-01-20"
+          },
+          "month" : {
+            "type" : "string",
+            "example" : "2027-01",
+            "pattern" : "^\\d{4}-\\d{2}$"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The lowest position, in VND.",
+            "example" : 8.9065E7
+          },
+          "negative" : {
+            "type" : "boolean",
+            "description" : "True when the lowest position is below zero.",
+            "example" : false
+          },
+          "referenceThreshold" : {
+            "type" : "number",
+            "description" : "One month of projected expense: the horizon's expense divided by three.",
+            "example" : 7.816666667E7
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "INSUFFICIENT_DATA when no cash or bank account was counted; else NEGATIVE below zero, THIN below the threshold, ADEQUATE otherwise.",
+            "enum" : [ "ADEQUATE", "THIN", "NEGATIVE", "INSUFFICIENT_DATA" ],
+            "example" : "ADEQUATE"
           }
         }
       }

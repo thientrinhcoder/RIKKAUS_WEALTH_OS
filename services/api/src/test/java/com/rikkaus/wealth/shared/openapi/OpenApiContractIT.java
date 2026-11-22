@@ -77,6 +77,7 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                         "/api/v1/auth/session",
                         "/api/v1/cash-flow-entries",
                         "/api/v1/cash-flow-entries/{entryId}",
+                        "/api/v1/cash-flow-forecast",
                         "/api/v1/cash-flow-occurrences",
                         "/api/v1/cash-flow-reports/monthly",
                         "/api/v1/feedback",
