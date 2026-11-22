@@ -167,6 +167,15 @@ M35 không token: `{"detail":"Authentication required.","status":401,"title":"Au
 `asset_valuations,assets,cash_flow_entries,feedback_entries,goals,liabilities,onboarding_progress,refresh_tokens,user_settings,users`,
 Flyway `12`.
 
+## Lần chạy 3 — 60/60 sau khi sửa cảnh báo CodeQL
+
+CodeQL trên PR #158 báo `java/comparison-with-wider-type` ở vòng lặp chia phần dư lớn nhất: chỉ số `int` so
+với số phần mười còn thiếu kiểu `long`. Commit `9001eda` đổi mọi bộ đếm phần mười sang `int`, đọc thương bằng
+`intValueExact`. Vì phép chia tỷ trọng bị chạm, toàn bộ 40 case được chạy lại trên jar đóng gói từ
+`clean verify` của `9001eda` (81 unit, 50 IT xanh), database mới, ngày 22/11/2026 16:16 (+07):
+**60/60 đạt**, gồm M09 (`HEALTHCARE` `5.0`), M10, M11 (`33.4`/`33.3`/`33.3`), M17 và reconciliation trên 9
+body; log API không có dòng `ERROR`.
+
 ## Không chạy
 
 Case múi giờ JVM của #74 không chạy lại: báo cáo không đọc đồng hồ, chỉ dùng ngày lịch qua cùng service đã
