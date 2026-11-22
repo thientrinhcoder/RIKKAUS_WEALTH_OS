@@ -3221,6 +3221,359 @@
         } ]
       }
     },
+    "/api/v1/cash-flow-reports/monthly" : {
+      "get" : {
+        "tags" : [ "monthly-cash-flow-report-controller" ],
+        "summary" : "Report the signed-in user's cash flow for one calendar month",
+        "description" : "Expands the viewer's entries into the month exactly as GET /api/v1/cash-flow-occurrences does for the window from the first to the last day of the month, and sums those occurrences. Every amount is in VND. A USD entry is converted with the rate the user has declared, one occurrence at a time, rounded half-up to whole dong; the rate and its effective date are returned in exchangeRate. Without a declared rate a USD occurrence keeps its originalAmount, its amount is null, it is left out of every total, complete is false and unconverted says how much was left out. net is income minus expense. Each composition lists the categories present, largest first, with shares apportioned by largest remainder so they sum to exactly 100.0. Passive income is income linked to an asset, grouped by asset; income in a passive-kind category with no link is reported as unassigned and not counted as passive. Every total equals the sum of the occurrences returned. A month with no occurrence is the same structure with zeros and empty arrays, and a share that cannot be computed is null. Past, current and future months are answered alike; nothing is compared with today and nothing is stored.",
+        "operationId" : "monthly",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "description" : "The calendar month to report, YYYY-MM.",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "example" : "2026-09",
+            "pattern" : "^\\d{4}-\\d{2}$"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The report, possibly of an empty month",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MonthlyCashFlowReport"
+                },
+                "examples" : {
+                  "September 2026 after declaring 1 USD = 25,100 VND" : {
+                    "description" : "September 2026 after declaring 1 USD = 25,100 VND",
+                    "value" : {
+                      "month" : "2026-09",
+                      "from" : "2026-09-01",
+                      "to" : "2026-09-30",
+                      "currency" : "VND",
+                      "exchangeRate" : {
+                        "usdToVndRate" : 25100.0,
+                        "effectiveDate" : "2026-09-12"
+                      },
+                      "complete" : true,
+                      "totals" : {
+                        "income" : 4.3765E7,
+                        "expense" : 2.002E7,
+                        "net" : 2.3745E7
+                      },
+                      "unconverted" : {
+                        "occurrenceCount" : 0,
+                        "income" : 0.0,
+                        "expense" : 0.0
+                      },
+                      "incomeComposition" : [ {
+                        "category" : "SALARY",
+                        "amount" : 4.0E7,
+                        "sharePercent" : 91.4,
+                        "occurrenceCount" : 1,
+                        "partial" : false
+                      }, {
+                        "category" : "DIVIDEND",
+                        "amount" : 3765000.0,
+                        "sharePercent" : 8.6,
+                        "occurrenceCount" : 1,
+                        "partial" : false
+                      } ],
+                      "expenseComposition" : [ {
+                        "category" : "HOUSING",
+                        "amount" : 1.5E7,
+                        "sharePercent" : 74.9,
+                        "occurrenceCount" : 1,
+                        "partial" : false
+                      }, {
+                        "category" : "LIVING_COSTS",
+                        "amount" : 5020000.0,
+                        "sharePercent" : 25.1,
+                        "occurrenceCount" : 1,
+                        "partial" : false
+                      } ],
+                      "passiveIncome" : {
+                        "total" : 0.0,
+                        "sharePercentOfIncome" : 0.0,
+                        "byAsset" : [ ],
+                        "unassigned" : {
+                          "amount" : 3765000.0,
+                          "occurrenceCount" : 1,
+                          "partial" : false
+                        }
+                      },
+                      "occurrences" : [ {
+                        "sourceEntryId" : "2e7c9a41-5b3d-4f86-a0c2-8d1e6b9f3a57",
+                        "occurrenceDate" : "2026-09-01",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "EXPENSE",
+                        "category" : "HOUSING",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Tiền nhà",
+                        "originalAmount" : 1.5E7,
+                        "originalCurrency" : "VND",
+                        "amount" : 1.5E7
+                      }, {
+                        "sourceEntryId" : "8f14b6d2-3a9e-4c71-b5d8-0e2a7c4f9b13",
+                        "occurrenceDate" : "2026-09-05",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "INCOME",
+                        "category" : "SALARY",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Lương",
+                        "originalAmount" : 4.0E7,
+                        "originalCurrency" : "VND",
+                        "amount" : 4.0E7
+                      }, {
+                        "sourceEntryId" : "c3a85e17-9d2b-4f40-8e6a-5b1f0d7c2e94",
+                        "occurrenceDate" : "2026-09-10",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "EXPENSE",
+                        "category" : "LIVING_COSTS",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Phần mềm làm việc",
+                        "originalAmount" : 200.0,
+                        "originalCurrency" : "USD",
+                        "amount" : 5020000.0
+                      }, {
+                        "sourceEntryId" : "5d9e2f73-1c6a-4b85-9f30-a7e4c8b1d026",
+                        "occurrenceDate" : "2026-09-30",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "INCOME",
+                        "category" : "DIVIDEND",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Cổ tức ETF Mỹ",
+                        "originalAmount" : 150.0,
+                        "originalCurrency" : "USD",
+                        "amount" : 3765000.0
+                      } ]
+                    }
+                  },
+                  "the same month before any rate is declared" : {
+                    "description" : "the same month before any rate is declared",
+                    "value" : {
+                      "month" : "2026-09",
+                      "from" : "2026-09-01",
+                      "to" : "2026-09-30",
+                      "currency" : "VND",
+                      "exchangeRate" : null,
+                      "complete" : false,
+                      "totals" : {
+                        "income" : 4.0E7,
+                        "expense" : 1.5E7,
+                        "net" : 2.5E7
+                      },
+                      "unconverted" : {
+                        "occurrenceCount" : 2,
+                        "income" : 150.0,
+                        "expense" : 200.0
+                      },
+                      "incomeComposition" : [ {
+                        "category" : "SALARY",
+                        "amount" : 4.0E7,
+                        "sharePercent" : 100.0,
+                        "occurrenceCount" : 1,
+                        "partial" : false
+                      }, {
+                        "category" : "DIVIDEND",
+                        "amount" : 0.0,
+                        "sharePercent" : 0.0,
+                        "occurrenceCount" : 1,
+                        "partial" : true
+                      } ],
+                      "expenseComposition" : [ {
+                        "category" : "HOUSING",
+                        "amount" : 1.5E7,
+                        "sharePercent" : 100.0,
+                        "occurrenceCount" : 1,
+                        "partial" : false
+                      }, {
+                        "category" : "LIVING_COSTS",
+                        "amount" : 0.0,
+                        "sharePercent" : 0.0,
+                        "occurrenceCount" : 1,
+                        "partial" : true
+                      } ],
+                      "passiveIncome" : {
+                        "total" : 0.0,
+                        "sharePercentOfIncome" : 0.0,
+                        "byAsset" : [ ],
+                        "unassigned" : {
+                          "amount" : 0.0,
+                          "occurrenceCount" : 1,
+                          "partial" : true
+                        }
+                      },
+                      "occurrences" : [ {
+                        "sourceEntryId" : "2e7c9a41-5b3d-4f86-a0c2-8d1e6b9f3a57",
+                        "occurrenceDate" : "2026-09-01",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "EXPENSE",
+                        "category" : "HOUSING",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Tiền nhà",
+                        "originalAmount" : 1.5E7,
+                        "originalCurrency" : "VND",
+                        "amount" : 1.5E7
+                      }, {
+                        "sourceEntryId" : "8f14b6d2-3a9e-4c71-b5d8-0e2a7c4f9b13",
+                        "occurrenceDate" : "2026-09-05",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "INCOME",
+                        "category" : "SALARY",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Lương",
+                        "originalAmount" : 4.0E7,
+                        "originalCurrency" : "VND",
+                        "amount" : 4.0E7
+                      }, {
+                        "sourceEntryId" : "c3a85e17-9d2b-4f40-8e6a-5b1f0d7c2e94",
+                        "occurrenceDate" : "2026-09-10",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "EXPENSE",
+                        "category" : "LIVING_COSTS",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Phần mềm làm việc",
+                        "originalAmount" : 200.0,
+                        "originalCurrency" : "USD",
+                        "amount" : null
+                      }, {
+                        "sourceEntryId" : "5d9e2f73-1c6a-4b85-9f30-a7e4c8b1d026",
+                        "occurrenceDate" : "2026-09-30",
+                        "sequence" : 1,
+                        "shiftedToMonthEnd" : false,
+                        "entryType" : "INCOME",
+                        "category" : "DIVIDEND",
+                        "recurrence" : null,
+                        "linkedAssetId" : null,
+                        "notes" : "Cổ tức ETF Mỹ",
+                        "originalAmount" : 150.0,
+                        "originalCurrency" : "USD",
+                        "amount" : null
+                      } ]
+                    }
+                  },
+                  "a month with no occurrence" : {
+                    "description" : "a month with no occurrence",
+                    "value" : {
+                      "month" : "2025-06",
+                      "from" : "2025-06-01",
+                      "to" : "2025-06-30",
+                      "currency" : "VND",
+                      "exchangeRate" : {
+                        "usdToVndRate" : 25100.0,
+                        "effectiveDate" : "2026-09-12"
+                      },
+                      "complete" : true,
+                      "totals" : {
+                        "income" : 0.0,
+                        "expense" : 0.0,
+                        "net" : 0.0
+                      },
+                      "unconverted" : {
+                        "occurrenceCount" : 0,
+                        "income" : 0.0,
+                        "expense" : 0.0
+                      },
+                      "incomeComposition" : [ ],
+                      "expenseComposition" : [ ],
+                      "passiveIncome" : {
+                        "total" : 0.0,
+                        "sharePercentOfIncome" : null,
+                        "byAsset" : [ ],
+                        "unassigned" : {
+                          "amount" : 0.0,
+                          "occurrenceCount" : 0,
+                          "partial" : false
+                        }
+                      },
+                      "occurrences" : [ ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "month is missing, blank, or not a calendar month in the form YYYY-MM.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "month not in the form YYYY-MM" : {
+                    "description" : "month not in the form YYYY-MM",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/cash-flow-reports/monthly",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83",
+                      "errors" : [ {
+                        "field" : "month",
+                        "message" : "must be a calendar month in the form YYYY-MM"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/cash-flow-occurrences" : {
       "get" : {
         "tags" : [ "cash-flow-occurrence-controller" ],
@@ -4801,6 +5154,310 @@
             "description" : "Which amount the form should suggest, and from what figure the client already holds.",
             "enum" : [ "NONE", "TARGET_FROM_SIX_MONTHS_OF_EXPENSES", "ALLOCATED_FROM_CURRENT_NET_WORTH", "TARGET_FROM_TOTAL_LIABILITIES" ],
             "example" : "TARGET_FROM_SIX_MONTHS_OF_EXPENSES"
+          }
+        }
+      },
+      "MonthlyCashFlowReport" : {
+        "type" : "object",
+        "description" : "Income, expense, net, composition and passive income of one calendar month, in VND.",
+        "properties" : {
+          "month" : {
+            "type" : "string",
+            "description" : "The month reported, YYYY-MM.",
+            "example" : "2026-09"
+          },
+          "from" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The first day of the month, included.",
+            "example" : "2026-09-01"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The last day of the month, included.",
+            "example" : "2026-09-30"
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency every amount except originalAmount and unconverted is in.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "exchangeRate" : {
+            "$ref" : "#/components/schemas/MonthlyCashFlowReportRate",
+            "description" : "The USD/VND rate the user has declared, applied to every USD line. Null when none is declared, in which case no USD line is converted."
+          },
+          "complete" : {
+            "type" : "boolean",
+            "description" : "False when a USD line could not be converted for lack of a rate. The totals then cover only the converted lines and unconverted says what was left out.",
+            "example" : true
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/MonthlyCashFlowReportTotals"
+          },
+          "unconverted" : {
+            "$ref" : "#/components/schemas/MonthlyCashFlowReportUnconverted"
+          },
+          "incomeComposition" : {
+            "type" : "array",
+            "description" : "Income by category, largest amount first, then by category name.",
+            "items" : {
+              "$ref" : "#/components/schemas/MonthlyCashFlowReportCategoryShare"
+            }
+          },
+          "expenseComposition" : {
+            "type" : "array",
+            "description" : "Expense by category, largest amount first, then by category name.",
+            "items" : {
+              "$ref" : "#/components/schemas/MonthlyCashFlowReportCategoryShare"
+            }
+          },
+          "passiveIncome" : {
+            "$ref" : "#/components/schemas/MonthlyCashFlowReportPassiveIncome"
+          },
+          "occurrences" : {
+            "type" : "array",
+            "description" : "Every occurrence in the month, ordered by date and then by sourceEntryId, as GET /api/v1/cash-flow-occurrences orders them.",
+            "items" : {
+              "$ref" : "#/components/schemas/MonthlyCashFlowReportLine"
+            }
+          }
+        }
+      },
+      "MonthlyCashFlowReportAssetIncome" : {
+        "type" : "object",
+        "description" : "One asset's linked income in the month.",
+        "properties" : {
+          "assetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset; GET /api/v1/assets/{assetId} reads its name.",
+            "example" : "6a1f3c2e-8b47-4d09-9e5a-1c7b2d4f8e60"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "Sum of the lines linked to this asset.",
+            "example" : 1.8E7
+          },
+          "sharePercentOfIncome" : {
+            "type" : "number",
+            "description" : "amount as a percent of total income, one decimal, rounded on its own.",
+            "example" : 10.0
+          },
+          "occurrenceCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 1
+          },
+          "partial" : {
+            "type" : "boolean",
+            "example" : false
+          }
+        }
+      },
+      "MonthlyCashFlowReportCategoryShare" : {
+        "type" : "object",
+        "description" : "One category's part of its type's total.",
+        "properties" : {
+          "category" : {
+            "type" : "string",
+            "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ],
+            "example" : "HOUSING"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "Sum of the category's converted lines.",
+            "example" : 1.875E7
+          },
+          "sharePercent" : {
+            "type" : "number",
+            "description" : "Percent of the type's total at one decimal. The rows of one composition are apportioned by largest remainder so they sum to exactly 100.0. Null when the type's total is zero.",
+            "example" : 20.4
+          },
+          "occurrenceCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "How many lines of the month are in this category.",
+            "example" : 1
+          },
+          "partial" : {
+            "type" : "boolean",
+            "description" : "True when a line of this category is unconverted and left out of amount.",
+            "example" : false
+          }
+        }
+      },
+      "MonthlyCashFlowReportLine" : {
+        "type" : "object",
+        "description" : "One occurrence in the month, traceable to its entry by sourceEntryId and occurrenceDate.",
+        "properties" : {
+          "sourceEntryId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The entry; GET /api/v1/cash-flow-entries/{id} reads it.",
+            "example" : "9b4d6f12-7e3a-4c58-b1d9-0a2e5c7f8d61"
+          },
+          "occurrenceDate" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-09-15"
+          },
+          "sequence" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Position in the entry's series, 1 for a one-time entry.",
+            "example" : 2
+          },
+          "shiftedToMonthEnd" : {
+            "type" : "boolean",
+            "example" : false
+          },
+          "entryType" : {
+            "type" : "string",
+            "enum" : [ "INCOME", "EXPENSE" ],
+            "example" : "INCOME"
+          },
+          "category" : {
+            "type" : "string",
+            "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ],
+            "example" : "DEPOSIT_INTEREST"
+          },
+          "recurrence" : {
+            "type" : "string",
+            "description" : "Null for a one-time entry.",
+            "enum" : [ "MONTHLY", "QUARTERLY", "YEARLY" ],
+            "example" : "YEARLY"
+          },
+          "linkedAssetId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The asset the entry is linked to. Null when it has none."
+          },
+          "notes" : {
+            "type" : "string",
+            "description" : "The entry's note. Null when it has none.",
+            "example" : "Lãi tiền gửi USD"
+          },
+          "originalAmount" : {
+            "type" : "number",
+            "description" : "The entry's amount in its own currency.",
+            "example" : 1200.0
+          },
+          "originalCurrency" : {
+            "type" : "string",
+            "enum" : [ "VND", "USD" ],
+            "example" : "USD"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "The amount in VND: the original for a VND entry, originalAmount times exchangeRate.usdToVndRate rounded half-up to whole dong for a USD one. Null for a USD entry when no rate is declared.",
+            "example" : 3.012E7
+          }
+        }
+      },
+      "MonthlyCashFlowReportPassiveIncome" : {
+        "type" : "object",
+        "description" : "Income linked to an asset, grouped by that asset. Passive income is decided by the link the user entered, never inferred from a category.",
+        "properties" : {
+          "total" : {
+            "type" : "number",
+            "description" : "Sum of byAsset.",
+            "example" : 2.25E7
+          },
+          "sharePercentOfIncome" : {
+            "type" : "number",
+            "description" : "total as a percent of total income, one decimal. Null when there is no income.",
+            "example" : 12.5
+          },
+          "byAsset" : {
+            "type" : "array",
+            "description" : "One row per linked asset, largest amount first, then by assetId.",
+            "items" : {
+              "$ref" : "#/components/schemas/MonthlyCashFlowReportAssetIncome"
+            }
+          },
+          "unassigned" : {
+            "$ref" : "#/components/schemas/MonthlyCashFlowReportUnassigned"
+          }
+        }
+      },
+      "MonthlyCashFlowReportRate" : {
+        "type" : "object",
+        "description" : "The declared rate the report applied.",
+        "properties" : {
+          "usdToVndRate" : {
+            "type" : "number",
+            "description" : "How many VND one USD buys.",
+            "example" : 25100.0
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date the user declared the rate took effect.",
+            "example" : "2026-09-12"
+          }
+        }
+      },
+      "MonthlyCashFlowReportTotals" : {
+        "type" : "object",
+        "description" : "The month's totals over converted lines.",
+        "properties" : {
+          "income" : {
+            "type" : "number",
+            "description" : "Sum of the INCOME lines' amount.",
+            "example" : 1.8E8
+          },
+          "expense" : {
+            "type" : "number",
+            "description" : "Sum of the EXPENSE lines' amount.",
+            "example" : 9.2E7
+          },
+          "net" : {
+            "type" : "number",
+            "description" : "income minus expense, and nothing else. Negative when spending exceeds income.",
+            "example" : 8.8E7
+          }
+        }
+      },
+      "MonthlyCashFlowReportUnassigned" : {
+        "type" : "object",
+        "description" : "Income in RENTAL_INCOME, DIVIDEND, DEPOSIT_INTEREST or BOND_OR_FUND_INCOME with no asset link. Shown so it can be linked; not counted in passive income.",
+        "properties" : {
+          "amount" : {
+            "type" : "number",
+            "example" : 3.012E7
+          },
+          "occurrenceCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 1
+          },
+          "partial" : {
+            "type" : "boolean",
+            "example" : false
+          }
+        }
+      },
+      "MonthlyCashFlowReportUnconverted" : {
+        "type" : "object",
+        "description" : "The USD lines left out of every total because no rate is declared.",
+        "properties" : {
+          "occurrenceCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "How many lines have a null amount.",
+            "example" : 0
+          },
+          "income" : {
+            "type" : "number",
+            "description" : "Sum of the unconverted INCOME lines' originalAmount, in USD.",
+            "example" : 0.0
+          },
+          "expense" : {
+            "type" : "number",
+            "description" : "Sum of the unconverted EXPENSE lines' originalAmount, in USD.",
+            "example" : 0.0
           }
         }
       },
