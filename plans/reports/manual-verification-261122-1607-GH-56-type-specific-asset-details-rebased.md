@@ -303,3 +303,24 @@ tìm ra:
 
 API (PID của lượt chạy) đã dừng, container `rikkaus-pg-issue-56` đã xoá bằng `docker rm -f`; cổng 8056
 và 5456 không còn tiến trình nào giữ.
+
+## Lượt chạy lại sau khi merge `main` có #77 và #80 — 22/11/2026, 16:26
+
+`main` đi tới `c025079`, có thêm `cashflow/reporting` (#77) và `cashflow/forecast` (#80); không có
+migration mới. Nhánh merge `origin/main` vào (merge commit, không rebase vì nhánh đã có trên origin và
+PR #160). Conflict duy nhất nằm ở mục *What is not here* của `docs/api-contract-conventions.md`: `main`
+đã bỏ dòng "Monthly totals and the forecast" vì hai tính năng đó đã có, nhánh này thay dòng
+"Type-specific asset fields" bằng dòng "Any calculation over the instrument fields". Kết quả giữ dòng
+của #56 và bỏ cả hai dòng đã lỗi thời. `OpenApiContractIT`, `ApplicationContextIT` và `.gitignore`
+merge tự động vì nhánh này không sửa chúng; `openapi.json` được regenerate.
+
+- Rà CodeQL `java/comparison-with-wider-type`: phần Java #56 thêm vào không có vòng lặp hay phép so
+  sánh số nguyên nào, nên không có gì phải sửa.
+- `clean verify -Dopenapi.update=true` rồi `clean verify` không flag: BUILD SUCCESS, 81 unit + 50 IT,
+  drift check khớp. Diff `openapi.json` so với `main` vẫn đúng +150/−4, chỉ là bốn field và example.
+- Jar đã merge (SHA-256 bắt đầu bằng `66b55d29f30e419b`) trên PostgreSQL 18.6 dùng một lần cổng
+  5456, API cổng 8056: Flyway `Successfully applied 11 migrations ... now at version v14`,
+  `ddl-auto: validate` chấp nhận mapping.
+- Cùng runner, cùng 118 case như bảng trên: **118 PASS, 0 FAIL** (103 HTTP, 15 PostgreSQL), từng nhóm
+  giống hệt lượt 16:07; log API không có dòng `ERROR`.
+- API đã dừng, container `rikkaus-pg-issue-56` đã xoá, cổng 8056 và 5456 trống.
