@@ -19,6 +19,10 @@ rikkaus:
       # instead, and the base configuration has no default, so this value cannot leak into one by
       # being forgotten.
       secret: local-development-only-jwt-signing-secret
+    refresh-cookie:
+      # Local development serves plain http, where a Secure cookie would not be stored by every client
+      # used in testing (curl's cookie jar among them). Every other environment keeps the default, true.
+      secure: false
     google:
       # Supply a real client id from Google Cloud Console to sign in locally. The redirect URI below is
       # the one Expo web serves on; register the same value in the Google OAuth client or Google will

@@ -2,9 +2,11 @@ package com.rikkaus.wealth.shared.security;
 
 import com.rikkaus.wealth.shared.api.ApiPaths;
 import com.rikkaus.wealth.shared.error.ProblemDetailWriter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -31,6 +33,9 @@ class SecurityConfiguration {
     private final ProblemAuthenticationEntryPoint authenticationEntryPoint;
     private final ProblemAccessDeniedHandler accessDeniedHandler;
     private final String healthPath;
+    private final boolean localProfile;
+
+    private static final String DEV_SIGN_IN_PATH = ApiPaths.V1 + "/auth/dev-sign-in";
 
     /**
      * The three collaborators are constructed here rather than scanned as components. A scanned {@code
@@ -41,7 +46,8 @@ class SecurityConfiguration {
     SecurityConfiguration(
             AccessTokenVerifier accessTokenVerifier,
             ProblemDetailWriter problemDetailWriter,
-            WebEndpointProperties webEndpointProperties) {
+            WebEndpointProperties webEndpointProperties,
+            Environment environment) {
         this.bearerTokenFilter =
                 new BearerTokenAuthenticationFilter(accessTokenVerifier, problemDetailWriter);
         this.authenticationEntryPoint = new ProblemAuthenticationEntryPoint(problemDetailWriter);
@@ -49,6 +55,7 @@ class SecurityConfiguration {
         // Read from the actuator's own property rather than hard-coding "/actuator", so relocating the
         // base path in configuration cannot silently lock the liveness probe out.
         this.healthPath = webEndpointProperties.getBasePath() + "/health";
+        this.localProfile = environment.matchesProfiles("local");
     }
 
     @Bean
@@ -60,10 +67,13 @@ class SecurityConfiguration {
                 // preflight — which carries no credential — would be refused before it reached MVC, and
                 // the whole allowlist in CorsConfiguration would be dead.
                 .cors(Customizer.withDefaults())
-                // No cookie-borne credential exists to forge: the access token travels in an
-                // Authorization header the browser never attaches on its own, so a cross-site form post
-                // cannot authenticate. If a cookie session is ever introduced this must be revisited,
-                // and that is the only condition under which this line is wrong.
+                // Spring Security's synchronizer-token CSRF stays off, and that was re-decided — not
+                // inherited — when the web refresh cookie was introduced. The access token still travels
+                // in an Authorization header the browser never attaches on its own. The one cookie,
+                // rikkaus_refresh, is SameSite=Strict, scoped to /api/v1/auth, and honoured only together
+                // with the X-Rikkaus-Client header from an allowlisted Origin; WebSessionTransport
+                // enforces that on exactly the routes that read it. A token-based CSRF scheme would need a
+                // second readable cookie or an extra round trip and would protect nothing more.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Both would otherwise be enabled by default and would answer an unauthenticated request
@@ -101,6 +111,12 @@ class SecurityConfiguration {
                                         // A liveness probe cannot carry a credential.
                                         .requestMatchers(healthPath)
                                         .permitAll()
+                                        // The development sign-in exists only under the local profile, and
+                                        // so does this permit. Elsewhere the path is an unknown route and
+                                        // denied by default like any other, rather than answering 404 to an
+                                        // anonymous caller and so marking itself as special.
+                                        .requestMatchers(request -> localProfile && isDevSignIn(request))
+                                        .permitAll()
                                         // Already gated to the local profile by springdoc.api-docs.enabled,
                                         // which returns 404 everywhere else. Permitted so that gate stays
                                         // the single control, rather than two half-controls that disagree.
@@ -115,5 +131,9 @@ class SecurityConfiguration {
                                         .accessDeniedHandler(accessDeniedHandler))
                 .addFilterBefore(bearerTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    private static boolean isDevSignIn(HttpServletRequest request) {
+        return DEV_SIGN_IN_PATH.equals(request.getRequestURI());
     }
 }
