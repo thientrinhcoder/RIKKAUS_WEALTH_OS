@@ -5,9 +5,7 @@ import type { HealthResponse } from './health-schema';
 
 export const healthQueryKey = ['health'] as const;
 
-export function useHealthQuery(
-  baseUrl: string | undefined,
-): UseQueryResult<HealthResponse, Error> {
+export function useHealthQuery(baseUrl: string | undefined): UseQueryResult<HealthResponse, Error> {
   return useQuery({
     queryKey: [...healthQueryKey, baseUrl ?? 'unconfigured'],
     queryFn: ({ signal }) => fetchHealth(baseUrl, signal),

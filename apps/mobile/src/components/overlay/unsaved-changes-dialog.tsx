@@ -61,11 +61,7 @@ export function UnsavedChangesDialog({
       </Text>
 
       <View style={styles.actions}>
-        <ActionButton
-          onPress={onKeepEditing}
-          testID={`${testID}-keep-editing`}
-          variant="secondary"
-        >
+        <ActionButton onPress={onKeepEditing} testID={`${testID}-keep-editing`} variant="secondary">
           {keepEditingLabel}
         </ActionButton>
 

@@ -30,7 +30,14 @@ describe('no shared component depends on the domain', () => {
   it('scans every kit directory', () => {
     const directories = new Set(files.map(({ path }) => path.split('/')[0]));
 
-    expect([...directories].sort()).toEqual(['action', 'data', 'feedback', 'form', 'overlay', 'shell']);
+    expect([...directories].sort()).toEqual([
+      'action',
+      'data',
+      'feedback',
+      'form',
+      'overlay',
+      'shell',
+    ]);
   });
 
   it('never imports from the feature layer', () => {

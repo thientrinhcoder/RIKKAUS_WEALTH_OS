@@ -43,7 +43,6 @@ describe('submitting a valid form', () => {
     /** The confirmation itself is a snackbar; form-shell-confirmation.test.tsx covers it. */
     expect(screen.queryByTestId('form-success')).toBeNull();
   });
-
 });
 
 describe('preventing a duplicate submission', () => {
@@ -149,10 +148,7 @@ describe('submitting an invalid form', () => {
   });
 
   it('clears the summary once validation passes on a later attempt', async () => {
-    const validate = jest
-      .fn()
-      .mockReturnValueOnce(TWO_ERRORS)
-      .mockReturnValue([]);
+    const validate = jest.fn().mockReturnValueOnce(TWO_ERRORS).mockReturnValue([]);
 
     await renderWithProviders(
       <FormShell onSubmit={jest.fn()} submitLabel="Lưu tài sản" validate={validate}>

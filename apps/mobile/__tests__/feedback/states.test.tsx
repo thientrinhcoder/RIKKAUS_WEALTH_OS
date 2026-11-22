@@ -44,9 +44,7 @@ describe('the shared state anatomy', () => {
   });
 
   it('announces assertively and as an alert only when told to', async () => {
-    await renderWithProviders(
-      <StateView live="assertive" message="Không lưu được" testID="s" />,
-    );
+    await renderWithProviders(<StateView live="assertive" message="Không lưu được" testID="s" />);
 
     expect(screen.getByTestId('s').props.accessibilityLiveRegion).toBe('assertive');
     expect(screen.getByTestId('s').props.accessibilityRole).toBe('alert');
@@ -82,9 +80,9 @@ describe('loading state', () => {
       <LoadingState accessibilityLabel="Đang tải danh sách tài sản" reservedHeight={184} />,
     );
 
-    const style = StyleSheet.flatten(
-      screen.getByTestId('loading-state').props.style,
-    ) as { height?: number };
+    const style = StyleSheet.flatten(screen.getByTestId('loading-state').props.style) as {
+      height?: number;
+    };
 
     expect(style.height).toBe(184);
   });

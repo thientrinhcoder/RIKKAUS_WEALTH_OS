@@ -222,9 +222,7 @@ describe('unsaved changes dialog', () => {
   };
 
   it('stays closed when the form holds nothing unsaved', async () => {
-    await renderWithProviders(
-      <UnsavedChangesDialog {...PROPS} isDirty={false} visible />,
-    );
+    await renderWithProviders(<UnsavedChangesDialog {...PROPS} isDirty={false} visible />);
 
     expect(screen.queryByTestId('unsaved-changes-dialog')).toBeNull();
   });
@@ -271,9 +269,7 @@ describe('blocking error dialog', () => {
   };
 
   it('offers exactly one way forward', async () => {
-    await renderWithProviders(
-      <BlockingErrorDialog {...PROPS} onSafeReturn={jest.fn()} visible />,
-    );
+    await renderWithProviders(<BlockingErrorDialog {...PROPS} onSafeReturn={jest.fn()} visible />);
 
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Quay lại danh sách' })).toBeTruthy();

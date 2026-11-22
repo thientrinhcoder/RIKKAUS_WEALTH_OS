@@ -63,7 +63,14 @@ export function FormShell({
    * guard from them would hand out a fresh guard each render and defeat it entirely: the second
    * activation would meet a guard that had never seen the first.
    */
-  const latest = useRef({ validate, onSubmit, onFocusField, successMessage, onUndoSubmit, snackbar });
+  const latest = useRef({
+    validate,
+    onSubmit,
+    onFocusField,
+    successMessage,
+    onUndoSubmit,
+    snackbar,
+  });
 
   /**
    * Refreshed after each render rather than during it. Effects run before any interaction can

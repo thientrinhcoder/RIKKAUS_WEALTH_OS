@@ -56,8 +56,7 @@ function renderedMinHeights(testID: string): number[] {
 
     const element = node as { props?: { style?: unknown; children?: unknown }; children?: unknown };
     const style = StyleSheet.flatten(element.props?.style as never) as
-      | { minHeight?: number }
-      | undefined;
+      { minHeight?: number } | undefined;
 
     if (typeof style?.minHeight === 'number') {
       found.push(style.minHeight);
@@ -88,15 +87,18 @@ describe('variants', () => {
     ]);
   });
 
-  it.each([...ACTION_BUTTON_VARIANTS])('renders %s as a button with its visible label', async (variant) => {
-    await renderWithProviders(
-      <ActionButton testID={`action-${variant}`} variant={variant}>
-        Lưu thay đổi
-      </ActionButton>,
-    );
+  it.each([...ACTION_BUTTON_VARIANTS])(
+    'renders %s as a button with its visible label',
+    async (variant) => {
+      await renderWithProviders(
+        <ActionButton testID={`action-${variant}`} variant={variant}>
+          Lưu thay đổi
+        </ActionButton>,
+      );
 
-    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeTruthy();
-  });
+      expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeTruthy();
+    },
+  );
 });
 
 describe('disabled state', () => {
@@ -199,10 +201,13 @@ describe('sizing', () => {
     expect(actionButtonMinHeight('destructive')).toBe(actionButtonMinHeight('primary'));
   });
 
-  it.each([...ACTION_BUTTON_VARIANTS])('keeps %s at or above the minimum touch target', (variant) => {
-    expect(actionButtonMinHeight(variant)).toBeGreaterThanOrEqual(sizing.minTouchTarget.ios);
-    expect(actionButtonMinHeight(variant)).toBeGreaterThanOrEqual(sizing.minTouchTarget.android);
-  });
+  it.each([...ACTION_BUTTON_VARIANTS])(
+    'keeps %s at or above the minimum touch target',
+    (variant) => {
+      expect(actionButtonMinHeight(variant)).toBeGreaterThanOrEqual(sizing.minTouchTarget.ios);
+      expect(actionButtonMinHeight(variant)).toBeGreaterThanOrEqual(sizing.minTouchTarget.android);
+    },
+  );
 
   it('actually applies the height to the rendered button', async () => {
     await renderWithProviders(

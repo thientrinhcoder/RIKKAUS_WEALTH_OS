@@ -93,13 +93,15 @@ describe('diagnostics screen', () => {
 
   it('applies the mobile and wide horizontal padding branches', async () => {
     const mobileView = await renderWithProviders(<DiagnosticsScreen />);
-    expect(StyleSheet.flatten(mobileView.getByTestId('screen-content').props.contentContainerStyle))
-      .toMatchObject({ paddingHorizontal: 16 });
+    expect(
+      StyleSheet.flatten(mobileView.getByTestId('screen-content').props.contentContainerStyle),
+    ).toMatchObject({ paddingHorizontal: 16 });
     await mobileView.unmount();
 
     mockedUseResponsiveLayout.mockReturnValue({ horizontalPadding: 24 });
     const wideView = await renderWithProviders(<DiagnosticsScreen />);
-    expect(StyleSheet.flatten(wideView.getByTestId('screen-content').props.contentContainerStyle))
-      .toMatchObject({ paddingHorizontal: 24 });
+    expect(
+      StyleSheet.flatten(wideView.getByTestId('screen-content').props.contentContainerStyle),
+    ).toMatchObject({ paddingHorizontal: 24 });
   });
 });

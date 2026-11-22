@@ -18,9 +18,11 @@ describe('health client', () => {
   });
 
   it('requests and validates the Actuator health endpoint', async () => {
-    const fetchMock = jest.fn().mockResolvedValue(
-      responseWith({ status: 'UP', components: { database: { status: 'UP' } } }),
-    );
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue(
+        responseWith({ status: 'UP', components: { database: { status: 'UP' } } }),
+      );
     globalThis.fetch = fetchMock;
 
     await expect(fetchHealth('http://localhost:8080/')).resolves.toMatchObject({ status: 'UP' });

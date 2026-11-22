@@ -33,8 +33,7 @@ function minHeightsIn(testID: string): number[] {
 
     const element = node as { props?: { style?: unknown; children?: unknown }; children?: unknown };
     const style = StyleSheet.flatten(element.props?.style as never) as
-      | { minHeight?: number }
-      | undefined;
+      { minHeight?: number } | undefined;
 
     if (typeof style?.minHeight === 'number') {
       found.push(style.minHeight);
@@ -98,9 +97,7 @@ describe('navigation chrome by width', () => {
 describe('active destination', () => {
   it('exposes the selected state on the active destination only', async () => {
     atWidth(375);
-    await renderWithProviders(
-      <AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>,
-    );
+    await renderWithProviders(<AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>);
 
     for (const destination of DESTINATIONS) {
       const tab = screen.getByRole('tab', { name: destination.label });
@@ -144,9 +141,9 @@ describe('bounded content', () => {
     atWidth(1440);
     await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
 
-    const style = StyleSheet.flatten(
-      screen.getByTestId('shell-content').props.style,
-    ) as { maxWidth?: number };
+    const style = StyleSheet.flatten(screen.getByTestId('shell-content').props.style) as {
+      maxWidth?: number;
+    };
 
     expect(style.maxWidth).toBe(sizing.shellContentMaxWidth);
   });
@@ -155,9 +152,9 @@ describe('bounded content', () => {
     atWidth(375);
     await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
 
-    const style = StyleSheet.flatten(
-      screen.getByTestId('shell-content').props.style,
-    ) as { maxWidth?: number };
+    const style = StyleSheet.flatten(screen.getByTestId('shell-content').props.style) as {
+      maxWidth?: number;
+    };
 
     expect(style.maxWidth).toBeUndefined();
   });
@@ -178,9 +175,7 @@ describe('the create action', () => {
 describe('the selected destination is visible without colour', () => {
   it('gives the active destination a filled indicator and a heavier label', async () => {
     atWidth(375);
-    await renderWithProviders(
-      <AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>,
-    );
+    await renderWithProviders(<AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>);
 
     for (const destination of DESTINATIONS) {
       const indicator = screen.getByTestId(`shell-destination-${destination.key}-indicator`);
@@ -196,9 +191,7 @@ describe('the selected destination is visible without colour', () => {
 
   it('weights the active label more heavily than the rest', async () => {
     atWidth(375);
-    await renderWithProviders(
-      <AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>,
-    );
+    await renderWithProviders(<AppShell activeRoute={DESTINATIONS[2].route}>{null}</AppShell>);
 
     /** The active destination's name also appears as the top app bar title, so scope the query. */
     const label = (key: string, text: string) =>
