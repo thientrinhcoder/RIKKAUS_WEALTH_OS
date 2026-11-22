@@ -1,6 +1,6 @@
 # Phase 4 — Xác minh thủ công
 
-Status: Pending · Depends on: phases 2–3
+Status: Complete · Depends on: phases 2–3
 
 ## Steps
 

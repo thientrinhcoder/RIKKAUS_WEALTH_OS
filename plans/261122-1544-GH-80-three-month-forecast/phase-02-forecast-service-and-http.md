@@ -1,6 +1,6 @@
 # Phase 2 — Service và route forecast
 
-Status: Pending · Depends on: phase 1
+Status: Complete · Depends on: phase 1
 
 ## Files (tạo mới, chỉ trong `cashflow.forecast`)
 

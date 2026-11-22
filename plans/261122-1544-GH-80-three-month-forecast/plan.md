@@ -1,7 +1,7 @@
 ---
 title: "Issue #80 dự báo dòng tiền ba tháng"
 description: "Service và route đọc GET /api/v1/cash-flow-forecast trong slice cashflow: ba tháng liên tiếp từ entry định kỳ, entry một lần và lịch trả nợ hiển thị được, số dư mở đầu từ tiền mặt và tài khoản ngân hàng, tín hiệu số dư thấp nhất, mọi khoản truy về source. Tính khi đọc, không migration."
-status: in-progress
+status: completed
 priority: P1
 effort: "2d"
 issue: 80
@@ -92,18 +92,18 @@ Lỗi: `400 validation-failed` (field `from`: sai dạng, trước tháng kế t
 | Phase | Tên | Status | Kết quả |
 |---|---|---|---|
 | 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Complete | 55 case với kỳ vọng tính tay, viết trước khi code |
-| 2 | [Service và route forecast](./phase-02-forecast-service-and-http.md) | Pending | package `cashflow.forecast`, đọc native, tái dùng expansion |
-| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Pending | `openapi.json`, `OpenApiContractIT`, `api-contract-conventions.md` |
-| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Pending | guide, report evidence, commit, push, PR body |
+| 2 | [Service và route forecast](./phase-02-forecast-service-and-http.md) | Complete | package `cashflow.forecast`, đọc native, tái dùng expansion |
+| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Complete | `openapi.json`, `OpenApiContractIT`, `api-contract-conventions.md` |
+| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Complete | guide, report evidence, commit, push, PR body |
 
 ## Acceptance criteria
 
-- [ ] Mọi case ở phase 1 đạt trên commit cuối, ghi status và body thật.
-- [ ] `clean verify` xanh không flag.
-- [ ] Mọi khoản mục truy về source đang tồn tại; xóa source thì khoản mục biến mất ở lần đọc sau.
-- [ ] User B không thấy gì của A; 401 ba kiểu; 405; `from` sai bị 400 với field.
-- [ ] Hai lần gọi cùng input cho body giống từng byte.
-- [ ] `openapi.json`, `OpenApiContractIT`, `docs/api-contract-conventions.md` cập nhật.
+- [x] Mọi case ở phase 1 đạt trên commit cuối, ghi status và body thật.
+- [x] `clean verify` xanh không flag.
+- [x] Mọi khoản mục truy về source đang tồn tại; xóa source thì khoản mục biến mất ở lần đọc sau.
+- [x] User B không thấy gì của A; 401 ba kiểu; 405; `from` sai bị 400 với field.
+- [x] Hai lần gọi cùng input cho body giống từng byte.
+- [x] `openapi.json`, `OpenApiContractIT`, `docs/api-contract-conventions.md` cập nhật.
 
 ## Verification gap
 
@@ -112,9 +112,12 @@ Lỗi: `400 validation-failed` (field `from`: sai dạng, trước tháng kế t
 - "Hôm nay" lấy từ đồng hồ hệ thống; lần chạy thủ công chỉ kiểm được ngày 22/11/2026. Biên đổi tháng
   (chạy đúng 23:59 ngày cuối tháng giờ Việt Nam) và ngày cuối tháng (khi `notProjected` là `null`)
   không được chạy thật.
-- Tần suất `SEMIANNUAL` và `QUARTERLY` của công nợ chỉ được suy ra từ cùng một vòng lặp với `MONTHLY`,
+- Tần suất `SEMIANNUAL` và `YEARLY` của công nợ chỉ được suy ra từ cùng một vòng lặp với `MONTHLY`,
   không có case riêng; công nợ bằng USD không có case riêng (chung đường quy đổi với entry USD).
 - Hiệu năng với catalog lớn không được đo.
+- Lần chạy dùng script Python gửi cùng request với guide; các khối lệnh `bash` trong
+  `docs/manual-test-guide-cash-flow-forecast.md` không được chạy nguyên văn.
+- `NO_NEXT_PAYMENT_DATE` không có case riêng.
 
 ## Câu hỏi cho Product Owner / Feature Contract #22
 

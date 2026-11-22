@@ -1,6 +1,6 @@
 # Phase 3 — Contract và docs
 
-Status: Pending · Depends on: phase 2
+Status: Complete · Depends on: phase 2
 
 ## Steps
 
