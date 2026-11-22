@@ -10,6 +10,10 @@ export default function AppGroupLayout() {
   const pathname = usePathname();
   const router = useRouter();
 
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    return null;
+  }
+
   return (
     <AppShell
       activeRoute={pathname}
