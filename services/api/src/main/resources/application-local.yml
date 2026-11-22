@@ -10,7 +10,7 @@ rikkaus:
     # or an explicit API_ALLOWED_ORIGINS value. The origin below was read from a running
     # `npx expo start --web`, which reported "Waiting on http://localhost:8081", rather than assumed
     # from Expo's documented default; apps/mobile pins no port in its web script.
-    allowed-origins: http://localhost:8081
+    allowed-origins: ${API_ALLOWED_ORIGINS:http://localhost:8081}
   auth:
     jwt:
       # A fixed development signing secret. Local-only, and it is committed on purpose so a new
