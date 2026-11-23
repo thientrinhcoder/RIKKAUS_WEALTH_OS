@@ -1,0 +1,987 @@
+{
+  "executedAt": "2026-11-22T09:48:19.843Z",
+  "api": "http://localhost:8180",
+  "results": [
+    {
+      "id": "TC-01",
+      "title": "base URL with trailing slash resolves without a double slash",
+      "pass": true,
+      "checks": {
+        "url": "http://localhost:8180/api/v1/meta",
+        "status": 200
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "4bd97ec9-d871-414c-b169-dcbaf75874af"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "4bd97ec9-d871-414c-b169-dcbaf75874af"
+            },
+            "body": "{\"application\":\"rikkaus-wealth-api\",\"apiVersion\":\"v1\",\"buildVersion\":\"0.0.1-SNAPSHOT\",\"serverTime\":\"2026-11-22T09:48:19.771487Z\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-02",
+      "title": "missing / invalid base URL fails before any request",
+      "pass": true,
+      "checks": {
+        "unset: kind": {
+          "kind": "configuration",
+          "reason": "missing"
+        },
+        "unset: title": "Chưa cấu hình đúng địa chỉ API",
+        "not-a-url: kind": {
+          "kind": "configuration",
+          "reason": "invalid"
+        },
+        "not-a-url: title": "Chưa cấu hình đúng địa chỉ API",
+        "ftp: kind": {
+          "kind": "configuration",
+          "reason": "invalid"
+        },
+        "ftp: title": "Chưa cấu hình đúng địa chỉ API",
+        "network calls": 0
+      },
+      "failures": [],
+      "exchanges": []
+    },
+    {
+      "id": "TC-03",
+      "title": "GET /api/v1/meta succeeds and is validated",
+      "pass": true,
+      "checks": {
+        "status": 200,
+        "apiVersion": "v1",
+        "serverTime": "2026-11-22T09:48:19.777348Z",
+        "correlationId": "cb387413-86da-4237-9037-287bee2dcc3d"
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "cb387413-86da-4237-9037-287bee2dcc3d"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "cb387413-86da-4237-9037-287bee2dcc3d"
+            },
+            "body": "{\"application\":\"rikkaus-wealth-api\",\"apiVersion\":\"v1\",\"buildVersion\":\"0.0.1-SNAPSHOT\",\"serverTime\":\"2026-11-22T09:48:19.777348Z\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-04",
+      "title": "authenticated success attaches the bearer token from the provider",
+      "pass": true,
+      "checks": {
+        "status": 200,
+        "data.id": "c3800000-0038-4038-8038-000000000038",
+        "Authorization sent": "Bearer [redacted valid token]"
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "x-correlation-id": "c02c588a-67c2-453c-8b14-3f916afd4044"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "c02c588a-67c2-453c-8b14-3f916afd4044"
+            },
+            "body": "{\"id\":\"c3800000-0038-4038-8038-000000000038\",\"email\":\"gh38.kiem.thu@example.com\",\"displayName\":\"Kiểm thử GH38\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-05",
+      "title": "public and operational routes do not carry the token",
+      "pass": true,
+      "checks": {
+        "meta status": 200,
+        "health status": "UP",
+        "no Authorization header sent": false,
+        "health headers": {
+          "accept": "application/json"
+        }
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "f80fe02b-8888-4000-840d-7c35979a95bb"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "f80fe02b-8888-4000-840d-7c35979a95bb"
+            },
+            "body": "{\"application\":\"rikkaus-wealth-api\",\"apiVersion\":\"v1\",\"buildVersion\":\"0.0.1-SNAPSHOT\",\"serverTime\":\"2026-11-22T09:48:19.785265Z\"}"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/actuator/health",
+            "headers": {
+              "accept": "application/json"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "3650ed1f-6d14-4c22-b5b2-fb00bae4c781"
+            },
+            "body": "{\"groups\":[\"liveness\",\"readiness\"],\"status\":\"UP\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-07",
+      "title": "validation-failed exposes field names, never server text",
+      "pass": true,
+      "checks": {
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:validation-failed",
+        "status": 400,
+        "title": "Thông tin chưa hợp lệ",
+        "retryable": false,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "d2cf45ad-bc4e-445e-83e9-a6d25321c37f",
+        "detail not displayed": false,
+        "message (vi)": "Một số thông tin chưa hợp lệ. Kiểm tra các trường được đánh dấu rồi gửi lại.",
+        "fields": [
+          "category",
+          "currency",
+          "currentValue",
+          "liquidity",
+          "name",
+          "valuationDate"
+        ],
+        "no errors[].message in copy": false
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8180/api/v1/assets",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "content-type": "application/json",
+              "x-correlation-id": "d2cf45ad-bc4e-445e-83e9-a6d25321c37f"
+            },
+            "body": "{}"
+          },
+          "response": {
+            "status": 400,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "d2cf45ad-bc4e-445e-83e9-a6d25321c37f"
+            },
+            "body": "{\"detail\":\"Invalid request content.\",\"instance\":\"/api/v1/assets\",\"status\":400,\"title\":\"Request validation failed\",\"type\":\"urn:rikkaus:problem:validation-failed\",\"errors\":[{\"message\":\"must not be null\",\"field\":\"valuationDate\"},{\"message\":\"must not be blank\",\"field\":\"name\"},{\"message\":\"must not be null\",\"field\":\"liquidity\"},{\"message\":\"must not be null\",\"field\":\"category\"},{\"message\":\"must not be null\",\"field\":\"currency\"},{\"message\":\"must not be null\",\"field\":\"currentValue\"}],\"correlationId\":\"d2cf45ad-bc4e-445e-83e9-a6d25321c37f\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-08",
+      "title": "malformed-request",
+      "pass": true,
+      "checks": {
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:malformed-request",
+        "status": 400,
+        "title": "Yêu cầu không đọc được",
+        "retryable": false,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "21c19bd8-4a3f-485c-977c-ca599b47e2ae",
+        "detail not displayed": false,
+        "message (vi)": "Máy chủ không đọc được dữ liệu vừa gửi. Tải lại trang rồi thử lại."
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8180/api/v1/assets",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "content-type": "application/json",
+              "x-correlation-id": "21c19bd8-4a3f-485c-977c-ca599b47e2ae"
+            },
+            "body": "{"
+          },
+          "response": {
+            "status": 400,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "21c19bd8-4a3f-485c-977c-ca599b47e2ae"
+            },
+            "body": "{\"detail\":\"Malformed request.\",\"instance\":\"/api/v1/assets\",\"status\":400,\"title\":\"Malformed request\",\"type\":\"urn:rikkaus:problem:malformed-request\",\"correlationId\":\"21c19bd8-4a3f-485c-977c-ca599b47e2ae\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-09",
+      "title": "not-found",
+      "pass": true,
+      "checks": {
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:not-found",
+        "status": 404,
+        "title": "Không thể mở mục này",
+        "retryable": false,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "a3e16e5a-dde6-4cff-906a-dd98d3457a0d",
+        "detail not displayed": false,
+        "message (vi)": "Quay lại trang trước để tiếp tục."
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/assets/d307489b-4f65-42a8-b7d9-b3ef902c3599",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "x-correlation-id": "a3e16e5a-dde6-4cff-906a-dd98d3457a0d"
+            }
+          },
+          "response": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "a3e16e5a-dde6-4cff-906a-dd98d3457a0d"
+            },
+            "body": "{\"detail\":\"Resource not found.\",\"instance\":\"/api/v1/assets/d307489b-4f65-42a8-b7d9-b3ef902c3599\",\"status\":404,\"title\":\"Resource not found\",\"type\":\"urn:rikkaus:problem:not-found\",\"correlationId\":\"a3e16e5a-dde6-4cff-906a-dd98d3457a0d\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-10",
+      "title": "method-not-allowed",
+      "pass": true,
+      "checks": {
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:method-not-allowed",
+        "status": 405,
+        "title": "Ứng dụng cần được cập nhật",
+        "retryable": false,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "5b2c091d-5fc1-4034-830f-21ba52d1af75",
+        "detail not displayed": false,
+        "message (vi)": "Phiên bản ứng dụng này gửi yêu cầu mà máy chủ không nhận. Hãy tải lại hoặc cập nhật ứng dụng."
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "5b2c091d-5fc1-4034-830f-21ba52d1af75"
+            }
+          },
+          "response": {
+            "status": 405,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "5b2c091d-5fc1-4034-830f-21ba52d1af75"
+            },
+            "body": "{\"detail\":\"Method 'DELETE' is not supported.\",\"instance\":\"/api/v1/meta\",\"status\":405,\"title\":\"Method not allowed\",\"type\":\"urn:rikkaus:problem:method-not-allowed\",\"correlationId\":\"5b2c091d-5fc1-4034-830f-21ba52d1af75\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-11",
+      "title": "not-acceptable",
+      "pass": true,
+      "checks": {
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:not-acceptable",
+        "status": 406,
+        "title": "Ứng dụng cần được cập nhật",
+        "retryable": false,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "3f8174a6-c72e-4f97-8bfa-fb146f6a9e67",
+        "detail not displayed": false,
+        "message (vi)": "Phiên bản ứng dụng này gửi yêu cầu mà máy chủ không nhận. Hãy tải lại hoặc cập nhật ứng dụng."
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "text/csv",
+              "x-correlation-id": "3f8174a6-c72e-4f97-8bfa-fb146f6a9e67"
+            }
+          },
+          "response": {
+            "status": 406,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "3f8174a6-c72e-4f97-8bfa-fb146f6a9e67"
+            },
+            "body": "{\"detail\":\"Acceptable representations: [application/json, application/*+json, application/yaml].\",\"instance\":\"/api/v1/meta\",\"status\":406,\"title\":\"Not acceptable\",\"type\":\"urn:rikkaus:problem:not-acceptable\",\"correlationId\":\"3f8174a6-c72e-4f97-8bfa-fb146f6a9e67\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-12",
+      "title": "unsupported-media-type",
+      "pass": true,
+      "checks": {
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:unsupported-media-type",
+        "status": 415,
+        "title": "Ứng dụng cần được cập nhật",
+        "retryable": false,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "bf60c4d8-693e-4da6-814d-6bb1a1e630c1",
+        "detail not displayed": false,
+        "message (vi)": "Phiên bản ứng dụng này gửi yêu cầu mà máy chủ không nhận. Hãy tải lại hoặc cập nhật ứng dụng."
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8180/api/v1/assets",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "content-type": "text/plain",
+              "x-correlation-id": "bf60c4d8-693e-4da6-814d-6bb1a1e630c1"
+            },
+            "body": "{}"
+          },
+          "response": {
+            "status": 415,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "bf60c4d8-693e-4da6-814d-6bb1a1e630c1"
+            },
+            "body": "{\"detail\":\"Content-Type 'text/plain;charset=UTF-8' is not supported.\",\"instance\":\"/api/v1/assets\",\"status\":415,\"title\":\"Unsupported media type\",\"type\":\"urn:rikkaus:problem:unsupported-media-type\",\"correlationId\":\"bf60c4d8-693e-4da6-814d-6bb1a1e630c1\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-13",
+      "title": "unauthorized (no token, then expired token)",
+      "pass": true,
+      "checks": {
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:unauthorized",
+        "status": 401,
+        "title": "Phiên đăng nhập đã hết hạn",
+        "retryable": false,
+        "requiresSignIn": true,
+        "correlationId present": true,
+        "header id == body id": "f476a6cd-14ac-40d0-b038-5094cc3bfea3",
+        "detail not displayed": false,
+        "message (vi)": "Để bảo vệ dữ liệu tài chính, nội dung trước đó đã được ẩn. Tiếp tục với Google để đăng nhập lại.",
+        "expired: type": "urn:rikkaus:problem:unauthorized",
+        "expired: requiresSignIn": true
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "f476a6cd-14ac-40d0-b038-5094cc3bfea3"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "f476a6cd-14ac-40d0-b038-5094cc3bfea3"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"f476a6cd-14ac-40d0-b038-5094cc3bfea3\"}"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted expired token]",
+              "x-correlation-id": "86de81b3-4f3e-4e18-986f-f51a2e5355a3"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "86de81b3-4f3e-4e18-986f-f51a2e5355a3"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"86de81b3-4f3e-4e18-986f-f51a2e5355a3\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-14",
+      "title": "forbidden — unreachable in MVP 0; contract-derived fixture body",
+      "pass": true,
+      "checks": {
+        "source": "fixture (no route can return 403 in MVP 0; contract docs: ownership failures return not-found)",
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:forbidden",
+        "status": 403,
+        "title": "Không thể mở mục này",
+        "retryable": false,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "gh38-fixture-0403",
+        "detail not displayed": false,
+        "message (vi)": "Quay lại trang trước để tiếp tục."
+      },
+      "failures": [],
+      "exchanges": []
+    },
+    {
+      "id": "TC-15",
+      "title": "internal-error — attempted with a token whose subject has no user row",
+      "pass": true,
+      "checks": {
+        "realAttempt": {
+          "failure": "problem",
+          "type": "urn:rikkaus:problem:unauthorized",
+          "status": 401
+        },
+        "realWriteAttempt": {
+          "failure": "problem",
+          "type": "urn:rikkaus:problem:internal-error",
+          "status": 500
+        },
+        "source": "real API",
+        "failure.kind": "problem",
+        "problem.type": "urn:rikkaus:problem:internal-error",
+        "status": 500,
+        "title": "Máy chủ gặp sự cố",
+        "retryable": true,
+        "requiresSignIn": false,
+        "correlationId present": true,
+        "header id == body id": "ca8bb33c-5c00-49db-90aa-ed0d4bdae6e6",
+        "detail not displayed": false,
+        "message (vi)": "Rikkaus chưa xử lý được yêu cầu này. Thử lại sau ít phút."
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted no-user-row token]",
+              "x-correlation-id": "2fcbd161-4e2d-41f1-a55d-6b314dc9926c"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "2fcbd161-4e2d-41f1-a55d-6b314dc9926c"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"instance\":\"/api/v1/auth/session\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"2fcbd161-4e2d-41f1-a55d-6b314dc9926c\"}"
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8180/api/v1/assets",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted no-user-row token]",
+              "content-type": "application/json",
+              "x-correlation-id": "ca8bb33c-5c00-49db-90aa-ed0d4bdae6e6"
+            },
+            "body": "{\"name\":\"Tài khoản thanh toán Vietcombank\",\"category\":\"BANK_ACCOUNT\",\"currency\":\"VND\",\"currentValue\":125000000,\"liquidity\":\"HIGH\",\"valuationDate\":\"2026-11-22\"}"
+          },
+          "response": {
+            "status": 500,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "ca8bb33c-5c00-49db-90aa-ed0d4bdae6e6"
+            },
+            "body": "{\"detail\":\"Unexpected server error.\",\"instance\":\"/api/v1/assets\",\"status\":500,\"title\":\"Unexpected server error\",\"type\":\"urn:rikkaus:problem:internal-error\",\"correlationId\":\"ca8bb33c-5c00-49db-90aa-ed0d4bdae6e6\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-16",
+      "title": "unknown future type URN degrades by status",
+      "pass": true,
+      "checks": {
+        "kind": "problem",
+        "problemType": "urn:rikkaus:problem:rate-limited",
+        "title": "Yêu cầu chưa hoàn tất"
+      },
+      "failures": [],
+      "exchanges": []
+    },
+    {
+      "id": "TC-17",
+      "title": "401 → onUnauthorized once → one retry with a fresh token",
+      "pass": true,
+      "checks": {
+        "onUnauthorized calls": 1,
+        "onUnauthorized saw": "urn:rikkaus:problem:unauthorized a75a81bd-1029-433f-904d-b6b46428d305",
+        "final status": 200,
+        "requests sent": 2,
+        "statuses": [
+          401,
+          200
+        ]
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted expired token]",
+              "x-correlation-id": "a75a81bd-1029-433f-904d-b6b46428d305"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "a75a81bd-1029-433f-904d-b6b46428d305"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"a75a81bd-1029-433f-904d-b6b46428d305\"}"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "x-correlation-id": "17664b9e-4d9e-4322-8d36-7a4cff7585a9"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "17664b9e-4d9e-4322-8d36-7a4cff7585a9"
+            },
+            "body": "{\"id\":\"c3800000-0038-4038-8038-000000000038\",\"email\":\"gh38.kiem.thu@example.com\",\"displayName\":\"Kiểm thử GH38\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-18",
+      "title": "a second 401 is not retried again",
+      "pass": true,
+      "checks": {
+        "type": "urn:rikkaus:problem:unauthorized",
+        "onUnauthorized calls": 1,
+        "requests sent": 2
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted expired token]",
+              "x-correlation-id": "f324852c-70a2-4b21-a1e5-be2586b115dc"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "f324852c-70a2-4b21-a1e5-be2586b115dc"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"f324852c-70a2-4b21-a1e5-be2586b115dc\"}"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted expired token]",
+              "x-correlation-id": "e6604c47-201d-43ce-8edd-a63c45e1bf2c"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "e6604c47-201d-43ce-8edd-a63c45e1bf2c"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"e6604c47-201d-43ce-8edd-a63c45e1bf2c\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-19",
+      "title": "onUnauthorized 'fail' surfaces the 401 without retry",
+      "pass": true,
+      "checks": {
+        "type": "urn:rikkaus:problem:unauthorized",
+        "onUnauthorized calls": 1,
+        "requests sent": 1
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted expired token]",
+              "x-correlation-id": "6f0a2a14-1edc-4fe1-a0fc-e8b4420d5838"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "6f0a2a14-1edc-4fe1-a0fc-e8b4420d5838"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"6f0a2a14-1edc-4fe1-a0fc-e8b4420d5838\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-20",
+      "title": "client sends a valid correlation id; server echoes it",
+      "pass": true,
+      "checks": {
+        "sent matches pattern": "9f1a2eaa-0d77-4cbf-b2bd-2d68f77931ed",
+        "echoed header": "9f1a2eaa-0d77-4cbf-b2bd-2d68f77931ed",
+        "ApiResponse.correlationId": "9f1a2eaa-0d77-4cbf-b2bd-2d68f77931ed"
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "9f1a2eaa-0d77-4cbf-b2bd-2d68f77931ed"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "9f1a2eaa-0d77-4cbf-b2bd-2d68f77931ed"
+            },
+            "body": "{\"application\":\"rikkaus-wealth-api\",\"apiVersion\":\"v1\",\"buildVersion\":\"0.0.1-SNAPSHOT\",\"serverTime\":\"2026-11-22T09:48:19.829162Z\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-21",
+      "title": "caller-chosen id echoed on errors in header and body",
+      "pass": true,
+      "checks": {
+        "ApiError.correlationId": "gh38-trace-0001",
+        "response header": "gh38-trace-0001",
+        "body correlationId": "gh38-trace-0001",
+        "referenceLabel": "Mã tham chiếu: gh38-trace-0001"
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/assets/f8060918-50c0-4b58-8b4a-b3b0b77826c3",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "x-correlation-id": "gh38-trace-0001"
+            }
+          },
+          "response": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "gh38-trace-0001"
+            },
+            "body": "{\"detail\":\"Resource not found.\",\"instance\":\"/api/v1/assets/f8060918-50c0-4b58-8b4a-b3b0b77826c3\",\"status\":404,\"title\":\"Resource not found\",\"type\":\"urn:rikkaus:problem:not-found\",\"correlationId\":\"gh38-trace-0001\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-23",
+      "title": "network failure (no listener on 8199)",
+      "pass": true,
+      "checks": {
+        "kind": "network",
+        "title": "Không kết nối được máy chủ",
+        "variant": "offline",
+        "retryable": true
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8199/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "3107c706-56c3-4358-8278-023746ebf16a"
+            }
+          },
+          "error": "TypeError: fetch failed"
+        }
+      ]
+    },
+    {
+      "id": "TC-24",
+      "title": "schema mismatch on a real 2xx body",
+      "pass": true,
+      "checks": {
+        "failure": {
+          "kind": "schema-mismatch",
+          "status": 200,
+          "issuePaths": [
+            "apiVersion"
+          ]
+        },
+        "correlationId is the real one": "ec5d010c-c3aa-4178-a97d-fe6d88bc3666",
+        "title": "Dữ liệu trả về không đúng định dạng",
+        "retryable": false
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "ec5d010c-c3aa-4178-a97d-fe6d88bc3666"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "ec5d010c-c3aa-4178-a97d-fe6d88bc3666"
+            },
+            "body": "{\"application\":\"rikkaus-wealth-api\",\"apiVersion\":\"v1\",\"buildVersion\":\"0.0.1-SNAPSHOT\",\"serverTime\":\"2026-11-22T09:48:19.834562Z\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-25",
+      "title": "non-problem error body (Actuator 503 DOWN, fixture)",
+      "pass": true,
+      "checks": {
+        "failure": {
+          "kind": "http",
+          "status": 503
+        },
+        "title": "Máy chủ chưa sẵn sàng",
+        "retryable": true
+      },
+      "failures": [],
+      "exchanges": []
+    },
+    {
+      "id": "TC-26",
+      "title": "abort propagates the AbortError unchanged",
+      "pass": true,
+      "checks": {
+        "is ApiError": false,
+        "name": "AbortError"
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "f400f364-dd4c-4075-ab05-a8052d8d9761"
+            }
+          },
+          "error": "AbortError: This operation was aborted"
+        }
+      ]
+    },
+    {
+      "id": "TC-27",
+      "title": "retry policy follows the classification",
+      "pass": true,
+      "checks": {
+        "network first failure": true,
+        "network second failure": false,
+        "internal-error": true,
+        "http 503": true,
+        "not-found": false,
+        "unauthorized": false,
+        "schema-mismatch": false,
+        "configuration": false
+      },
+      "failures": [],
+      "exchanges": [
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8199/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "ff3b7dab-d11e-467a-b985-70c51e3e0a24"
+            }
+          },
+          "error": "TypeError: fetch failed"
+        },
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/assets/0e7997a2-9c95-4769-b9e5-19c4c695bd53",
+            "headers": {
+              "accept": "application/json",
+              "authorization": "Bearer [redacted valid token]",
+              "x-correlation-id": "0b3e2199-15ed-4b61-8335-37f56a9b993d"
+            }
+          },
+          "response": {
+            "status": 404,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "0b3e2199-15ed-4b61-8335-37f56a9b993d"
+            },
+            "body": "{\"detail\":\"Resource not found.\",\"instance\":\"/api/v1/assets/0e7997a2-9c95-4769-b9e5-19c4c695bd53\",\"status\":404,\"title\":\"Resource not found\",\"type\":\"urn:rikkaus:problem:not-found\",\"correlationId\":\"0b3e2199-15ed-4b61-8335-37f56a9b993d\"}"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/auth/session",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "20c3c17c-4799-4856-b93a-1e9453e99467"
+            }
+          },
+          "response": {
+            "status": 401,
+            "headers": {
+              "content-type": "application/problem+json",
+              "x-correlation-id": "20c3c17c-4799-4856-b93a-1e9453e99467"
+            },
+            "body": "{\"detail\":\"Authentication required.\",\"status\":401,\"title\":\"Authentication required\",\"type\":\"urn:rikkaus:problem:unauthorized\",\"correlationId\":\"20c3c17c-4799-4856-b93a-1e9453e99467\"}"
+          }
+        },
+        {
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8180/api/v1/meta",
+            "headers": {
+              "accept": "application/json",
+              "x-correlation-id": "6681e952-e067-4054-9454-f3dedc0a5c77"
+            }
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "content-type": "application/json",
+              "x-correlation-id": "6681e952-e067-4054-9454-f3dedc0a5c77"
+            },
+            "body": "{\"application\":\"rikkaus-wealth-api\",\"apiVersion\":\"v1\",\"buildVersion\":\"0.0.1-SNAPSHOT\",\"serverTime\":\"2026-11-22T09:48:19.841198Z\"}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "TC-30",
+      "title": "every contract example is available and parses",
+      "pass": true,
+      "checks": {
+        "total examples": 51,
+        "problem examples all parse and are known": [],
+        "meta example parses": true,
+        "meta fixture through client": "0.0.1-SNAPSHOT",
+        "problem examples count": 25
+      },
+      "failures": [],
+      "exchanges": []
+    }
+  ]
+}

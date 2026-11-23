@@ -5,10 +5,14 @@
  * The parsed value is the source of truth and is never rounded on the way in: section 9 requires
  * calculation precision to be preserved while display does not imply more precision than a
  * manual valuation supports. Formatting is therefore a display concern only.
+ *
+ * These are the editing-time helpers: they work on what the user is typing, including partial
+ * input such as `1.250,`. Display of a finished value and parsing into a canonical decimal for
+ * the API live in `@/money` (`formatMoney`, `parseVietnameseDecimal`, `fromFormValue`), which
+ * shares the grouping rule below so a field and a read-only figure can never disagree.
  */
 
-const GROUP_SEPARATOR = '.';
-const DECIMAL_SEPARATOR = ',';
+import { DECIMAL_SEPARATOR, groupThousands } from '@/money/format-number';
 
 export interface ParseOptions {
   allowNegative?: boolean;
@@ -25,7 +29,7 @@ export function formatGrouped(value: string): string {
   const unsigned = negative ? value.slice(1) : value;
   const [integerPart, decimalPart] = unsigned.split(DECIMAL_SEPARATOR);
 
-  const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, GROUP_SEPARATOR);
+  const grouped = groupThousands(integerPart);
   const rendered =
     decimalPart === undefined ? grouped : `${grouped}${DECIMAL_SEPARATOR}${decimalPart}`;
 

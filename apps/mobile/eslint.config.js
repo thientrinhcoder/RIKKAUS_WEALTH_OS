@@ -8,6 +8,6 @@ module.exports = defineConfig([
   expoConfig,
   prettierConfig,
   {
-    ignores: ['dist/**', 'playwright-report/**', 'test-results/**'],
+    ignores: ['dist/**', 'playwright-report/**', 'test-results/**', 'src/api/generated/**'],
   },
 ]);

@@ -2,11 +2,11 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { classifyApiError, isApiBaseUrlConfigured, readApiBaseUrlFromEnv } from '@/api';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { ErrorState } from '@/components/feedback/error-state';
 import { LoadingState } from '@/components/feedback/loading-state';
 import { SuccessState } from '@/components/feedback/success-state';
-import { isApiBaseUrlConfigured } from '@/features/health/health-client';
 import { useHealthQuery } from '@/features/health/use-health-query';
 import { CONTENT_MAX_WIDTH, useResponsiveLayout } from '@/ui/responsive';
 import { spacing } from '@/ui/tokens';
@@ -20,7 +20,7 @@ import { useAppTheme } from '@/ui/theme';
 const HEALTH_CARD_HEIGHT = 184;
 
 function HealthStatus() {
-  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const apiBaseUrl = readApiBaseUrlFromEnv();
   const configured = isApiBaseUrlConfigured(apiBaseUrl);
   const healthQuery = useHealthQuery(apiBaseUrl);
 
@@ -51,22 +51,21 @@ function HealthStatus() {
   }
 
   if (healthQuery.isError) {
-    const reason =
-      healthQuery.error instanceof Error
-        ? healthQuery.error.message
-        : 'Không hoàn tất được lượt kiểm tra.';
+    /** Copy comes from the failure's classification, never from server or exception text. */
+    const failure = classifyApiError(healthQuery.error);
+    const preserved = [failure.message, failure.referenceLabel].filter(Boolean).join(' ');
 
     return (
       <View testID="health-state-error">
         <ErrorState
-          message="Kiểm tra tình trạng API thất bại."
+          message={`Kiểm tra tình trạng API thất bại. ${failure.title}.`}
           onRetry={() => {
             void healthQuery.refetch();
           }}
-          preserved={reason}
+          preserved={preserved}
           retryLabel="Thử lại"
           testID="health-error"
-          variant="request"
+          variant={failure.variant}
         />
       </View>
     );

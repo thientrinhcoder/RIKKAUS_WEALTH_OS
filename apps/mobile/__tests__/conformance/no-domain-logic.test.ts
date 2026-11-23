@@ -37,6 +37,7 @@ describe('no shared component depends on the domain', () => {
       'form',
       'overlay',
       'shell',
+      'value',
     ]);
   });
 
