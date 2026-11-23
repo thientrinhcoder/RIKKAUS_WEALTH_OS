@@ -12,8 +12,10 @@ export const DATE_ERROR_MESSAGES = {
   'invalid-month': 'Tháng phải nằm trong khoảng 01 đến 12.',
 } as const;
 
-export interface DateFieldProps
-  extends Omit<TextFieldProps, 'keyboardType' | 'onChangeValue' | 'value' | 'autoCapitalize'> {
+export interface DateFieldProps extends Omit<
+  TextFieldProps,
+  'keyboardType' | 'onChangeValue' | 'value' | 'autoCapitalize'
+> {
   /** The unambiguous stored value, in ISO form. */
   value: string;
   onChangeValue?: (isoDate: string) => void;

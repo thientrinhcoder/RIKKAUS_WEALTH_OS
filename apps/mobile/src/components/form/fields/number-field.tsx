@@ -3,8 +3,10 @@ import { TextInput } from 'react-native-paper';
 import { formatGrouped, parseNumericInput } from '../formatters';
 import { TextField, type TextFieldProps } from './text-field';
 
-export interface NumberFieldProps
-  extends Omit<TextFieldProps, 'keyboardType' | 'onChangeValue' | 'right' | 'autoCapitalize'> {
+export interface NumberFieldProps extends Omit<
+  TextFieldProps,
+  'keyboardType' | 'onChangeValue' | 'right' | 'autoCapitalize'
+> {
   value: string;
   onChangeValue?: (normalized: string) => void;
   unit?: string;

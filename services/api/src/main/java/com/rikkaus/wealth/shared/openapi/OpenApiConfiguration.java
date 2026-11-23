@@ -1,5 +1,6 @@
 package com.rikkaus.wealth.shared.openapi;
 
+import com.rikkaus.wealth.shared.deletion.DeletionGuard;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.observability.CorrelationId;
 import io.swagger.v3.oas.models.Components;
@@ -67,7 +68,8 @@ class OpenApiConfiguration {
     /**
      * Written by hand rather than inferred from Spring's {@code ProblemDetail} class, because the
      * inferred version omits this project's extension members — and {@code correlationId} and {@code
-     * errors} are exactly the parts a client's error classifier needs.
+     * errors} are exactly the parts a client's error classifier needs. {@code impact} refers to the
+     * schema springdoc generates from the deletion-impact routes, so the two cannot drift apart.
      */
     private static Schema<?> problemDetailSchema() {
         return new ObjectSchema()
@@ -109,6 +111,14 @@ class OpenApiConfiguration {
                                         new ObjectSchema()
                                                 .addProperty("field", new StringSchema())
                                                 .addProperty("message", new StringSchema())))
+                .addProperty(
+                        DeletionGuard.IMPACT_MEMBER,
+                        new Schema<>()
+                                .$ref("#/components/schemas/DeletionImpact")
+                                .description(
+                                        "Extension member, present on linked-records only. What the "
+                                                + "refused delete would do, in the shape GET "
+                                                + ".../deletion-impact returns."))
                 .required(List.of("type", "title", "status"));
     }
 

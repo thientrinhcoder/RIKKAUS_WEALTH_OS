@@ -1,9 +1,14 @@
 package com.rikkaus.wealth.liabilities.domain;
 
+import com.rikkaus.wealth.shared.deletion.LinkedRecordRow;
+import jakarta.persistence.LockModeType;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Liability persistence, declaring only the operations the slice uses.
@@ -18,9 +23,37 @@ public interface LiabilityRepository extends Repository<Liability, UUID>, Liabil
 
     Optional<Liability> findById(UUID id);
 
+    /**
+     * The liability, with its row locked until the transaction ends.
+     *
+     * <p>Declared for the delete, which reads what would be unlinked and then acts on it. Locking first
+     * serialises two overlapping deletes: the second waits, finds the row gone and answers {@code
+     * not-found}, instead of both judging the same impact. A JPQL query rather than a derived {@code
+     * findById} with {@code @Lock}, as in {@code AssetRepository}, so the lock cannot be dropped by a
+     * rename.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select l from Liability l where l.id = :id")
+    Optional<Liability> findAndLockById(@Param("id") UUID id);
+
     Liability save(Liability liability);
 
     void delete(Liability liability);
+
+    /**
+     * The owner's cash-flow entries linked to this liability, which {@code ON DELETE SET NULL} unlinks.
+     *
+     * <p>Native SQL on the cash-flow table for the reason {@link #ownsAsset} gives: the foreign key
+     * already couples the two tables, and this slice may not import the other.
+     */
+    @Query(
+            value =
+                    "SELECT id, notes AS label, category FROM wealth.cash_flow_entries"
+                            + " WHERE linked_liability_id = :liabilityId AND user_id = :ownerId"
+                            + " ORDER BY created_at, id",
+            nativeQuery = true)
+    List<LinkedRecordRow> cashFlowEntriesLinkedTo(
+            @Param("liabilityId") UUID liabilityId, @Param("ownerId") UUID ownerId);
 
     /**
      * Whether {@code assetId} names an asset that {@code userId} owns.

@@ -27,6 +27,12 @@ public enum ProblemType {
             "unsupported-media-type", "Unsupported media type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
     NOT_ACCEPTABLE("not-acceptable", "Not acceptable", HttpStatus.NOT_ACCEPTABLE),
     /**
+     * A delete that would change other records was sent without {@code confirm=true}. Nothing was
+     * deleted; the body's {@code impact} member says what the confirmed delete would do. Thrown by
+     * {@code DeletionGuard} only, never derived from a framework status.
+     */
+    LINKED_RECORDS("linked-records", "Linked records would change", HttpStatus.CONFLICT),
+    /**
      * Declared but unreachable here. Reserved so the authentication task can throw it without
      * editing this enum or renegotiating the contract with the frontend.
      */

@@ -16,8 +16,7 @@ import {
  * An ISO-8601 instant with an explicit `Z` or offset. Fractions beyond milliseconds — the API
  * sends microseconds — are truncated first, because not every JavaScript engine parses them.
  */
-const INSTANT =
-  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?)(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})$/;
+const INSTANT = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?)(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})$/;
 
 export function parseInstant(value: unknown): Date | null {
   if (typeof value !== 'string') {

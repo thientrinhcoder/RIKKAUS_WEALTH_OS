@@ -49,8 +49,7 @@ export function parseNumericInput(value: string, options: ParseOptions = {}): st
 
   if (options.allowDecimal === true) {
     const [first, ...rest] = digitsAndSeparators.split(DECIMAL_SEPARATOR);
-    normalized =
-      rest.length === 0 ? first : `${first}${DECIMAL_SEPARATOR}${rest.join('')}`;
+    normalized = rest.length === 0 ? first : `${first}${DECIMAL_SEPARATOR}${rest.join('')}`;
   } else {
     normalized = digitsAndSeparators.replace(/,/g, '');
   }

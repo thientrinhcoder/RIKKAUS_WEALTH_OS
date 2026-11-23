@@ -38,9 +38,7 @@ describe('the feedback kit stays generic', () => {
   it('hard-codes no goal vocabulary, which the goals feature supplies instead', () => {
     const offenders = files
       .filter(({ contents }) =>
-        /Đúng kế hoạch|Đúng tiến độ|Có rủi ro|Chậm tiến độ|on-track|at-risk|behind/i.test(
-          contents,
-        ),
+        /Đúng kế hoạch|Đúng tiến độ|Có rủi ro|Chậm tiến độ|on-track|at-risk|behind/i.test(contents),
       )
       .map(({ path }) => path);
 

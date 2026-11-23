@@ -9,15 +9,10 @@ import type { DecimalString } from './decimal';
  */
 
 export type DecimalParseError =
-  | 'empty'
-  | 'invalid-format'
-  | 'negative-not-allowed'
-  | 'too-many-decimals'
-  | 'too-large';
+  'empty' | 'invalid-format' | 'negative-not-allowed' | 'too-many-decimals' | 'too-large';
 
 export type DecimalParseResult =
-  | { value: DecimalString; error?: undefined }
-  | { error: DecimalParseError; value?: undefined };
+  { value: DecimalString; error?: undefined } | { error: DecimalParseError; value?: undefined };
 
 export interface DecimalParseOptions {
   /** Section 8: negatives only where the product contract permits them. */

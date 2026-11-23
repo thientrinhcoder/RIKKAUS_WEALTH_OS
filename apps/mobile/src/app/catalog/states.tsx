@@ -103,9 +103,7 @@ export default function StatesCatalog() {
       />
 
       <ActionButton
-        onPress={() =>
-          snackbar.show({ message: 'Đã lưu định giá mới.', actionLabel: 'Hoàn tác' })
-        }
+        onPress={() => snackbar.show({ message: 'Đã lưu định giá mới.', actionLabel: 'Hoàn tác' })}
         testID="catalog-raise-snackbar"
         variant="secondary"
       >

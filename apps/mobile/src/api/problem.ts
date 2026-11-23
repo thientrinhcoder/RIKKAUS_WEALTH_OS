@@ -45,10 +45,12 @@ export const ProblemDetailSchema = z.object({
 export type ProblemDetail = z.infer<typeof ProblemDetailSchema>;
 
 /** The contract's own shape must stay assignable to what the client parses. */
-export type ContractProblemDetailIsParseable =
-  ContractSchemas['ProblemDetail'] extends Omit<ProblemDetail, 'type'> & { type: string }
-    ? true
-    : never;
+export type ContractProblemDetailIsParseable = ContractSchemas['ProblemDetail'] extends Omit<
+  ProblemDetail,
+  'type'
+> & { type: string }
+  ? true
+  : never;
 const contractProblemDetailIsParseable: ContractProblemDetailIsParseable = true;
 void contractProblemDetailIsParseable;
 

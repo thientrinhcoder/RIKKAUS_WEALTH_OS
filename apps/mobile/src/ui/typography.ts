@@ -12,31 +12,14 @@ import { SANS_FAMILY_BY_WEIGHT, type SansWeight } from './fonts';
  */
 
 export type TypographyRole =
-  | 'display'
-  | 'heading1'
-  | 'heading2'
-  | 'title'
-  | 'body'
-  | 'bodyStrong'
-  | 'supporting'
-  | 'label';
+  'display' | 'heading1' | 'heading2' | 'title' | 'body' | 'bodyStrong' | 'supporting' | 'label';
 
 /**
  * Paper's typescale accepts only these weights, a narrower set than React Native's
  * TextStyle. Declaring it here keeps the theme assignable to Paper's ThemeProp.
  */
 export type FontWeight =
-  | 'normal'
-  | 'bold'
-  | '100'
-  | '200'
-  | '300'
-  | '400'
-  | '500'
-  | '600'
-  | '700'
-  | '800'
-  | '900';
+  'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
 
 export type PaperVariant =
   | 'displaySmall'

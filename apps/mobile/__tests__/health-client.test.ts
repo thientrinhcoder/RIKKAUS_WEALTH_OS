@@ -12,9 +12,11 @@ function responseWith(payload: unknown, options?: { ok?: boolean; status?: numbe
 
 describe('health client', () => {
   it('requests and validates the Actuator health endpoint without custom headers', async () => {
-    const fetchMock = jest.fn().mockResolvedValue(
-      responseWith({ status: 'UP', components: { database: { status: 'UP' } } }),
-    );
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue(
+        responseWith({ status: 'UP', components: { database: { status: 'UP' } } }),
+      );
     const client = createApiClient({ baseUrl: 'http://localhost:8080///', fetchImpl: fetchMock });
 
     await expect(fetchHealth(client)).resolves.toMatchObject({ status: 'UP' });
@@ -29,7 +31,9 @@ describe('health client', () => {
   it('reports non-successful HTTP responses as an http failure', async () => {
     const client = createApiClient({
       baseUrl: 'http://localhost:8080',
-      fetchImpl: jest.fn().mockResolvedValue(responseWith({ status: 'DOWN' }, { ok: false, status: 503 })),
+      fetchImpl: jest
+        .fn()
+        .mockResolvedValue(responseWith({ status: 'DOWN' }, { ok: false, status: 503 })),
     });
 
     await expect(fetchHealth(client)).rejects.toMatchObject({

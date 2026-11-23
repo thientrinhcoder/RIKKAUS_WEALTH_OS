@@ -58,7 +58,7 @@ describe('token discipline', () => {
     expect(offenders).toEqual([]);
   });
 
-  it("reads the theme through useAppTheme so the project roles stay typed", () => {
+  it('reads the theme through useAppTheme so the project roles stay typed', () => {
     const offenders = files
       .filter(({ path }) => !PAPER_THEME_EXEMPT.includes(path))
       .filter(({ contents }) => /\buseTheme\b/.test(contents))

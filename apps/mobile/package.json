@@ -27,14 +27,17 @@
     "zod": "^4.6.4"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.1",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
+    "eslint-config-prettier": "10.1.8",
     "jest": "~29.7.0",
     "jest-expo": "~57.0.5",
     "openapi-typescript": "^7.13.0",
+    "prettier": "3.10.1",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -48,6 +51,9 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "expo:check": "expo install --check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:e2e": "playwright test",
     "api:generate": "node scripts/generate-api-contract.mjs",
     "api:check": "node scripts/generate-api-contract.mjs --check"
   },

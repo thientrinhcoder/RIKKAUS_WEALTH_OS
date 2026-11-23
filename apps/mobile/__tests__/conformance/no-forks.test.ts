@@ -41,7 +41,9 @@ describe('the catalog forks nothing', () => {
 
   it('defines no pressable or button of its own', () => {
     const offenders = files
-      .filter(({ contents }) => /\bPressable\b|\bTouchableRipple\b|\bTouchableOpacity\b/.test(contents))
+      .filter(({ contents }) =>
+        /\bPressable\b|\bTouchableRipple\b|\bTouchableOpacity\b/.test(contents),
+      )
       .map(({ path }) => path);
 
     expect(offenders).toEqual([]);

@@ -119,12 +119,7 @@ export default function FormsCatalog() {
           value={valuedOn}
         />
 
-        <TextareaField
-          label="Ghi chú"
-          onChangeValue={setNote}
-          testID="catalog-note"
-          value={note}
-        />
+        <TextareaField label="Ghi chú" onChangeValue={setNote} testID="catalog-note" value={note} />
       </FormShell>
 
       <TextField
