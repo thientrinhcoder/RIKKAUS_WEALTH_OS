@@ -1,7 +1,7 @@
 ---
 title: "Issue #89 dự phóng mục tiêu minh bạch và trạng thái"
 description: "Route đọc GET /api/v1/goal-projections và GET /api/v1/goal-projections/{goalId} trong slice goals: phần trăm hoàn thành, số còn lại, số tháng còn lại, dự phóng tại ngày đích theo công thức future value tách hai phần, mức đóng góp cần mỗi tháng, trạng thái ON_TRACK | AT_RISK | BEHIND theo ngưỡng cấu hình tập trung, sổ giả định và mô tả phương pháp trong response. Tính khi đọc, không migration."
-status: in-progress
+status: completed
 priority: P1
 effort: "2d"
 issue: 89
@@ -63,7 +63,7 @@ rõ công thức production, quy ước làm tròn và giá trị ngưỡng thu�
 | D13 | Làm tròn: phép trung gian `MathContext.DECIMAL128` (34 chữ số); hai phần dự phóng làm tròn `HALF_UP` về 2 số lẻ **rồi** mới cộng, nên `fromAllocated + fromContributions = total` đúng từng đồng; `gapToTarget = total − target`; phần trăm `scale 2` làm tròn **xuống** (không bao giờ báo dư tiến độ); `monthlyRatePercent` (`scale 6`) và `growthFactor` (`scale 10`) `HALF_UP` chỉ để hiển thị cách tính; lãi tháng ghi bằng phần trăm vì `BigDecimal` 0 với scale > 6 ra JSON dạng `0E-10` | design: "breakdown reconciles to the total" | `121,37 %`, design hiển thị `121,4 %` |
 | D14 | `assumptions` là danh sách `{key, source, value}` với ba nguồn `USER_ENTERED`, `SYSTEM`, `NOT_MODELLED` theo ledger design; `value` là chuỗi chuẩn hoặc `null`; `disclaimer` khẳng định lợi suất không được đảm bảo; `method` mô tả công thức bằng chữ | design phase 1 "Frozen assumption ledger"; backbone §7 | `INFLATION`, `NOT_MODELLED` |
 | D15 | Danh sách: cùng thứ tự mặc định của `GET /goals` (ngày đích gần nhất, rồi tên, rồi id); không tham số lọc | `GoalService.listFor` với `GoalFilter` mặc định | |
-| D16 | Goal không tồn tại hoặc của người khác → `404 not-found` giống từng byte trừ `correlationId`; id sai dạng → `400 malformed-request` như `/goals/{goalId}` | `OwnershipGuard`, G58 của #86 | |
+| D16 | Goal không tồn tại hoặc của người khác → `404 not-found` cùng `type`, `title`, `status`, `detail`, chỉ khác `instance` và `correlationId`; id sai dạng → `400 malformed-request` như `/goals/{goalId}` | `OwnershipGuard`, G58 của #86 | |
 
 ## Contract
 
@@ -96,26 +96,54 @@ Lỗi: `400 malformed-request` (id sai dạng), `401`, `404 not-found`, `405`, `
 | 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Complete | case với kỳ vọng tính độc lập, viết trước khi code |
 | 2 | [Service, properties và route](./phase-02-projection-service-and-http.md) | Complete | package `goals.projection` |
 | 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Complete | `openapi.json`, `OpenApiContractIT`, `api-contract-conventions.md` |
-| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Pending | guide, report evidence, commit, push, PR body |
+| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Complete | guide, report evidence, commit, push, PR body |
 
 ## Acceptance criteria
 
-- [ ] Mọi case ở phase 1 đạt trên commit cuối, ghi status và body thật.
-- [ ] `clean verify` xanh không flag.
-- [ ] Sáu goal fixture #87 cho đúng mức cần mỗi tháng và trạng thái của design.
-- [ ] `PUT /goals/{goalId}` đổi input thì lần `GET` dự phóng kế tiếp đổi theo.
-- [ ] Không output nào trả 0 thay cho không khả dụng; lý do được nêu.
-- [ ] User B không thấy gì của A (404 giống từng byte trừ `correlationId`); 401 ba kiểu; 405; 406.
-- [ ] Hai lần gọi cùng input cho body giống từng byte.
-- [ ] `openapi.json`, `OpenApiContractIT`, `docs/api-contract-conventions.md` cập nhật.
+- [x] Mọi case ở phase 1 đạt trên commit cuối, ghi status và body thật.
+- [x] `clean verify` xanh không flag.
+- [x] Sáu goal fixture #87 cho đúng mức cần mỗi tháng và trạng thái của design.
+- [x] `PUT /goals/{goalId}` đổi input thì lần `GET` dự phóng kế tiếp đổi theo.
+- [x] Không output nào trả 0 thay cho không khả dụng; lý do được nêu.
+- [x] User B không thấy gì của A (404 cùng `type`, `title`, `status`, `detail`; chỉ khác `instance` và `correlationId`); 401 ba kiểu; 405; 406.
+- [x] Hai lần gọi cùng input cho body giống từng byte.
+- [x] `openapi.json`, `OpenApiContractIT`, `docs/api-contract-conventions.md` cập nhật.
 
 ## Verification gap
 
-Điền ở phase 4.
+- Không automated test nào bảo vệ phép tính; regression chỉ bị phát hiện khi chạy lại
+  `docs/manual-test-guide-goal-projection.md`. Kỳ vọng được tính bằng một máy tính Python `decimal` độc lập
+  với code production, nhưng cùng tác giả, nên một hiểu sai chung về design sẽ không bị phát hiện. Sáu dòng
+  fixture #87 khớp với số design công bố là kiểm chứng độc lập duy nhất.
+- "Hôm nay" lấy từ đồng hồ hệ thống và không có `asOf`; lần chạy chỉ kiểm được ngày 23/11/2026. Biên đổi
+  ngày lúc nửa đêm giờ Việt Nam (17:00 UTC), ngày cuối tháng và tháng 12 sang tháng 1 không được chạy thật.
+- Goal có số đã phân bổ **lớn hơn** mục tiêu chỉ tạo được bằng SQL (API từ chối); không có case riêng.
+  E4 (bằng mục tiêu) là case gần nhất.
+- Biên lợi suất 30 % và số tiền 17 chữ số nguyên (giới hạn của `GoalRequest`) không có case; độ chính xác
+  34 chữ số chỉ được suy ra, chưa đo với `n` lớn hơn 183 tháng.
+- Hiệu năng của danh sách với nhiều goal không được đo; mỗi phần tử tính độc lập, không có truy vấn thêm.
+- Ba goal quá hạn có ngày đích đặt bằng `UPDATE` trong database, vì API không cho tạo; đường ghi đó không
+  phải đường người dùng đi.
+- Lần chạy dùng script Python gửi cùng request với guide; các khối `bash` trong guide không được chạy
+  nguyên văn.
+- `apps/mobile/src/api/generated/*` chưa được sinh lại từ `openapi.json` mới: worktree không cài dependency
+  của mobile và CI chỉ chạy `backend.yml`. Frontend #88 chạy `npm run api:generate` khi dùng route này.
 
 ## Câu hỏi cho Product Owner / Feature Contract #25
 
-Điền ở phase 4.
+1. **Ngày đích đã qua nhưng còn trong tháng này** (ví dụ 15/11/2026 khi hôm nay là 23/11/2026): API trả
+   `EXPIRED` vì so theo ngày (D4). Code của design #87 so theo tháng nên sẽ hiển thị "Không còn tháng đóng
+   góp nào". Giữ cách của API?
+2. **Không có tham số `asOf`** (D2): dự phóng luôn tính cho hôm nay vì số đã phân bổ là số của hôm nay.
+   Có cần xem lại dự phóng "như ngày X" không?
+3. **Hiển thị tỷ lệ**: API trả 2 số lẻ làm tròn **xuống** (121,37 %), design hiển thị 1 số lẻ làm tròn
+   thường (121,4 %). Frontend #88 làm tròn lại 1 số lẻ thì ra đúng số design, nhưng có thể hiện 100,0 %
+   cạnh `AT_RISK` khi tỷ lệ thật là 99,96 %. Chấp nhận, hay frontend cũng làm tròn xuống?
+4. **Goal đã đủ tiền nhưng chưa nhập đóng góp**: theo design, trạng thái là `null` ("Không khả dụng") dù
+   mức cần là 0 ₫. Có muốn coi goal đã đủ là `ON_TRACK` bất kể đóng góp không?
+5. **Nhãn vòng đời quá hạn** ("Quá hạn" / "Đã đạt mục tiêu") là đề xuất của design #87, chưa có trong
+   Feature Contract #25. API trả `timeline: EXPIRED` cùng `targetReached` để frontend chọn nhãn; cần PO
+   chốt câu chữ.
 
 ## Risks and rollback
 

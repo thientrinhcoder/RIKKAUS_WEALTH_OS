@@ -4,7 +4,7 @@ Hai route `GET /api/v1/goal-projections` và `GET /api/v1/goal-projections/{goal
 **không có automated test**, theo chỉ đạo của Product Owner. Tài liệu này là phần thay thế: chạy lại nó
 là cách duy nhất một regression trong phương pháp dự phóng bị phát hiện. Kết quả lần chạy đi kèm
 implementation ở
-[`plans/reports/manual-verification-261122-1842-GH-89-goal-projection-status.md`](../plans/reports/manual-verification-261122-1842-GH-89-goal-projection-status.md).
+[`plans/reports/manual-verification-261123-1537-GH-89-goal-projection-status.md`](../plans/reports/manual-verification-261123-1537-GH-89-goal-projection-status.md).
 Danh sách scenario viết trước khi code, cùng **bảng kỳ vọng tính trước** cho từng goal, ở
 [`phase-01-test-scenarios.md`](../plans/261122-1842-GH-89-goal-projection-status/phase-01-test-scenarios.md);
 số case ở đây là số case ở đó. Phương pháp đang được kiểm chứng ở mục "Goal projection" của
@@ -145,7 +145,7 @@ Dừng API, khởi động lại với ngưỡng 95:
 DB_URL=jdbc:postgresql://localhost:5489/rikkaus /opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home/bin/java -jar services/api/target/rikkaus-wealth-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=local --server.port=8089 --rikkaus.goals.projection.at-risk-min-coverage-percent=95
 ```
 
-F3 (94,39) và F4 (91,91) thành `BEHIND`, E9 nếu còn (97,99) vẫn `AT_RISK`, mục
+F3 (94,39) và F4 (91,91) thành `BEHIND`, F1 (121,37) vẫn `ON_TRACK` (E9 đã bị xóa ở P27), mục
 `AT_RISK_MIN_COVERAGE_PERCENT` là `95`. Rồi khởi động với `=120`: app không lên và log có
 `rikkaus.goals.projection.at-risk-min-coverage-percent must be less than`.
 

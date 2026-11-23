@@ -1,11 +1,11 @@
 # Phase 4 — Xác minh thủ công
 
-Status: Pending
+Status: Complete · 44/44 case đạt trên `6fc2c63`, chạy ngày 23/11/2026
 
 ## Files
 
 - `docs/manual-test-guide-goal-projection.md`: cách dựng môi trường và chạy P01–P44.
-- `plans/reports/manual-verification-261122-1842-GH-89-goal-projection-status.md`: status và body thật từng case,
+- `plans/reports/manual-verification-261123-1537-GH-89-goal-projection-status.md`: status và body thật từng case,
   commit, số pass/fail; case fail rồi sửa ghi là đã fail.
 
 ## Môi trường

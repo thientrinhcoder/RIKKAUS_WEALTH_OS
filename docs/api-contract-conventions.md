@@ -1488,7 +1488,7 @@ differ only in `instance` and `correlationId`.
 
 Shipped on Product Owner direction with no automated test. The scenarios, with expectations computed
 before the code, are in `plans/261122-1842-GH-89-goal-projection-status/phase-01-test-scenarios.md`; the
-run is recorded in `plans/reports/manual-verification-261122-1842-GH-89-goal-projection-status.md` and is
+run is recorded in `plans/reports/manual-verification-261123-1537-GH-89-goal-projection-status.md` and is
 reproduced by [`docs/manual-test-guide-goal-projection.md`](manual-test-guide-goal-projection.md). The six
 goals of the issue #87 fixture, with their target dates moved by the two months between the design's
 reference day and the run, reproduce the design's required contributions and statuses exactly.
@@ -1776,7 +1776,7 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `plans/reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md`,
   `plans/reports/manual-verification-261122-1544-GH-80-three-month-forecast.md`,
   `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`,
-  `plans/reports/manual-verification-261122-1842-GH-89-goal-projection-status.md`,
+  `plans/reports/manual-verification-261123-1537-GH-89-goal-projection-status.md`,
   `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` and
   `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md`. Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
