@@ -1,6 +1,6 @@
 # Xác minh thủ công — issue #89 dự phóng mục tiêu và trạng thái
 
-**Kết quả: 44/44 case đạt** trên commit `6fc2c63` (merge `origin/main` `0eb1ec3` vào `a02b275`), chạy ngày
+**Kết quả: 44/44 case đạt** trên commit `6fc2c63`, và 44/44 lần nữa sau khi merge main thành `5c8718e` (merge `origin/main` `0eb1ec3` vào `a02b275`), chạy ngày
 **23/11/2026** giờ Việt Nam qua HTTP vào PostgreSQL 18.6 Docker riêng. Không case nào fail trong lần chạy
 chính thức. `clean verify` trên cùng commit xanh, không flag (50 integration test, gồm `OpenApiContractIT`
 và `ApplicationContextIT`).
@@ -33,6 +33,13 @@ Cách chạy lại: [`docs/manual-test-guide-goal-projection.md`](../../docs/man
 - 22/11/2026, trên `a02b275` trước khi commit (chạy thử khi phát triển): P01–P41 và P44 đạt 42/42 ngay lần
   đầu; chưa chạy P42, P43. Sau lần đó chỉ đổi `operationId` tường minh và ví dụ OpenAPI, không đổi phép tính.
 - 23/11/2026, trên `6fc2c63` (chính thức, ghi dưới đây): 44/44.
+- 23/11/2026, chạy lại sau khi merge `origin/main` `4612f0e` (#104 deletion-impact và guard `linked-records`,
+  #65 wealth snapshot) thành `5c8718e`: jar mới (sha256 bắt đầu `cca1ed24752e5c08`), database tạo mới,
+  cùng script và kỳ vọng. **44/44 đạt**: P01–P41, P44 đạt 42/42; P42 (F1 `ON_TRACK` 121,37, F3 `BEHIND` 94,39,
+  F4 `BEHIND` 91,91, ledger `95`) và P43 (thoát mã 1, log nêu property) đạt. P27 vẫn trả `204` rồi `404`:
+  goal không có bản ghi liên kết nên guard của #104 không chặn. `clean verify -Dopenapi.update=true` không đổi
+  `openapi.json`; `clean verify` không flag xanh. Body từng case giống lần chạy trên `6fc2c63` trừ `goalId`,
+  nên phần dưới không in lại.
 
 ## Đối chiếu fixture design #87
 
