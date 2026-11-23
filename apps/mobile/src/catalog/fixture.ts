@@ -1,3 +1,5 @@
+import { decimal, formatMoney } from '@/money';
+
 /**
  * The section 16.3 mock data baseline, as display fixture data for the component catalog.
  *
@@ -109,5 +111,5 @@ export const UPCOMING_PAYMENT = LIABILITIES[0];
  * catalog reads the way the product will.
  */
 export function formatVnd(amount: number): string {
-  return `${amount.toLocaleString('de-DE')} ₫`;
+  return formatMoney(decimal(String(amount)), 'VND');
 }

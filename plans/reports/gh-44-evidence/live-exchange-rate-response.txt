@@ -1,0 +1,2 @@
+{"baseCurrency":"VND","usdToVndRate":25100.000000,"effectiveDate":"2026-09-12","updatedAt":"2026-11-22T09:47:02.967215Z"}
+HTTP 200
