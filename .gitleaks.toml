@@ -84,6 +84,10 @@ regexes = [
 # truncated — `eyJhbGciOiJIUzI1NiJ9...` — and never trips any rule; the `refreshToken` example is a
 # full-length random string and does. Truncating the others the same way would let this exemption be
 # deleted. That belongs to issue #42, not here.
+#
+# The mobile app's generated client (`apps/mobile/src/api/generated/openapi.ts`) carries the same
+# examples as JSDoc, `* @example <value>`, generated from the contract document. That line shape is a
+# fourth spelling of the same declaration and is exempt for the same reason.
 [[allowlists]]
 description = "Documented example tokens, matched on the declaring line"
 regexTarget = "line"
@@ -91,6 +95,7 @@ regexes = [
   '''(?i)@Schema\([^)]*example''',
   '''(?i)^\s*example\s*=''',
   '''(?i)"example"\s*:''',
+  '''^\s*\*\s*@example\s''',
 ]
 
 [[allowlists]]
