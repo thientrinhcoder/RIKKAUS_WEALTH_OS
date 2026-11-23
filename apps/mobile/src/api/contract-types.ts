@@ -23,7 +23,11 @@ export type ApiOperation<M extends HttpMethod, P extends PathWithMethod<M>> = Op
 type ParametersOf<O> = O extends { parameters: infer Parameters } ? Parameters : never;
 
 export type PathParamsOf<O> =
-  ParametersOf<O> extends { path?: infer Path } ? ([Path] extends [undefined] ? never : Path) : never;
+  ParametersOf<O> extends { path?: infer Path }
+    ? [Path] extends [undefined]
+      ? never
+      : Path
+    : never;
 
 export type QueryParamsOf<O> =
   ParametersOf<O> extends { query?: infer Query }

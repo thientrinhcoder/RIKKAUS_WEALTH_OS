@@ -1,6 +1,8 @@
 package com.rikkaus.wealth.assets.domain;
 
+import com.rikkaus.wealth.shared.deletion.LinkedRecordRow;
 import jakarta.persistence.LockModeType;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.Lock;
@@ -49,6 +51,40 @@ public interface AssetRepository extends Repository<Asset, UUID>, AssetSearch {
     Asset save(Asset asset);
 
     void delete(Asset asset);
+
+    /** How many valuation records {@code ON DELETE CASCADE} removes together with the asset. */
+    @Query(
+            value = "SELECT count(*) FROM wealth.asset_valuations WHERE asset_id = :assetId",
+            nativeQuery = true)
+    long countValuations(@Param("assetId") UUID assetId);
+
+    /**
+     * The owner's liabilities that name this asset as collateral, which {@code ON DELETE SET NULL}
+     * leaves without one.
+     *
+     * <p>Native SQL on the liabilities table rather than a call into that slice, which this one may not
+     * depend on. Scoped to the owner as well as the asset: creating a liability already refuses another
+     * user's asset as collateral, and this keeps another user's liability name out of the answer even if
+     * a row ever disagreed.
+     */
+    @Query(
+            value =
+                    "SELECT id, name AS label, category FROM wealth.liabilities"
+                            + " WHERE collateral_asset_id = :assetId AND user_id = :ownerId"
+                            + " ORDER BY created_at, id",
+            nativeQuery = true)
+    List<LinkedRecordRow> liabilitiesSecuredBy(
+            @Param("assetId") UUID assetId, @Param("ownerId") UUID ownerId);
+
+    /** The owner's cash-flow entries linked to this asset, which {@code ON DELETE SET NULL} unlinks. */
+    @Query(
+            value =
+                    "SELECT id, notes AS label, category FROM wealth.cash_flow_entries"
+                            + " WHERE linked_asset_id = :assetId AND user_id = :ownerId"
+                            + " ORDER BY created_at, id",
+            nativeQuery = true)
+    List<LinkedRecordRow> cashFlowEntriesLinkedTo(
+            @Param("assetId") UUID assetId, @Param("ownerId") UUID ownerId);
 
     /**
      * Sends the pending statements now, instead of at commit.

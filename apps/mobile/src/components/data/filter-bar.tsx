@@ -71,11 +71,7 @@ export function FilterBar({
             </Chip>
           ))}
 
-          <ActionButton
-            onPress={onClearFilters}
-            testID={`${testID}-clear-all`}
-            variant="text"
-          >
+          <ActionButton onPress={onClearFilters} testID={`${testID}-clear-all`} variant="text">
             Xoá tất cả bộ lọc
           </ActionButton>
         </View>
@@ -88,9 +84,7 @@ export function FilterBar({
           testID={`${testID}-match-count`}
           variant="bodyMedium"
         >
-          {matchCount === 0
-            ? 'Không có bản ghi nào khớp'
-            : `${matchCount} bản ghi khớp`}
+          {matchCount === 0 ? 'Không có bản ghi nào khớp' : `${matchCount} bản ghi khớp`}
         </Text>
       )}
     </View>

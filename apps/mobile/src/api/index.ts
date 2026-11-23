@@ -24,7 +24,12 @@ export type {
   PathWithMethod,
 } from './contract-types';
 export { CORRELATION_HEADER, CORRELATION_ID_PATTERN, createCorrelationId } from './correlation';
-export { contractFixture, createFixtureFetch, type FixtureResponse, type FixtureRoute } from './fixtures';
+export {
+  contractFixture,
+  createFixtureFetch,
+  type FixtureResponse,
+  type FixtureRoute,
+} from './fixtures';
 export { fetchMeta, MetaResponseSchema, type MetaResponse } from './meta';
 export {
   isKnownProblemType,

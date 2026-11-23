@@ -7,6 +7,7 @@ import com.rikkaus.wealth.cashflow.domain.CashFlowEntryType;
 import com.rikkaus.wealth.cashflow.domain.CashFlowRecurrence;
 import com.rikkaus.wealth.cashflow.domain.CashFlowTiming;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
 import com.rikkaus.wealth.shared.money.Currency;
 import com.rikkaus.wealth.shared.search.QueryParameters;
 import com.rikkaus.wealth.shared.search.SearchText;
@@ -39,7 +40,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The cash-flow catalog: list, add, read, replace, remove.
+ * The cash-flow catalog: list, add, read, replace, preview a deletion, remove.
  *
  * <p>The collection is addressed by the access token and the members by their own identifier. The only
  * path variable is the entry's id, never the owner's: an ArchUnit rule fails the compilation gate on a
@@ -498,11 +499,53 @@ class CashFlowEntryController {
     }
 
     @Operation(
+            summary = "Preview what deleting a cash-flow entry would do",
+            description =
+                    "Reads, without changing anything, what DELETE /api/v1/cash-flow-entries/{entryId} would "
+                            + "do. No stored record refers to an entry, so linkedEffects is always empty and "
+                            + "confirmationRequired always false; derivedEffects names the computed views that "
+                            + "stop including it: occurrences, the monthly report and the forecast. An asset "
+                            + "or liability the entry links to is not affected. The same not-found as GET "
+                            + "answers another user's entry.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+            responseCode = "200",
+            description = "What the delete would do",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = DeletionImpact.class)))
+    @ApiResponse(
+            responseCode = "400",
+            description = "The identifier in the path is not a UUID",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "401",
+            description = "No access token, or it has expired or been revoked",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "No such entry, or it belongs to another user",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @GetMapping("/{entryId}/deletion-impact")
+    DeletionImpact deletionImpact(@PathVariable UUID entryId) {
+        return service.deletionImpact(CurrentUser.require(), entryId);
+    }
+
+    @Operation(
             summary = "Remove a cash-flow entry",
             description =
-                    "Deletes the entry when the signed-in user owns it. This is the plain removal the generic "
-                            + "destructive confirmation in the accepted design promises; undo and a retention "
-                            + "policy belong to issue #104. A second delete of the same identifier answers "
+                    "Deletes the entry when the signed-in user owns it. Nothing refers to an entry, so there is "
+                            + "never a linked-record confirmation; GET .../deletion-impact names the computed "
+                            + "views that stop including it. Nothing is recoverable afterwards. A second delete of the same identifier answers "
                             + "not-found, the same answer any unknown identifier gets. Two deletes that overlap, "
                             + "which is what a double-tapped confirm button produces, give one 204 and not-found "
                             + "to the rest rather than a server error.")

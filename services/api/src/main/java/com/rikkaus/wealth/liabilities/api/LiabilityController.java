@@ -7,6 +7,7 @@ import com.rikkaus.wealth.liabilities.domain.LiabilityFilter;
 import com.rikkaus.wealth.liabilities.domain.LiabilityTerms;
 import com.rikkaus.wealth.liabilities.domain.PaymentSchedule;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
 import com.rikkaus.wealth.shared.money.Currency;
 import com.rikkaus.wealth.shared.search.QueryParameters;
 import com.rikkaus.wealth.shared.search.SearchText;
@@ -39,7 +40,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The liability catalog: list, add, read, replace, remove.
+ * The liability catalog: list, add, read, replace, preview a deletion, remove.
  *
  * <p>The collection is addressed by the access token and the members by their own identifier. The only
  * path variable is the liability's id, never the owner's. Another user's identifier answers {@code
@@ -436,18 +437,75 @@ class LiabilityController {
     }
 
     @Operation(
+            summary = "Preview what deleting a liability would do",
+            description =
+                    "Reads, without changing anything, what DELETE /api/v1/liabilities/{liabilityId} would do "
+                            + "now: the cash-flow entries that would lose their link to it (listed). "
+                            + "confirmationRequired is true when there is at least one. The pledged asset is "
+                            + "never affected. The same not-found as GET answers another user's liability.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+            responseCode = "200",
+            description = "What the delete would do",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = DeletionImpact.class),
+                            examples =
+                                    @ExampleObject(
+                                            name = "Mortgage with its monthly instalment linked",
+                                            value =
+                                                    "{\"recordType\":\"LIABILITY\","
+                                                            + "\"recordId\":\"9d1e7c42-5b6a-4f3e-8d2c-1b0a9f8e7d6c\","
+                                                            + "\"confirmationRequired\":true,"
+                                                            + "\"linkedEffects\":["
+                                                            + "{\"recordType\":\"CASH_FLOW_ENTRY\",\"effect\":\"UNLINKED\","
+                                                            + "\"field\":\"linkedLiabilityId\",\"count\":1,\"records\":["
+                                                            + "{\"id\":\"5e7a9c1b-3d4f-4a6b-8c0d-2e4f6a8b0c1d\","
+                                                            + "\"label\":\"Trả góp vay mua nhà Vietcombank\","
+                                                            + "\"category\":\"DEBT_PRINCIPAL_PAYMENT\"}]}],"
+                                                            + "\"derivedEffects\":[]}")))
+    @ApiResponse(
+            responseCode = "400",
+            description = "The identifier in the path is not a UUID",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "401",
+            description = "No access token, or it has expired or been revoked",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "No such liability, or it belongs to another user",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @GetMapping("/{liabilityId}/deletion-impact")
+    DeletionImpact deletionImpact(@PathVariable UUID liabilityId) {
+        return liabilityService.deletionImpact(CurrentUser.require(), liabilityId);
+    }
+
+    @Operation(
             summary = "Remove a liability",
             description =
-                    "Deletes the liability when the signed-in user owns it. A plain removal; undo and a "
-                            + "retention policy belong to issue #104. A second delete of the same identifier "
-                            + "answers not-found, the same answer any unknown identifier gets. Two deletes "
-                            + "that overlap give one 204 and not-found to the rest rather than a server "
-                            + "error. The pledged asset, if any, is untouched.")
+                    "Deletes the liability when the signed-in user owns it. Cash-flow entries linked to it "
+                            + "are kept with linkedLiabilityId cleared, and while there is at least one the "
+                            + "delete is refused with 409 linked-records, carrying the same impact GET "
+                            + ".../deletion-impact returns, unless the request says confirm=true. A liability "
+                            + "nothing refers to deletes without it. Nothing is recoverable afterwards. A "
+                            + "second delete of the same identifier answers not-found, the same answer any "
+                            + "unknown identifier gets. Two deletes that overlap give one 204 and not-found "
+                            + "to the rest rather than a server error. The pledged asset, if any, is untouched.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "204", description = "The liability no longer exists")
     @ApiResponse(
             responseCode = "400",
-            description = "The identifier in the path is not a UUID",
+            description = "The identifier in the path is not a UUID, or confirm is not a boolean",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @ApiResponse(
             responseCode = "401",
@@ -462,9 +520,23 @@ class LiabilityController {
             responseCode = "405",
             description = "Wrong HTTP method",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "409",
+            description =
+                    "linked-records: cash-flow entries would be unlinked and confirm=true was not sent. "
+                            + "Nothing was deleted; the impact member says what the confirmed delete would do",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
     @DeleteMapping("/{liabilityId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void delete(@PathVariable UUID liabilityId) {
-        liabilityService.delete(CurrentUser.require(), liabilityId);
+    void delete(
+            @PathVariable UUID liabilityId,
+            @Parameter(
+                            description =
+                                    "true once the user has seen and accepted the linked-record effects. "
+                                            + "Absent or false: a liability with linked entries is not deleted.",
+                            example = "true")
+                    @RequestParam(name = "confirm", defaultValue = "false")
+                    boolean confirm) {
+        liabilityService.delete(CurrentUser.require(), liabilityId, confirm);
     }
 }

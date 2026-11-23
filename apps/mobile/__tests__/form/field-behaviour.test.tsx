@@ -27,8 +27,7 @@ function renderedMinHeights(testID: string): number[] {
 
     const element = node as { props?: { style?: unknown; children?: unknown }; children?: unknown };
     const style = StyleSheet.flatten(element.props?.style as never) as
-      | { minHeight?: number }
-      | undefined;
+      { minHeight?: number } | undefined;
 
     if (typeof style?.minHeight === 'number') {
       found.push(style.minHeight);
@@ -54,9 +53,7 @@ describe('accessible state coverage', () => {
     ['disabled', { disabled: true }, { disabled: true }],
     ['invalid', { errorText: 'Nhập giá trị.' }, { invalid: true }],
   ] as const)('reports the %s state on the control itself', async (_name, props, expected) => {
-    await renderWithProviders(
-      <TextField label="Tên tài sản" testID="f" value="" {...props} />,
-    );
+    await renderWithProviders(<TextField label="Tên tài sản" testID="f" value="" {...props} />);
 
     expect(input('f').props.accessibilityState).toMatchObject(expected);
   });

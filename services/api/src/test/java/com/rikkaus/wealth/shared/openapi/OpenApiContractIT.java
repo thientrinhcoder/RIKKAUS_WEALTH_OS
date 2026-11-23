@@ -69,6 +69,7 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                 .containsExactlyInAnyOrder(
                         "/api/v1/assets",
                         "/api/v1/assets/{assetId}",
+                        "/api/v1/assets/{assetId}/deletion-impact",
                         "/api/v1/assets/{assetId}/valuations",
                         "/api/v1/assets/{assetId}/valuations/{valuationId}",
                         "/api/v1/auth/google",
@@ -77,6 +78,7 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                         "/api/v1/auth/session",
                         "/api/v1/cash-flow-entries",
                         "/api/v1/cash-flow-entries/{entryId}",
+                        "/api/v1/cash-flow-entries/{entryId}/deletion-impact",
                         "/api/v1/cash-flow-forecast",
                         "/api/v1/cash-flow-occurrences",
                         "/api/v1/cash-flow-reports/monthly",
@@ -84,8 +86,10 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                         "/api/v1/goal-templates",
                         "/api/v1/goals",
                         "/api/v1/goals/{goalId}",
+                        "/api/v1/goals/{goalId}/deletion-impact",
                         "/api/v1/liabilities",
                         "/api/v1/liabilities/{liabilityId}",
+                        "/api/v1/liabilities/{liabilityId}/deletion-impact",
                         "/api/v1/meta",
                         "/api/v1/onboarding",
                         "/api/v1/profile",
@@ -136,7 +140,12 @@ class OpenApiContractIT extends AbstractPostgresIntegrationTest {
                 servedDocument().get("components").get("schemas").get("ProblemDetail").get("properties");
 
         assertThat(problem.propertyNames())
-                .contains("type", "title", "status", "detail", "instance", "correlationId", "errors");
+                .contains(
+                        "type", "title", "status", "detail", "instance", "correlationId", "errors", "impact");
+        assertThat(problem.get("type").get("enum").values())
+                .extracting(JsonNode::asString)
+                .as("a refused delete is a problem type the frontend can classify")
+                .contains("urn:rikkaus:problem:linked-records");
     }
 
     private JsonNode servedDocument() {

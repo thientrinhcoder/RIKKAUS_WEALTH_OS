@@ -5,6 +5,7 @@ import com.rikkaus.wealth.goals.domain.GoalFields;
 import com.rikkaus.wealth.goals.domain.GoalFilter;
 import com.rikkaus.wealth.goals.domain.GoalType;
 import com.rikkaus.wealth.shared.api.ApiPaths;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
 import com.rikkaus.wealth.shared.search.QueryParameters;
 import com.rikkaus.wealth.shared.search.SearchText;
 import com.rikkaus.wealth.shared.security.CurrentUser;
@@ -36,7 +37,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Financial goals: list, create, read, replace, remove.
+ * Financial goals: list, create, read, replace, preview a deletion, remove.
  *
  * <p>The collection is addressed by the access token and the members by their own identifier. The only
  * path variable is the goal's id, never the owner's: an ArchUnit rule fails the compilation gate on a
@@ -407,11 +408,51 @@ class GoalController {
     }
 
     @Operation(
+            summary = "Preview what deleting a goal would do",
+            description =
+                    "Reads, without changing anything, what DELETE /api/v1/goals/{goalId} would do: nothing "
+                            + "beyond the goal. No record refers to a goal, so both lists are empty and "
+                            + "confirmationRequired is false. The same not-found as GET answers another user's "
+                            + "goal.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+            responseCode = "200",
+            description = "What the delete would do",
+            content =
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = DeletionImpact.class)))
+    @ApiResponse(
+            responseCode = "400",
+            description = "The identifier in the path is not a UUID",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "401",
+            description = "No access token, or it has expired or been revoked",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "404",
+            description = "No such goal, or it belongs to another user",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "405",
+            description = "Wrong HTTP method",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @ApiResponse(
+            responseCode = "406",
+            description = "The requested media type cannot be produced",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(ref = PROBLEM_SCHEMA_REF)))
+    @GetMapping("/{goalId}/deletion-impact")
+    DeletionImpact deletionImpact(@PathVariable UUID goalId) {
+        return goalService.deletionImpact(CurrentUser.require(), goalId);
+    }
+
+    @Operation(
             summary = "Remove a goal",
             description =
                     "Deletes the goal when the signed-in user owns it. Asset, liability and cash-flow records "
-                            + "are untouched, as the accepted design's confirmation dialog states. Undo and a "
-                            + "retention window belong to issue #104. A second delete of the same identifier "
+                            + "are untouched, as the accepted design's confirmation dialog states, so there is no "
+                            + "linked-record confirmation. Nothing is recoverable afterwards. A second delete of the same identifier "
                             + "answers not-found, the same answer any unknown identifier gets; two deletes that "
                             + "overlap give one 204 and not-found to the rest rather than a server error.")
     @SecurityRequirement(name = "bearerAuth")

@@ -496,7 +496,7 @@
       "delete" : {
         "tags" : [ "liability-controller" ],
         "summary" : "Remove a liability",
-        "description" : "Deletes the liability when the signed-in user owns it. A plain removal; undo and a retention policy belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap give one 204 and not-found to the rest rather than a server error. The pledged asset, if any, is untouched.",
+        "description" : "Deletes the liability when the signed-in user owns it. Cash-flow entries linked to it are kept with linkedLiabilityId cleared, and while there is at least one the delete is refused with 409 linked-records, carrying the same impact GET .../deletion-impact returns, unless the request says confirm=true. A liability nothing refers to deletes without it. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap give one 204 and not-found to the rest rather than a server error. The pledged asset, if any, is untouched.",
         "operationId" : "delete",
         "parameters" : [ {
           "name" : "liabilityId",
@@ -506,13 +506,23 @@
             "type" : "string",
             "format" : "uuid"
           }
+        }, {
+          "name" : "confirm",
+          "in" : "query",
+          "description" : "true once the user has seen and accepted the linked-record effects. Absent or false: a liability with linked entries is not deleted.",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          },
+          "example" : true
         } ],
         "responses" : {
           "204" : {
             "description" : "The liability no longer exists"
           },
           "400" : {
-            "description" : "The identifier in the path is not a UUID",
+            "description" : "The identifier in the path is not a UUID, or confirm is not a boolean",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -543,6 +553,16 @@
           },
           "405" : {
             "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "linked-records: cash-flow entries would be unlinked and confirm=true was not sent. Nothing was deleted; the impact member says what the confirmed delete would do",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -741,7 +761,7 @@
       "delete" : {
         "tags" : [ "goal-controller" ],
         "summary" : "Remove a goal",
-        "description" : "Deletes the goal when the signed-in user owns it. Asset, liability and cash-flow records are untouched, as the accepted design's confirmation dialog states. Undo and a retention window belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets; two deletes that overlap give one 204 and not-found to the rest rather than a server error.",
+        "description" : "Deletes the goal when the signed-in user owns it. Asset, liability and cash-flow records are untouched, as the accepted design's confirmation dialog states, so there is no linked-record confirmation. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets; two deletes that overlap give one 204 and not-found to the rest rather than a server error.",
         "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "goalId",
@@ -986,7 +1006,7 @@
       "delete" : {
         "tags" : [ "cash-flow-entry-controller" ],
         "summary" : "Remove a cash-flow entry",
-        "description" : "Deletes the entry when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo and a retention policy belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
+        "description" : "Deletes the entry when the signed-in user owns it. Nothing refers to an entry, so there is never a linked-record confirmation; GET .../deletion-impact names the computed views that stop including it. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
         "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "entryId",
@@ -1231,7 +1251,7 @@
       "delete" : {
         "tags" : [ "asset-controller" ],
         "summary" : "Remove an asset",
-        "description" : "Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
+        "description" : "Deletes the asset and its valuation history when the signed-in user owns it. When a liability uses the asset as collateral or a cash-flow entry is linked to it, those records are kept with the reference cleared, and the delete is refused with 409 linked-records, carrying the same impact GET .../deletion-impact returns, unless the request says confirm=true. An asset nothing refers to deletes without it. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.",
         "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "assetId",
@@ -1241,13 +1261,23 @@
             "type" : "string",
             "format" : "uuid"
           }
+        }, {
+          "name" : "confirm",
+          "in" : "query",
+          "description" : "true once the user has seen and accepted the linked-record effects. Absent or false: an asset with linked records is not deleted.",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          },
+          "example" : true
         } ],
         "responses" : {
           "204" : {
             "description" : "The asset no longer exists"
           },
           "400" : {
-            "description" : "The identifier in the path is not a UUID",
+            "description" : "The identifier in the path is not a UUID, or confirm is not a boolean",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -1278,6 +1308,16 @@
           },
           "405" : {
             "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "linked-records: other records would be unlinked and confirm=true was not sent. Nothing was deleted; the impact member says what the confirmed delete would do",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -4029,6 +4069,192 @@
         }
       }
     },
+    "/api/v1/liabilities/{liabilityId}/deletion-impact" : {
+      "get" : {
+        "tags" : [ "liability-controller" ],
+        "summary" : "Preview what deleting a liability would do",
+        "description" : "Reads, without changing anything, what DELETE /api/v1/liabilities/{liabilityId} would do now: the cash-flow entries that would lose their link to it (listed). confirmationRequired is true when there is at least one. The pledged asset is never affected. The same not-found as GET answers another user's liability.",
+        "operationId" : "deletionImpact",
+        "parameters" : [ {
+          "name" : "liabilityId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "What the delete would do",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeletionImpact"
+                },
+                "examples" : {
+                  "Mortgage with its monthly instalment linked" : {
+                    "description" : "Mortgage with its monthly instalment linked",
+                    "value" : {
+                      "recordType" : "LIABILITY",
+                      "recordId" : "9d1e7c42-5b6a-4f3e-8d2c-1b0a9f8e7d6c",
+                      "confirmationRequired" : true,
+                      "linkedEffects" : [ {
+                        "recordType" : "CASH_FLOW_ENTRY",
+                        "effect" : "UNLINKED",
+                        "field" : "linkedLiabilityId",
+                        "count" : 1,
+                        "records" : [ {
+                          "id" : "5e7a9c1b-3d4f-4a6b-8c0d-2e4f6a8b0c1d",
+                          "label" : "Trả góp vay mua nhà Vietcombank",
+                          "category" : "DEBT_PRINCIPAL_PAYMENT"
+                        } ]
+                      } ],
+                      "derivedEffects" : [ ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such liability, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/goals/{goalId}/deletion-impact" : {
+      "get" : {
+        "tags" : [ "goal-controller" ],
+        "summary" : "Preview what deleting a goal would do",
+        "description" : "Reads, without changing anything, what DELETE /api/v1/goals/{goalId} would do: nothing beyond the goal. No record refers to a goal, so both lists are empty and confirmationRequired is false. The same not-found as GET answers another user's goal.",
+        "operationId" : "deletionImpact_1",
+        "parameters" : [ {
+          "name" : "goalId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "What the delete would do",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeletionImpact"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such goal, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/goal-templates" : {
       "get" : {
         "tags" : [ "goal-template-controller" ],
@@ -4842,6 +5068,88 @@
         } ]
       }
     },
+    "/api/v1/cash-flow-entries/{entryId}/deletion-impact" : {
+      "get" : {
+        "tags" : [ "cash-flow-entry-controller" ],
+        "summary" : "Preview what deleting a cash-flow entry would do",
+        "description" : "Reads, without changing anything, what DELETE /api/v1/cash-flow-entries/{entryId} would do. No stored record refers to an entry, so linkedEffects is always empty and confirmationRequired always false; derivedEffects names the computed views that stop including it: occurrences, the monthly report and the forecast. An asset or liability the entry links to is not affected. The same not-found as GET answers another user's entry.",
+        "operationId" : "deletionImpact_2",
+        "parameters" : [ {
+          "name" : "entryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "What the delete would do",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeletionImpact"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such entry, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/auth/session" : {
       "get" : {
         "tags" : [ "authentication-controller" ],
@@ -4984,6 +5292,126 @@
           "bearerAuth" : [ ]
         } ]
       }
+    },
+    "/api/v1/assets/{assetId}/deletion-impact" : {
+      "get" : {
+        "tags" : [ "asset-controller" ],
+        "summary" : "Preview what deleting an asset would do",
+        "description" : "Reads, without changing anything, what DELETE /api/v1/assets/{assetId} would do now: the valuation records removed with the asset (counted), the liabilities that would lose it as collateral and the cash-flow entries that would lose their link (listed). confirmationRequired is true when anything would be unlinked; the valuation history alone never requires it. The same not-found as GET answers another user's asset.",
+        "operationId" : "deletionImpact_3",
+        "parameters" : [ {
+          "name" : "assetId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "What the delete would do",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeletionImpact"
+                },
+                "examples" : {
+                  "Apartment pledged for a mortgage and rented out" : {
+                    "description" : "Apartment pledged for a mortgage and rented out",
+                    "value" : {
+                      "recordType" : "ASSET",
+                      "recordId" : "3f6b2a10-8c4d-4e5f-9a1b-2c3d4e5f6a7b",
+                      "confirmationRequired" : true,
+                      "linkedEffects" : [ {
+                        "recordType" : "ASSET_VALUATION",
+                        "effect" : "DELETED",
+                        "field" : null,
+                        "count" : 3,
+                        "records" : [ ]
+                      }, {
+                        "recordType" : "LIABILITY",
+                        "effect" : "UNLINKED",
+                        "field" : "collateralAssetId",
+                        "count" : 1,
+                        "records" : [ {
+                          "id" : "9d1e7c42-5b6a-4f3e-8d2c-1b0a9f8e7d6c",
+                          "label" : "Vay mua nhà Vietcombank",
+                          "category" : "BANK_LOAN"
+                        } ]
+                      }, {
+                        "recordType" : "CASH_FLOW_ENTRY",
+                        "effect" : "UNLINKED",
+                        "field" : "linkedAssetId",
+                        "count" : 1,
+                        "records" : [ {
+                          "id" : "c2a4e6f8-1b3d-4f5a-8c7e-9d0b2a4c6e8f",
+                          "label" : "Cho thuê căn hộ Thảo Điền",
+                          "category" : "RENTAL_INCOME"
+                        } ]
+                      } ],
+                      "derivedEffects" : [ ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The identifier in the path is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No such asset, or it belongs to another user",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
     }
   },
   "components" : {
@@ -4995,7 +5423,7 @@
           "type" : {
             "type" : "string",
             "description" : "Stable taxonomy identifier. A URN rather than a URL because the project owns no domain; RFC 9457 does not require it to dereference.",
-            "enum" : [ "urn:rikkaus:problem:forbidden", "urn:rikkaus:problem:internal-error", "urn:rikkaus:problem:malformed-request", "urn:rikkaus:problem:method-not-allowed", "urn:rikkaus:problem:not-acceptable", "urn:rikkaus:problem:not-found", "urn:rikkaus:problem:unauthorized", "urn:rikkaus:problem:unsupported-media-type", "urn:rikkaus:problem:validation-failed" ]
+            "enum" : [ "urn:rikkaus:problem:forbidden", "urn:rikkaus:problem:internal-error", "urn:rikkaus:problem:linked-records", "urn:rikkaus:problem:malformed-request", "urn:rikkaus:problem:method-not-allowed", "urn:rikkaus:problem:not-acceptable", "urn:rikkaus:problem:not-found", "urn:rikkaus:problem:unauthorized", "urn:rikkaus:problem:unsupported-media-type", "urn:rikkaus:problem:validation-failed" ]
           },
           "title" : {
             "type" : "string",
@@ -5032,6 +5460,10 @@
                 }
               }
             }
+          },
+          "impact" : {
+            "$ref" : "#/components/schemas/DeletionImpact",
+            "description" : "Extension member, present on linked-records only. What the refused delete would do, in the shape GET .../deletion-impact returns."
           }
         },
         "required" : [ "status", "title", "type" ]
@@ -6786,6 +7218,100 @@
           "serverTime" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "DeletionImpact" : {
+        "type" : "object",
+        "description" : "What deleting this record does to other stored records and to computed views, read from the database at the moment of the request.",
+        "properties" : {
+          "recordType" : {
+            "type" : "string",
+            "description" : "The kind of record being deleted.",
+            "enum" : [ "ASSET", "ASSET_VALUATION", "LIABILITY", "CASH_FLOW_ENTRY", "GOAL" ],
+            "example" : "ASSET"
+          },
+          "recordId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The record being deleted."
+          },
+          "confirmationRequired" : {
+            "type" : "boolean",
+            "description" : "True when at least one linkedEffects entry is UNLINKED. A DELETE of this record then answers 409 linked-records unless it carries confirm=true.",
+            "example" : true
+          },
+          "linkedEffects" : {
+            "type" : "array",
+            "description" : "Stored records the delete removes or changes. Only kinds with at least one affected record appear.",
+            "items" : {
+              "$ref" : "#/components/schemas/LinkedRecordEffect"
+            }
+          },
+          "derivedEffects" : {
+            "type" : "array",
+            "description" : "Computed views that will no longer include this record. Descriptive: nothing is stored for them and nothing is counted.",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "CASH_FLOW_OCCURRENCES", "MONTHLY_CASH_FLOW_REPORTS", "CASH_FLOW_FORECAST" ]
+            }
+          }
+        }
+      },
+      "LinkedRecordEffect" : {
+        "type" : "object",
+        "description" : "One kind of stored record the delete reaches, and what happens to it.",
+        "properties" : {
+          "recordType" : {
+            "type" : "string",
+            "description" : "The kind of record affected.",
+            "enum" : [ "ASSET", "ASSET_VALUATION", "LIABILITY", "CASH_FLOW_ENTRY", "GOAL" ],
+            "example" : "LIABILITY"
+          },
+          "effect" : {
+            "type" : "string",
+            "description" : "DELETED: removed together with the record. UNLINKED: kept, with the field named in field set to null.",
+            "enum" : [ "DELETED", "UNLINKED" ],
+            "example" : "UNLINKED"
+          },
+          "field" : {
+            "type" : [ "string", "null" ],
+            "description" : "For UNLINKED, the response member that becomes null on each affected record. Null for DELETED.",
+            "example" : "collateralAssetId"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "How many records are affected. Always at least 1.",
+            "example" : 1
+          },
+          "records" : {
+            "type" : "array",
+            "description" : "The affected records, for UNLINKED. Empty for DELETED, where only the count is given.",
+            "items" : {
+              "$ref" : "#/components/schemas/LinkedRecordReference"
+            }
+          }
+        }
+      },
+      "LinkedRecordReference" : {
+        "type" : "object",
+        "description" : "An affected record, identified for display.",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The affected record's identifier."
+          },
+          "label" : {
+            "type" : [ "string", "null" ],
+            "description" : "The user's label for it: a liability's name, a cash-flow entry's notes. Null for an entry recorded without notes.",
+            "example" : "Vay mua nhà Vietcombank"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "The affected record's category constant.",
+            "example" : "BANK_LOAN"
           }
         }
       },

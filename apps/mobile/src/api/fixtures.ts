@@ -52,7 +52,9 @@ export interface FixtureRoute {
  */
 export function createFixtureFetch(routes: FixtureRoute[]): typeof fetch {
   return async (input, init) => {
-    const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
+    const url = new URL(
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+    );
     const method = (init?.method ?? 'GET').toUpperCase();
     const match = routes.find((candidate) => candidate.route === `${method} ${url.pathname}`);
 

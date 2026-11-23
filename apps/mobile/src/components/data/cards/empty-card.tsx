@@ -17,13 +17,7 @@ export interface EmptyCardProps {
   testID?: string;
 }
 
-export function EmptyCard({
-  title,
-  description,
-  actionLabel,
-  onAction,
-  testID,
-}: EmptyCardProps) {
+export function EmptyCard({ title, description, actionLabel, onAction, testID }: EmptyCardProps) {
   const theme = useAppTheme();
 
   return (

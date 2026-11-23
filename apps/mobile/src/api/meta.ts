@@ -16,7 +16,10 @@ export const MetaResponseSchema = z.object({
 
 export type MetaResponse = z.infer<typeof MetaResponseSchema>;
 
-export function fetchMeta(client: ApiClient, signal?: AbortSignal): Promise<ApiResponse<MetaResponse>> {
+export function fetchMeta(
+  client: ApiClient,
+  signal?: AbortSignal,
+): Promise<ApiResponse<MetaResponse>> {
   return client.request('get', '/api/v1/meta', {
     schema: MetaResponseSchema,
     auth: false,

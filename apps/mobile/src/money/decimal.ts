@@ -103,9 +103,7 @@ export function isPrecisionAtRisk(value: unknown): boolean {
     return true;
   }
 
-  const significant = expandExponent(String(value))
-    .replace(/[-.]/g, '')
-    .replace(/^0+/, '');
+  const significant = expandExponent(String(value)).replace(/[-.]/g, '').replace(/^0+/, '');
 
   return significant.length > SAFE_SIGNIFICANT_DIGITS;
 }

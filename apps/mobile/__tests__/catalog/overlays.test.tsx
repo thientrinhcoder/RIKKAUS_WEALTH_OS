@@ -77,9 +77,7 @@ describe('the overlays example', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Lỗi chặn' }));
     await waitFor(() => expect(screen.getByTestId('catalog-blocking')).toBeTruthy());
 
-    expect(screen.getByTestId('catalog-blocking-message')).toHaveTextContent(
-      /vẫn được giữ lại/,
-    );
+    expect(screen.getByTestId('catalog-blocking-message')).toHaveTextContent(/vẫn được giữ lại/);
 
     fireEvent.press(screen.getByRole('button', { name: 'Quay lại danh sách' }));
 

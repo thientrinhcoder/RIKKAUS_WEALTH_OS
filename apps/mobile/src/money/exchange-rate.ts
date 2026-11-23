@@ -36,13 +36,14 @@ const CONVERSION_FRACTION_DIGITS = 2;
 
 export const RATE_MISSING_REASON = 'Chưa có tỷ giá USD/VND';
 
-export function readExchangeRateSettings(payload: ExchangeRateSettingsPayload): ExchangeRateSettings {
+export function readExchangeRateSettings(
+  payload: ExchangeRateSettingsPayload,
+): ExchangeRateSettings {
   const usdToVndRate = fromApiValue(payload.usdToVndRate);
   const effectiveDate = parseIsoDate(payload.effectiveDate);
 
   return {
-    rate:
-      usdToVndRate === null || effectiveDate === null ? null : { usdToVndRate, effectiveDate },
+    rate: usdToVndRate === null || effectiveDate === null ? null : { usdToVndRate, effectiveDate },
     updatedAt: parseInstant(payload.updatedAt),
   };
 }

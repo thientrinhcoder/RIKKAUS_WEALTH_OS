@@ -91,6 +91,9 @@ regexes = [
   '''(?i)@Schema\([^)]*example''',
   '''(?i)^\s*example\s*=''',
   '''(?i)"example"\s*:''',
+  # The same examples after `openapi-typescript` turns the contract into the mobile app's types: each
+  # one becomes a JSDoc `@example` line in `apps/mobile/src/api/generated/openapi.ts`.
+  '''^\s*\*\s*@example\s''',
 ]
 
 [[allowlists]]

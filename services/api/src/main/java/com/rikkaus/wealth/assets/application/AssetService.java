@@ -9,6 +9,11 @@ import com.rikkaus.wealth.assets.domain.AssetRepository;
 import com.rikkaus.wealth.assets.domain.AssetValuation;
 import com.rikkaus.wealth.assets.domain.AssetValuationRepository;
 import com.rikkaus.wealth.assets.domain.DeclaredValuation;
+import com.rikkaus.wealth.shared.deletion.DeletionGuard;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact.RecordType;
+import com.rikkaus.wealth.shared.deletion.LinkedRecordEffect;
+import com.rikkaus.wealth.shared.deletion.LinkedRecordReference;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
@@ -175,19 +180,56 @@ public class AssetService {
     }
 
     /**
-     * Removes one of the owner's assets.
+     * What deleting one of the owner's assets would do, without doing it.
      *
-     * <p>A plain delete. Undo, linked-record consequences and a retention policy belong to issue #102;
-     * what this does is exactly what the generic destructive confirmation in the approved design
-     * promises, and nothing more.
+     * <p>Ownership first, so another user's identifier answers the same {@code not-found} as a missing
+     * one and never reveals whether that asset has links.
+     */
+    @Transactional(readOnly = true)
+    public DeletionImpact deletionImpact(UUID ownerId, UUID assetId) {
+        return impactOf(OwnershipGuard.requireOwned(assets.findById(assetId), ownerId), ownerId);
+    }
+
+    /**
+     * Removes one of the owner's assets, unless that would change another record the user has not
+     * confirmed changing.
      *
-     * <p>Ownership is resolved before anything is removed, so a non-owner's request returns {@code
-     * not-found} with the row untouched rather than deleting it and then failing a check.
+     * <p>The asset row is locked before the impact is read, so two overlapping deletes are serialised:
+     * the second waits, finds the row gone and answers {@code not-found}, and the impact the first one
+     * judged is the one it acted on. A refusal deletes nothing and carries that impact.
+     *
+     * <p>Ownership is resolved before anything is read or removed, so a non-owner's request returns
+     * {@code not-found} with the row untouched, never {@code linked-records}.
      */
     @Transactional
-    public void delete(UUID ownerId, UUID assetId) {
-        assets.delete(OwnershipGuard.requireOwned(assets.findById(assetId), ownerId));
+    public void delete(UUID ownerId, UUID assetId, boolean confirmed) {
+        Asset asset = OwnershipGuard.requireOwned(assets.findAndLockById(assetId), ownerId);
+        DeletionGuard.requireConfirmed(impactOf(asset, ownerId), confirmed);
+        assets.delete(asset);
         flushTreatingAVanishedRowAsNotFound();
+    }
+
+    /**
+     * The three foreign keys that reach {@code wealth.assets}: the valuation history goes with the
+     * asset, a liability's collateral and a cash-flow entry's link are cleared.
+     */
+    private DeletionImpact impactOf(Asset asset, UUID ownerId) {
+        List<LinkedRecordEffect> effects = new ArrayList<>();
+        long valuationCount = assets.countValuations(asset.getId());
+        if (valuationCount > 0) {
+            effects.add(LinkedRecordEffect.deleted(RecordType.ASSET_VALUATION, valuationCount));
+        }
+        List<LinkedRecordReference> liabilities =
+                LinkedRecordReference.of(assets.liabilitiesSecuredBy(asset.getId(), ownerId));
+        if (!liabilities.isEmpty()) {
+            effects.add(LinkedRecordEffect.unlinked(RecordType.LIABILITY, "collateralAssetId", liabilities));
+        }
+        List<LinkedRecordReference> entries =
+                LinkedRecordReference.of(assets.cashFlowEntriesLinkedTo(asset.getId(), ownerId));
+        if (!entries.isEmpty()) {
+            effects.add(LinkedRecordEffect.unlinked(RecordType.CASH_FLOW_ENTRY, "linkedAssetId", entries));
+        }
+        return DeletionImpact.of(RecordType.ASSET, asset.getId(), effects, List.of());
     }
 
     /**

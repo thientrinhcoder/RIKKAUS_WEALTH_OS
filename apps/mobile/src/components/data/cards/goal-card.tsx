@@ -34,11 +34,7 @@ export function GoalCard({
   const percent = Math.round(clamped * 100);
 
   return (
-    <CardShell
-      accessibilityLabel={`${title}. ${progressLabel}.`}
-      onPress={onPress}
-      testID={testID}
-    >
+    <CardShell accessibilityLabel={`${title}. ${progressLabel}.`} onPress={onPress} testID={testID}>
       <Text variant="titleMedium">{title}</Text>
 
       <View
@@ -57,10 +53,7 @@ export function GoalCard({
       </View>
 
       {statusLabel === undefined ? null : (
-        <Text
-          testID={testID === undefined ? undefined : `${testID}-status`}
-          variant="labelLarge"
-        >
+        <Text testID={testID === undefined ? undefined : `${testID}-status`} variant="labelLarge">
           {statusLabel}
         </Text>
       )}

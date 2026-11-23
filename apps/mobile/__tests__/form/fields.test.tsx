@@ -129,9 +129,7 @@ describe('number field', () => {
 
 describe('date field', () => {
   it('displays the stored value in the Vietnamese format', async () => {
-    await renderWithProviders(
-      <DateField label="Ngày định giá" testID="date" value="2026-09-12" />,
-    );
+    await renderWithProviders(<DateField label="Ngày định giá" testID="date" value="2026-09-12" />);
 
     expect(input('date').props.value).toBe('12/09/2026');
   });

@@ -11,7 +11,10 @@ describe('HealthResponseSchema', () => {
     ).toEqual({ status: 'UP', components: { database: { status: 'UP' } } });
   });
 
-  it.each([{ status: 'DOWN' }, {}, null])('rejects an unhealthy or invalid response: %p', (value) => {
-    expect(() => HealthResponseSchema.parse(value)).toThrow();
-  });
+  it.each([{ status: 'DOWN' }, {}, null])(
+    'rejects an unhealthy or invalid response: %p',
+    (value) => {
+      expect(() => HealthResponseSchema.parse(value)).toThrow();
+    },
+  );
 });
