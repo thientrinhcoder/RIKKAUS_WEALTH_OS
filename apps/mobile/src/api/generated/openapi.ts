@@ -71,7 +71,7 @@ export interface paths {
         post?: never;
         /**
          * Remove a liability
-         * @description Deletes the liability when the signed-in user owns it. A plain removal; undo and a retention policy belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap give one 204 and not-found to the rest rather than a server error. The pledged asset, if any, is untouched.
+         * @description Deletes the liability when the signed-in user owns it. Cash-flow entries linked to it are kept with linkedLiabilityId cleared, and while there is at least one the delete is refused with 409 linked-records, carrying the same impact GET .../deletion-impact returns, unless the request says confirm=true. A liability nothing refers to deletes without it. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap give one 204 and not-found to the rest rather than a server error. The pledged asset, if any, is untouched.
          */
         delete: operations["delete"];
         options?: never;
@@ -99,7 +99,7 @@ export interface paths {
         post?: never;
         /**
          * Remove a goal
-         * @description Deletes the goal when the signed-in user owns it. Asset, liability and cash-flow records are untouched, as the accepted design's confirmation dialog states. Undo and a retention window belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets; two deletes that overlap give one 204 and not-found to the rest rather than a server error.
+         * @description Deletes the goal when the signed-in user owns it. Asset, liability and cash-flow records are untouched, as the accepted design's confirmation dialog states, so there is no linked-record confirmation. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets; two deletes that overlap give one 204 and not-found to the rest rather than a server error.
          */
         delete: operations["delete_1"];
         options?: never;
@@ -127,7 +127,7 @@ export interface paths {
         post?: never;
         /**
          * Remove a cash-flow entry
-         * @description Deletes the entry when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo and a retention policy belong to issue #104. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.
+         * @description Deletes the entry when the signed-in user owns it. Nothing refers to an entry, so there is never a linked-record confirmation; GET .../deletion-impact names the computed views that stop including it. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.
          */
         delete: operations["delete_2"];
         options?: never;
@@ -155,7 +155,7 @@ export interface paths {
         post?: never;
         /**
          * Remove an asset
-         * @description Deletes the asset when the signed-in user owns it. This is the plain removal the generic destructive confirmation in the accepted design promises; undo, linked-record consequences and a retention policy belong to issue #102. A second delete of the same identifier answers not-found, so the response is not idempotent and that is deliberate: it is the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.
+         * @description Deletes the asset and its valuation history when the signed-in user owns it. When a liability uses the asset as collateral or a cash-flow entry is linked to it, those records are kept with the reference cleared, and the delete is refused with 409 linked-records, carrying the same impact GET .../deletion-impact returns, unless the request says confirm=true. An asset nothing refers to deletes without it. Nothing is recoverable afterwards. A second delete of the same identifier answers not-found, the same answer any unknown identifier gets. Two deletes that overlap, which is what a double-tapped confirm button produces, give one 204 and not-found to the rest rather than a server error.
          */
         delete: operations["delete_3"];
         options?: never;
@@ -391,6 +391,26 @@ export interface paths {
         patch: operations["recordProgress"];
         trace?: never;
     };
+    "/api/v1/wealth-snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summarise the signed-in user's assets, liabilities and net worth
+         * @description Every amount is in VND. A USD asset or liability is converted with the rate the user has declared, one line at a time, rounded half-up to whole dong; the rate and its effective date are returned in exchangeRate. totalAssets sums every asset's latest value, totalLiabilities every outstanding balance, netWorth is their difference, debtToAssetRatio is liabilities over assets as a six-decimal fraction, liquidAssets sums the assets marked HIGH. Without a declared rate a USD line keeps its original amount and its VND figure is null; every total containing it has a null amountVnd, the sum of what is known in knownAmountVnd and the count left out in excludedRecordCount; netWorth and debtToAssetRatio are null and complete is false. Nothing unavailable is ever reported as zero. debtToAssetRatio is also null when total assets are zero. assetsByCategory and assetsByLiquidity group the asset lines; largestAssets is the first five converted asset lines. upcomingLiabilityDues lists every next payment and maturity date on or before asOfDate + 30 days, past ones marked overdue. lastDataUpdate is the newest of sourceDates. Every total equals the sum of the lines returned. A user with no record gets the same structure with zeros and empty arrays. Nothing is stored.
+         */
+        get: operations["snapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meta": {
         parameters: {
             query?: never;
@@ -411,6 +431,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/liabilities/{liabilityId}/deletion-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what deleting a liability would do
+         * @description Reads, without changing anything, what DELETE /api/v1/liabilities/{liabilityId} would do now: the cash-flow entries that would lose their link to it (listed). confirmationRequired is true when there is at least one. The pledged asset is never affected. The same not-found as GET answers another user's liability.
+         */
+        get: operations["deletionImpact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{goalId}/deletion-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what deleting a goal would do
+         * @description Reads, without changing anything, what DELETE /api/v1/goals/{goalId} would do: nothing beyond the goal. No record refers to a goal, so both lists are empty and confirmationRequired is false. The same not-found as GET answers another user's goal.
+         */
+        get: operations["deletionImpact_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/goal-templates": {
         parameters: {
             query?: never;
@@ -423,6 +483,46 @@ export interface paths {
          * @description Returns every template with the defaults the accepted design suggests for a new goal of that type: an expected annual return, a horizon in months, and which amount the form should prefill from figures the client already holds. Every value is a suggestion the user may change. The list is fixed and identical for every user.
          */
         get: operations["list_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goal-projections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Project every goal of the signed-in user
+         * @description One projection per goal the viewer owns, in the goal list's default order: nearest target date first, then by name. An empty array when there are no goals. Computed on every read from the goal as it is stored now and today's date in Asia/Ho_Chi_Minh, and never stored, so an edit to the goal shows in the next read and the same goal on the same day gives the same bytes. The projected amount at the target date is the future value of the allocated amount plus the future value of a level monthly contribution, compounded monthly at one twelfth of the user's expected annual return, with contributions at the end of each month; the required contribution solves the same equation for the target and is rounded up to a whole 1,000 VND; the status compares the planned contribution with it against the configured system reference thresholds. An output that cannot be derived is null, never 0, and its reason is in unavailableReasons. The expected return is the user's assumption and is never presented as guaranteed.
+         */
+        get: operations["listGoalProjections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goal-projections/{goalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Project one of the signed-in user's goals
+         * @description The projection of one goal the viewer owns. Computed on every read from the goal as it is stored now and today's date in Asia/Ho_Chi_Minh, and never stored, so an edit to the goal shows in the next read and the same goal on the same day gives the same bytes. The projected amount at the target date is the future value of the allocated amount plus the future value of a level monthly contribution, compounded monthly at one twelfth of the user's expected annual return, with contributions at the end of each month; the required contribution solves the same equation for the target and is rounded up to a whole 1,000 VND; the status compares the planned contribution with it against the configured system reference thresholds. An output that cannot be derived is null, never 0, and its reason is in unavailableReasons. The expected return is the user's assumption and is never presented as guaranteed.
+         */
+        get: operations["readGoalProjection"];
         put?: never;
         post?: never;
         delete?: never;
@@ -491,6 +591,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cash-flow-entries/{entryId}/deletion-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what deleting a cash-flow entry would do
+         * @description Reads, without changing anything, what DELETE /api/v1/cash-flow-entries/{entryId} would do. No stored record refers to an entry, so linkedEffects is always empty and confirmationRequired always false; derivedEffects names the computed views that stop including it: occurrences, the monthly report and the forecast. An asset or liability the entry links to is not affected. The same not-found as GET answers another user's entry.
+         */
+        get: operations["deletionImpact_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/session": {
         parameters: {
             query?: never;
@@ -531,6 +651,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assets/{assetId}/deletion-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what deleting an asset would do
+         * @description Reads, without changing anything, what DELETE /api/v1/assets/{assetId} would do now: the valuation records removed with the asset (counted), the liabilities that would lose it as collateral and the cash-flow entries that would lose their link (listed). confirmationRequired is true when anything would be unlinked; the valuation history alone never requires it. The same not-found as GET answers another user's asset.
+         */
+        get: operations["deletionImpact_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -541,7 +681,7 @@ export interface components {
              * @description Stable taxonomy identifier. A URN rather than a URL because the project owns no domain; RFC 9457 does not require it to dereference.
              * @enum {string}
              */
-            type: "urn:rikkaus:problem:forbidden" | "urn:rikkaus:problem:internal-error" | "urn:rikkaus:problem:malformed-request" | "urn:rikkaus:problem:method-not-allowed" | "urn:rikkaus:problem:not-acceptable" | "urn:rikkaus:problem:not-found" | "urn:rikkaus:problem:unauthorized" | "urn:rikkaus:problem:unsupported-media-type" | "urn:rikkaus:problem:validation-failed";
+            type: "urn:rikkaus:problem:forbidden" | "urn:rikkaus:problem:internal-error" | "urn:rikkaus:problem:linked-records" | "urn:rikkaus:problem:malformed-request" | "urn:rikkaus:problem:method-not-allowed" | "urn:rikkaus:problem:not-acceptable" | "urn:rikkaus:problem:not-found" | "urn:rikkaus:problem:unauthorized" | "urn:rikkaus:problem:unsupported-media-type" | "urn:rikkaus:problem:validation-failed";
             /** @description Short, human-readable summary. */
             title: string;
             /**
@@ -560,6 +700,8 @@ export interface components {
                 field?: string;
                 message?: string;
             }[];
+            /** @description Extension member, present on linked-records only. What the refused delete would do, in the shape GET .../deletion-impact returns. */
+            impact?: components["schemas"]["DeletionImpact"];
         };
         /** @description Declare the USD/VND exchange rate and the date it took effect. */
         DeclareExchangeRateRequest: {
@@ -1649,12 +1791,441 @@ export interface components {
              */
             done?: boolean;
         };
+        /** @description An asset as the snapshot counts it. */
+        WealthSnapshotAsset: {
+            /**
+             * Format: uuid
+             * @example 4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742
+             */
+            id?: string;
+            /** @example Tài khoản USD */
+            name?: string;
+            /** @example BANK_ACCOUNT */
+            category?: string;
+            /** @example HIGH */
+            liquidity?: string;
+            /**
+             * @description The current value in the asset's own currency.
+             * @example 20000
+             */
+            value?: number;
+            /**
+             * @example USD
+             * @enum {string}
+             */
+            currency?: "VND" | "USD";
+            /**
+             * @description value in VND; null when USD and no rate is declared.
+             * @example 502000000
+             */
+            valueVnd?: number;
+            /**
+             * Format: date
+             * @example 2026-09-12
+             */
+            valuationDate?: string;
+        };
+        /** @description One asset category and the sum of its assets. */
+        WealthSnapshotCategory: {
+            /**
+             * @description The asset category code.
+             * @example REAL_ESTATE
+             */
+            category?: string;
+            /**
+             * @description The sum, or null when a record is excluded.
+             * @example 6100000000
+             */
+            amountVnd?: number;
+            /**
+             * @description The sum of the converted records.
+             * @example 6100000000
+             */
+            knownAmountVnd?: number;
+            /**
+             * Format: int32
+             * @example 1
+             */
+            recordCount?: number;
+            /**
+             * Format: int32
+             * @example 0
+             */
+            excludedRecordCount?: number;
+        };
+        /** @description One date a liability falls due. */
+        WealthSnapshotDue: {
+            /**
+             * Format: uuid
+             * @description GET /api/v1/liabilities/{id} reads it.
+             * @example 9c2e7b14-5d38-4a61-b0f9-3e8d1a6c2b57
+             */
+            liabilityId?: string;
+            /** @example Khoản vay mua nhà */
+            name?: string;
+            /** @example BANK_LOAN */
+            category?: string;
+            /**
+             * @description PAYMENT is nextPaymentDate; MATURITY is maturityDate.
+             * @example PAYMENT
+             * @enum {string}
+             */
+            dueKind?: "PAYMENT" | "MATURITY";
+            /**
+             * Format: date
+             * @example 2026-12-20
+             */
+            dueDate?: string;
+            /**
+             * @description dueDate is before asOfDate.
+             * @example false
+             */
+            overdue?: boolean;
+            /**
+             * @description The recurring payment for PAYMENT, the outstanding balance for MATURITY, in the liability's currency. Null when no recurring payment is stated.
+             * @example 18750000
+             */
+            amount?: number;
+            /**
+             * @example VND
+             * @enum {string}
+             */
+            currency?: "VND" | "USD";
+            /**
+             * @description amount in VND; null when amount is null or it is USD without a declared rate.
+             * @example 18750000
+             */
+            amountVnd?: number;
+        };
+        /** @description The declared rate, as used for every conversion in this snapshot. */
+        WealthSnapshotExchangeRate: {
+            /**
+             * @description VND for one USD.
+             * @example 25100
+             */
+            usdToVndRate?: number;
+            /**
+             * Format: date
+             * @description The date the user states the rate took effect.
+             * @example 2026-09-12
+             */
+            effectiveDate?: string;
+        };
+        /** @description The six KPIs of the dashboard. */
+        WealthSnapshotKpis: {
+            /** @description Every asset's latest value, converted to VND. */
+            totalAssets?: components["schemas"]["WealthSnapshotTotal"];
+            /** @description Every liability's outstanding balance, converted to VND. */
+            totalLiabilities?: components["schemas"]["WealthSnapshotTotal"];
+            /**
+             * @description totalAssets minus totalLiabilities; may be negative. Null when either amountVnd is null.
+             * @example 10470000000
+             */
+            netWorth?: number;
+            /**
+             * @description totalLiabilities / totalAssets as a fraction, six decimals, HALF_UP (0.127645 is 12.7645 %). Null when total assets are zero or either amountVnd is null.
+             * @example 0.127645
+             */
+            debtToAssetRatio?: number;
+            /** @description Assets whose liquidity is HIGH, converted to VND. */
+            liquidAssets?: components["schemas"]["WealthSnapshotTotal"];
+            /**
+             * Format: date
+             * @description The newest date in sourceDates; null when there is no source.
+             * @example 2026-09-19
+             */
+            lastDataUpdate?: string;
+        };
+        /** @description The five largest assets by VND value. */
+        WealthSnapshotLargestAssets: {
+            /** @description At most five, in the order of assets: largest valueVnd, then Vietnamese name, then id. */
+            items?: components["schemas"]["WealthSnapshotRankedAsset"][];
+            /**
+             * Format: int32
+             * @description Assets that could not be ranked because they could not be converted.
+             * @example 0
+             */
+            excludedRecordCount?: number;
+        };
+        /** @description A liability as the snapshot counts it. */
+        WealthSnapshotLiability: {
+            /**
+             * Format: uuid
+             * @example 9c2e7b14-5d38-4a61-b0f9-3e8d1a6c2b57
+             */
+            id?: string;
+            /** @example Khoản vay mua nhà */
+            name?: string;
+            /** @example BANK_LOAN */
+            category?: string;
+            /**
+             * @description In the liability's own currency.
+             * @example 1500000000
+             */
+            outstandingBalance?: number;
+            /**
+             * @example VND
+             * @enum {string}
+             */
+            currency?: "VND" | "USD";
+            /**
+             * @description outstandingBalance in VND; null when USD and no rate is declared.
+             * @example 1500000000
+             */
+            outstandingBalanceVnd?: number;
+            /**
+             * Format: date
+             * @example 2026-12-20
+             */
+            nextPaymentDate?: string;
+            /**
+             * Format: date
+             * @example 2041-09-20
+             */
+            maturityDate?: string;
+            /** @example 18750000 */
+            recurringPaymentAmount?: number;
+            /** @example MONTHLY */
+            recurringPaymentFrequency?: string;
+            /**
+             * Format: date
+             * @description The day, in timeZone, the liability was last saved.
+             * @example 2026-11-22
+             */
+            updatedOn?: string;
+        };
+        /** @description One liquidity level and the sum of its assets. */
+        WealthSnapshotLiquidity: {
+            /**
+             * @description HIGH, MEDIUM or LOW.
+             * @example HIGH
+             */
+            liquidity?: string;
+            /**
+             * @description The sum, or null when a record is excluded.
+             * @example 3180000000
+             */
+            amountVnd?: number;
+            /**
+             * @description The sum of the converted records.
+             * @example 3180000000
+             */
+            knownAmountVnd?: number;
+            /**
+             * Format: int32
+             * @example 4
+             */
+            recordCount?: number;
+            /**
+             * Format: int32
+             * @example 0
+             */
+            excludedRecordCount?: number;
+        };
+        /** @description A ranked asset; the same figures as its row in assets. */
+        WealthSnapshotRankedAsset: {
+            /**
+             * Format: uuid
+             * @description GET /api/v1/assets/{id} reads it.
+             * @example 6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531
+             */
+            assetId?: string;
+            /** @example Căn hộ Thảo Điền */
+            name?: string;
+            /** @example REAL_ESTATE */
+            category?: string;
+            /** @example LOW */
+            liquidity?: string;
+            /** @example 6100000000 */
+            valueVnd?: number;
+            /**
+             * Format: date
+             * @example 2026-08-02
+             */
+            valuationDate?: string;
+        };
+        /** @description The signed-in user's assets, liabilities and net worth in VND, with every line they are summed from. */
+        WealthSnapshotResponse: {
+            /**
+             * Format: date
+             * @description Today in timeZone; the day the due-date window starts.
+             * @example 2026-11-22
+             */
+            asOfDate?: string;
+            /**
+             * @description The zone asOfDate is read in.
+             * @example Asia/Ho_Chi_Minh
+             */
+            timeZone?: string;
+            /**
+             * @description The reporting currency. Always VND.
+             * @example VND
+             * @enum {string}
+             */
+            currency?: "VND" | "USD";
+            /** @description The declared USD/VND rate every USD line is converted with; null when none is declared. */
+            exchangeRate?: components["schemas"]["WealthSnapshotExchangeRate"];
+            /**
+             * @description False when at least one USD asset or liability could not be converted because no rate is declared. The affected totals are then null.
+             * @example true
+             */
+            complete?: boolean;
+            kpis?: components["schemas"]["WealthSnapshotKpis"];
+            /** @description One row per category that has an asset, largest knownAmountVnd first, then by category. Not grouped into an other slice. */
+            assetsByCategory?: components["schemas"]["WealthSnapshotCategory"][];
+            /** @description One row per liquidity level that has an asset, in the order HIGH, MEDIUM, LOW. */
+            assetsByLiquidity?: components["schemas"]["WealthSnapshotLiquidity"][];
+            largestAssets?: components["schemas"]["WealthSnapshotLargestAssets"];
+            upcomingLiabilityDues?: components["schemas"]["WealthSnapshotUpcomingDues"];
+            /** @description The date every source contributes, for the freshness screen. Newest first; on one day ASSET, LIABILITY, EXCHANGE_RATE, then by Vietnamese name and id. */
+            sourceDates?: components["schemas"]["WealthSnapshotSourceDate"][];
+            /** @description Every asset, largest valueVnd first (unconverted last), then by Vietnamese name, then id. Every asset total sums these. */
+            assets?: components["schemas"]["WealthSnapshotAsset"][];
+            /** @description Every liability, largest outstandingBalanceVnd first (unconverted last), then by Vietnamese name, then id. */
+            liabilities?: components["schemas"]["WealthSnapshotLiability"][];
+        };
+        /** @description The date one source contributes to the snapshot. */
+        WealthSnapshotSourceDate: {
+            /**
+             * @example ASSET
+             * @enum {string}
+             */
+            sourceType?: "ASSET" | "LIABILITY" | "EXCHANGE_RATE";
+            /**
+             * Format: uuid
+             * @description The asset or liability; null for EXCHANGE_RATE.
+             * @example 6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531
+             */
+            sourceId?: string;
+            /**
+             * @description Its name; null for EXCHANGE_RATE.
+             * @example Danh mục cổ phiếu HOSE
+             */
+            name?: string;
+            /**
+             * Format: date
+             * @description An asset's valuationDate, the day (in timeZone) a liability was last saved, or the rate's effectiveDate. The rate is listed only when it converted a line.
+             * @example 2026-09-19
+             */
+            date?: string;
+        };
+        /** @description A sum over records that may include unconverted USD ones. amountVnd is null when any record is excluded; knownAmountVnd is always the sum of the converted records. */
+        WealthSnapshotTotal: {
+            /**
+             * @description The total, or null when excludedRecordCount > 0.
+             * @example 12002000000
+             */
+            amountVnd?: number;
+            /**
+             * @description The sum of the records that were converted.
+             * @example 12002000000
+             */
+            knownAmountVnd?: number;
+            /**
+             * Format: int32
+             * @description Every record in the set.
+             * @example 11
+             */
+            recordCount?: number;
+            /**
+             * Format: int32
+             * @description Records left out for want of a declared rate.
+             * @example 0
+             */
+            excludedRecordCount?: number;
+        };
+        /** @description Liability dates on or before asOfDate + windowDays, past ones included. */
+        WealthSnapshotUpcomingDues: {
+            /**
+             * Format: int32
+             * @description How many days ahead of asOfDate count as upcoming.
+             * @example 30
+             */
+            windowDays?: number;
+            /**
+             * Format: date
+             * @description asOfDate + windowDays, included.
+             * @example 2026-12-22
+             */
+            windowEnd?: string;
+            /** @description By dueDate, PAYMENT before MATURITY, then Vietnamese name, then liabilityId. */
+            items?: components["schemas"]["WealthSnapshotDue"][];
+        };
         MetaResponse: {
             application?: string;
             apiVersion?: string;
             buildVersion?: string;
             /** Format: date-time */
             serverTime?: string;
+        };
+        /** @description What deleting this record does to other stored records and to computed views, read from the database at the moment of the request. */
+        DeletionImpact: {
+            /**
+             * @description The kind of record being deleted.
+             * @example ASSET
+             * @enum {string}
+             */
+            recordType?: "ASSET" | "ASSET_VALUATION" | "LIABILITY" | "CASH_FLOW_ENTRY" | "GOAL";
+            /**
+             * Format: uuid
+             * @description The record being deleted.
+             */
+            recordId?: string;
+            /**
+             * @description True when at least one linkedEffects entry is UNLINKED. A DELETE of this record then answers 409 linked-records unless it carries confirm=true.
+             * @example true
+             */
+            confirmationRequired?: boolean;
+            /** @description Stored records the delete removes or changes. Only kinds with at least one affected record appear. */
+            linkedEffects?: components["schemas"]["LinkedRecordEffect"][];
+            /** @description Computed views that will no longer include this record. Descriptive: nothing is stored for them and nothing is counted. */
+            derivedEffects?: ("CASH_FLOW_OCCURRENCES" | "MONTHLY_CASH_FLOW_REPORTS" | "CASH_FLOW_FORECAST")[];
+        };
+        /** @description One kind of stored record the delete reaches, and what happens to it. */
+        LinkedRecordEffect: {
+            /**
+             * @description The kind of record affected.
+             * @example LIABILITY
+             * @enum {string}
+             */
+            recordType?: "ASSET" | "ASSET_VALUATION" | "LIABILITY" | "CASH_FLOW_ENTRY" | "GOAL";
+            /**
+             * @description DELETED: removed together with the record. UNLINKED: kept, with the field named in field set to null.
+             * @example UNLINKED
+             * @enum {string}
+             */
+            effect?: "DELETED" | "UNLINKED";
+            /**
+             * @description For UNLINKED, the response member that becomes null on each affected record. Null for DELETED.
+             * @example collateralAssetId
+             */
+            field?: string | null;
+            /**
+             * Format: int64
+             * @description How many records are affected. Always at least 1.
+             * @example 1
+             */
+            count?: number;
+            /** @description The affected records, for UNLINKED. Empty for DELETED, where only the count is given. */
+            records?: components["schemas"]["LinkedRecordReference"][];
+        };
+        /** @description An affected record, identified for display. */
+        LinkedRecordReference: {
+            /**
+             * Format: uuid
+             * @description The affected record's identifier.
+             */
+            id?: string;
+            /**
+             * @description The user's label for it: a liability's name, a cash-flow entry's notes. Null for an entry recorded without notes.
+             * @example Vay mua nhà Vietcombank
+             */
+            label?: string | null;
+            /**
+             * @description The affected record's category constant.
+             * @example BANK_LOAN
+             */
+            category?: string;
         };
         /** @description A goal template: a type and the suggested defaults for a new goal of that type. */
         GoalTemplateResponse: {
@@ -1681,6 +2252,163 @@ export interface components {
              * @enum {string}
              */
             amountPrefill?: "NONE" | "TARGET_FROM_SIX_MONTHS_OF_EXPENSES" | "ALLOCATED_FROM_CURRENT_NET_WORTH" | "TARGET_FROM_TOTAL_LIABILITIES";
+        };
+        /** @description A goal's projection on today's date in Asia/Ho_Chi_Minh. Computed on every read and never stored. The method is stated in `method` and in docs/api-contract-conventions.md. */
+        GoalProjection: {
+            /**
+             * Format: uuid
+             * @description The projected goal's identifier.
+             * @example 9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92
+             */
+            goalId?: string;
+            /**
+             * @description The goal's name.
+             * @example Mua nhà cho con
+             */
+            goalName?: string;
+            /**
+             * @description The currency every amount is in. Always VND.
+             * @example VND
+             * @enum {string}
+             */
+            currency?: "VND" | "USD";
+            /**
+             * Format: date
+             * @description The reference day: today in Asia/Ho_Chi_Minh.
+             * @example 2026-11-22
+             */
+            asOfDate?: string;
+            /**
+             * @description ACTIVE when at least one contribution month remains; DUE_THIS_MONTH when the target date is today or later this month; EXPIRED when it is before asOfDate.
+             * @example ACTIVE
+             * @enum {string}
+             */
+            timeline?: "ACTIVE" | "DUE_THIS_MONTH" | "EXPIRED";
+            /**
+             * @description Whether the allocated amount already meets the target amount.
+             * @example false
+             */
+            targetReached?: boolean;
+            /**
+             * @description currentAllocatedAmount / targetAmount × 100, rounded down to 2 decimals, at most 100.
+             * @example 40
+             */
+            completionPercent?: number;
+            /**
+             * @description targetAmount − currentAllocatedAmount, never below 0.
+             * @example 1800000000
+             */
+            remainingAmount?: number;
+            /**
+             * Format: int32
+             * @description Contribution months from the month after asOfDate through the target month, both included. 0 when DUE_THIS_MONTH or EXPIRED.
+             * @example 57
+             */
+            remainingMonths?: number;
+            /**
+             * Format: int32
+             * @description Days since the target date. Null unless EXPIRED.
+             * @example 22
+             */
+            daysPastTargetDate?: number;
+            /**
+             * @description The level monthly contribution that reaches the target, rounded up to a whole 1,000 VND; 0.00 when nothing more is needed. Null when not ACTIVE, or when the expected return is missing and the goal is not yet funded.
+             * @example 21371000
+             */
+            requiredMonthlyContribution?: number;
+            /**
+             * @description plannedMonthlyContribution / requiredMonthlyContribution × 100, rounded down to 2 decimals; 100.00 when nothing is required. Null when either is unavailable.
+             * @example 116.98
+             */
+            contributionCoveragePercent?: number;
+            /**
+             * @description Coverage against the system reference thresholds in the assumptions. Null whenever the coverage is unavailable, including every DUE_THIS_MONTH and EXPIRED goal.
+             * @example ON_TRACK
+             * @enum {string}
+             */
+            status?: "ON_TRACK" | "AT_RISK" | "BEHIND";
+            /** @description The projected amount at the target date as its two parts. Null unless ACTIVE with both a planned contribution and an expected return. */
+            projectedAtTargetDate?: components["schemas"]["GoalProjectionBreakdown"];
+            /** @description Intermediate figures for redoing the arithmetic. Null unless ACTIVE with an expected return. */
+            calculation?: components["schemas"]["GoalProjectionCalculation"];
+            /** @description Why each null output is null. Empty when every output is available. */
+            unavailableReasons?: ("TARGET_DATE_PASSED" | "NO_CONTRIBUTION_MONTH" | "PLANNED_MONTHLY_CONTRIBUTION_MISSING" | "EXPECTED_ANNUAL_RETURN_MISSING")[];
+            /** @description Every assumption behind the projection, in a fixed order, with who supplied it. */
+            assumptions?: components["schemas"]["GoalProjectionAssumption"][];
+            /** @description The projection method in words. */
+            method?: components["schemas"]["GoalProjectionMethod"];
+            /**
+             * @description States that the expected return is the user's assumption and is not guaranteed.
+             * @example The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ.
+             */
+            disclaimer?: string;
+        };
+        /** @description One line of the assumption ledger. */
+        GoalProjectionAssumption: {
+            /**
+             * @description Which assumption.
+             * @example EXPECTED_ANNUAL_RETURN_PERCENT
+             * @enum {string}
+             */
+            key?: "TARGET_AMOUNT" | "CURRENT_ALLOCATED_AMOUNT" | "TARGET_DATE" | "PLANNED_MONTHLY_CONTRIBUTION" | "EXPECTED_ANNUAL_RETURN_PERCENT" | "AS_OF_DATE" | "TIME_ZONE" | "FIRST_CONTRIBUTION_MONTH" | "COMPOUNDING" | "CONTRIBUTION_TIMING" | "REQUIRED_CONTRIBUTION_ROUNDING" | "ON_TRACK_MIN_COVERAGE_PERCENT" | "AT_RISK_MIN_COVERAGE_PERCENT" | "INFLATION" | "TAXES_AND_FEES" | "RETURN_VARIABILITY" | "CASH_FLOW_LINK";
+            /**
+             * @description USER_ENTERED on the goal, a SYSTEM convention, or NOT_MODELLED by the projection.
+             * @example USER_ENTERED
+             * @enum {string}
+             */
+            source?: "USER_ENTERED" | "SYSTEM" | "NOT_MODELLED";
+            /**
+             * @description The value as canonical text: a plain decimal, an ISO date or month, or an identifier. Null when the user did not state it or it is NOT_MODELLED.
+             * @example 6.00
+             */
+            value?: string;
+        };
+        /** @description The projected amount at the target date, in two parts. */
+        GoalProjectionBreakdown: {
+            /**
+             * @description currentAllocatedAmount × g, rounded half up to 2 decimals.
+             * @example 1594581665.13
+             */
+            fromAllocated?: number;
+            /**
+             * @description plannedMonthlyContribution × (g − 1) / r, or × n when r = 0, rounded half up to 2 decimals.
+             * @example 1644090271.39
+             */
+            fromContributions?: number;
+            /**
+             * @description fromAllocated + fromContributions, exactly.
+             * @example 3238671936.52
+             */
+            total?: number;
+            /**
+             * @description total − targetAmount. Positive is a surplus, negative a shortfall.
+             * @example 238671936.52
+             */
+            gapToTarget?: number;
+        };
+        /** @description Intermediate figures, rounded for display only. */
+        GoalProjectionCalculation: {
+            /**
+             * @description expectedAnnualReturnPercent / 12, in percent, rounded half up to 6 decimals.
+             * @example 0.5
+             */
+            monthlyRatePercent?: number;
+            /**
+             * @description g = (1 + r)^n, rounded half up to 10 decimals.
+             * @example 1.3288180543
+             */
+            growthFactor?: number;
+        };
+        /** @description The projection method in words, as implemented. */
+        GoalProjectionMethod: {
+            /** @example FUTURE_VALUE_MONTHLY_COMPOUNDING */
+            name?: string;
+            remainingMonths?: string;
+            monthlyRate?: string;
+            projectedAmount?: string;
+            requiredMonthlyContribution?: string;
+            status?: string;
+            rounding?: string;
         };
         /** @description Income, expense, net, composition and passive income of one calendar month, in VND. */
         MonthlyCashFlowReport: {
@@ -2659,7 +3387,13 @@ export interface operations {
     };
     delete: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description true once the user has seen and accepted the linked-record effects. Absent or false: a liability with linked entries is not deleted.
+                 * @example true
+                 */
+                confirm?: boolean;
+            };
             header?: never;
             path: {
                 liabilityId: string;
@@ -2675,7 +3409,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description The identifier in the path is not a UUID */
+            /** @description The identifier in the path is not a UUID, or confirm is not a boolean */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2704,6 +3438,15 @@ export interface operations {
             };
             /** @description Wrong HTTP method */
             405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description linked-records: cash-flow entries would be unlinked and confirm=true was not sent. Nothing was deleted; the impact member says what the confirmed delete would do */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3268,7 +4011,13 @@ export interface operations {
     };
     delete_3: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description true once the user has seen and accepted the linked-record effects. Absent or false: an asset with linked records is not deleted.
+                 * @example true
+                 */
+                confirm?: boolean;
+            };
             header?: never;
             path: {
                 assetId: string;
@@ -3284,7 +4033,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description The identifier in the path is not a UUID */
+            /** @description The identifier in the path is not a UUID, or confirm is not a boolean */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3313,6 +4062,15 @@ export interface operations {
             };
             /** @description Wrong HTTP method */
             405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description linked-records: other records would be unlinked and confirm=true was not sent. Nothing was deleted; the impact member says what the confirmed delete would do */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4531,6 +5289,53 @@ export interface operations {
             };
         };
     };
+    snapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The snapshot, possibly of a user with no record yet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WealthSnapshotResponse"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     meta: {
         parameters: {
             query?: never;
@@ -4549,6 +5354,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetaResponse"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    deletionImpact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                liabilityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What the delete would do */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionImpact"];
+                };
+            };
+            /** @description The identifier in the path is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No such liability, or it belongs to another user */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    deletionImpact_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What the delete would do */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionImpact"];
+                };
+            };
+            /** @description The identifier in the path is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No such goal, or it belongs to another user */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
             /** @description Wrong HTTP method */
@@ -4599,6 +5538,124 @@ export interface operations {
                 };
             };
             /** @description Wrong HTTP method; the templates are read-only */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    listGoalProjections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The viewer's goal projections, possibly empty */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalProjection"][];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    readGoalProjection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The goal's identifier.
+                 * @example 9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92
+                 */
+                goalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The goal's projection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalProjection"];
+                };
+            };
+            /** @description The goal identifier is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No goal with this identifier is visible to the viewer: it does not exist, or it belongs to someone else. The two are deliberately indistinguishable. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
             405: {
                 headers: {
                     [name: string]: unknown;
@@ -4797,6 +5854,73 @@ export interface operations {
             };
         };
     };
+    deletionImpact_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What the delete would do */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionImpact"];
+                };
+            };
+            /** @description The identifier in the path is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No such entry, or it belongs to another user */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     currentSession: {
         parameters: {
             query?: never;
@@ -4893,6 +6017,73 @@ export interface operations {
                 };
             };
             /** @description Wrong HTTP method. A record is never edited or deleted */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    deletionImpact_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What the delete would do */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionImpact"];
+                };
+            };
+            /** @description The identifier in the path is not a UUID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No such asset, or it belongs to another user */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
             405: {
                 headers: {
                     [name: string]: unknown;

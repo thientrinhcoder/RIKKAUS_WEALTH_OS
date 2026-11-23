@@ -15,6 +15,7 @@ const KNOWN_PROBLEM_TYPE_SET = {
   'urn:rikkaus:problem:method-not-allowed': true,
   'urn:rikkaus:problem:not-acceptable': true,
   'urn:rikkaus:problem:unsupported-media-type': true,
+  'urn:rikkaus:problem:linked-records': true,
   'urn:rikkaus:problem:unauthorized': true,
   'urn:rikkaus:problem:forbidden': true,
   'urn:rikkaus:problem:internal-error': true,

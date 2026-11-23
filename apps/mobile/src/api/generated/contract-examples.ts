@@ -3,7 +3,7 @@
  * Do not edit: run `npm run api:generate` after the contract changes.
  */
 
-/** 51 examples, copied verbatim from the contract. */
+/** 61 examples, copied verbatim from the contract. */
 export const contractExamples = {
   "GET /api/v1/settings/exchange-rate": {
     "200": {
@@ -859,6 +859,334 @@ export const contractExamples = {
       }
     }
   },
+  "GET /api/v1/wealth-snapshot": {
+    "200": {
+      "contentType": "application/json",
+      "examples": {
+        "a USD account and a USD loan after declaring 1 USD = 25,100 VND": {
+          "asOfDate": "2026-11-22",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "currency": "VND",
+          "exchangeRate": {
+            "usdToVndRate": 25100,
+            "effectiveDate": "2026-11-20"
+          },
+          "complete": true,
+          "kpis": {
+            "totalAssets": {
+              "amountVnd": 650000000,
+              "knownAmountVnd": 650000000,
+              "recordCount": 2,
+              "excludedRecordCount": 0
+            },
+            "totalLiabilities": {
+              "amountVnd": 125500000,
+              "knownAmountVnd": 125500000,
+              "recordCount": 1,
+              "excludedRecordCount": 0
+            },
+            "netWorth": 524500000,
+            "debtToAssetRatio": 0.193077,
+            "liquidAssets": {
+              "amountVnd": 650000000,
+              "knownAmountVnd": 650000000,
+              "recordCount": 2,
+              "excludedRecordCount": 0
+            },
+            "lastDataUpdate": "2026-11-22"
+          },
+          "assetsByCategory": [
+            {
+              "category": "BANK_ACCOUNT",
+              "amountVnd": 502000000,
+              "knownAmountVnd": 502000000,
+              "recordCount": 1,
+              "excludedRecordCount": 0
+            },
+            {
+              "category": "CASH",
+              "amountVnd": 148000000,
+              "knownAmountVnd": 148000000,
+              "recordCount": 1,
+              "excludedRecordCount": 0
+            }
+          ],
+          "assetsByLiquidity": [
+            {
+              "liquidity": "HIGH",
+              "amountVnd": 650000000,
+              "knownAmountVnd": 650000000,
+              "recordCount": 2,
+              "excludedRecordCount": 0
+            }
+          ],
+          "largestAssets": {
+            "items": [
+              {
+                "assetId": "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+                "name": "Tài khoản USD",
+                "category": "BANK_ACCOUNT",
+                "liquidity": "HIGH",
+                "valueVnd": 502000000,
+                "valuationDate": "2026-11-15"
+              },
+              {
+                "assetId": "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                "name": "Tiền mặt dự phòng",
+                "category": "CASH",
+                "liquidity": "HIGH",
+                "valueVnd": 148000000,
+                "valuationDate": "2026-11-15"
+              }
+            ],
+            "excludedRecordCount": 0
+          },
+          "upcomingLiabilityDues": {
+            "windowDays": 30,
+            "windowEnd": "2026-12-22",
+            "items": []
+          },
+          "sourceDates": [
+            {
+              "sourceType": "LIABILITY",
+              "sourceId": "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+              "name": "Khoản vay USD từ người thân",
+              "date": "2026-11-22"
+            },
+            {
+              "sourceType": "EXCHANGE_RATE",
+              "sourceId": null,
+              "name": null,
+              "date": "2026-11-20"
+            },
+            {
+              "sourceType": "ASSET",
+              "sourceId": "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+              "name": "Tài khoản USD",
+              "date": "2026-11-15"
+            },
+            {
+              "sourceType": "ASSET",
+              "sourceId": "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+              "name": "Tiền mặt dự phòng",
+              "date": "2026-11-15"
+            }
+          ],
+          "assets": [
+            {
+              "id": "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+              "name": "Tài khoản USD",
+              "category": "BANK_ACCOUNT",
+              "liquidity": "HIGH",
+              "value": 20000,
+              "currency": "USD",
+              "valueVnd": 502000000,
+              "valuationDate": "2026-11-15"
+            },
+            {
+              "id": "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+              "name": "Tiền mặt dự phòng",
+              "category": "CASH",
+              "liquidity": "HIGH",
+              "value": 148000000,
+              "currency": "VND",
+              "valueVnd": 148000000,
+              "valuationDate": "2026-11-15"
+            }
+          ],
+          "liabilities": [
+            {
+              "id": "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+              "name": "Khoản vay USD từ người thân",
+              "category": "PERSONAL_LOAN",
+              "outstandingBalance": 5000,
+              "currency": "USD",
+              "outstandingBalanceVnd": 125500000,
+              "nextPaymentDate": null,
+              "maturityDate": null,
+              "recurringPaymentAmount": null,
+              "recurringPaymentFrequency": null,
+              "updatedOn": "2026-11-22"
+            }
+          ]
+        },
+        "the same records before any rate is declared": {
+          "asOfDate": "2026-11-22",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "currency": "VND",
+          "exchangeRate": null,
+          "complete": false,
+          "kpis": {
+            "totalAssets": {
+              "amountVnd": null,
+              "knownAmountVnd": 148000000,
+              "recordCount": 2,
+              "excludedRecordCount": 1
+            },
+            "totalLiabilities": {
+              "amountVnd": null,
+              "knownAmountVnd": 0,
+              "recordCount": 1,
+              "excludedRecordCount": 1
+            },
+            "netWorth": null,
+            "debtToAssetRatio": null,
+            "liquidAssets": {
+              "amountVnd": null,
+              "knownAmountVnd": 148000000,
+              "recordCount": 2,
+              "excludedRecordCount": 1
+            },
+            "lastDataUpdate": "2026-11-22"
+          },
+          "assetsByCategory": [
+            {
+              "category": "CASH",
+              "amountVnd": 148000000,
+              "knownAmountVnd": 148000000,
+              "recordCount": 1,
+              "excludedRecordCount": 0
+            },
+            {
+              "category": "BANK_ACCOUNT",
+              "amountVnd": null,
+              "knownAmountVnd": 0,
+              "recordCount": 1,
+              "excludedRecordCount": 1
+            }
+          ],
+          "assetsByLiquidity": [
+            {
+              "liquidity": "HIGH",
+              "amountVnd": null,
+              "knownAmountVnd": 148000000,
+              "recordCount": 2,
+              "excludedRecordCount": 1
+            }
+          ],
+          "largestAssets": {
+            "items": [
+              {
+                "assetId": "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+                "name": "Tiền mặt dự phòng",
+                "category": "CASH",
+                "liquidity": "HIGH",
+                "valueVnd": 148000000,
+                "valuationDate": "2026-11-15"
+              }
+            ],
+            "excludedRecordCount": 1
+          },
+          "upcomingLiabilityDues": {
+            "windowDays": 30,
+            "windowEnd": "2026-12-22",
+            "items": []
+          },
+          "sourceDates": [
+            {
+              "sourceType": "LIABILITY",
+              "sourceId": "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+              "name": "Khoản vay USD từ người thân",
+              "date": "2026-11-22"
+            },
+            {
+              "sourceType": "ASSET",
+              "sourceId": "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+              "name": "Tài khoản USD",
+              "date": "2026-11-15"
+            },
+            {
+              "sourceType": "ASSET",
+              "sourceId": "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+              "name": "Tiền mặt dự phòng",
+              "date": "2026-11-15"
+            }
+          ],
+          "assets": [
+            {
+              "id": "e3c17a9d-0f52-4b68-a4d1-9b6e2c8f5a03",
+              "name": "Tiền mặt dự phòng",
+              "category": "CASH",
+              "liquidity": "HIGH",
+              "value": 148000000,
+              "currency": "VND",
+              "valueVnd": 148000000,
+              "valuationDate": "2026-11-15"
+            },
+            {
+              "id": "4b8d2e61-7a03-4f59-8c1e-d6a9b3f0e742",
+              "name": "Tài khoản USD",
+              "category": "BANK_ACCOUNT",
+              "liquidity": "HIGH",
+              "value": 20000,
+              "currency": "USD",
+              "valueVnd": null,
+              "valuationDate": "2026-11-15"
+            }
+          ],
+          "liabilities": [
+            {
+              "id": "71d5b0e8-3c29-4a6f-8e17-2f9c4d6b1a85",
+              "name": "Khoản vay USD từ người thân",
+              "category": "PERSONAL_LOAN",
+              "outstandingBalance": 5000,
+              "currency": "USD",
+              "outstandingBalanceVnd": null,
+              "nextPaymentDate": null,
+              "maturityDate": null,
+              "recurringPaymentAmount": null,
+              "recurringPaymentFrequency": null,
+              "updatedOn": "2026-11-22"
+            }
+          ]
+        },
+        "a user with no record yet": {
+          "asOfDate": "2026-11-22",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "currency": "VND",
+          "exchangeRate": null,
+          "complete": true,
+          "kpis": {
+            "totalAssets": {
+              "amountVnd": 0,
+              "knownAmountVnd": 0,
+              "recordCount": 0,
+              "excludedRecordCount": 0
+            },
+            "totalLiabilities": {
+              "amountVnd": 0,
+              "knownAmountVnd": 0,
+              "recordCount": 0,
+              "excludedRecordCount": 0
+            },
+            "netWorth": 0,
+            "debtToAssetRatio": null,
+            "liquidAssets": {
+              "amountVnd": 0,
+              "knownAmountVnd": 0,
+              "recordCount": 0,
+              "excludedRecordCount": 0
+            },
+            "lastDataUpdate": null
+          },
+          "assetsByCategory": [],
+          "assetsByLiquidity": [],
+          "largestAssets": {
+            "items": [],
+            "excludedRecordCount": 0
+          },
+          "upcomingLiabilityDues": {
+            "windowDays": 30,
+            "windowEnd": "2026-12-22",
+            "items": []
+          },
+          "sourceDates": [],
+          "assets": [],
+          "liabilities": []
+        }
+      }
+    }
+  },
   "GET /api/v1/meta": {
     "200": {
       "contentType": "application/json",
@@ -868,6 +1196,424 @@ export const contractExamples = {
           "apiVersion": "v1",
           "buildVersion": "0.0.1-SNAPSHOT",
           "serverTime": "2026-09-27T07:42:00Z"
+        }
+      }
+    }
+  },
+  "GET /api/v1/liabilities/{liabilityId}/deletion-impact": {
+    "200": {
+      "contentType": "application/json",
+      "examples": {
+        "Mortgage with its monthly instalment linked": {
+          "recordType": "LIABILITY",
+          "recordId": "9d1e7c42-5b6a-4f3e-8d2c-1b0a9f8e7d6c",
+          "confirmationRequired": true,
+          "linkedEffects": [
+            {
+              "recordType": "CASH_FLOW_ENTRY",
+              "effect": "UNLINKED",
+              "field": "linkedLiabilityId",
+              "count": 1,
+              "records": [
+                {
+                  "id": "5e7a9c1b-3d4f-4a6b-8c0d-2e4f6a8b0c1d",
+                  "label": "Trả góp vay mua nhà Vietcombank",
+                  "category": "DEBT_PRINCIPAL_PAYMENT"
+                }
+              ]
+            }
+          ],
+          "derivedEffects": []
+        }
+      }
+    }
+  },
+  "GET /api/v1/goal-projections": {
+    "200": {
+      "contentType": "application/json",
+      "examples": {
+        "no goals yet": [],
+        "one goal whose target date has passed": [
+          {
+            "goalId": "c3e8a1f5-7b24-4d96-8e0a-1f5c9b3d6e27",
+            "goalName": "Đổi xe gia đình",
+            "currency": "VND",
+            "asOfDate": "2026-11-22",
+            "timeline": "EXPIRED",
+            "targetReached": false,
+            "completionPercent": 77.5,
+            "remainingAmount": 180000000,
+            "remainingMonths": 0,
+            "daysPastTargetDate": 22,
+            "requiredMonthlyContribution": null,
+            "contributionCoveragePercent": null,
+            "status": null,
+            "projectedAtTargetDate": null,
+            "calculation": null,
+            "unavailableReasons": [
+              "TARGET_DATE_PASSED"
+            ],
+            "assumptions": [
+              {
+                "key": "TARGET_AMOUNT",
+                "source": "USER_ENTERED",
+                "value": "800000000.00"
+              },
+              {
+                "key": "CURRENT_ALLOCATED_AMOUNT",
+                "source": "USER_ENTERED",
+                "value": "620000000.00"
+              },
+              {
+                "key": "TARGET_DATE",
+                "source": "USER_ENTERED",
+                "value": "2026-10-31"
+              },
+              {
+                "key": "PLANNED_MONTHLY_CONTRIBUTION",
+                "source": "USER_ENTERED",
+                "value": "0.00"
+              },
+              {
+                "key": "EXPECTED_ANNUAL_RETURN_PERCENT",
+                "source": "USER_ENTERED",
+                "value": "4.00"
+              },
+              {
+                "key": "AS_OF_DATE",
+                "source": "SYSTEM",
+                "value": "2026-11-22"
+              },
+              {
+                "key": "TIME_ZONE",
+                "source": "SYSTEM",
+                "value": "Asia/Ho_Chi_Minh"
+              },
+              {
+                "key": "FIRST_CONTRIBUTION_MONTH",
+                "source": "SYSTEM",
+                "value": null
+              },
+              {
+                "key": "COMPOUNDING",
+                "source": "SYSTEM",
+                "value": "MONTHLY"
+              },
+              {
+                "key": "CONTRIBUTION_TIMING",
+                "source": "SYSTEM",
+                "value": "END_OF_MONTH"
+              },
+              {
+                "key": "REQUIRED_CONTRIBUTION_ROUNDING",
+                "source": "SYSTEM",
+                "value": "UP_TO_1000_VND"
+              },
+              {
+                "key": "ON_TRACK_MIN_COVERAGE_PERCENT",
+                "source": "SYSTEM",
+                "value": "100"
+              },
+              {
+                "key": "AT_RISK_MIN_COVERAGE_PERCENT",
+                "source": "SYSTEM",
+                "value": "80"
+              },
+              {
+                "key": "INFLATION",
+                "source": "NOT_MODELLED",
+                "value": null
+              },
+              {
+                "key": "TAXES_AND_FEES",
+                "source": "NOT_MODELLED",
+                "value": null
+              },
+              {
+                "key": "RETURN_VARIABILITY",
+                "source": "NOT_MODELLED",
+                "value": null
+              },
+              {
+                "key": "CASH_FLOW_LINK",
+                "source": "NOT_MODELLED",
+                "value": null
+              }
+            ],
+            "method": {
+              "name": "FUTURE_VALUE_MONTHLY_COMPOUNDING",
+              "remainingMonths": "n = calendar months from the month after asOfDate through the month of targetDate, both included; contributions arrive at the end of each month. A target date before asOfDate is EXPIRED; a target date later this month leaves n = 0 and is DUE_THIS_MONTH.",
+              "monthlyRate": "r = expectedAnnualReturnPercent / 100 / 12, compounded monthly; g = (1 + r)^n.",
+              "projectedAmount": "fromAllocated = currentAllocatedAmount × g; fromContributions = plannedMonthlyContribution × (g − 1) / r, or plannedMonthlyContribution × n when r = 0; total = fromAllocated + fromContributions; gapToTarget = total − targetAmount.",
+              "requiredMonthlyContribution": "(targetAmount − currentAllocatedAmount × g) × r / (g − 1), or (targetAmount − currentAllocatedAmount) / n when r = 0; 0 when the goal is already funded or the allocated amount alone reaches the target; otherwise rounded up to the next 1,000 VND.",
+              "status": "contributionCoveragePercent = plannedMonthlyContribution / requiredMonthlyContribution × 100 (100 when nothing is required). ON_TRACK at or above 100, AT_RISK at or above 80, BEHIND below; these are system reference thresholds, compared before the percentage is rounded.",
+              "rounding": "Intermediate values carry 34 significant digits. Each part of the projected amount is rounded half up to 2 decimals before they are added, so the parts add up to the total. Percentages are rounded down to 2 decimals."
+            },
+            "disclaimer": "The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ."
+          }
+        ]
+      }
+    }
+  },
+  "GET /api/v1/goal-projections/{goalId}": {
+    "200": {
+      "contentType": "application/json",
+      "examples": {
+        "an active goal on track": {
+          "goalId": "9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92",
+          "goalName": "Mua nhà cho con",
+          "currency": "VND",
+          "asOfDate": "2026-11-22",
+          "timeline": "ACTIVE",
+          "targetReached": false,
+          "completionPercent": 40,
+          "remainingAmount": 1800000000,
+          "remainingMonths": 57,
+          "daysPastTargetDate": null,
+          "requiredMonthlyContribution": 21371000,
+          "contributionCoveragePercent": 116.98,
+          "status": "ON_TRACK",
+          "projectedAtTargetDate": {
+            "fromAllocated": 1594581665.13,
+            "fromContributions": 1644090271.39,
+            "total": 3238671936.52,
+            "gapToTarget": 238671936.52
+          },
+          "calculation": {
+            "monthlyRatePercent": 0.5,
+            "growthFactor": 1.3288180543
+          },
+          "unavailableReasons": [],
+          "assumptions": [
+            {
+              "key": "TARGET_AMOUNT",
+              "source": "USER_ENTERED",
+              "value": "3000000000.00"
+            },
+            {
+              "key": "CURRENT_ALLOCATED_AMOUNT",
+              "source": "USER_ENTERED",
+              "value": "1200000000.00"
+            },
+            {
+              "key": "TARGET_DATE",
+              "source": "USER_ENTERED",
+              "value": "2031-08-31"
+            },
+            {
+              "key": "PLANNED_MONTHLY_CONTRIBUTION",
+              "source": "USER_ENTERED",
+              "value": "25000000.00"
+            },
+            {
+              "key": "EXPECTED_ANNUAL_RETURN_PERCENT",
+              "source": "USER_ENTERED",
+              "value": "6.00"
+            },
+            {
+              "key": "AS_OF_DATE",
+              "source": "SYSTEM",
+              "value": "2026-11-22"
+            },
+            {
+              "key": "TIME_ZONE",
+              "source": "SYSTEM",
+              "value": "Asia/Ho_Chi_Minh"
+            },
+            {
+              "key": "FIRST_CONTRIBUTION_MONTH",
+              "source": "SYSTEM",
+              "value": "2026-12"
+            },
+            {
+              "key": "COMPOUNDING",
+              "source": "SYSTEM",
+              "value": "MONTHLY"
+            },
+            {
+              "key": "CONTRIBUTION_TIMING",
+              "source": "SYSTEM",
+              "value": "END_OF_MONTH"
+            },
+            {
+              "key": "REQUIRED_CONTRIBUTION_ROUNDING",
+              "source": "SYSTEM",
+              "value": "UP_TO_1000_VND"
+            },
+            {
+              "key": "ON_TRACK_MIN_COVERAGE_PERCENT",
+              "source": "SYSTEM",
+              "value": "100"
+            },
+            {
+              "key": "AT_RISK_MIN_COVERAGE_PERCENT",
+              "source": "SYSTEM",
+              "value": "80"
+            },
+            {
+              "key": "INFLATION",
+              "source": "NOT_MODELLED",
+              "value": null
+            },
+            {
+              "key": "TAXES_AND_FEES",
+              "source": "NOT_MODELLED",
+              "value": null
+            },
+            {
+              "key": "RETURN_VARIABILITY",
+              "source": "NOT_MODELLED",
+              "value": null
+            },
+            {
+              "key": "CASH_FLOW_LINK",
+              "source": "NOT_MODELLED",
+              "value": null
+            }
+          ],
+          "method": {
+            "name": "FUTURE_VALUE_MONTHLY_COMPOUNDING",
+            "remainingMonths": "n = calendar months from the month after asOfDate through the month of targetDate, both included; contributions arrive at the end of each month. A target date before asOfDate is EXPIRED; a target date later this month leaves n = 0 and is DUE_THIS_MONTH.",
+            "monthlyRate": "r = expectedAnnualReturnPercent / 100 / 12, compounded monthly; g = (1 + r)^n.",
+            "projectedAmount": "fromAllocated = currentAllocatedAmount × g; fromContributions = plannedMonthlyContribution × (g − 1) / r, or plannedMonthlyContribution × n when r = 0; total = fromAllocated + fromContributions; gapToTarget = total − targetAmount.",
+            "requiredMonthlyContribution": "(targetAmount − currentAllocatedAmount × g) × r / (g − 1), or (targetAmount − currentAllocatedAmount) / n when r = 0; 0 when the goal is already funded or the allocated amount alone reaches the target; otherwise rounded up to the next 1,000 VND.",
+            "status": "contributionCoveragePercent = plannedMonthlyContribution / requiredMonthlyContribution × 100 (100 when nothing is required). ON_TRACK at or above 100, AT_RISK at or above 80, BEHIND below; these are system reference thresholds, compared before the percentage is rounded.",
+            "rounding": "Intermediate values carry 34 significant digits. Each part of the projected amount is rounded half up to 2 decimals before they are added, so the parts add up to the total. Percentages are rounded down to 2 decimals."
+          },
+          "disclaimer": "The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ."
+        },
+        "no planned monthly contribution": {
+          "goalId": "4a7c2e91-5d08-4f3b-9c61-b2e8d0a5f714",
+          "goalName": "Quỹ học tiếp cho bản thân",
+          "currency": "VND",
+          "asOfDate": "2026-11-22",
+          "timeline": "ACTIVE",
+          "targetReached": false,
+          "completionPercent": 10,
+          "remainingAmount": 360000000,
+          "remainingMonths": 37,
+          "daysPastTargetDate": null,
+          "requiredMonthlyContribution": 9025000,
+          "contributionCoveragePercent": null,
+          "status": null,
+          "projectedAtTargetDate": null,
+          "calculation": {
+            "monthlyRatePercent": 0.333333,
+            "growthFactor": 1.1310294474
+          },
+          "unavailableReasons": [
+            "PLANNED_MONTHLY_CONTRIBUTION_MISSING"
+          ],
+          "assumptions": [
+            {
+              "key": "TARGET_AMOUNT",
+              "source": "USER_ENTERED",
+              "value": "400000000.00"
+            },
+            {
+              "key": "CURRENT_ALLOCATED_AMOUNT",
+              "source": "USER_ENTERED",
+              "value": "40000000.00"
+            },
+            {
+              "key": "TARGET_DATE",
+              "source": "USER_ENTERED",
+              "value": "2029-12-31"
+            },
+            {
+              "key": "PLANNED_MONTHLY_CONTRIBUTION",
+              "source": "USER_ENTERED",
+              "value": null
+            },
+            {
+              "key": "EXPECTED_ANNUAL_RETURN_PERCENT",
+              "source": "USER_ENTERED",
+              "value": "4.00"
+            },
+            {
+              "key": "AS_OF_DATE",
+              "source": "SYSTEM",
+              "value": "2026-11-22"
+            },
+            {
+              "key": "TIME_ZONE",
+              "source": "SYSTEM",
+              "value": "Asia/Ho_Chi_Minh"
+            },
+            {
+              "key": "FIRST_CONTRIBUTION_MONTH",
+              "source": "SYSTEM",
+              "value": "2026-12"
+            },
+            {
+              "key": "COMPOUNDING",
+              "source": "SYSTEM",
+              "value": "MONTHLY"
+            },
+            {
+              "key": "CONTRIBUTION_TIMING",
+              "source": "SYSTEM",
+              "value": "END_OF_MONTH"
+            },
+            {
+              "key": "REQUIRED_CONTRIBUTION_ROUNDING",
+              "source": "SYSTEM",
+              "value": "UP_TO_1000_VND"
+            },
+            {
+              "key": "ON_TRACK_MIN_COVERAGE_PERCENT",
+              "source": "SYSTEM",
+              "value": "100"
+            },
+            {
+              "key": "AT_RISK_MIN_COVERAGE_PERCENT",
+              "source": "SYSTEM",
+              "value": "80"
+            },
+            {
+              "key": "INFLATION",
+              "source": "NOT_MODELLED",
+              "value": null
+            },
+            {
+              "key": "TAXES_AND_FEES",
+              "source": "NOT_MODELLED",
+              "value": null
+            },
+            {
+              "key": "RETURN_VARIABILITY",
+              "source": "NOT_MODELLED",
+              "value": null
+            },
+            {
+              "key": "CASH_FLOW_LINK",
+              "source": "NOT_MODELLED",
+              "value": null
+            }
+          ],
+          "method": {
+            "name": "FUTURE_VALUE_MONTHLY_COMPOUNDING",
+            "remainingMonths": "n = calendar months from the month after asOfDate through the month of targetDate, both included; contributions arrive at the end of each month. A target date before asOfDate is EXPIRED; a target date later this month leaves n = 0 and is DUE_THIS_MONTH.",
+            "monthlyRate": "r = expectedAnnualReturnPercent / 100 / 12, compounded monthly; g = (1 + r)^n.",
+            "projectedAmount": "fromAllocated = currentAllocatedAmount × g; fromContributions = plannedMonthlyContribution × (g − 1) / r, or plannedMonthlyContribution × n when r = 0; total = fromAllocated + fromContributions; gapToTarget = total − targetAmount.",
+            "requiredMonthlyContribution": "(targetAmount − currentAllocatedAmount × g) × r / (g − 1), or (targetAmount − currentAllocatedAmount) / n when r = 0; 0 when the goal is already funded or the allocated amount alone reaches the target; otherwise rounded up to the next 1,000 VND.",
+            "status": "contributionCoveragePercent = plannedMonthlyContribution / requiredMonthlyContribution × 100 (100 when nothing is required). ON_TRACK at or above 100, AT_RISK at or above 80, BEHIND below; these are system reference thresholds, compared before the percentage is rounded.",
+            "rounding": "Intermediate values carry 34 significant digits. Each part of the projected amount is rounded half up to 2 decimals before they are added, so the parts add up to the total. Percentages are rounded down to 2 decimals."
+          },
+          "disclaimer": "The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ."
+        }
+      }
+    },
+    "404": {
+      "contentType": "application/problem+json",
+      "examples": {
+        "absent or another user's": {
+          "type": "urn:rikkaus:problem:not-found",
+          "title": "Resource not found",
+          "status": 404,
+          "detail": "Resource not found.",
+          "instance": "/api/v1/goal-projections/9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92",
+          "correlationId": "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83"
         }
       }
     }
@@ -1444,6 +2190,54 @@ export const contractExamples = {
               "message": "must not be before the month after today"
             }
           ]
+        }
+      }
+    }
+  },
+  "GET /api/v1/assets/{assetId}/deletion-impact": {
+    "200": {
+      "contentType": "application/json",
+      "examples": {
+        "Apartment pledged for a mortgage and rented out": {
+          "recordType": "ASSET",
+          "recordId": "3f6b2a10-8c4d-4e5f-9a1b-2c3d4e5f6a7b",
+          "confirmationRequired": true,
+          "linkedEffects": [
+            {
+              "recordType": "ASSET_VALUATION",
+              "effect": "DELETED",
+              "field": null,
+              "count": 3,
+              "records": []
+            },
+            {
+              "recordType": "LIABILITY",
+              "effect": "UNLINKED",
+              "field": "collateralAssetId",
+              "count": 1,
+              "records": [
+                {
+                  "id": "9d1e7c42-5b6a-4f3e-8d2c-1b0a9f8e7d6c",
+                  "label": "Vay mua nhà Vietcombank",
+                  "category": "BANK_LOAN"
+                }
+              ]
+            },
+            {
+              "recordType": "CASH_FLOW_ENTRY",
+              "effect": "UNLINKED",
+              "field": "linkedAssetId",
+              "count": 1,
+              "records": [
+                {
+                  "id": "c2a4e6f8-1b3d-4f5a-8c7e-9d0b2a4c6e8f",
+                  "label": "Cho thuê căn hộ Thảo Điền",
+                  "category": "RENTAL_INCOME"
+                }
+              ]
+            }
+          ],
+          "derivedEffects": []
         }
       }
     }
