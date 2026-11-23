@@ -27,7 +27,19 @@ export interface ApiAuthHooks {
    * `'retry'` after renewing the session to resend the request once with a fresh token; a
    * second 401 is thrown without calling this again. Return `'fail'` to surface the 401.
    */
-  onUnauthorized?: (error: ApiError) => UnauthorizedDecision | Promise<UnauthorizedDecision>;
+  onUnauthorized?: (
+    error: ApiError,
+    context: UnauthorizedContext,
+  ) => UnauthorizedDecision | Promise<UnauthorizedDecision>;
+}
+
+export interface UnauthorizedContext {
+  /**
+   * The token the rejected request carried. Concurrent requests that fail together each report
+   * the same stale token, so the identity layer can renew once and retry the rest with the
+   * renewed token instead of renewing again.
+   */
+  accessToken: string | null;
 }
 
 export type UnauthorizedDecision = 'retry' | 'fail';
@@ -52,6 +64,13 @@ interface CommonRequestOptions {
   auth?: boolean;
   /** Choose the correlation id instead of generating one. */
   correlationId?: string;
+  /** Extra request headers, such as the auth routes' `X-Rikkaus-Client: web`. */
+  headers?: Record<string, string>;
+  /**
+   * Forwarded to `fetch`. Only the web client's auth routes need `'include'`, because their
+   * refresh cookie is the one credential the browser attaches; every other route allows none.
+   */
+  credentials?: RequestCredentials;
 }
 
 type PathOption<O> = [PathParamsOf<O>] extends [never]
@@ -100,6 +119,7 @@ interface PreparedRequest {
   body?: string;
   signal?: AbortSignal;
   schema?: z.ZodType<unknown>;
+  credentials?: RequestCredentials;
 }
 
 function interpolatePath(path: string, params: Record<string, unknown> | undefined): string {
@@ -210,6 +230,7 @@ export function createApiClient({ baseUrl, auth, fetchImpl }: ApiClientOptions):
         headers: prepared.headers,
         body: prepared.body,
         signal: prepared.signal,
+        ...(prepared.credentials ? { credentials: prepared.credentials } : {}),
       });
     } catch (error) {
       /** Cancellation is not a failure; TanStack Query relies on seeing the AbortError. */
@@ -273,6 +294,8 @@ export function createApiClient({ baseUrl, auth, fetchImpl }: ApiClientOptions):
       signal,
       auth: useAuth = true,
       correlationId,
+      headers: extraHeaders,
+      credentials,
     } = options as CommonRequestOptions & {
       pathParams?: Record<string, unknown>;
       query?: Record<string, QueryValue>;
@@ -285,16 +308,21 @@ export function createApiClient({ baseUrl, auth, fetchImpl }: ApiClientOptions):
 
     async function attempt(isRetry: boolean): Promise<ApiResponse<T>> {
       const headers: Record<string, string> = {
+        ...extraHeaders,
         Accept: 'application/json',
         [CORRELATION_HEADER]: correlationId ?? createCorrelationId(),
       };
+      let sentToken: string | null = null;
 
       if (body !== undefined) headers['Content-Type'] = 'application/json';
 
       if (useAuth && auth) {
         const token = await auth.getAccessToken();
 
-        if (token) headers.Authorization = `Bearer ${token}`;
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+          sentToken = token;
+        }
       }
 
       try {
@@ -306,6 +334,7 @@ export function createApiClient({ baseUrl, auth, fetchImpl }: ApiClientOptions):
           body: body === undefined ? undefined : JSON.stringify(body),
           signal,
           schema,
+          credentials,
         });
       } catch (error) {
         const unauthorized =
@@ -314,7 +343,9 @@ export function createApiClient({ baseUrl, auth, fetchImpl }: ApiClientOptions):
           error.failure.problem.type === 'urn:rikkaus:problem:unauthorized';
 
         if (unauthorized && useAuth && !isRetry && auth?.onUnauthorized) {
-          if ((await auth.onUnauthorized(error)) === 'retry') return attempt(true);
+          const decision = await auth.onUnauthorized(error, { accessToken: sentToken });
+
+          if (decision === 'retry') return attempt(true);
         }
 
         throw error;

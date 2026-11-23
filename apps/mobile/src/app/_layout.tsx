@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
+import { SessionProvider } from '@/features/identity';
 import { AppProviders } from '@/providers/app-providers';
 import { fontAssets } from '@/ui/fonts';
 
@@ -33,8 +34,10 @@ export default function RootLayout() {
 
   return (
     <AppProviders>
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="auto" />
+      <SessionProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+        <StatusBar style="auto" />
+      </SessionProvider>
     </AppProviders>
   );
 }
