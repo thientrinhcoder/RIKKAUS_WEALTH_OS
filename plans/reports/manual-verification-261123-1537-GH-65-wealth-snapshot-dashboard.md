@@ -25,6 +25,7 @@ dịch một ngày: `D−5 = 18/11`, `D−1 = 22/11`, `D+7 = 30/11`, `D+13 = 06/
 |---|---|---|---|
 | 1, chạy thử | cây làm việc trên `da67680` trước commit `4eb5dde`, `spring-boot:run` | 22/11/2026 18:55 | 51/51 `PASS`; không tính là evidence vì code chưa commit |
 | 2, chính thức | `a74afb8`, jar | 23/11/2026 15:40 | 51/51 `PASS` |
+| 3, sau merge `main` | `aa8cdbb` (merge `origin/main` `8f3249e`, có #104 deletion impact), jar | 23/11/2026 15:53 | 51/51 `PASS` |
 
 Không case nào fail ở cả hai lần, nên không có lỗi nào phải sửa giữa hai lần chạy.
 
@@ -167,6 +168,19 @@ commit a74afb8 2026-11-23 15:40 +07 today=2026-11-23
     S32 PASS contract publishes GET only, bearerAuth
 TOTAL pass=51 fail=0
 ```
+
+## Chạy lại sau khi merge `main`
+
+`main` nhận #104 (route `deletion-impact`, guard `409 linked-records` khi xóa record có liên kết) sau lần
+chạy chính thức. Merge vào nhánh chỉ conflict ở `docs/api-contract-conventions.md` (hai section mới cùng chỗ,
+giữ cả hai); `openapi.json` regenerate không đổi byte nào so với bản auto-merge. `clean verify` có và không
+`-Dopenapi.update=true` đều xanh: 81 unit test, 50 integration test.
+
+Lần 3 chạy trên jar của `aa8cdbb` vào PostgreSQL mới, với ba script **trích thẳng từ guide** trên nhánh đã
+merge: `TOTAL pass=51 fail=0`, dòng đầu `commit aa8cdbb 2026-11-23 15:53 +07 today=2026-11-23`. Số chính
+không đổi: S01 `[12002000000.00,1532000000.00,10470000000.00,0.127645,3180000000.00]`; S11
+`[null,null,false]` (tổng tài sản, ròng, `complete`); S24 6 mục nghĩa vụ; sáu body `recon.jq` đều `true`.
+Fixture chỉ `POST`, không xóa gì, nên guard của #104 không chạm vào các case này.
 
 ## Dọn dẹp
 
