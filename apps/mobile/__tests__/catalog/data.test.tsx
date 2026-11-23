@@ -61,10 +61,7 @@ describe('the data example', () => {
   it('offers a way out of a search that matches nothing', async () => {
     await renderWithProviders(<DataCatalog />);
 
-    fireEvent.changeText(
-      screen.getByTestId('catalog-filter-bar-search-input'),
-      'không tồn tại',
-    );
+    fireEvent.changeText(screen.getByTestId('catalog-filter-bar-search-input'), 'không tồn tại');
 
     await waitFor(() => expect(screen.getByTestId('catalog-list-empty-title')).toBeTruthy());
 
@@ -97,9 +94,7 @@ describe('the data example', () => {
     await waitFor(() => expect(screen.getByTestId('catalog-filter-sheet')).toBeTruthy());
 
     fireEvent.press(screen.getByTestId('catalog-filter-category-anchor'));
-    await waitFor(() =>
-      expect(screen.getByTestId('catalog-filter-category-options')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByTestId('catalog-filter-category-options')).toBeTruthy());
 
     fireEvent.press(screen.getByTestId('catalog-filter-category-option-Bất động sản'));
     await waitFor(() =>

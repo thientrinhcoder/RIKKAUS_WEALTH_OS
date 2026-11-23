@@ -126,7 +126,11 @@ export default function DataCatalog() {
         testID="catalog-filter-bar"
       />
 
-      <ActionButton onPress={() => setSheetOpen(true)} testID="catalog-open-filters" variant="secondary">
+      <ActionButton
+        onPress={() => setSheetOpen(true)}
+        testID="catalog-open-filters"
+        variant="secondary"
+      >
         Mở bộ lọc
       </ActionButton>
 

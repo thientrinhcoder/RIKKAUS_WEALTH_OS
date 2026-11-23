@@ -106,9 +106,9 @@ export function SelectField({
       {open ? (
         <Portal>
           {/**
-            * A transparent full-screen layer so a tap anywhere outside closes the list. Choosing
-            * nothing costs nothing here, so every dismissal route is allowed.
-            */}
+           * A transparent full-screen layer so a tap anywhere outside closes the list. Choosing
+           * nothing costs nothing here, so every dismissal route is allowed.
+           */}
           <Pressable
             accessibilityElementsHidden
             aria-hidden

@@ -89,9 +89,7 @@ describe('safe areas', () => {
     atWidth(768);
     await renderWithInsets(<AppShell activeRoute="/">{null}</AppShell>);
 
-    expect(flatten('shell-nav-rail').paddingTop).toBeGreaterThanOrEqual(
-      INSET_METRICS.insets.top,
-    );
+    expect(flatten('shell-nav-rail').paddingTop).toBeGreaterThanOrEqual(INSET_METRICS.insets.top);
   });
 
   it('keeps the create action inside the shell even with insets applied', async () => {
@@ -117,25 +115,22 @@ describe('layout safety across the reviewed widths', () => {
     expect(content.minWidth).toBeUndefined();
   });
 
-  it.each([360, 375])(
-    'keeps the bottom bar to one line per destination at %ipx',
-    async (width) => {
-      atWidth(width, 1.6);
-      await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
+  it.each([360, 375])('keeps the bottom bar to one line per destination at %ipx', async (width) => {
+    atWidth(width, 1.6);
+    await renderWithProviders(<AppShell activeRoute="/">{null}</AppShell>);
 
-      for (const destination of DESTINATIONS) {
-        const item = screen.getByTestId(`shell-destination-${destination.key}`);
-        const [label] = within(item).getAllByText(destination.shortLabel);
+    for (const destination of DESTINATIONS) {
+      const item = screen.getByTestId(`shell-destination-${destination.key}`);
+      const [label] = within(item).getAllByText(destination.shortLabel);
 
-        /**
-         * The bottom bar gives each destination a fifth of the width. A wrapped label makes its
-         * item taller than its siblings and knocks the row out of alignment, so the bar shows the
-         * short label on a single line instead.
-         */
-        expect(label.props.numberOfLines).toBe(1);
-      }
-    },
-  );
+      /**
+       * The bottom bar gives each destination a fifth of the width. A wrapped label makes its
+       * item taller than its siblings and knocks the row out of alignment, so the bar shows the
+       * short label on a single line instead.
+       */
+      expect(label.props.numberOfLines).toBe(1);
+    }
+  });
 
   it.each([768, 1024, 1440])(
     'lets the rail and sidebar labels wrap freely at %ipx',

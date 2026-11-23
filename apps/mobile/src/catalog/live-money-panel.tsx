@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { View } from "react-native";
-import { Text } from "react-native-paper";
-import { z } from "zod";
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { View } from 'react-native';
+import { Text } from 'react-native-paper';
+import { z } from 'zod';
 
 import {
   classifyApiError,
@@ -11,17 +11,17 @@ import {
   readApiBaseUrlFromEnv,
   resolveApiBaseUrl,
   type ApiClient,
-} from "@/api";
-import { ActionButton } from "@/components/action";
-import { CardShell } from "@/components/data";
-import { ErrorState, LoadingState } from "@/components/feedback";
+} from '@/api';
+import { ActionButton } from '@/components/action';
+import { CardShell } from '@/components/data';
+import { ErrorState, LoadingState } from '@/components/feedback';
 import {
   ConvertedMoney,
   DateText,
   ExchangeRateText,
   FreshnessBadge,
   TimestampText,
-} from "@/components/value";
+} from '@/components/value';
 import {
   convertToReporting,
   fromApiValue,
@@ -30,9 +30,9 @@ import {
   readExchangeRateSettings,
   type ExchangeRateSettings,
   type ExchangeRateSettingsPayload,
-} from "@/money";
-import { parseIsoDate } from "@/time";
-import { spacing } from "@/ui/tokens";
+} from '@/money';
+import { parseIsoDate } from '@/time';
+import { spacing } from '@/ui/tokens';
 
 /**
  * Renders the real exchange-rate settings and asset list through the primitives, so the catalog
@@ -43,7 +43,7 @@ import { spacing } from "@/ui/tokens";
  * state for this page view only: nothing is written to browser storage, and the refresh token is
  * discarded. Requests go through the typed API client. Product screens get identity from #41.
  */
-const DEV_USER = { email: "an.nguyen@example.com", displayName: "An Nguyễn" };
+const DEV_USER = { email: 'an.nguyen@example.com', displayName: 'An Nguyễn' };
 
 const DevSessionSchema = z.object({ accessToken: z.string().min(1) });
 
@@ -63,7 +63,7 @@ const AssetListSchema = z.array(
     id: z.string(),
     name: z.string(),
     currentValue: z.number(),
-    currency: z.enum(["VND", "USD"]),
+    currency: z.enum(['VND', 'USD']),
     valuationDate: optionalNullable(z.string()),
   }),
 );
@@ -89,10 +89,10 @@ async function devSignIn(): Promise<string> {
   const response = await fetch(
     `${resolveApiBaseUrl(readApiBaseUrlFromEnv())}/api/v1/auth/dev-sign-in`,
     {
-      method: "POST",
+      method: 'POST',
       headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(DEV_USER),
     },
@@ -109,10 +109,10 @@ async function devSignIn(): Promise<string> {
 
 async function loadLiveData(client: ApiClient): Promise<LiveData> {
   const [settings, assets] = await Promise.all([
-    client.request("get", "/api/v1/settings/exchange-rate", {
+    client.request('get', '/api/v1/settings/exchange-rate', {
       schema: ExchangeRateSchema,
     }),
-    client.request("get", "/api/v1/assets", { schema: AssetListSchema }),
+    client.request('get', '/api/v1/assets', { schema: AssetListSchema }),
   ]);
 
   return {
@@ -141,7 +141,7 @@ export function LiveMoneyPanel() {
   );
 
   const query = useQuery({
-    queryKey: ["catalog", "live-money", token],
+    queryKey: ['catalog', 'live-money', token],
     queryFn: () => loadLiveData(client),
     enabled: token !== null,
     retry: false,
@@ -150,8 +150,8 @@ export function LiveMoneyPanel() {
   if (!configured) {
     return (
       <Text testID="live-no-api" variant="bodyMedium">
-        Chưa cấu hình EXPO_PUBLIC_API_BASE_URL nên không gọi API thật. Phần này
-        chỉ dùng khi kiểm thử cục bộ.
+        Chưa cấu hình EXPO_PUBLIC_API_BASE_URL nên không gọi API thật. Phần này chỉ dùng khi kiểm
+        thử cục bộ.
       </Text>
     );
   }
@@ -160,16 +160,14 @@ export function LiveMoneyPanel() {
     return (
       <View style={{ gap: spacing.sm }}>
         <Text testID="live-no-token" variant="bodyMedium">
-          Đăng nhập phiên dev ({DEV_USER.email}) để đọc tỷ giá và tài sản thật.
-          Chỉ hoạt động khi API chạy profile local.
+          Đăng nhập phiên dev ({DEV_USER.email}) để đọc tỷ giá và tài sản thật. Chỉ hoạt động khi
+          API chạy profile local.
         </Text>
         {signInError ? <Text variant="bodyMedium">{signInError}</Text> : null}
         <ActionButton
           onPress={() => {
             setSignInError(null);
-            devSignIn().then(setToken, (error: unknown) =>
-              setSignInError(String(error)),
-            );
+            devSignIn().then(setToken, (error: unknown) => setSignInError(String(error)));
           }}
           testID="live-dev-sign-in"
           variant="secondary"
@@ -181,12 +179,7 @@ export function LiveMoneyPanel() {
   }
 
   if (query.isPending) {
-    return (
-      <LoadingState
-        accessibilityLabel="Đang tải tỷ giá và tài sản"
-        reservedHeight={160}
-      />
-    );
+    return <LoadingState accessibilityLabel="Đang tải tỷ giá và tài sản" reservedHeight={160} />;
   }
 
   if (query.isError) {
@@ -226,15 +219,13 @@ export function LiveMoneyPanel() {
       {assets.map((asset, index) => {
         const amount = fromApiValue(asset.currentValue);
         const currency = isCurrencyCode(asset.currency) ? asset.currency : null;
-        const id = typeof asset.id === "string" ? asset.id : String(index);
+        const id = typeof asset.id === 'string' ? asset.id : String(index);
 
         return (
           <CardShell key={id} testID={`live-asset-${index}`}>
             <Text variant="titleMedium">{String(asset.name)}</Text>
             {amount === null || currency === null ? (
-              <Text variant="bodyMedium">
-                Giá trị hoặc tiền tệ không đọc được.
-              </Text>
+              <Text variant="bodyMedium">Giá trị hoặc tiền tệ không đọc được.</Text>
             ) : (
               <ConvertedMoney
                 conversion={convertToReporting(amount, currency, settings.rate)}
@@ -248,20 +239,14 @@ export function LiveMoneyPanel() {
             />
             <Text testID={`live-asset-${index}-raw`} variant="bodyMedium">
               {`JSON: ${JSON.stringify(asset.currentValue)} ${String(asset.currency)}${
-                isPrecisionAtRisk(asset.currentValue)
-                  ? " · có thể đã mất độ chính xác"
-                  : ""
+                isPrecisionAtRisk(asset.currentValue) ? ' · có thể đã mất độ chính xác' : ''
               }`}
             </Text>
           </CardShell>
         );
       })}
 
-      <ActionButton
-        onPress={() => void query.refetch()}
-        testID="live-reload"
-        variant="text"
-      >
+      <ActionButton onPress={() => void query.refetch()} testID="live-reload" variant="text">
         Tải lại
       </ActionButton>
     </View>

@@ -56,10 +56,7 @@ export function SegmentedControl({
             disabled={disabled}
             key={item.value}
             onPress={() => onChange(item.value)}
-            style={[
-              styles.segment,
-              selected && { backgroundColor: theme.colors.primaryContainer },
-            ]}
+            style={[styles.segment, selected && { backgroundColor: theme.colors.primaryContainer }]}
             testID={`${testID}-${item.value}`}
           >
             <Text

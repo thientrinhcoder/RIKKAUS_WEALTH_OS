@@ -55,11 +55,7 @@ export function ErrorState({
           </ActionButton>
 
           {safeReturnLabel === undefined || onSafeReturn === undefined ? null : (
-            <ActionButton
-              onPress={onSafeReturn}
-              testID={`${testID}-safe-return`}
-              variant="text"
-            >
+            <ActionButton onPress={onSafeReturn} testID={`${testID}-safe-return`} variant="text">
               {safeReturnLabel}
             </ActionButton>
           )}

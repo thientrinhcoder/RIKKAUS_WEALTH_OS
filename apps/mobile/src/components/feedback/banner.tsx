@@ -42,10 +42,7 @@ export function Banner({
     <Surface
       accessibilityLiveRegion="polite"
       elevation={0}
-      style={[
-        styles.banner,
-        { backgroundColor: theme.colors.surface, borderColor: toneColor },
-      ]}
+      style={[styles.banner, { backgroundColor: theme.colors.surface, borderColor: toneColor }]}
       testID={testID}
     >
       <View style={styles.headline}>

@@ -49,8 +49,7 @@ export function DestinationItem({
 }: DestinationItemProps) {
   const theme = useAppTheme();
   const tint = selected ? theme.colors.primary : theme.colors.onSurfaceVariant;
-  const visibleLabel =
-    labelVariant === 'short' ? destination.shortLabel : destination.label;
+  const visibleLabel = labelVariant === 'short' ? destination.shortLabel : destination.label;
 
   return (
     <TouchableRipple
@@ -69,15 +68,12 @@ export function DestinationItem({
     >
       <View style={orientation === 'vertical' ? styles.vertical : styles.horizontalInner}>
         {/**
-          * The active destination carries a filled pill behind its icon and a heavier label, not
-          * just a different colour. Section 12 forbids a distinction that exists only in colour,
-          * and a tint change alone was genuinely hard to see.
-          */}
+         * The active destination carries a filled pill behind its icon and a heavier label, not
+         * just a different colour. Section 12 forbids a distinction that exists only in colour,
+         * and a tint change alone was genuinely hard to see.
+         */}
         <View
-          style={[
-            styles.iconSlot,
-            selected && { backgroundColor: theme.colors.primaryContainer },
-          ]}
+          style={[styles.iconSlot, selected && { backgroundColor: theme.colors.primaryContainer }]}
           testID={`shell-destination-${destination.key}-indicator`}
         >
           <Icon color={tint} size={24} source={destination.icon} />

@@ -24,7 +24,12 @@ jest
 const SCREENS: ReadonlyArray<readonly [string, ReactElement]> = [
   ['forms', <FormsCatalog key="forms" />],
   ['data', <DataCatalog key="data" />],
-  ['states', <SnackbarProvider key="states"><StatesCatalog /></SnackbarProvider>],
+  [
+    'states',
+    <SnackbarProvider key="states">
+      <StatesCatalog />
+    </SnackbarProvider>,
+  ],
   ['overlays', <OverlaysCatalog key="overlays" />],
   ['shell', <ShellCatalog key="shell" />],
 ];

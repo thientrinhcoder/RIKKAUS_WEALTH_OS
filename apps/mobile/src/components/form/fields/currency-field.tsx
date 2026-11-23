@@ -3,8 +3,10 @@ import { TextInput } from 'react-native-paper';
 import { formatGrouped, parseNumericInput } from '../formatters';
 import { TextField, type TextFieldProps } from './text-field';
 
-export interface CurrencyFieldProps
-  extends Omit<TextFieldProps, 'keyboardType' | 'onChangeValue' | 'right' | 'autoCapitalize'> {
+export interface CurrencyFieldProps extends Omit<
+  TextFieldProps,
+  'keyboardType' | 'onChangeValue' | 'right' | 'autoCapitalize'
+> {
   /**
    * The normalized, unrounded value. Section 9 keeps calculation precision in the stored value
    * while display shows no more precision than a manual valuation supports.
