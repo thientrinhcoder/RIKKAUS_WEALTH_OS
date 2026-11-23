@@ -55,6 +55,7 @@ name a host that resolves to nothing; RFC 9457 does not require the type to dere
 | `method-not-allowed` | `urn:rikkaus:problem:method-not-allowed` | Method not allowed | 405 |
 | `not-acceptable` | `urn:rikkaus:problem:not-acceptable` | Not acceptable | 406 |
 | `unsupported-media-type` | `urn:rikkaus:problem:unsupported-media-type` | Unsupported media type | 415 |
+| `linked-records` | `urn:rikkaus:problem:linked-records` | Linked records would change | 409 |
 | `unauthorized` | `urn:rikkaus:problem:unauthorized` | Authentication required | 401 |
 | `forbidden` | `urn:rikkaus:problem:forbidden` | Access denied | 403 |
 | `internal-error` | `urn:rikkaus:problem:internal-error` | Unexpected server error | 500 |
@@ -85,6 +86,8 @@ Two extension members beyond the RFC's standard ones:
 - **`errors`** — an array, present on validation failures only. Each entry is
   `{"field": "...", "message": "..."}`, one per rejected field. Assert against this rather than
   against the status code alone.
+- **`impact`** — an object, present on `linked-records` only: the deletion impact described in
+  *Deletion impact and linked-record confirmation* below.
 
 `detail` is always safe to show a user. It never carries a stack trace, an internal class name, a SQL
 fragment or a credential, and for the statuses where Spring's own text would echo your input it is
@@ -814,12 +817,12 @@ which asset identifiers exist, the disclosure the ownership rule on the path ref
 
 The check is re-run on every `PUT`, not only when the link is first made.
 
-**Deleting the pledged asset does not fail and does not delete the liability.** The foreign key is
-`ON DELETE SET NULL`: the liability survives and reads back with `collateralAssetId: null`, the same as
-one that never had collateral. Refusing the asset's deletion would have changed the asset resource's
-behaviour from inside this slice, and the consequences of deleting a linked record are issue #104's. A
-client that shows "collateral: Căn hộ Thảo Điền" from its own asset list should expect that name to
-disappear when the asset does.
+**Deleting the pledged asset does not delete the liability.** The foreign key is `ON DELETE SET NULL`:
+the liability survives and reads back with `collateralAssetId: null`, the same as one that never had
+collateral. The asset's `DELETE` says so first: it answers `409 linked-records` naming this liability
+until the client sends `confirm=true` — see *Deletion impact and linked-record confirmation*. A client
+that shows "collateral: Căn hộ Thảo Điền" from its own asset list should expect that name to disappear
+when the asset does.
 
 ### `PUT` replaces everything but the category
 
@@ -938,7 +941,8 @@ the foreign key already depends on, because the slice rule forbids `cashflow` im
 
 Deleting the linked record does not delete the entry. Both foreign keys are `ON DELETE SET NULL`, the
 same choice the liability catalog made for its collateral, so the entry survives with the link set to
-`null`. What the user should see when that happens is issue #104's question.
+`null`. The asset's or liability's `DELETE` names the entries it would unlink and refuses with
+`409 linked-records` until confirmed — see *Deletion impact and linked-record confirmation*.
 
 A link is a reference and nothing more. Linking an interest payment to a mortgage does not derive the
 amount from the liability's recurring payment, and the liability's own schedule is not turned into
@@ -1613,6 +1617,109 @@ procedure and
 `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md` is what it returned,
 including the byte-for-byte comparison of the four parameterless lists against `main`.
 
+## Deletion impact and linked-record confirmation — implemented
+
+Issue #104. Two promises from the feature contract: *nothing is deleted by accident*, and *what a delete
+does to linked records is said out loud*. Every deletable catalog record has a read-only preview, and the
+two whose deletion changes other records refuse to do it until the client confirms.
+
+### The preview
+
+| Route | What it can report |
+|---|---|
+| `GET /api/v1/assets/{assetId}/deletion-impact` | Valuation records removed with the asset (counted); liabilities losing it as collateral; cash-flow entries losing `linkedAssetId` (listed) |
+| `GET /api/v1/liabilities/{liabilityId}/deletion-impact` | Cash-flow entries losing `linkedLiabilityId` (listed). The pledged asset is never affected |
+| `GET /api/v1/cash-flow-entries/{entryId}/deletion-impact` | Nothing stored; names the computed views that stop including the entry |
+| `GET /api/v1/goals/{goalId}/deletion-impact` | Nothing: no record refers to a goal |
+
+Every answer is computed from the database at the moment of the request, from the foreign keys that
+exist (`asset_valuations` `ON DELETE CASCADE`; `liabilities.collateral_asset_id`,
+`cash_flow_entries.linked_asset_id` and `linked_liability_id` `ON DELETE SET NULL`). It changes nothing.
+Ownership is the record's own: another user's identifier, or one that exists nowhere, is the same
+`not-found` the record's `GET` returns, so the preview never tells a caller whether someone else's
+record has links.
+
+A body for `Căn hộ Thảo Điền` pledged for `Vay mua nhà Vietcombank`, with three valuations and two
+cash-flow entries linked to it (identifiers shortened):
+
+```json
+{
+  "recordType": "ASSET",
+  "recordId": "…",
+  "confirmationRequired": true,
+  "linkedEffects": [
+    { "recordType": "ASSET_VALUATION", "effect": "DELETED", "field": null, "count": 3, "records": [] },
+    { "recordType": "LIABILITY", "effect": "UNLINKED", "field": "collateralAssetId", "count": 1,
+      "records": [ { "id": "…", "label": "Vay mua nhà Vietcombank", "category": "BANK_LOAN" } ] },
+    { "recordType": "CASH_FLOW_ENTRY", "effect": "UNLINKED", "field": "linkedAssetId", "count": 2,
+      "records": [
+        { "id": "…", "label": "Cho thuê căn hộ Thảo Điền", "category": "RENTAL_INCOME" },
+        { "id": "…", "label": "Phí quản lý căn hộ Thảo Điền", "category": "HOUSING" } ] }
+  ],
+  "derivedEffects": []
+}
+```
+
+- `linkedEffects` has an entry only for a kind with at least one affected record, in the order above.
+  `DELETED` mirrors `CASCADE` and lists nothing; `UNLINKED` mirrors `SET NULL`, names the response
+  member that becomes `null` in `field`, and lists each record oldest first.
+- `records[].label` is the user's own text: a liability's `name`, a cash-flow entry's `notes`, which is
+  `null` for an entry saved without notes. `category` is the constant, for the client to translate. No
+  amount or balance is included.
+- `derivedEffects` is descriptive and never counted. A cash-flow entry always names
+  `CASH_FLOW_OCCURRENCES`, `MONTHLY_CASH_FLOW_REPORTS` and `CASH_FLOW_FORECAST`, one-time or recurring;
+  the other three record types name none. Deleting an asset or a liability still changes computed
+  views — an unlinked rental entry drops out of the monthly report's `passiveIncome.byAsset`, a deleted
+  cash account leaves the forecast's opening balance — but the preview does not enumerate that.
+
+### The confirmation
+
+`confirmationRequired` is `true` exactly when some `linkedEffects` entry is `UNLINKED`. The valuation
+history alone never sets it: it belongs to the asset, every asset has at least the record it was created
+with, and a rule that counted it would make every asset deletion a two-step one.
+
+When it is `true`, `DELETE /api/v1/assets/{assetId}` and `DELETE /api/v1/liabilities/{liabilityId}`
+answer **`409 linked-records`** and delete nothing, unless the request carries **`confirm=true`**:
+
+```json
+{
+  "type": "urn:rikkaus:problem:linked-records",
+  "title": "Linked records would change",
+  "status": 409,
+  "detail": "Deleting this record changes other records. Review the impact and repeat the request with confirm=true.",
+  "instance": "/api/v1/assets/…",
+  "correlationId": "…",
+  "impact": { "recordType": "ASSET", "confirmationRequired": true, "…": "the preview body" }
+}
+```
+
+- `impact` is computed inside the delete's own transaction, so a client that skipped the preview, or
+  showed one that has since gone stale, still gets the current consequences.
+- `confirm` is a query parameter. Absent or `false` is "not confirmed"; a value Spring cannot read as a
+  boolean is `400 malformed-request`. A query parameter rather than a header because a custom header
+  would have to join the CORS allow-list and costs a preflight, and because the request log never
+  records a query string.
+- A record with no `UNLINKED` effect deletes with `204` whether or not `confirm` is sent. The cash-flow
+  and goal `DELETE`s declare no `confirm` and ignore it like any unknown parameter, so a client may send
+  `confirm=true` on every confirmed delete.
+- Another user's record is `not-found` before anything else is read: never `409`.
+- The asset or liability row is locked before the impact is read. Overlapping deletes are serialised:
+  one `204`, `not-found` for the rest, never a `500` — confirmed or not, the same answers the plain
+  delete gave.
+
+### Editing never unlinks behind the user's back
+
+`PUT` stays a replacement on every resource. Sending `collateralAssetId` or `linkedAssetId` /
+`linkedLiabilityId` again keeps the link; omitting it clears it, as each resource's section already
+states. Editing an asset or liability never touches the records that refer to it.
+
+### Verified by hand, not by the suite
+
+No automated test exercises the preview or the guard, on Product Owner direction.
+[`docs/manual-test-guide-safe-delete.md`](manual-test-guide-safe-delete.md) is the reproducible
+procedure and `plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md` is what it
+returned, including the `SET NULL` and `CASCADE` results read straight from PostgreSQL.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -1634,9 +1741,11 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **A converted VND figure on a valuation record, and any freshness judgement about its rate.** The
   record publishes the value and the rate the user applied; the arithmetic and the staleness rule are
   the client's, per the accepted designs for issues #48 and #57.
-- **Hardened deletion.** `DELETE` removes the row. There is no undo, no soft delete, no retention
-  window and no handling of records that will later reference an asset. Issue #102 owns all of it for
-  assets and issue #104 for goals.
+- **Undo, soft delete and retention.** `DELETE` removes the row for good. Linked-record effects are
+  previewed and confirmed (see *Deletion impact and linked-record confirmation*), but there is no
+  undo, no trash, no retention window, no audit log and no bulk delete.
+- **Edit conflicts.** No `ETag`, `If-Match` or row version: two edits of one record are last-write-wins.
+  A pilot user edits from one device, and no accepted design asks for a conflict screen.
 - **Goal projections.** No completion percentage, remaining amount, remaining time, required monthly
   contribution or status is computed or published anywhere. Issue #89 owns the projection method and
   its documentation; the goals resource is shaped so it can add them without reopening this contract.
@@ -1650,7 +1759,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
 - **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
-  report, forecast, goal and onboarding routes, and for the search and filter parameters.** All of
+  report, forecast, goal and onboarding routes, for the search and filter parameters and for deletion
+  impact.** All of
   them shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
@@ -1661,7 +1771,9 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `plans/reports/manual-verification-261122-1544-GH-80-three-month-forecast.md`,
   `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`,
   `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` and
-  `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md`. Every other route
+  `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md` and
+  `plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md` (deletion impact and the
+  linked-record guard). Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and

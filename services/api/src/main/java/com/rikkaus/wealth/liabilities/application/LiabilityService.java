@@ -7,6 +7,11 @@ import com.rikkaus.wealth.liabilities.domain.LiabilityFilter;
 import com.rikkaus.wealth.liabilities.domain.LiabilityRepository;
 import com.rikkaus.wealth.liabilities.domain.LiabilityTerms;
 import com.rikkaus.wealth.liabilities.domain.PaymentSchedule;
+import com.rikkaus.wealth.shared.deletion.DeletionGuard;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact;
+import com.rikkaus.wealth.shared.deletion.DeletionImpact.RecordType;
+import com.rikkaus.wealth.shared.deletion.LinkedRecordEffect;
+import com.rikkaus.wealth.shared.deletion.LinkedRecordReference;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
@@ -85,13 +90,42 @@ public class LiabilityService {
     }
 
     /**
-     * Removes one of the owner's liabilities. A plain delete; undo and a retention policy are issue
-     * #104's. Ownership is resolved before anything is removed.
+     * What deleting one of the owner's liabilities would do, without doing it. Ownership first, so
+     * another user's identifier answers {@code not-found} and never reveals whether it has links.
+     */
+    @Transactional(readOnly = true)
+    public DeletionImpact deletionImpact(UUID ownerId, UUID liabilityId) {
+        return impactOf(OwnershipGuard.requireOwned(liabilities.findById(liabilityId), ownerId), ownerId);
+    }
+
+    /**
+     * Removes one of the owner's liabilities, unless cash-flow entries linked to it would lose their
+     * link without the caller having confirmed that.
+     *
+     * <p>No undo and no retention window. The row is locked before the impact is read, so overlapping
+     * deletes are serialised and the later ones answer {@code not-found}. Ownership is resolved before
+     * anything is read or removed. The pledged asset, if any, is untouched: the foreign key points
+     * from the liability to the asset, not the other way.
      */
     @Transactional
-    public void delete(UUID ownerId, UUID liabilityId) {
-        liabilities.delete(OwnershipGuard.requireOwned(liabilities.findById(liabilityId), ownerId));
+    public void delete(UUID ownerId, UUID liabilityId, boolean confirmed) {
+        Liability liability = OwnershipGuard.requireOwned(liabilities.findAndLockById(liabilityId), ownerId);
+        DeletionGuard.requireConfirmed(impactOf(liability, ownerId), confirmed);
+        liabilities.delete(liability);
         flushTreatingAVanishedRowAsNotFound();
+    }
+
+    /** The one foreign key that reaches {@code wealth.liabilities}: a cash-flow entry's link. */
+    private DeletionImpact impactOf(Liability liability, UUID ownerId) {
+        List<LinkedRecordReference> entries =
+                LinkedRecordReference.of(liabilities.cashFlowEntriesLinkedTo(liability.getId(), ownerId));
+        List<LinkedRecordEffect> effects =
+                entries.isEmpty()
+                        ? List.of()
+                        : List.of(
+                                LinkedRecordEffect.unlinked(
+                                        RecordType.CASH_FLOW_ENTRY, "linkedLiabilityId", entries));
+        return DeletionImpact.of(RecordType.LIABILITY, liability.getId(), effects, List.of());
     }
 
     /**

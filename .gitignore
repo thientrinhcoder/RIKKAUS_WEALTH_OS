@@ -111,6 +111,9 @@ plans/**/*
 !plans/261122-1538-GH-101-search-basic-filters/
 !plans/261122-1538-GH-101-search-basic-filters/**
 !plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md
+!plans/261122-1842-GH-104-safe-edit-delete/
+!plans/261122-1842-GH-104-safe-edit-delete/**
+!plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md
 screenshots/*
 docs/screenshots/*
 logs.txt
