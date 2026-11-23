@@ -1,7 +1,7 @@
 ---
 title: "Issue #65 tổng quan tài sản ròng (wealth snapshot dashboard)"
 description: "Route đọc GET /api/v1/wealth-snapshot trong slice mới snapshot: sáu KPI theo công thức canonical, phân bổ theo danh mục và thanh khoản, năm tài sản lớn nhất, nghĩa vụ công nợ sắp đến hạn, ngày nguồn để dựng màn độ mới, và mọi dòng nguồn để đối soát. Quy đổi USD bằng tỷ giá người dùng khai, partial state không bao giờ trả 0. Không migration."
-status: in-progress
+status: completed
 priority: P1
 effort: "2d"
 issue: 65
@@ -96,20 +96,20 @@ gộp `Khác`, tỷ trọng phần trăm ở server (client chia từ số tiề
 |---|---|---|---|
 | 1 | [Danh sách test scenario](./phase-01-test-scenarios.md) | Hoàn tất | 32 case viết trước khi code |
 | 2 | [Slice snapshot và HTTP](./phase-02-snapshot-slice-and-http.md) | Hoàn tất | reader, service, controller |
-| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Đang làm | `openapi.json`, `OpenApiContractIT`, conventions, guide |
-| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Chưa làm | chạy 32 case, ghi evidence |
+| 3 | [Contract và docs](./phase-03-contract-and-docs.md) | Hoàn tất | `openapi.json`, `OpenApiContractIT`, conventions, guide |
+| 4 | [Xác minh thủ công](./phase-04-manual-verification.md) | Hoàn tất | 32 case, 51/51 phép kiểm `PASS` |
 
 ## Acceptance Criteria
 
-- [ ] Sáu KPI đúng công thức canonical; fixture design #63 tái dựng đúng `12.002.000.000`, `1.532.000.000`,
+- [x] Sáu KPI đúng công thức canonical; fixture design #63 tái dựng đúng `12.002.000.000`, `1.532.000.000`,
       `10.470.000.000`, `0.127645`, `3.180.000.000`.
-- [ ] USD quy đổi bằng tỷ giá đang khai, response mang tỷ giá và ngày hiệu lực; thiếu tỷ giá thì partial,
+- [x] USD quy đổi bằng tỷ giá đang khai, response mang tỷ giá và ngày hiệu lực; thiếu tỷ giá thì partial,
       không quy về 0.
-- [ ] Phân bổ danh mục, thanh khoản, năm tài sản lớn nhất và nghĩa vụ sắp đến hạn khớp các dòng nguồn.
-- [ ] Hòa giá trị sắp theo tên tiếng Việt; ghi định giá mới làm KPI và `lastDataUpdate` đổi, lịch sử giữ nguyên.
-- [ ] User mới đủ cấu trúc; không thấy dữ liệu user khác; 401 ba kiểu token; 405; 406.
-- [ ] Reconciliation kiểm bằng `jq` trên body thật; hai lần gọi cho body giống từng byte.
-- [ ] `openapi.json` regenerate, `clean verify` xanh không flag.
+- [x] Phân bổ danh mục, thanh khoản, năm tài sản lớn nhất và nghĩa vụ sắp đến hạn khớp các dòng nguồn.
+- [x] Hòa giá trị sắp theo tên tiếng Việt; ghi định giá mới làm KPI và `lastDataUpdate` đổi, lịch sử giữ nguyên.
+- [x] User mới đủ cấu trúc; không thấy dữ liệu user khác; 401 ba kiểu token; 405; 406.
+- [x] Reconciliation kiểm bằng `jq` trên body thật; hai lần gọi cho body giống từng byte.
+- [x] `openapi.json` regenerate, `clean verify` xanh không flag.
 
 ## Verification gap
 
@@ -134,3 +134,13 @@ lúc 23:59 và 00:00 giờ Việt Nam) không được chạy. `OpenApiContractI
 4. Tỷ giá không quy đổi dòng nào (user toàn VND) thì không tính vào ngày dữ liệu (đã làm). Đồng ý?
 
 <!-- slug: issue-65-wealth-snapshot-dashboard -->
+
+## Kết quả
+
+Hoàn tất ngày 23/11/2026. Code và contract ở commit `4eb5dde`, merge `origin/main` (`0eb1ec3`) sạch, docs ở
+`a74afb8`. `clean verify` xanh không dùng update flag: 81 unit test, 50 integration test, `openapi.json`
+không drift sau merge. 32 case (51 phép kiểm) chạy thật trên jar của `a74afb8` vào PostgreSQL Docker mới:
+**51/51 đạt**, không case nào fail ở cả lần chạy thử 22/11 lẫn lần chính thức. Fixture design #63 tái dựng
+đúng `12.002.000.000 ₫`, `1.532.000.000 ₫`, `10.470.000.000 ₫`, `0.127645`, `3.180.000.000 ₫`. Evidence ở
+[`manual-verification-261123-1537-GH-65-wealth-snapshot-dashboard.md`](../reports/manual-verification-261123-1537-GH-65-wealth-snapshot-dashboard.md).
+

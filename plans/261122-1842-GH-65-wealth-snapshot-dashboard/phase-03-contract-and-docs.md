@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Contract và docs"
-status: in-progress
+status: completed
 priority: P1
 effort: "0.25d"
 dependencies: [2]
