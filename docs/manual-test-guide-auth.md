@@ -58,24 +58,40 @@ The body has no `refreshToken`; the response carries
 From the web app (Expo web on `http://localhost:8081`), the same call is:
 
 ```js
-await fetch('http://localhost:8380/api/v1/auth/dev-sign-in', {
-  method: 'POST',
-  credentials: 'include',
-  headers: { 'Content-Type': 'application/json', 'X-Rikkaus-Client': 'web' },
-  body: JSON.stringify({ email: 'an.nguyen@example.com', displayName: 'An Nguyễn' }),
+await fetch("http://localhost:8380/api/v1/auth/dev-sign-in", {
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json", "X-Rikkaus-Client": "web" },
+  body: JSON.stringify({
+    email: "an.nguyen@example.com",
+    displayName: "An Nguyễn",
+  }),
 });
 ```
 
+### From the Expo web app
+
+Start Expo web with the development sign-in enabled (dev bundles only; `expo export` never includes it):
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://localhost:8380 EXPO_PUBLIC_DEV_SIGN_IN=local npx expo start --web
+```
+
+`/sign-in` then shows **Đăng nhập phát triển** below the Google entry. It calls the same route in web
+mode, so the browser holds `rikkaus_refresh` and a reload restores the session. Expo web on a port other
+than 8081 needs that origin in `API_ALLOWED_ORIGINS`. The executed frontend cases are in
+[`plans/261123-GH-41-identity-session/test-cases.md`](../plans/261123-GH-41-identity-session/test-cases.md).
+
 ## 3. Check the cookie lifecycle
 
-| Step | Command | Expect |
-|---|---|---|
-| Renew via cookie | `curl -s -b jar.txt -c jar.txt -X POST http://localhost:8380/api/v1/auth/refresh -H 'X-Rikkaus-Client: web' -H 'Origin: http://localhost:8081'` | 200, new `accessToken`, no `refreshToken` in body, new cookie in `jar.txt` |
-| CSRF: cookie without header | `curl -s -b jar.txt -X POST http://localhost:8380/api/v1/auth/refresh` | 403 `urn:rikkaus:problem:forbidden`; the cookie still works afterwards |
-| CSRF: foreign origin | `curl -s -b jar.txt -X POST http://localhost:8380/api/v1/auth/refresh -H 'X-Rikkaus-Client: web' -H 'Origin: https://evil.example'` | 403 `Invalid CORS request`; the cookie still works afterwards |
-| Reuse revokes | save the cookie, renew once, then renew with the saved value | 401 `unauthorized`, and the newer cookie is 401 too |
-| Sign out | `curl -s -i -b jar.txt -c jar.txt -X POST http://localhost:8380/api/v1/auth/logout -H 'X-Rikkaus-Client: web' -H 'Origin: http://localhost:8081'` | 204 with `Set-Cookie: rikkaus_refresh=; Max-Age=0` |
-| Preflight | `curl -s -i -X OPTIONS http://localhost:8380/api/v1/auth/refresh -H 'Origin: http://localhost:8081' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,x-rikkaus-client'` | 200 with `Access-Control-Allow-Credentials: true` and the exact origin |
+| Step                        | Command                                                                                                                                                                                                          | Expect                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Renew via cookie            | `curl -s -b jar.txt -c jar.txt -X POST http://localhost:8380/api/v1/auth/refresh -H 'X-Rikkaus-Client: web' -H 'Origin: http://localhost:8081'`                                                                  | 200, new `accessToken`, no `refreshToken` in body, new cookie in `jar.txt` |
+| CSRF: cookie without header | `curl -s -b jar.txt -X POST http://localhost:8380/api/v1/auth/refresh`                                                                                                                                           | 403 `urn:rikkaus:problem:forbidden`; the cookie still works afterwards     |
+| CSRF: foreign origin        | `curl -s -b jar.txt -X POST http://localhost:8380/api/v1/auth/refresh -H 'X-Rikkaus-Client: web' -H 'Origin: https://evil.example'`                                                                              | 403 `Invalid CORS request`; the cookie still works afterwards              |
+| Reuse revokes               | save the cookie, renew once, then renew with the saved value                                                                                                                                                     | 401 `unauthorized`, and the newer cookie is 401 too                        |
+| Sign out                    | `curl -s -i -b jar.txt -c jar.txt -X POST http://localhost:8380/api/v1/auth/logout -H 'X-Rikkaus-Client: web' -H 'Origin: http://localhost:8081'`                                                                | 204 with `Set-Cookie: rikkaus_refresh=; Max-Age=0`                         |
+| Preflight                   | `curl -s -i -X OPTIONS http://localhost:8380/api/v1/auth/refresh -H 'Origin: http://localhost:8081' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,x-rikkaus-client'` | 200 with `Access-Control-Allow-Credentials: true` and the exact origin     |
 
 ## 4. Confirm the development sign-in is absent elsewhere
 

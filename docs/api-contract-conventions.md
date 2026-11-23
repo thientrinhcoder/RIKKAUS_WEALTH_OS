@@ -140,6 +140,17 @@ The app calls the API only through [`apps/mobile/src/api`](../apps/mobile/src/ap
   is shown in error states as `Mã tham chiếu: …`.
 - **Auth seam.** `createApiClient({ auth: { getAccessToken, onUnauthorized } })` attaches the token
   and retries once after a 401 when `onUnauthorized` returns `'retry'`. The client stores no token.
+- **Identity layer.** [`src/features/identity`](../apps/mobile/src/features/identity/index.ts) owns the
+  session and plugs into that seam. The access token lives in memory only. The web build sends
+  `X-Rikkaus-Client: web` with `credentials: 'include'` on the auth routes and stores nothing in
+  localStorage, sessionStorage or IndexedDB; a reload restores the session with `POST /auth/refresh`
+  and the cookie. Native builds keep the refresh token in `expo-secure-store`. Concurrent 401s share one
+  in-flight renewal, and on web the Web Locks API serialises renewals across tabs so two tabs never
+  present the same single-use cookie. A refused renewal on start shows the expired-session screen; one
+  refused while the app is in use shows the revoked screen. Both replace protected content. Google
+  sign-in uses `expo-auth-session` (authorization code + PKCE) with the redirect
+  `<web origin>/auth/callback`. Development sign-in appears only in a dev bundle with
+  `EXPO_PUBLIC_DEV_SIGN_IN=local`; see [`.env.example`](../apps/mobile/.env.example).
 - **Operational routes.** `/actuator/health` is outside the contract. It is called through
   `getOperational`, which sends no token and no custom header, because that endpoint's CORS mapping
   rejects both.
