@@ -98,6 +98,11 @@ rikkaus:
     # How long a signed-in device can renew without returning to Google. Bounded so an abandoned
     # device eventually stops being a live session on its own.
     refresh-token-ttl: P30D
+    # The web client's refresh token travels in the HttpOnly, SameSite=Strict cookie rikkaus_refresh
+    # (Path=/api/v1/auth, Max-Age = refresh-token-ttl). Secure everywhere except the local profile, which
+    # serves plain http. See docs/api-contract-conventions.md, "Web session cookie".
+    refresh-cookie:
+      secure: true
     google:
       client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
       # Optional. A public client using PKCE alone needs none, so an empty value is a valid

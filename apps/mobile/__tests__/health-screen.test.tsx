@@ -19,7 +19,8 @@ const mockedUseResponsiveLayout = jest.mocked(useResponsiveLayout);
 
 function responseWith(payload: unknown, options?: { ok?: boolean; status?: number }): Response {
   return {
-    json: jest.fn().mockResolvedValue(payload),
+    text: jest.fn().mockResolvedValue(JSON.stringify(payload)),
+    headers: new Headers({ 'Content-Type': 'application/json' }),
     ok: options?.ok ?? true,
     status: options?.status ?? 200,
   } as unknown as Response;
@@ -63,7 +64,9 @@ describe('diagnostics screen', () => {
       .mockResolvedValueOnce(responseWith({ status: 'UP' }));
     const view = await renderWithProviders(<DiagnosticsScreen />);
 
-    expect(await view.findByText('Kiểm tra tình trạng API thất bại.')).toBeTruthy();
+    expect(
+      await view.findByText('Kiểm tra tình trạng API thất bại. Máy chủ chưa sẵn sàng.'),
+    ).toBeTruthy();
     await fireEvent.press(view.getByRole('button', { name: 'Thử lại' }));
 
     expect(await view.findByText(/API phản hồi bình thường/)).toBeTruthy();
@@ -74,9 +77,15 @@ describe('diagnostics screen', () => {
     process.env.EXPO_PUBLIC_API_BASE_URL = 'not-a-url';
     const view = await renderWithProviders(<DiagnosticsScreen />);
 
-    expect(await view.findByText('Kiểm tra tình trạng API thất bại.')).toBeTruthy();
-    /** The error names what was preserved, per the shared state anatomy. */
-    expect(view.getByText('The API endpoint configuration is invalid.')).toBeTruthy();
+    expect(
+      await view.findByText('Kiểm tra tình trạng API thất bại. Chưa cấu hình đúng địa chỉ API.'),
+    ).toBeTruthy();
+    /** The error names what was preserved, per the shared state anatomy, in Vietnamese copy. */
+    expect(
+      view.getByText(
+        'Đặt EXPO_PUBLIC_API_BASE_URL thành một địa chỉ http hoặc https rồi khởi động lại Expo.',
+      ),
+    ).toBeTruthy();
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 

@@ -2432,8 +2432,26 @@
       "post" : {
         "tags" : [ "authentication-controller" ],
         "summary" : "Renew a session",
-        "description" : "Exchanges a refresh token for a new access token and a new refresh token. The presented token is single-use: presenting it again is treated as evidence that it leaked and revokes the whole session.",
+        "description" : "Exchanges a refresh token for a new access token and a new refresh token. The presented token is single-use: presenting it again is treated as evidence that it leaked and revokes the whole session. A native client sends the token in the body. The web client sends no body token, the `rikkaus_refresh` cookie, and `X-Rikkaus-Client: web`; the rotated token comes back as a new cookie.",
         "operationId" : "renew",
+        "parameters" : [ {
+          "name" : "X-Rikkaus-Client",
+          "in" : "header",
+          "description" : "Send `web` from the browser client. The refresh token is then set as the HttpOnly, SameSite=Strict cookie `rikkaus_refresh` (Path=/api/v1/auth) and omitted from the body. Omit the header from a native client to keep the token in the body.",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "web"
+        }, {
+          "name" : "rikkaus_refresh",
+          "in" : "cookie",
+          "description" : "The web client's refresh token, set by a previous sign-in or renewal.",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2441,8 +2459,7 @@
                 "$ref" : "#/components/schemas/RefreshSessionRequest"
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "200" : {
@@ -2456,7 +2473,7 @@
             }
           },
           "400" : {
-            "description" : "The refresh token is missing from the body",
+            "description" : "No refresh token in the body or in an honoured cookie",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -2494,6 +2511,16 @@
                 }
               }
             }
+          },
+          "403" : {
+            "description" : "The refresh cookie was sent without `X-Rikkaus-Client: web`, or from an origin that is not allowlisted. Refused before the token is read, so the session is untouched.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -2502,8 +2529,26 @@
       "post" : {
         "tags" : [ "authentication-controller" ],
         "summary" : "Sign out",
-        "description" : "Revokes the session the refresh token belongs to. Returns 204 whether or not the token was still live, so the endpoint cannot be used to test whether a token is valid.",
+        "description" : "Revokes the session the refresh token belongs to. Returns 204 whether or not the token was still live, so the endpoint cannot be used to test whether a token is valid. The token comes from the body, or for the web client from the `rikkaus_refresh` cookie with `X-Rikkaus-Client: web`. Every 204 also expires the cookie.",
         "operationId" : "signOut",
+        "parameters" : [ {
+          "name" : "X-Rikkaus-Client",
+          "in" : "header",
+          "description" : "Send `web` from the browser client. The refresh token is then set as the HttpOnly, SameSite=Strict cookie `rikkaus_refresh` (Path=/api/v1/auth) and omitted from the body. Omit the header from a native client to keep the token in the body.",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "web"
+        }, {
+          "name" : "rikkaus_refresh",
+          "in" : "cookie",
+          "description" : "The web client's refresh token, set by a previous sign-in or renewal.",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2511,15 +2556,14 @@
                 "$ref" : "#/components/schemas/RefreshSessionRequest"
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "204" : {
-            "description" : "The session is no longer usable"
+            "description" : "The session is no longer usable and the cookie is cleared"
           },
           "400" : {
-            "description" : "The refresh token is missing from the body",
+            "description" : "No refresh token in the body or in an honoured cookie",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -2547,6 +2591,16 @@
                 }
               }
             }
+          },
+          "403" : {
+            "description" : "The refresh cookie was sent without `X-Rikkaus-Client: web`, or from an origin that is not allowlisted",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -2557,6 +2611,16 @@
         "summary" : "Complete a Google sign-in and start a session",
         "description" : "Exchanges an authorization code with Google using PKCE, creates the account on first sign-in, and returns an access token with a rotating refresh token. Google is the only identity provider; there is no password.",
         "operationId" : "signInWithGoogle",
+        "parameters" : [ {
+          "name" : "X-Rikkaus-Client",
+          "in" : "header",
+          "description" : "Send `web` from the browser client. The refresh token is then set as the HttpOnly, SameSite=Strict cookie `rikkaus_refresh` (Path=/api/v1/auth) and omitted from the body. Omit the header from a native client to keep the token in the body.",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          },
+          "example" : "web"
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2627,6 +2691,16 @@
           },
           "415" : {
             "description" : "The request body is not JSON",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "`X-Rikkaus-Client: web` was sent from an origin that is not allowlisted",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -5821,12 +5895,10 @@
         "properties" : {
           "refreshToken" : {
             "type" : "string",
-            "description" : "The refresh token returned by the most recent sign-in or renewal.",
-            "example" : "1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE",
-            "minLength" : 1
+            "description" : "The refresh token returned by the most recent sign-in or renewal. Required for native clients. The web client omits it (or the whole body) and sends the `rikkaus_refresh` cookie with `X-Rikkaus-Client: web` instead.",
+            "example" : "1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE"
           }
-        },
-        "required" : [ "refreshToken" ]
+        }
       },
       "AuthenticatedUserResponse" : {
         "type" : "object",
@@ -5868,7 +5940,7 @@
           },
           "refreshToken" : {
             "type" : "string",
-            "description" : "Single-use token for renewing the session. Rotated on every renewal.",
+            "description" : "Single-use token for renewing the session. Rotated on every renewal. Present for native clients only; a request sent with `X-Rikkaus-Client: web` receives it in the HttpOnly `rikkaus_refresh` cookie and this field is omitted.",
             "example" : "1mQ7rVx0Yb3TkPzFhLdW8sNcJgA6eRuq2ZoXiB4ySvE"
           },
           "user" : {

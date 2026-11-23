@@ -10,7 +10,7 @@ rikkaus:
     # or an explicit API_ALLOWED_ORIGINS value. The origin below was read from a running
     # `npx expo start --web`, which reported "Waiting on http://localhost:8081", rather than assumed
     # from Expo's documented default; apps/mobile pins no port in its web script.
-    allowed-origins: http://localhost:8081
+    allowed-origins: ${API_ALLOWED_ORIGINS:http://localhost:8081}
   auth:
     jwt:
       # A fixed development signing secret. Local-only, and it is committed on purpose so a new
@@ -19,6 +19,10 @@ rikkaus:
       # instead, and the base configuration has no default, so this value cannot leak into one by
       # being forgotten.
       secret: local-development-only-jwt-signing-secret
+    refresh-cookie:
+      # Local development serves plain http, where a Secure cookie would not be stored by every client
+      # used in testing (curl's cookie jar among them). Every other environment keeps the default, true.
+      secure: false
     google:
       # Supply a real client id from Google Cloud Console to sign in locally. The redirect URI below is
       # the one Expo web serves on; register the same value in the Google OAuth client or Google will

@@ -123,8 +123,17 @@ public class IdentityService {
                                                         identity.displayName(),
                                                         clock.instant())));
 
-        Issued issued = refreshTokens.issueNewChain(user.getId());
-        return sessionFor(user, issued);
+        return startSession(user);
+    }
+
+    /**
+     * Starts a new session chain for an account that has already been authenticated by the caller.
+     *
+     * <p>Package-private: the only callers are this class's Google path and the {@code local}-profile
+     * development sign-in, which must issue exactly the same tokens the real path does.
+     */
+    AuthenticatedSession startSession(UserAccount user) {
+        return sessionFor(user, refreshTokens.issueNewChain(user.getId()));
     }
 
     /** Renews a session by rotating its refresh token. */
