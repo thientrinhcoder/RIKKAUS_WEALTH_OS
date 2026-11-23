@@ -15,12 +15,14 @@ on:
   pull_request:
     paths:
       - "apps/mobile/**"
+      - "services/api/openapi/openapi.json"
       - ".github/workflows/frontend.yml"
   push:
     branches:
       - main
     paths:
       - "apps/mobile/**"
+      - "services/api/openapi/openapi.json"
       - ".github/workflows/frontend.yml"
   workflow_dispatch:
 
@@ -79,6 +81,11 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      # The generated client must match the committed backend contract. This also runs when only
+      # services/api/openapi/openapi.json changes, so a contract change cannot land without it.
+      - name: Check the generated API client against the contract
+        run: npm run api:check
 
       - name: Unit and component tests
         run: npm test -- --passWithNoTests --ci
