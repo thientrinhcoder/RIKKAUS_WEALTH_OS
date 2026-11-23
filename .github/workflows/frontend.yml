@@ -83,7 +83,11 @@ jobs:
       - name: Unit and component tests
         run: npm test -- --passWithNoTests --ci
 
+      # The app restores its session from the API before rendering the protected shell, so the build
+      # needs an API origin. Nothing listens there in CI: the smoke test answers the auth calls itself.
       - name: Export the web build
+        env:
+          EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:18080
         run: npm run build:web
 
       # Browser version follows the @playwright/test version in the lockfile.
