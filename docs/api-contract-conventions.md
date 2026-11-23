@@ -1613,6 +1613,107 @@ procedure and
 `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md` is what it returned,
 including the byte-for-byte comparison of the four parameterless lists against `main`.
 
+## Wealth snapshot — implemented
+
+A read-only, derived resource (issue #65) behind the dashboard of design #63. One route, under
+`bearerAuth`, owner-scoped by the token, with no path variable and no parameter. It is computed on every
+read from the viewer's assets, liabilities and declared rate; nothing is stored, there is no cache and
+no migration, so recording a valuation, editing a liability or declaring a rate changes the next read.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/wealth-snapshot` | none | 200, one snapshot object; a user with no record gets the full structure with zeros and empty arrays, never 404 |
+
+A singular noun like `/settings/exchange-rate`: each user has exactly one current picture of their
+wealth. `dashboard` is left out of the path because the dashboard is the client's screen; insights
+(#68) and financial-health indicators (#83) read the same resource without drawing it.
+
+### The formulas
+
+```text
+asset.valueVnd           = value                       (VND)
+                         = round_half_up(value * usdToVndRate, 0 decimals)   (USD, declared rate)
+                         = null                        (USD, no rate declared)
+total_assets_vnd         = sum(asset.valueVnd)         over every asset
+total_liabilities_vnd    = sum(liability.outstandingBalanceVnd), converted the same way
+net_worth_vnd            = total_assets_vnd - total_liabilities_vnd           (may be negative)
+debt_to_asset_ratio      = total_liabilities_vnd / total_assets_vnd, six decimals, HALF_UP, a fraction
+liquid_asset_value_vnd   = sum(asset.valueVnd) over assets whose liquidity is HIGH
+last_data_update         = max(sourceDates[].date)
+```
+
+- An asset's value is the `current_value` of `wealth.assets`, the denormalised copy of its current
+  valuation record (#59 keeps the two in step in one transaction), so it is the backbone's "latest asset
+  valuation". The rate snapshot kept on a valuation record is not used: every USD line is converted with
+  the rate the user has declared now, which `exchangeRate` returns with its effective date.
+- Each line is converted on its own through `ConversionTrace` and rounded once to whole đồng; totals are
+  sums of those rounded figures, so every total equals the sum of the lines the response carries. VND
+  amounts are written with two decimals, like every catalog amount (`502000000.00`).
+- `debtToAssetRatio` is a fraction: `0.127645` is 12.7645 %, which the design shows as `12,8%`. It is
+  `null` when total assets are zero, so nothing is divided by zero.
+
+### Partial state
+
+Without a declared rate a USD asset or liability keeps its original `value` or `outstandingBalance` and
+its VND figure is `null`. Every total that contains such a line — `kpis.totalAssets`,
+`kpis.totalLiabilities`, `kpis.liquidAssets`, a category row, a liquidity row — is reported as
+
+| Field | Meaning |
+|---|---|
+| `amountVnd` | the total, or `null` when `excludedRecordCount > 0` ("Không khả dụng") |
+| `knownAmountVnd` | the sum of the lines that were converted, always a number |
+| `recordCount` | every line in the set |
+| `excludedRecordCount` | the lines left out for want of a rate |
+
+`netWorth` and `debtToAssetRatio` are `null` when either total is, and `complete` is `false`. An
+unavailable figure is never reported as `0.00`; a `0.00` is always a real sum. The request still
+succeeds.
+
+### Groupings and lists
+
+- `assetsByCategory`: one row per category that has an asset, a zero-valued one included; largest
+  `knownAmountVnd` first, then by category code. The server does not fold small categories into an
+  "other" slice: four categories plus `Khác` is the client's display rule.
+- `assetsByLiquidity`: one row per level that has an asset, in the fixed order `HIGH`, `MEDIUM`, `LOW`.
+- The asset-versus-liability comparison bar reads `kpis.totalAssets` and `kpis.totalLiabilities`.
+- `assets` and `liabilities`: every line, largest VND figure first with unconverted lines last, then by
+  name under a Vietnamese collator (`java.text.Collator`, `vi-VN`), then by id. `Ô tô Kia Morning` sorts
+  before `Vàng SJC` although a code-point comparison would put it after.
+- `largestAssets.items`: the first five converted lines of `assets`, so the ranking and the list never
+  disagree; `excludedRecordCount` counts the assets that could not be ranked.
+- `upcomingLiabilityDues`: one item per `nextPaymentDate` (`PAYMENT`, amount = the recurring payment,
+  `null` when none is stated) and per `maturityDate` (`MATURITY`, amount = the outstanding balance) on or
+  before `windowEnd = asOfDate + 30 days`. A date already past is kept and marked `overdue`. Ordered by
+  date, `PAYMENT` before `MATURITY`, then Vietnamese name, then liability id.
+- `sourceDates`: an asset's `valuationDate`, the day in `Asia/Ho_Chi_Minh` a liability was last saved
+  (`updatedOn`), and the rate's `effectiveDate` only when the rate converted at least one line. Newest
+  first; on one day `ASSET`, `LIABILITY`, `EXCHANGE_RATE`, then name and id. `kpis.lastDataUpdate` is
+  the first of them, `null` when there is none.
+
+### Time and determinism
+
+Today is read once, in `Asia/Ho_Chi_Minh`, and returned as `asOfDate`; only the due-date window and the
+`overdue` flag depend on it. Two reads on the same day over the same records return the same bytes.
+
+### Errors
+
+No token, an expired one or one signed with another key: `401 unauthorized`. Another method: `405`.
+An `Accept` that is not JSON: `406`. There is no input, hence no `400`. A `userId` query parameter is
+ignored: the owner comes from the token only.
+
+### Not here
+
+Insight rules and thresholds (#68), any stale-data flag or N-day rule, historical or per-valuation
+rates, net-worth history over time, percentage shares (the client divides the amounts it is given),
+export and caching.
+
+### Verified by hand, not by the suite
+
+Shipped on Product Owner direction with no automated test. The scenarios, written before the code, are
+in `plans/261122-1842-GH-65-wealth-snapshot-dashboard/phase-01-test-scenarios.md`; the run is recorded in
+`plans/reports/manual-verification-261123-1537-GH-65-wealth-snapshot-dashboard.md` and is reproduced by
+`docs/manual-test-guide-wealth-snapshot.md`.
+
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -1622,8 +1723,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - Pagination conventions, rate limiting and idempotency keys. The asset catalog returns an unpaginated
   array; a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has
   agreed is worse than returning all of them.
-- **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding and
-  feedback are described above. Insights are still later work.
+- **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding,
+  feedback and the wealth snapshot are described above. Insights are still later work.
 - **Any calculation over the instrument fields.** The four fields are stored and returned; nothing
   accrues interest, projects a yield, computes a gain or loss, or derives a current value from a
   quantity and a unit price. A new unit price does not record a valuation either. Market-price
@@ -1650,7 +1751,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
 - **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
-  report, forecast, goal and onboarding routes, and for the search and filter parameters.** All of
+  report, forecast, wealth snapshot, goal and onboarding routes, and for the search and filter
+  parameters.** All of
   them shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
@@ -1659,6 +1761,7 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `plans/reports/manual-verification-261114-1843-GH-74-recurring-schedule-expansion.md`,
   `plans/reports/manual-verification-261122-1538-GH-77-monthly-cash-flow-reports.md`,
   `plans/reports/manual-verification-261122-1544-GH-80-three-month-forecast.md`,
+  `plans/reports/manual-verification-261123-1537-GH-65-wealth-snapshot-dashboard.md`,
   `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`,
   `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` and
   `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md`. Every other route
