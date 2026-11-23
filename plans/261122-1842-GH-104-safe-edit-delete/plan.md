@@ -103,7 +103,8 @@ Nếu client bấm xóa mà chưa xác nhận các hệ quả đó, backend tr�
 45/45 scenario pass trên commit `c8dbeab` (lần 3, database sạch). Lần 1 44/45: U01 fail và U04 pass sai
 do lỗi script với bash 3.2; lần 2 45/45 nhưng G06 kiểm sai tên trường (`entryId` thay vì
 `sourceEntryId`) nên pass rỗng; cả hai đã sửa trong script, không đổi code. `clean verify` không flag
-xanh (131 test, 0 fail). Evidence:
+xanh (131 test, 0 fail). Sau khi merge `origin/main` `0eb1ec3` (commit `a13a7d6`): verify xanh và
+45/45 scenario pass lại trên jar đã merge. Evidence:
 [`plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md`](../reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md).
 
 ## Câu hỏi cho PO / design #102

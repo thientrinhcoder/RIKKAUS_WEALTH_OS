@@ -1,6 +1,7 @@
 # Manual verification — issue #104 safe edit & delete flows
 
-**Kết quả: 45/45 scenario PASS trên commit `c8dbeab`** (lần chạy 3, database sạch). Hai lần chạy trước
+**Kết quả: 45/45 scenario PASS trên commit `c8dbeab`** (lần chạy 3, database sạch), và lại 45/45 trên
+merge `origin/main` `0eb1ec3` vào nhánh (commit `a13a7d6`, lần chạy 4). Hai lần chạy trước
 có một case fail và hai case pass không đáng tin, đều do lỗi của script chấm, không phải của code; chi
 tiết ở *Các lần chạy*. `clean verify` không flag xanh trên `c8dbeab`: 131 test (unit + integration),
 0 fail, gồm drift check `openapi.json`, `OpenApiContractIT` đã mở rộng và `ArchitectureRulesTest`.
@@ -23,6 +24,7 @@ tiết ở *Các lần chạy*. `clean verify` không flag xanh trên `c8dbeab`:
 | 1 | `c8dbeab` | **44/45**, fail U01 | Lỗi script: bash 3.2 của macOS với `set -u` báo `auth[@]: unbound variable` khi gửi request không token, nên request U01 không được gửi. U04 dùng cùng nhánh code đó và được chấm PASS sai (status rỗng, hàm so sánh lỗi rồi `all` nhận thiếu đối số). Sửa script: mở rộng mảng an toàn và hàm `is` chịu được đối số rỗng |
 | 2 | `c8dbeab`, database mới | 45/45 | Khi đọc lại evidence: G06 tìm occurrence theo trường `entryId`, nhưng response dùng `sourceEntryId`, nên "0 occurrence của CF5 sau khi xóa" đúng một cách rỗng. Sửa scenario: đếm trước khi xóa (phải là 1) và sau khi xóa (phải là 0) |
 | 3 | `c8dbeab`, database mới | **45/45** | Kết quả ghi bên dưới. U01/U04 gửi thật không token và nhận 401; G06 thấy 1 occurrence của CF5 trước khi xóa, 0 sau khi xóa |
+| 4 | Merge `a13a7d6` (`origin/main` `0eb1ec3`: #162 web refresh cookie + dev sign-in local, #163, #164), jar từ `clean verify` không flag, database mới | **45/45** | Merge không conflict; `clean verify -Dopenapi.update=true` không đổi `openapi.json` so với bản git tự gộp; `clean verify` không flag 131 test, 0 fail. Token vẫn mint như cũ vì `AccessTokenService` không đổi, chỉ `SecurityConfiguration` mở thêm `/auth/dev-sign-in` cho profile `local`. C01 `204 404 404 404`, K01 đủ 7 điểm, K02 0/155 dòng log |
 
 ## Phát hiện
 
