@@ -1349,9 +1349,10 @@ property Jackson drops; the response still says `"currency":"VND"`.
 ### No projection, no conversion
 
 The response carries what the user entered and nothing derived from it. Completion percentage,
-remaining amount, remaining months, required monthly contribution and the on-track status are issue
-#89's and have no route yet. Publishing them here would fix a projection method in this contract before
-that task documents one. Every amount is VND; there is no exchange rate anywhere in this resource.
+remaining amount, remaining months, required monthly contribution and the status are a separate
+read-only resource, [Goal projection](#goal-projection--implemented), so a goal stays the user's inputs
+and a projection stays a figure of the day it is read. Every amount is VND; there is no exchange rate
+anywhere in this resource.
 
 ### Errors specific to this resource
 
@@ -1380,6 +1381,121 @@ also `list`, `create`, `read`, `replace` and `delete`, shifted the suffixes of t
 cash-flow operations by one (`list_2` became `list_3`, `read_4` became `read_5`, and so on) in
 `openapi.json`. No client generates code from the contract, so nothing consumes those identifiers; a
 future generator should set explicit `operationId`s rather than rely on the derived ones.
+
+## Goal projection — implemented
+
+A derived, read-only resource beside the goals catalog (issue #89). Two routes under `bearerAuth`,
+owner-scoped by the token. The design it implements is `docs/transparent-goal-projection-status-review.html`
+(issue #87); this section is the method "documented alongside the implementation" that the MVP backbone
+requires, and every response also states it in `method`.
+
+| Route | Success |
+|---|---|
+| `GET /api/v1/goal-projections` | 200, one projection per goal of the viewer, in the goal list's default order (nearest `targetDate`, then name, then id); `[]` when none |
+| `GET /api/v1/goal-projections/{goalId}` | 200, the projection of one goal |
+
+Not under `/goals/{goalId}/...` on purpose: `/goals/projections` would share a path segment with
+`/goals/{goalId}`, and the projection is owned by its own controller so the catalog's routes are
+untouched. Computed on every read from the goal as stored now and today's date in `Asia/Ho_Chi_Minh`,
+never stored and never cached: an edit through `PUT /goals/{goalId}` is visible in the next read, and the
+same goal on the same day gives the same bytes. There is no `asOf` parameter, because the allocated
+amount is today's figure and projecting it from another day would mix two moments.
+
+### Method
+
+```text
+n                = calendar months from the month after asOfDate through the month of targetDate, both included
+                   (contributions arrive at the end of each month; 22/11/2026 -> 31/12/2030 is n = 49)
+r                = expectedAnnualReturnPercent / 100 / 12          (compounded monthly)
+g                = (1 + r)^n
+fromAllocated    = currentAllocatedAmount × g
+fromContributions= plannedMonthlyContribution × (g − 1) / r        (r = 0: plannedMonthlyContribution × n)
+total            = fromAllocated + fromContributions
+gapToTarget      = total − targetAmount                            (positive: surplus; negative: shortfall)
+required         = (targetAmount − currentAllocatedAmount × g) × r / (g − 1)
+                                                                   (r = 0: (targetAmount − currentAllocatedAmount) / n)
+                   0 when the goal is already funded or the result is not positive, else rounded UP to a whole 1,000 VND
+coverage         = plannedMonthlyContribution / required × 100     (100 when required is 0)
+status           = ON_TRACK  when planned × 100 ≥ onTrackMinCoveragePercent × required
+                   AT_RISK   when planned × 100 ≥ atRiskMinCoveragePercent × required
+                   BEHIND    otherwise
+completion       = currentAllocatedAmount / targetAmount × 100, at most 100
+remainingAmount  = max(targetAmount − currentAllocatedAmount, 0)
+```
+
+The status is judged against the **rounded-up** required contribution, as the accepted design's
+fixture does, and compared exactly, before the published percentage is rounded.
+
+### Thresholds
+
+System reference thresholds, configured in one place and stated in every response's `assumptions`:
+
+| Property | Default |
+|---|---|
+| `rikkaus.goals.projection.on-track-min-coverage-percent` | `100` |
+| `rikkaus.goals.projection.at-risk-min-coverage-percent` | `80` |
+
+The application refuses to start when either is missing, when at-risk is not greater than zero, or when
+it is not below on-track; the failure names the property.
+
+### Decimals and rounding
+
+Every value is a `BigDecimal`; nothing passes through `double`. Intermediates carry 34 significant
+digits (`MathContext.DECIMAL128`). `fromAllocated` and `fromContributions` are each rounded half up to
+2 decimals **before** they are added, so `fromAllocated + fromContributions = total` and
+`total − targetAmount = gapToTarget` hold exactly. `completionPercent` and `contributionCoveragePercent`
+are rounded **down** to 2 decimals, so a goal is never shown further along than it is and a 99.996%
+coverage reads `99.99` beside `AT_RISK`. `calculation.monthlyRatePercent` (6 decimals) and
+`calculation.growthFactor` (10 decimals) are rounded half up for display only.
+
+### When an output is unavailable
+
+An output that cannot be derived is `null`, never `0`, and `unavailableReasons` names why. Zero is
+always a computed answer: a stated contribution of zero, a required contribution of zero.
+
+| `timeline` | When | Outputs |
+|---|---|---|
+| `ACTIVE` | `n ≥ 1` | all, subject to the inputs below |
+| `DUE_THIS_MONTH` | `targetDate` is today or later this month, `n = 0` | `required`, `coverage`, `status`, `projectedAtTargetDate`, `calculation` are `null`; reason `NO_CONTRIBUTION_MONTH` |
+| `EXPIRED` | `targetDate` is before today (judged by **day**, so 15/11 is expired on 22/11) | as above, plus `daysPastTargetDate`; reason `TARGET_DATE_PASSED`; `targetReached` tells "Đã đạt mục tiêu" from "Quá hạn" |
+
+| Missing input on an `ACTIVE` goal | Reason | `null` |
+|---|---|---|
+| `plannedMonthlyContribution` | `PLANNED_MONTHLY_CONTRIBUTION_MISSING` | `coverage`, `status`, `projectedAtTargetDate` (`required` is still published) |
+| `expectedAnnualReturnPercent` | `EXPECTED_ANNUAL_RETURN_MISSING` | `required` (unless the goal is already funded), `coverage`, `status`, `projectedAtTargetDate`, `calculation`; a missing return is never treated as 0% |
+
+`completionPercent`, `remainingAmount` and `remainingMonths` are always published.
+
+### Assumption ledger
+
+`assumptions` is a fixed-order list of `{key, source, value}`; `value` is canonical text (a plain decimal,
+an ISO date or month, an identifier) or `null` when the user did not state it or the factor is not
+modelled.
+
+| `source` | Keys |
+|---|---|
+| `USER_ENTERED` | `TARGET_AMOUNT`, `CURRENT_ALLOCATED_AMOUNT`, `TARGET_DATE`, `PLANNED_MONTHLY_CONTRIBUTION`, `EXPECTED_ANNUAL_RETURN_PERCENT` |
+| `SYSTEM` | `AS_OF_DATE`, `TIME_ZONE` (`Asia/Ho_Chi_Minh`), `FIRST_CONTRIBUTION_MONTH` (`null` unless `ACTIVE`), `COMPOUNDING` (`MONTHLY`), `CONTRIBUTION_TIMING` (`END_OF_MONTH`), `REQUIRED_CONTRIBUTION_ROUNDING` (`UP_TO_1000_VND`), `ON_TRACK_MIN_COVERAGE_PERCENT`, `AT_RISK_MIN_COVERAGE_PERCENT` |
+| `NOT_MODELLED` | `INFLATION`, `TAXES_AND_FEES`, `RETURN_VARIABILITY`, `CASH_FLOW_LINK` |
+
+`disclaimer` states that the expected return is the user's assumption, not a guaranteed, promised or
+predicted return. The client renders the accepted design's Vietnamese copy; no Vietnamese text is
+published.
+
+### Errors
+
+`401`, `405`, `406` as everywhere. A goal identifier that is not a UUID is `malformed-request`. Another
+user's goal and a missing one are both `not-found`, through `GoalService.read` and `OwnershipGuard`, and
+differ only in `instance` and `correlationId`.
+
+### Verified by hand, not by the suite
+
+Shipped on Product Owner direction with no automated test. The scenarios, with expectations computed
+before the code, are in `plans/261122-1842-GH-89-goal-projection-status/phase-01-test-scenarios.md`; the
+run is recorded in `plans/reports/manual-verification-261123-1537-GH-89-goal-projection-status.md` and is
+reproduced by [`docs/manual-test-guide-goal-projection.md`](manual-test-guide-goal-projection.md). The six
+goals of the issue #87 fixture, with their target dates moved by the two months between the design's
+reference day and the run, reproduce the design's required contributions and statuses exactly.
 
 ## Guided onboarding — implemented
 
@@ -1847,9 +1963,9 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   undo, no trash, no retention window, no audit log and no bulk delete.
 - **Edit conflicts.** No `ETag`, `If-Match` or row version: two edits of one record are last-write-wins.
   A pilot user edits from one device, and no accepted design asks for a conflict screen.
-- **Goal projections.** No completion percentage, remaining amount, remaining time, required monthly
-  contribution or status is computed or published anywhere. Issue #89 owns the projection method and
-  its documentation; the goals resource is shaped so it can add them without reopening this contract.
+- **Goal projection beyond the backbone's method.** No inflation, tax, fee, return-range or Monte Carlo
+  model, no link between a goal's contribution and recorded cash flow, no user-set status threshold,
+  no stored or historical projection, and no Basic Advisor (#92) reading of it.
 - **Full-text search, saved filters and filters across domains.** The search above is a substring
   match per resource; there is no ranking, no stemming, no search that spans assets and liabilities
   in one request, and no stored filter. Goal status is not a filter because no status is stored.
@@ -1860,8 +1976,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
   out of date is the client's, per the accepted design for issue #48.
 - **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
-  report, forecast, wealth snapshot, goal and onboarding routes, for the search and filter parameters
-  and for deletion impact.** All of
+  report, forecast, wealth snapshot, goal, goal projection and onboarding routes, for the search and
+  filter parameters and for deletion impact.** All of
   them shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
@@ -1872,6 +1988,7 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `plans/reports/manual-verification-261122-1544-GH-80-three-month-forecast.md`,
   `plans/reports/manual-verification-261123-1537-GH-65-wealth-snapshot-dashboard.md`,
   `plans/reports/manual-verification-261114-1740-GH-86-generic-financial-goals-templates.md`,
+  `plans/reports/manual-verification-261123-1537-GH-89-goal-projection-status.md`,
   `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` and
   `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md` and
   `plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md` (deletion impact and the

@@ -4311,6 +4311,478 @@
         } ]
       }
     },
+    "/api/v1/goal-projections" : {
+      "get" : {
+        "tags" : [ "goal-projection-controller" ],
+        "summary" : "Project every goal of the signed-in user",
+        "description" : "One projection per goal the viewer owns, in the goal list's default order: nearest target date first, then by name. An empty array when there are no goals. Computed on every read from the goal as it is stored now and today's date in Asia/Ho_Chi_Minh, and never stored, so an edit to the goal shows in the next read and the same goal on the same day gives the same bytes. The projected amount at the target date is the future value of the allocated amount plus the future value of a level monthly contribution, compounded monthly at one twelfth of the user's expected annual return, with contributions at the end of each month; the required contribution solves the same equation for the target and is rounded up to a whole 1,000 VND; the status compares the planned contribution with it against the configured system reference thresholds. An output that cannot be derived is null, never 0, and its reason is in unavailableReasons. The expected return is the user's assumption and is never presented as guaranteed.",
+        "operationId" : "listGoalProjections",
+        "responses" : {
+          "200" : {
+            "description" : "The viewer's goal projections, possibly empty",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/GoalProjection"
+                  }
+                },
+                "examples" : {
+                  "no goals yet" : {
+                    "description" : "no goals yet",
+                    "value" : [ ]
+                  },
+                  "one goal whose target date has passed" : {
+                    "description" : "one goal whose target date has passed",
+                    "value" : [ {
+                      "goalId" : "c3e8a1f5-7b24-4d96-8e0a-1f5c9b3d6e27",
+                      "goalName" : "Đổi xe gia đình",
+                      "currency" : "VND",
+                      "asOfDate" : "2026-11-22",
+                      "timeline" : "EXPIRED",
+                      "targetReached" : false,
+                      "completionPercent" : 77.5,
+                      "remainingAmount" : 1.8E8,
+                      "remainingMonths" : 0,
+                      "daysPastTargetDate" : 22,
+                      "requiredMonthlyContribution" : null,
+                      "contributionCoveragePercent" : null,
+                      "status" : null,
+                      "projectedAtTargetDate" : null,
+                      "calculation" : null,
+                      "unavailableReasons" : [ "TARGET_DATE_PASSED" ],
+                      "assumptions" : [ {
+                        "key" : "TARGET_AMOUNT",
+                        "source" : "USER_ENTERED",
+                        "value" : "800000000.00"
+                      }, {
+                        "key" : "CURRENT_ALLOCATED_AMOUNT",
+                        "source" : "USER_ENTERED",
+                        "value" : "620000000.00"
+                      }, {
+                        "key" : "TARGET_DATE",
+                        "source" : "USER_ENTERED",
+                        "value" : "2026-10-31"
+                      }, {
+                        "key" : "PLANNED_MONTHLY_CONTRIBUTION",
+                        "source" : "USER_ENTERED",
+                        "value" : "0.00"
+                      }, {
+                        "key" : "EXPECTED_ANNUAL_RETURN_PERCENT",
+                        "source" : "USER_ENTERED",
+                        "value" : "4.00"
+                      }, {
+                        "key" : "AS_OF_DATE",
+                        "source" : "SYSTEM",
+                        "value" : "2026-11-22"
+                      }, {
+                        "key" : "TIME_ZONE",
+                        "source" : "SYSTEM",
+                        "value" : "Asia/Ho_Chi_Minh"
+                      }, {
+                        "key" : "FIRST_CONTRIBUTION_MONTH",
+                        "source" : "SYSTEM",
+                        "value" : null
+                      }, {
+                        "key" : "COMPOUNDING",
+                        "source" : "SYSTEM",
+                        "value" : "MONTHLY"
+                      }, {
+                        "key" : "CONTRIBUTION_TIMING",
+                        "source" : "SYSTEM",
+                        "value" : "END_OF_MONTH"
+                      }, {
+                        "key" : "REQUIRED_CONTRIBUTION_ROUNDING",
+                        "source" : "SYSTEM",
+                        "value" : "UP_TO_1000_VND"
+                      }, {
+                        "key" : "ON_TRACK_MIN_COVERAGE_PERCENT",
+                        "source" : "SYSTEM",
+                        "value" : "100"
+                      }, {
+                        "key" : "AT_RISK_MIN_COVERAGE_PERCENT",
+                        "source" : "SYSTEM",
+                        "value" : "80"
+                      }, {
+                        "key" : "INFLATION",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "TAXES_AND_FEES",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "RETURN_VARIABILITY",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "CASH_FLOW_LINK",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      } ],
+                      "method" : {
+                        "name" : "FUTURE_VALUE_MONTHLY_COMPOUNDING",
+                        "remainingMonths" : "n = calendar months from the month after asOfDate through the month of targetDate, both included; contributions arrive at the end of each month. A target date before asOfDate is EXPIRED; a target date later this month leaves n = 0 and is DUE_THIS_MONTH.",
+                        "monthlyRate" : "r = expectedAnnualReturnPercent / 100 / 12, compounded monthly; g = (1 + r)^n.",
+                        "projectedAmount" : "fromAllocated = currentAllocatedAmount × g; fromContributions = plannedMonthlyContribution × (g − 1) / r, or plannedMonthlyContribution × n when r = 0; total = fromAllocated + fromContributions; gapToTarget = total − targetAmount.",
+                        "requiredMonthlyContribution" : "(targetAmount − currentAllocatedAmount × g) × r / (g − 1), or (targetAmount − currentAllocatedAmount) / n when r = 0; 0 when the goal is already funded or the allocated amount alone reaches the target; otherwise rounded up to the next 1,000 VND.",
+                        "status" : "contributionCoveragePercent = plannedMonthlyContribution / requiredMonthlyContribution × 100 (100 when nothing is required). ON_TRACK at or above 100, AT_RISK at or above 80, BEHIND below; these are system reference thresholds, compared before the percentage is rounded.",
+                        "rounding" : "Intermediate values carry 34 significant digits. Each part of the projected amount is rounded half up to 2 decimals before they are added, so the parts add up to the total. Percentages are rounded down to 2 decimals."
+                      },
+                      "disclaimer" : "The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ."
+                    } ]
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/goal-projections/{goalId}" : {
+      "get" : {
+        "tags" : [ "goal-projection-controller" ],
+        "summary" : "Project one of the signed-in user's goals",
+        "description" : "The projection of one goal the viewer owns. Computed on every read from the goal as it is stored now and today's date in Asia/Ho_Chi_Minh, and never stored, so an edit to the goal shows in the next read and the same goal on the same day gives the same bytes. The projected amount at the target date is the future value of the allocated amount plus the future value of a level monthly contribution, compounded monthly at one twelfth of the user's expected annual return, with contributions at the end of each month; the required contribution solves the same equation for the target and is rounded up to a whole 1,000 VND; the status compares the planned contribution with it against the configured system reference thresholds. An output that cannot be derived is null, never 0, and its reason is in unavailableReasons. The expected return is the user's assumption and is never presented as guaranteed.",
+        "operationId" : "readGoalProjection",
+        "parameters" : [ {
+          "name" : "goalId",
+          "in" : "path",
+          "description" : "The goal's identifier.",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "example" : "9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The goal's projection",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GoalProjection"
+                },
+                "examples" : {
+                  "an active goal on track" : {
+                    "description" : "an active goal on track",
+                    "value" : {
+                      "goalId" : "9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92",
+                      "goalName" : "Mua nhà cho con",
+                      "currency" : "VND",
+                      "asOfDate" : "2026-11-22",
+                      "timeline" : "ACTIVE",
+                      "targetReached" : false,
+                      "completionPercent" : 40.0,
+                      "remainingAmount" : 1.8E9,
+                      "remainingMonths" : 57,
+                      "daysPastTargetDate" : null,
+                      "requiredMonthlyContribution" : 2.1371E7,
+                      "contributionCoveragePercent" : 116.98,
+                      "status" : "ON_TRACK",
+                      "projectedAtTargetDate" : {
+                        "fromAllocated" : 1.59458166513E9,
+                        "fromContributions" : 1.64409027139E9,
+                        "total" : 3.23867193652E9,
+                        "gapToTarget" : 2.3867193652E8
+                      },
+                      "calculation" : {
+                        "monthlyRatePercent" : 0.5,
+                        "growthFactor" : 1.3288180543
+                      },
+                      "unavailableReasons" : [ ],
+                      "assumptions" : [ {
+                        "key" : "TARGET_AMOUNT",
+                        "source" : "USER_ENTERED",
+                        "value" : "3000000000.00"
+                      }, {
+                        "key" : "CURRENT_ALLOCATED_AMOUNT",
+                        "source" : "USER_ENTERED",
+                        "value" : "1200000000.00"
+                      }, {
+                        "key" : "TARGET_DATE",
+                        "source" : "USER_ENTERED",
+                        "value" : "2031-08-31"
+                      }, {
+                        "key" : "PLANNED_MONTHLY_CONTRIBUTION",
+                        "source" : "USER_ENTERED",
+                        "value" : "25000000.00"
+                      }, {
+                        "key" : "EXPECTED_ANNUAL_RETURN_PERCENT",
+                        "source" : "USER_ENTERED",
+                        "value" : "6.00"
+                      }, {
+                        "key" : "AS_OF_DATE",
+                        "source" : "SYSTEM",
+                        "value" : "2026-11-22"
+                      }, {
+                        "key" : "TIME_ZONE",
+                        "source" : "SYSTEM",
+                        "value" : "Asia/Ho_Chi_Minh"
+                      }, {
+                        "key" : "FIRST_CONTRIBUTION_MONTH",
+                        "source" : "SYSTEM",
+                        "value" : "2026-12"
+                      }, {
+                        "key" : "COMPOUNDING",
+                        "source" : "SYSTEM",
+                        "value" : "MONTHLY"
+                      }, {
+                        "key" : "CONTRIBUTION_TIMING",
+                        "source" : "SYSTEM",
+                        "value" : "END_OF_MONTH"
+                      }, {
+                        "key" : "REQUIRED_CONTRIBUTION_ROUNDING",
+                        "source" : "SYSTEM",
+                        "value" : "UP_TO_1000_VND"
+                      }, {
+                        "key" : "ON_TRACK_MIN_COVERAGE_PERCENT",
+                        "source" : "SYSTEM",
+                        "value" : "100"
+                      }, {
+                        "key" : "AT_RISK_MIN_COVERAGE_PERCENT",
+                        "source" : "SYSTEM",
+                        "value" : "80"
+                      }, {
+                        "key" : "INFLATION",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "TAXES_AND_FEES",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "RETURN_VARIABILITY",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "CASH_FLOW_LINK",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      } ],
+                      "method" : {
+                        "name" : "FUTURE_VALUE_MONTHLY_COMPOUNDING",
+                        "remainingMonths" : "n = calendar months from the month after asOfDate through the month of targetDate, both included; contributions arrive at the end of each month. A target date before asOfDate is EXPIRED; a target date later this month leaves n = 0 and is DUE_THIS_MONTH.",
+                        "monthlyRate" : "r = expectedAnnualReturnPercent / 100 / 12, compounded monthly; g = (1 + r)^n.",
+                        "projectedAmount" : "fromAllocated = currentAllocatedAmount × g; fromContributions = plannedMonthlyContribution × (g − 1) / r, or plannedMonthlyContribution × n when r = 0; total = fromAllocated + fromContributions; gapToTarget = total − targetAmount.",
+                        "requiredMonthlyContribution" : "(targetAmount − currentAllocatedAmount × g) × r / (g − 1), or (targetAmount − currentAllocatedAmount) / n when r = 0; 0 when the goal is already funded or the allocated amount alone reaches the target; otherwise rounded up to the next 1,000 VND.",
+                        "status" : "contributionCoveragePercent = plannedMonthlyContribution / requiredMonthlyContribution × 100 (100 when nothing is required). ON_TRACK at or above 100, AT_RISK at or above 80, BEHIND below; these are system reference thresholds, compared before the percentage is rounded.",
+                        "rounding" : "Intermediate values carry 34 significant digits. Each part of the projected amount is rounded half up to 2 decimals before they are added, so the parts add up to the total. Percentages are rounded down to 2 decimals."
+                      },
+                      "disclaimer" : "The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ."
+                    }
+                  },
+                  "no planned monthly contribution" : {
+                    "description" : "no planned monthly contribution",
+                    "value" : {
+                      "goalId" : "4a7c2e91-5d08-4f3b-9c61-b2e8d0a5f714",
+                      "goalName" : "Quỹ học tiếp cho bản thân",
+                      "currency" : "VND",
+                      "asOfDate" : "2026-11-22",
+                      "timeline" : "ACTIVE",
+                      "targetReached" : false,
+                      "completionPercent" : 10.0,
+                      "remainingAmount" : 3.6E8,
+                      "remainingMonths" : 37,
+                      "daysPastTargetDate" : null,
+                      "requiredMonthlyContribution" : 9025000.0,
+                      "contributionCoveragePercent" : null,
+                      "status" : null,
+                      "projectedAtTargetDate" : null,
+                      "calculation" : {
+                        "monthlyRatePercent" : 0.333333,
+                        "growthFactor" : 1.1310294474
+                      },
+                      "unavailableReasons" : [ "PLANNED_MONTHLY_CONTRIBUTION_MISSING" ],
+                      "assumptions" : [ {
+                        "key" : "TARGET_AMOUNT",
+                        "source" : "USER_ENTERED",
+                        "value" : "400000000.00"
+                      }, {
+                        "key" : "CURRENT_ALLOCATED_AMOUNT",
+                        "source" : "USER_ENTERED",
+                        "value" : "40000000.00"
+                      }, {
+                        "key" : "TARGET_DATE",
+                        "source" : "USER_ENTERED",
+                        "value" : "2029-12-31"
+                      }, {
+                        "key" : "PLANNED_MONTHLY_CONTRIBUTION",
+                        "source" : "USER_ENTERED",
+                        "value" : null
+                      }, {
+                        "key" : "EXPECTED_ANNUAL_RETURN_PERCENT",
+                        "source" : "USER_ENTERED",
+                        "value" : "4.00"
+                      }, {
+                        "key" : "AS_OF_DATE",
+                        "source" : "SYSTEM",
+                        "value" : "2026-11-22"
+                      }, {
+                        "key" : "TIME_ZONE",
+                        "source" : "SYSTEM",
+                        "value" : "Asia/Ho_Chi_Minh"
+                      }, {
+                        "key" : "FIRST_CONTRIBUTION_MONTH",
+                        "source" : "SYSTEM",
+                        "value" : "2026-12"
+                      }, {
+                        "key" : "COMPOUNDING",
+                        "source" : "SYSTEM",
+                        "value" : "MONTHLY"
+                      }, {
+                        "key" : "CONTRIBUTION_TIMING",
+                        "source" : "SYSTEM",
+                        "value" : "END_OF_MONTH"
+                      }, {
+                        "key" : "REQUIRED_CONTRIBUTION_ROUNDING",
+                        "source" : "SYSTEM",
+                        "value" : "UP_TO_1000_VND"
+                      }, {
+                        "key" : "ON_TRACK_MIN_COVERAGE_PERCENT",
+                        "source" : "SYSTEM",
+                        "value" : "100"
+                      }, {
+                        "key" : "AT_RISK_MIN_COVERAGE_PERCENT",
+                        "source" : "SYSTEM",
+                        "value" : "80"
+                      }, {
+                        "key" : "INFLATION",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "TAXES_AND_FEES",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "RETURN_VARIABILITY",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      }, {
+                        "key" : "CASH_FLOW_LINK",
+                        "source" : "NOT_MODELLED",
+                        "value" : null
+                      } ],
+                      "method" : {
+                        "name" : "FUTURE_VALUE_MONTHLY_COMPOUNDING",
+                        "remainingMonths" : "n = calendar months from the month after asOfDate through the month of targetDate, both included; contributions arrive at the end of each month. A target date before asOfDate is EXPIRED; a target date later this month leaves n = 0 and is DUE_THIS_MONTH.",
+                        "monthlyRate" : "r = expectedAnnualReturnPercent / 100 / 12, compounded monthly; g = (1 + r)^n.",
+                        "projectedAmount" : "fromAllocated = currentAllocatedAmount × g; fromContributions = plannedMonthlyContribution × (g − 1) / r, or plannedMonthlyContribution × n when r = 0; total = fromAllocated + fromContributions; gapToTarget = total − targetAmount.",
+                        "requiredMonthlyContribution" : "(targetAmount − currentAllocatedAmount × g) × r / (g − 1), or (targetAmount − currentAllocatedAmount) / n when r = 0; 0 when the goal is already funded or the allocated amount alone reaches the target; otherwise rounded up to the next 1,000 VND.",
+                        "status" : "contributionCoveragePercent = plannedMonthlyContribution / requiredMonthlyContribution × 100 (100 when nothing is required). ON_TRACK at or above 100, AT_RISK at or above 80, BEHIND below; these are system reference thresholds, compared before the percentage is rounded.",
+                        "rounding" : "Intermediate values carry 34 significant digits. Each part of the projected amount is rounded half up to 2 decimals before they are added, so the parts add up to the total. Percentages are rounded down to 2 decimals."
+                      },
+                      "disclaimer" : "The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The goal identifier is not a UUID",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No goal with this identifier is visible to the viewer: it does not exist, or it belongs to someone else. The two are deliberately indistinguishable.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "absent or another user's" : {
+                    "description" : "absent or another user's",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:not-found",
+                      "title" : "Resource not found",
+                      "status" : 404,
+                      "detail" : "Resource not found.",
+                      "instance" : "/api/v1/goal-projections/9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92",
+                      "correlationId" : "b7f4c21a-9e03-4d55-8a16-2cf09b4d7e83"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/cash-flow-reports/monthly" : {
       "get" : {
         "tags" : [ "monthly-cash-flow-report-controller" ],
@@ -7341,6 +7813,209 @@
             "description" : "Which amount the form should suggest, and from what figure the client already holds.",
             "enum" : [ "NONE", "TARGET_FROM_SIX_MONTHS_OF_EXPENSES", "ALLOCATED_FROM_CURRENT_NET_WORTH", "TARGET_FROM_TOTAL_LIABILITIES" ],
             "example" : "TARGET_FROM_SIX_MONTHS_OF_EXPENSES"
+          }
+        }
+      },
+      "GoalProjection" : {
+        "type" : "object",
+        "description" : "A goal's projection on today's date in Asia/Ho_Chi_Minh. Computed on every read and never stored. The method is stated in `method` and in docs/api-contract-conventions.md.",
+        "properties" : {
+          "goalId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The projected goal's identifier.",
+            "example" : "9d4b1f68-2c7e-4a35-b8f0-6e1a5d3c7b92"
+          },
+          "goalName" : {
+            "type" : "string",
+            "description" : "The goal's name.",
+            "example" : "Mua nhà cho con"
+          },
+          "currency" : {
+            "type" : "string",
+            "description" : "The currency every amount is in. Always VND.",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "asOfDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The reference day: today in Asia/Ho_Chi_Minh.",
+            "example" : "2026-11-22"
+          },
+          "timeline" : {
+            "type" : "string",
+            "description" : "ACTIVE when at least one contribution month remains; DUE_THIS_MONTH when the target date is today or later this month; EXPIRED when it is before asOfDate.",
+            "enum" : [ "ACTIVE", "DUE_THIS_MONTH", "EXPIRED" ],
+            "example" : "ACTIVE"
+          },
+          "targetReached" : {
+            "type" : "boolean",
+            "description" : "Whether the allocated amount already meets the target amount.",
+            "example" : false
+          },
+          "completionPercent" : {
+            "type" : "number",
+            "description" : "currentAllocatedAmount / targetAmount × 100, rounded down to 2 decimals, at most 100.",
+            "example" : 40.0
+          },
+          "remainingAmount" : {
+            "type" : "number",
+            "description" : "targetAmount − currentAllocatedAmount, never below 0.",
+            "example" : 1.8E9
+          },
+          "remainingMonths" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Contribution months from the month after asOfDate through the target month, both included. 0 when DUE_THIS_MONTH or EXPIRED.",
+            "example" : 57
+          },
+          "daysPastTargetDate" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Days since the target date. Null unless EXPIRED.",
+            "example" : 22
+          },
+          "requiredMonthlyContribution" : {
+            "type" : "number",
+            "description" : "The level monthly contribution that reaches the target, rounded up to a whole 1,000 VND; 0.00 when nothing more is needed. Null when not ACTIVE, or when the expected return is missing and the goal is not yet funded.",
+            "example" : 2.1371E7
+          },
+          "contributionCoveragePercent" : {
+            "type" : "number",
+            "description" : "plannedMonthlyContribution / requiredMonthlyContribution × 100, rounded down to 2 decimals; 100.00 when nothing is required. Null when either is unavailable.",
+            "example" : 116.98
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "Coverage against the system reference thresholds in the assumptions. Null whenever the coverage is unavailable, including every DUE_THIS_MONTH and EXPIRED goal.",
+            "enum" : [ "ON_TRACK", "AT_RISK", "BEHIND" ],
+            "example" : "ON_TRACK"
+          },
+          "projectedAtTargetDate" : {
+            "$ref" : "#/components/schemas/GoalProjectionBreakdown",
+            "description" : "The projected amount at the target date as its two parts. Null unless ACTIVE with both a planned contribution and an expected return."
+          },
+          "calculation" : {
+            "$ref" : "#/components/schemas/GoalProjectionCalculation",
+            "description" : "Intermediate figures for redoing the arithmetic. Null unless ACTIVE with an expected return."
+          },
+          "unavailableReasons" : {
+            "type" : "array",
+            "description" : "Why each null output is null. Empty when every output is available.",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "TARGET_DATE_PASSED", "NO_CONTRIBUTION_MONTH", "PLANNED_MONTHLY_CONTRIBUTION_MISSING", "EXPECTED_ANNUAL_RETURN_MISSING" ]
+            }
+          },
+          "assumptions" : {
+            "type" : "array",
+            "description" : "Every assumption behind the projection, in a fixed order, with who supplied it.",
+            "items" : {
+              "$ref" : "#/components/schemas/GoalProjectionAssumption"
+            }
+          },
+          "method" : {
+            "$ref" : "#/components/schemas/GoalProjectionMethod",
+            "description" : "The projection method in words."
+          },
+          "disclaimer" : {
+            "type" : "string",
+            "description" : "States that the expected return is the user's assumption and is not guaranteed.",
+            "example" : "The expected annual return is the user's own assumption, not a guaranteed, promised or predicted return. Projected amounts illustrate what the entered figures would produce if that return were earned every month; actual results will differ."
+          }
+        }
+      },
+      "GoalProjectionAssumption" : {
+        "type" : "object",
+        "description" : "One line of the assumption ledger.",
+        "properties" : {
+          "key" : {
+            "type" : "string",
+            "description" : "Which assumption.",
+            "enum" : [ "TARGET_AMOUNT", "CURRENT_ALLOCATED_AMOUNT", "TARGET_DATE", "PLANNED_MONTHLY_CONTRIBUTION", "EXPECTED_ANNUAL_RETURN_PERCENT", "AS_OF_DATE", "TIME_ZONE", "FIRST_CONTRIBUTION_MONTH", "COMPOUNDING", "CONTRIBUTION_TIMING", "REQUIRED_CONTRIBUTION_ROUNDING", "ON_TRACK_MIN_COVERAGE_PERCENT", "AT_RISK_MIN_COVERAGE_PERCENT", "INFLATION", "TAXES_AND_FEES", "RETURN_VARIABILITY", "CASH_FLOW_LINK" ],
+            "example" : "EXPECTED_ANNUAL_RETURN_PERCENT"
+          },
+          "source" : {
+            "type" : "string",
+            "description" : "USER_ENTERED on the goal, a SYSTEM convention, or NOT_MODELLED by the projection.",
+            "enum" : [ "USER_ENTERED", "SYSTEM", "NOT_MODELLED" ],
+            "example" : "USER_ENTERED"
+          },
+          "value" : {
+            "type" : "string",
+            "description" : "The value as canonical text: a plain decimal, an ISO date or month, or an identifier. Null when the user did not state it or it is NOT_MODELLED.",
+            "example" : "6.00"
+          }
+        }
+      },
+      "GoalProjectionBreakdown" : {
+        "type" : "object",
+        "description" : "The projected amount at the target date, in two parts.",
+        "properties" : {
+          "fromAllocated" : {
+            "type" : "number",
+            "description" : "currentAllocatedAmount × g, rounded half up to 2 decimals.",
+            "example" : 1.59458166513E9
+          },
+          "fromContributions" : {
+            "type" : "number",
+            "description" : "plannedMonthlyContribution × (g − 1) / r, or × n when r = 0, rounded half up to 2 decimals.",
+            "example" : 1.64409027139E9
+          },
+          "total" : {
+            "type" : "number",
+            "description" : "fromAllocated + fromContributions, exactly.",
+            "example" : 3.23867193652E9
+          },
+          "gapToTarget" : {
+            "type" : "number",
+            "description" : "total − targetAmount. Positive is a surplus, negative a shortfall.",
+            "example" : 2.3867193652E8
+          }
+        }
+      },
+      "GoalProjectionCalculation" : {
+        "type" : "object",
+        "description" : "Intermediate figures, rounded for display only.",
+        "properties" : {
+          "monthlyRatePercent" : {
+            "type" : "number",
+            "description" : "expectedAnnualReturnPercent / 12, in percent, rounded half up to 6 decimals.",
+            "example" : 0.5
+          },
+          "growthFactor" : {
+            "type" : "number",
+            "description" : "g = (1 + r)^n, rounded half up to 10 decimals.",
+            "example" : 1.3288180543
+          }
+        }
+      },
+      "GoalProjectionMethod" : {
+        "type" : "object",
+        "description" : "The projection method in words, as implemented.",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "example" : "FUTURE_VALUE_MONTHLY_COMPOUNDING"
+          },
+          "remainingMonths" : {
+            "type" : "string"
+          },
+          "monthlyRate" : {
+            "type" : "string"
+          },
+          "projectedAmount" : {
+            "type" : "string"
+          },
+          "requiredMonthlyContribution" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "rounding" : {
+            "type" : "string"
           }
         }
       },
