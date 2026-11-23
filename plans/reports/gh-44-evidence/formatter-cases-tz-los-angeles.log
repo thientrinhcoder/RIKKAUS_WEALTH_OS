@@ -1,0 +1,72 @@
+-- 1. Decimal intake
+PASS D1    "12002000000"
+PASS D2    "45000000.5"
+PASS D3    "25100.000000"
+PASS D4    "-1245000000"
+PASS D5    ["0","0"]
+PASS D6    [null,null]
+PASS D7    "0.0000001"
+PASS D8    [null,null]
+PASS D9    [true,false]
+PASS D10   [null,null]
+-- 2. Money display
+PASS M1    ["12.002.000.000 ₫","12.002.000.000 đồng"]
+PASS M2    ["380.000.000 ₫","380.000.000 đồng"]
+PASS M3    ["-1.245.000.000 ₫","âm 1.245.000.000 đồng"]
+PASS M4    ["0 ₫","0 đồng"]
+PASS M6    ["20.000 USD","20.000 đô la Mỹ"]
+PASS M7    ["1.250,50 USD","1.250,50 đô la Mỹ"]
+PASS M8    "1.250,05 USD"
+PASS M9    "0,01 USD"
+PASS M10   "1.234.568 ₫"
+PASS M11   ["0 ₫","0 đồng"]
+PASS M12   "100.000.000.000.000.000 ₫"
+-- 3. Input parsing
+PASS P1    "12002000000"
+PASS P2    "1250.50"
+PASS P3    "1250.5"
+PASS P4    "380000000"
+PASS P5    "negative-not-allowed"
+PASS P6    "-1245000000"
+PASS P7    "invalid-format"
+PASS P8    "invalid-format"
+PASS P9    "too-many-decimals"
+PASS P10   ["invalid-format","empty"]
+PASS P11   "too-large"
+PASS P12   "25100.5"
+PASS P13   "1250"
+PASS P14   ["1250.50","1250",null,"1250,50"]
+-- 4. Exchange rate & conversion
+PASS R1    ["1 USD = 25.100 VND","hiệu lực 12/09/2026"]
+PASS R2    "1 USD = 25.100,5 VND"
+PASS R3    {"rate":null,"updatedAt":null}
+PASS R4    ["converted","502000000.00","502.000.000 ₫","25100.000000","2026-09-12"]
+PASS R5    "31388175.25"
+PASS R6    "251.00"
+PASS R7    {"status":"unavailable","original":{"amount":"20000","currency":"USD"},"reason":"Chưa có tỷ giá USD/VND"}
+PASS R8    {"status":"reporting","amount":"380000000"}
+-- 5. Percentages
+PASS Q1    ["18,4%","18,4 phần trăm"]
+PASS Q2    "18,4%"
+PASS Q3    "0%"
+PASS Q4    ["-2,5%","âm 2,5 phần trăm"]
+PASS Q6    "100%"
+-- 6. Dates and timestamps (process TZ=America/Los_Angeles)
+PASS T1    "12/09/2026"
+PASS T2    "09:30, 13/09/2026 (GMT+7)"
+PASS T3    "2026-09-12"
+PASS T4    "2026-09-13"
+PASS T5    "00:30, 01/01/2027 (GMT+7)"
+PASS T6    "16:38, 22/11/2026 (GMT+7)"
+PASS T7    "Khoảng 2 giờ trước"
+PASS T8    ["Vừa xong","45 phút trước","Hôm qua","10 ngày trước"]
+PASS T9    [null,null,null]
+-- 7. Freshness
+PASS S1    {"status":"fresh","ageDays":1,"asOf":"2026-09-12"}
+PASS S2    {"status":"stale","ageDays":71,"asOf":"2026-09-12"}
+PASS S3    ["fresh","stale"]
+PASS S4    "2026-09-12"
+PASS S4b   "2026-09-13"
+PASS S5    {"status":"missing"}
+
+63 passed, 0 failed
