@@ -22,9 +22,7 @@ describe('status indicator', () => {
     );
 
     expect(screen.getByTestId('st-icon')).toBeTruthy();
-    expect(screen.getByTestId('st-label')).toHaveTextContent(
-      'Nhãn do miền nghiệp vụ cung cấp',
-    );
+    expect(screen.getByTestId('st-label')).toHaveTextContent('Nhãn do miền nghiệp vụ cung cấp');
   });
 
   it('covers exactly the five generic tones, with no goal vocabulary among them', () => {
@@ -32,9 +30,7 @@ describe('status indicator', () => {
   });
 
   it('renders whatever label the caller supplies, including goal language from the domain', async () => {
-    await renderWithProviders(
-      <StatusIndicator label="Chậm tiến độ" testID="st" tone="warning" />,
-    );
+    await renderWithProviders(<StatusIndicator label="Chậm tiến độ" testID="st" tone="warning" />);
 
     expect(screen.getByTestId('st-label')).toHaveTextContent('Chậm tiến độ');
   });

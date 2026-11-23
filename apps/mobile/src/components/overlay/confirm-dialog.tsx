@@ -35,12 +35,7 @@ export function ConfirmDialog({
   const theme = useAppTheme();
 
   return (
-    <OverlayShell
-      accessibilityLabel={title}
-      onDismiss={onCancel}
-      testID={testID}
-      visible={visible}
-    >
+    <OverlayShell accessibilityLabel={title} onDismiss={onCancel} testID={testID} visible={visible}>
       <Text accessibilityRole="header" testID={`${testID}-title`} variant="titleMedium">
         {title}
       </Text>

@@ -7,7 +7,10 @@ import { HealthResponseSchema, type HealthResponse } from './health-schema';
  * client's operational route: same base URL, error classification and schema validation, but no
  * token and no custom header, which that endpoint's CORS mapping would reject.
  */
-export async function fetchHealth(client: ApiClient, signal?: AbortSignal): Promise<HealthResponse> {
+export async function fetchHealth(
+  client: ApiClient,
+  signal?: AbortSignal,
+): Promise<HealthResponse> {
   const { data } = await client.getOperational('/actuator/health', {
     schema: HealthResponseSchema,
     signal,

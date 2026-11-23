@@ -67,7 +67,9 @@ export function FieldShell({
     <View style={styles.field} testID={testID}>
       <View style={styles.labelRow}>
         <Text
-          style={{ color: disabled === true ? theme.colors.onSurfaceVariant : theme.colors.onSurface }}
+          style={{
+            color: disabled === true ? theme.colors.onSurfaceVariant : theme.colors.onSurface,
+          }}
           variant="labelLarge"
         >
           {label}

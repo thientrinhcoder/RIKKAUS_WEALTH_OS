@@ -1,11 +1,10 @@
-import {
-  NUMERIC_TYPOGRAPHY_ROLES,
-  typographyRoles,
-  type TypographyRole,
-} from '@/ui/typography';
+import { NUMERIC_TYPOGRAPHY_ROLES, typographyRoles, type TypographyRole } from '@/ui/typography';
 import { appTheme } from '@/ui/theme';
 
-const EXPECTED: Record<TypographyRole, { variant: string; size: number; lineHeight: number; weight: string }> = {
+const EXPECTED: Record<
+  TypographyRole,
+  { variant: string; size: number; lineHeight: number; weight: string }
+> = {
   display: { variant: 'displaySmall', size: 32, lineHeight: 40, weight: '600' },
   heading1: { variant: 'headlineSmall', size: 24, lineHeight: 32, weight: '600' },
   heading2: { variant: 'titleLarge', size: 20, lineHeight: 28, weight: '600' },

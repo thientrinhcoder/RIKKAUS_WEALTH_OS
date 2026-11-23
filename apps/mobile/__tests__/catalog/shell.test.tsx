@@ -36,9 +36,7 @@ describe('the shell example across every reviewed width', () => {
     atWidth(width);
     await renderWithProviders(<ShellCatalog />);
 
-    const present = Object.values(CHROME).filter(
-      (testID) => screen.queryByTestId(testID) !== null,
-    );
+    const present = Object.values(CHROME).filter((testID) => screen.queryByTestId(testID) !== null);
 
     expect(present).toEqual([expectedChrome(width)]);
   });

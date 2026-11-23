@@ -56,7 +56,8 @@ export function FreshnessBadge({
   const text = { ...DEFAULT_LABELS, ...labels };
   const freshness = assessFreshness(asOf, maxAgeDays, today);
 
-  const tone = freshness.status === 'fresh' ? 'success' : freshness.status === 'stale' ? 'stale' : 'warning';
+  const tone =
+    freshness.status === 'fresh' ? 'success' : freshness.status === 'stale' ? 'stale' : 'warning';
   const label = text[freshness.status];
 
   const detail =

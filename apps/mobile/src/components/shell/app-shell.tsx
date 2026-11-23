@@ -48,10 +48,7 @@ export function AppShell({
     ) : null;
 
   return (
-    <View
-      style={[styles.root, { backgroundColor: theme.colors.background }]}
-      testID="shell-root"
-    >
+    <View style={[styles.root, { backgroundColor: theme.colors.background }]} testID="shell-root">
       <View style={styles.body}>
         {sideChrome}
 
@@ -85,9 +82,7 @@ export function AppShell({
         </View>
       </View>
 
-      {mode === 'bottom' ? (
-        <BottomNav activeRoute={activeRoute} onNavigate={onNavigate} />
-      ) : null}
+      {mode === 'bottom' ? <BottomNav activeRoute={activeRoute} onNavigate={onNavigate} /> : null}
     </View>
   );
 }

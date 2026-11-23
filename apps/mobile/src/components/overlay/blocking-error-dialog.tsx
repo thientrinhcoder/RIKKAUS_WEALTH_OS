@@ -52,11 +52,7 @@ export function BlockingErrorDialog({
         {message}
       </Text>
 
-      <ActionButton
-        onPress={onSafeReturn}
-        testID={`${testID}-safe-return`}
-        variant="primary"
-      >
+      <ActionButton onPress={onSafeReturn} testID={`${testID}-safe-return`} variant="primary">
         {safeReturnLabel}
       </ActionButton>
     </OverlayShell>

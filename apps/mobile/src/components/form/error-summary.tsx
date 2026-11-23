@@ -21,7 +21,11 @@ interface ErrorSummaryProps {
  * names the field and its correction, and activating it moves focus to that field so the user
  * is not left to hunt for it.
  */
-export function ErrorSummary({ errors, onFocusField, testID = 'error-summary' }: ErrorSummaryProps) {
+export function ErrorSummary({
+  errors,
+  onFocusField,
+  testID = 'error-summary',
+}: ErrorSummaryProps) {
   const theme = useAppTheme();
 
   if (errors.length === 0) {
@@ -44,9 +48,7 @@ export function ErrorSummary({ errors, onFocusField, testID = 'error-summary' }:
       testID={testID}
     >
       <Text style={{ color: theme.colors.error }} variant="titleMedium">
-        {errors.length === 1
-          ? 'Còn 1 trường cần sửa'
-          : `Còn ${errors.length} trường cần sửa`}
+        {errors.length === 1 ? 'Còn 1 trường cần sửa' : `Còn ${errors.length} trường cần sửa`}
       </Text>
 
       <View>

@@ -24,11 +24,7 @@ export function RowMetadata({ items, testID }: RowMetadataProps) {
   return (
     <View style={styles.row} testID={testID}>
       {present.map((item, index) => (
-        <Text
-          key={item}
-          style={{ color: theme.colors.onSurfaceVariant }}
-          variant="bodyMedium"
-        >
+        <Text key={item} style={{ color: theme.colors.onSurfaceVariant }} variant="bodyMedium">
           {index === 0 ? item : `· ${item}`}
         </Text>
       ))}

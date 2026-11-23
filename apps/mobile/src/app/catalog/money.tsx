@@ -99,7 +99,12 @@ export default function MoneyCatalog() {
       <ScreenHeading>Tiền tệ, tỷ giá và thời gian</ScreenHeading>
 
       <Section testID="money-display" title="Hiển thị tiền">
-        <MoneyText amount={decimal('12002000000')} currency="VND" testID="m-vnd" variant="displaySmall" />
+        <MoneyText
+          amount={decimal('12002000000')}
+          currency="VND"
+          testID="m-vnd"
+          variant="displaySmall"
+        />
         <MoneyText amount={decimal('380000000.00')} currency="VND" testID="m-vnd-decimals" />
         <MoneyText amount={decimal('-1245000000')} currency="VND" testID="m-negative" />
         <MoneyText amount={decimal('0')} currency="VND" testID="m-zero" />
@@ -115,8 +120,14 @@ export default function MoneyCatalog() {
 
       <Section testID="money-rate" title="Tỷ giá và quy đổi">
         <ExchangeRateText rate={RATE} testID="r-rate" />
-        <ConvertedMoney conversion={convertToReporting(decimal('20000'), 'USD', RATE)} testID="r-converted" />
-        <ConvertedMoney conversion={convertToReporting(decimal('20000'), 'USD', null)} testID="r-no-rate" />
+        <ConvertedMoney
+          conversion={convertToReporting(decimal('20000'), 'USD', RATE)}
+          testID="r-converted"
+        />
+        <ConvertedMoney
+          conversion={convertToReporting(decimal('20000'), 'USD', null)}
+          testID="r-no-rate"
+        />
         <ExchangeRateText
           onSetup={() => {}}
           rate={null}

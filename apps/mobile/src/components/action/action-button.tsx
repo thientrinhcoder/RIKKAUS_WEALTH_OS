@@ -22,14 +22,16 @@ export const ACTION_BUTTON_VARIANTS = [
 export type ActionButtonVariant = (typeof ACTION_BUTTON_VARIANTS)[number];
 
 /** Paper mode per approved variant. Destructive reuses the filled treatment, recoloured. */
-const PAPER_MODE: Record<ActionButtonVariant, 'contained' | 'outlined' | 'contained-tonal' | 'text'> =
-  {
-    primary: 'contained',
-    secondary: 'outlined',
-    tonal: 'contained-tonal',
-    text: 'text',
-    destructive: 'contained',
-  };
+const PAPER_MODE: Record<
+  ActionButtonVariant,
+  'contained' | 'outlined' | 'contained-tonal' | 'text'
+> = {
+  primary: 'contained',
+  secondary: 'outlined',
+  tonal: 'contained-tonal',
+  text: 'text',
+  destructive: 'contained',
+};
 
 /**
  * Section 12 requires a destructive action to be distinguishable by more than colour, so it
@@ -120,8 +122,7 @@ export function ActionButton({
    * part of the computed accessible name. Naming the button explicitly from its own label keeps
    * the name the user hears identical to the text they read.
    */
-  const resolvedLabel =
-    accessibilityLabel ?? (typeof children === 'string' ? children : undefined);
+  const resolvedLabel = accessibilityLabel ?? (typeof children === 'string' ? children : undefined);
 
   return (
     <Button

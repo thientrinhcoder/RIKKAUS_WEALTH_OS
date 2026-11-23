@@ -35,7 +35,8 @@ interface Copy {
 
 const CLIENT_DEFECT: Copy = {
   title: 'Ứng dụng cần được cập nhật',
-  message: 'Phiên bản ứng dụng này gửi yêu cầu mà máy chủ không nhận. Hãy tải lại hoặc cập nhật ứng dụng.',
+  message:
+    'Phiên bản ứng dụng này gửi yêu cầu mà máy chủ không nhận. Hãy tải lại hoặc cập nhật ứng dụng.',
   retryable: false,
 };
 
