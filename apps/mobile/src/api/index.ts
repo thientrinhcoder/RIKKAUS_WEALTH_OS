@@ -6,6 +6,7 @@ export {
   type ApiRequestOptions,
   type ApiResponse,
   type OperationalPath,
+  type UnauthorizedContext,
   type UnauthorizedDecision,
 } from './api-client';
 export { isApiBaseUrlConfigured, readApiBaseUrlFromEnv, resolveApiBaseUrl } from './api-config';

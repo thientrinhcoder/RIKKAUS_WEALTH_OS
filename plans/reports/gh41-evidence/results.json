@@ -1,0 +1,1291 @@
+{
+  "runs": [
+    "2026-11-23T09:00:21.842Z",
+    "2026-11-23T09:05:05.961Z"
+  ],
+  "cases": {
+    "setup": {
+      "seed": {
+        "userA": {
+          "id": "83374070-ba63-452f-8131-f2d782d00eae",
+          "email": "an.nguyen@example.com",
+          "displayName": "An Nguyễn"
+        },
+        "userB": {
+          "id": "ada1d418-1703-497e-92e7-e744aeffac9a",
+          "email": "binh.tran@example.com",
+          "displayName": "Bình Trần"
+        },
+        "ownAssetId": "475639d2-59ea-4645-8ea6-f0804cabc211",
+        "ownAssetStatus": 201,
+        "otherAssetId": "3bd6f537-5ade-4c0e-9fb8-9e6f13d02693",
+        "otherAssetStatus": 201
+      }
+    },
+    "TC-01": {
+      "entryShots": [
+        "tc01-entry-360.png",
+        "tc01-entry-1440.png"
+      ],
+      "auditEntry": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "email": "gh41.moi.1795424423513@example.com",
+      "resultShots": [
+        "tc01-first-login-360.png",
+        "tc01-first-login-1440.png"
+      ],
+      "cookie": {
+        "name": "rikkaus_refresh",
+        "domain": "localhost",
+        "path": "/api/v1/auth",
+        "expires": 1798016423.591785,
+        "httpOnly": true,
+        "secure": false,
+        "sameSite": "Strict",
+        "value": "<redacted>"
+      },
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "nextShots": [
+        "tc01-next-exchange-rate-360.png",
+        "tc01-next-exchange-rate-1440.png"
+      ],
+      "network": [
+        {
+          "t": 1795424422401,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{}"
+        },
+        {
+          "t": 1795424422415,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 400,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:validation-failed"
+          }
+        },
+        {
+          "t": 1795424423610,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{\"email\":\"gh41.moi.1795424423513@example.com\",\"displayName\":\"Lê Minh Châu\"}"
+        },
+        {
+          "t": 1795424423610,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:00:23 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424423619,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/settings/exchange-rate",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424423621,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/settings/exchange-rate",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "baseCurrency",
+            "usdToVndRate",
+            "effectiveDate",
+            "updatedAt"
+          ]
+        },
+        {
+          "t": 1795424424785,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424424786,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        }
+      ],
+      "errors": [
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ]
+    },
+    "TC-02": {
+      "resultShots": [
+        "tc02-returning-360.png",
+        "tc02-returning-1440.png"
+      ],
+      "path": "/",
+      "overviewShots": [
+        "tc02-overview-360.png",
+        "tc02-overview-1440.png"
+      ],
+      "profileText": "An Nguyễn\nan.nguyen@example.com\nĐăng nhập bằng Google Account. Rikkaus không tạo và không lưu mật khẩu.",
+      "profileShots": [
+        "tc02-profile-360.png",
+        "tc02-profile-1440.png"
+      ],
+      "cookie": {
+        "name": "rikkaus_refresh",
+        "domain": "localhost",
+        "path": "/api/v1/auth",
+        "expires": 1798016426.287781,
+        "httpOnly": true,
+        "secure": false,
+        "sameSite": "Strict",
+        "value": "<redacted>"
+      },
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "network": [
+        {
+          "t": 1795424426214,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{}"
+        },
+        {
+          "t": 1795424426228,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 400,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:validation-failed"
+          }
+        },
+        {
+          "t": 1795424426306,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{\"email\":\"an.nguyen@example.com\",\"displayName\":\"An Nguyễn\"}"
+        },
+        {
+          "t": 1795424426307,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:00:26 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424426313,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/settings/exchange-rate",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424426315,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/settings/exchange-rate",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "baseCurrency",
+            "usdToVndRate",
+            "effectiveDate",
+            "updatedAt"
+          ]
+        },
+        {
+          "t": 1795424427447,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424427448,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        }
+      ]
+    },
+    "TC-03": {
+      "pathsVisited": [
+        "/",
+        "/",
+        "/"
+      ],
+      "shots": [
+        "tc03-reload-360.png",
+        "tc03-reload-1440.png"
+      ],
+      "network": [
+        {
+          "t": 1795424429862,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424429874,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:00:29 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424429881,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424429881,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        }
+      ],
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      }
+    },
+    "TC-09": {
+      "ownShots": [
+        "tc09-own-asset-360.png",
+        "tc09-own-asset-1440.png"
+      ],
+      "crossUserShots": [
+        "tc09-cross-user-360.png",
+        "tc09-cross-user-1440.png"
+      ],
+      "crossUserLeaks": false,
+      "randomShots": [
+        "tc09-random-id-360.png",
+        "tc09-random-id-1440.png"
+      ],
+      "identicalCopy": true,
+      "copy": "󰅚\nKhông thể mở mục này\nNội dung không khả dụng. Không có thông tin nào về bản ghi hoặc chủ sở hữu được hiển thị.\nQuay lại Tổng quan\nVề trang trước an toàn",
+      "network": [
+        {
+          "t": 1795424432209,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424432222,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:00:32 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424432228,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424432228,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424432231,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "name",
+            "category",
+            "currentValue",
+            "currency",
+            "valuationDate",
+            "liquidity",
+            "purchaseValue",
+            "purchaseDate",
+            "quantity",
+            "institution",
+            "notes",
+            "symbol",
+            "costPerUnit",
+            "currentPricePerUnit",
+            "interestRate",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        {
+          "t": 1795424432231,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        },
+        {
+          "t": 1795424433593,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424433604,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:00:33 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424433610,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424433611,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        },
+        {
+          "t": 1795424433612,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/assets/3bd6f537-5ade-4c0e-9fb8-9e6f13d02693",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424433613,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/assets/3bd6f537-5ade-4c0e-9fb8-9e6f13d02693",
+          "status": 404,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:not-found"
+          }
+        },
+        {
+          "t": 1795424434970,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424434981,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:00:34 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424434987,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424434987,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        },
+        {
+          "t": 1795424434988,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/assets/6f1c0b8e-0d4f-4f43-9e7b-2c1d5a9e4b71",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424434990,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/assets/6f1c0b8e-0d4f-4f43-9e7b-2c1d5a9e4b71",
+          "status": 404,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:not-found"
+          }
+        }
+      ],
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      }
+    },
+    "TC-04": {
+      "network": [
+        {
+          "t": 1795424501449,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424501450,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424501452,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 401,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:unauthorized"
+          }
+        },
+        {
+          "t": 1795424501452,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "status": 401,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:unauthorized"
+          }
+        },
+        {
+          "t": 1795424501469,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424501470,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:01:41 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424501475,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424501476,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        },
+        {
+          "t": 1795424501477,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424501477,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "name",
+            "category",
+            "currentValue",
+            "currency",
+            "valuationDate",
+            "liquidity",
+            "purchaseValue",
+            "purchaseDate",
+            "quantity",
+            "institution",
+            "notes",
+            "symbol",
+            "costPerUnit",
+            "currentPricePerUnit",
+            "interestRate",
+            "createdAt",
+            "updatedAt"
+          ]
+        }
+      ],
+      "refreshCount": 1,
+      "stillShowsAsset": true,
+      "shots": [
+        "tc04-after-renewal-360.png",
+        "tc04-after-renewal-1440.png"
+      ],
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      }
+    },
+    "TC-05": {
+      "rotated": true,
+      "network": [
+        {
+          "t": 1795424572192,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424572193,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424572196,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 401,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:unauthorized"
+          }
+        },
+        {
+          "t": 1795424572196,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/assets/475639d2-59ea-4645-8ea6-f0804cabc211",
+          "status": 401,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:unauthorized"
+          }
+        },
+        {
+          "t": 1795424572218,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424572232,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 401,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:unauthorized"
+          }
+        }
+      ],
+      "assetHiddenFromDom": true,
+      "revokedShots": [
+        "tc05-revoked-360.png",
+        "tc05-revoked-1440.png"
+      ],
+      "pathWhileRevoked": "/",
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "pathAfterReauth": "/",
+      "reauthShots": [
+        "tc05-after-reauth-360.png",
+        "tc05-after-reauth-1440.png"
+      ],
+      "reauthNetwork": [
+        {
+          "t": 1795424573376,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{\"email\":\"an.nguyen@example.com\",\"displayName\":\"An Nguyễn\"}"
+        },
+        {
+          "t": 1795424573386,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:02:53 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424573392,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424573392,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        }
+      ]
+    },
+    "TC-06": {
+      "shots": [
+        "tc06-expired-360.png",
+        "tc06-expired-1440.png"
+      ],
+      "network": [
+        {
+          "t": 1795424575676,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424575693,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 401,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:unauthorized"
+          }
+        }
+      ],
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      }
+    },
+    "TC-07": {
+      "dialogShots": [
+        "tc07-confirm-360.png",
+        "tc07-confirm-1440.png"
+      ],
+      "cancelKeepsSession": true,
+      "cookieAfterCancel": true,
+      "pathAfterLogout": "/sign-in",
+      "network": [
+        {
+          "t": 1795424578925,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/logout",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424578941,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/logout",
+          "status": 204,
+          "setCookie": "rikkaus_refresh=; Path=/api/v1/auth; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Strict"
+        }
+      ],
+      "cookieAfterLogout": null,
+      "signedOutShots": [
+        "tc07-signed-out-360.png",
+        "tc07-signed-out-1440.png"
+      ],
+      "reloadNetwork": [
+        {
+          "t": 1795424580289,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{}"
+        },
+        {
+          "t": 1795424580297,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 400,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:validation-failed"
+          }
+        }
+      ],
+      "pathAfterBack": "/sign-in",
+      "shellVisibleAfterBack": false,
+      "backShots": [
+        "tc07-after-back-360.png",
+        "tc07-after-back-1440.png"
+      ],
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      }
+    },
+    "TC-08": {
+      "redirectedTo": "/sign-in",
+      "shots": [
+        "tc08-deep-link-redirect-360.png",
+        "tc08-deep-link-redirect-1440.png"
+      ],
+      "pathAfterSignIn": "/",
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      }
+    },
+    "TC-02-rerun": {
+      "resultShots": [
+        "tc02-returning-360.png",
+        "tc02-returning-1440.png"
+      ],
+      "path": "/",
+      "overviewShots": [
+        "tc02-overview-360.png",
+        "tc02-overview-1440.png"
+      ],
+      "profileText": "An Nguyễn\nan.nguyen@example.com\nĐăng nhập bằng Google Account. Rikkaus không tạo và không lưu mật khẩu.",
+      "profileShots": [
+        "tc02-profile-360.png",
+        "tc02-profile-1440.png"
+      ],
+      "cookie": {
+        "name": "rikkaus_refresh",
+        "domain": "localhost",
+        "path": "/api/v1/auth",
+        "expires": 1798016708.58322,
+        "httpOnly": true,
+        "secure": false,
+        "sameSite": "Strict",
+        "value": "<redacted>"
+      },
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "network": [
+        {
+          "t": 1795424708514,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{}"
+        },
+        {
+          "t": 1795424708528,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 400,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:validation-failed"
+          }
+        },
+        {
+          "t": 1795424708602,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{\"email\":\"an.nguyen@example.com\",\"displayName\":\"An Nguyễn\"}"
+        },
+        {
+          "t": 1795424708603,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/dev-sign-in",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:05:08 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        },
+        {
+          "t": 1795424708610,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/settings/exchange-rate",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424708612,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/settings/exchange-rate",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "baseCurrency",
+            "usdToVndRate",
+            "effectiveDate",
+            "updatedAt"
+          ]
+        },
+        {
+          "t": 1795424709783,
+          "dir": "req",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": null,
+          "authorization": "Bearer <redacted>",
+          "cookieSent": null
+        },
+        {
+          "t": 1795424709784,
+          "dir": "res",
+          "method": "GET",
+          "path": "/api/v1/auth/session",
+          "status": 200,
+          "setCookie": null,
+          "bodyKeys": [
+            "id",
+            "email",
+            "displayName"
+          ]
+        }
+      ]
+    },
+    "TC-10": {
+      "authorizationUrl": {
+        "origin": "https://accounts.google.com/o/oauth2/v2/auth",
+        "params": {
+          "code_challenge": "<43 chars>",
+          "prompt": "select_account",
+          "code_challenge_method": "S256",
+          "redirect_uri": "http://localhost:8095/auth/callback",
+          "client_id": "gh41-placeholder.apps.googleusercontent.com",
+          "response_type": "code",
+          "state": "<10 chars>",
+          "scope": "openid email profile"
+        }
+      },
+      "auditDuringRedirect": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "processingShots": [
+        "tc10-processing-360.png",
+        "tc10-processing-1440.png"
+      ],
+      "cancelledShots": [
+        "tc10-cancelled-360.png",
+        "tc10-cancelled-1440.png"
+      ],
+      "auditCancelled": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "deniedShots": [
+        "tc10-denied-360.png",
+        "tc10-denied-1440.png"
+      ],
+      "auditDenied": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "failedShots": [
+        "tc10-failed-360.png",
+        "tc10-failed-1440.png"
+      ],
+      "failedNetwork": [
+        {
+          "t": 1795424718279,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/google",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": null,
+          "body": "{\"authorizationCode\":\"<redacted>\",\"codeVerifier\":\"<redacted>\",\"redirectUri\":\"http://localhost:8095/auth/callback\"}"
+        },
+        {
+          "t": 1795424718688,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/google",
+          "status": 401,
+          "setCookie": null,
+          "bodyKeys": {
+            "type": "urn:rikkaus:problem:unauthorized"
+          }
+        }
+      ],
+      "auditFailed": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "orphanShots": [
+        "tc10-callback-opened-directly-360.png",
+        "tc10-callback-opened-directly-1440.png"
+      ],
+      "errors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    },
+    "TC-11": {
+      "unreachableShots": [
+        "tc11-unreachable-360.png",
+        "tc11-unreachable-1440.png"
+      ],
+      "audit": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      },
+      "restoredAfterRetry": true,
+      "retryNetwork": [
+        {
+          "t": 1795424725198,
+          "dir": "req",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "origin": "http://localhost:8095",
+          "xRikkausClient": "web",
+          "authorization": null,
+          "cookieSent": "rikkaus_refresh=<redacted>",
+          "body": "{}"
+        },
+        {
+          "t": 1795424725213,
+          "dir": "res",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "status": 200,
+          "setCookie": "rikkaus_refresh=<redacted>; Path=/api/v1/auth; Max-Age=2592000; Expires=Wed, 23 Dec 2026 09:05:25 GMT; HttpOnly; SameSite=Strict",
+          "bodyKeys": [
+            "accessToken",
+            "tokenType",
+            "expiresInSeconds",
+            "user"
+          ]
+        }
+      ],
+      "restoredShots": [
+        "tc11-restored-360.png",
+        "tc11-restored-1440.png"
+      ],
+      "signInOfflineShots": [
+        "tc11-sign-in-offline-360.png",
+        "tc11-sign-in-offline-1440.png"
+      ],
+      "cookieAfterOfflineSignIn": false,
+      "auditSignInOffline": {
+        "localStorage": [],
+        "sessionStorage": [],
+        "indexedDB": [],
+        "documentCookieHasRefresh": false
+      }
+    },
+    "TC-13": {
+      "360": {
+        "path": "/sign-in",
+        "devSectionCount": 0,
+        "devTextInDom": false,
+        "googleUnconfiguredNote": 1
+      },
+      "1440": {
+        "path": "/sign-in",
+        "devSectionCount": 0,
+        "devTextInDom": false,
+        "googleUnconfiguredNote": 1
+      }
+    }
+  }
+}

@@ -15,12 +15,14 @@ on:
   pull_request:
     paths:
       - "apps/mobile/**"
+      - "services/api/openapi/openapi.json"
       - ".github/workflows/frontend.yml"
   push:
     branches:
       - main
     paths:
       - "apps/mobile/**"
+      - "services/api/openapi/openapi.json"
       - ".github/workflows/frontend.yml"
   workflow_dispatch:
 
@@ -80,10 +82,19 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # The generated client must match the committed backend contract. This also runs when only
+      # services/api/openapi/openapi.json changes, so a contract change cannot land without it.
+      - name: Check the generated API client against the contract
+        run: npm run api:check
+
       - name: Unit and component tests
         run: npm test -- --passWithNoTests --ci
 
+      # The app restores its session from the API before rendering the protected shell, so the build
+      # needs an API origin. Nothing listens there in CI: the smoke test answers the auth calls itself.
       - name: Export the web build
+        env:
+          EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:18080
         run: npm run build:web
 
       # Browser version follows the @playwright/test version in the lockfile.

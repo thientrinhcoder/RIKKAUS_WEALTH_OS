@@ -67,6 +67,14 @@ const PROBLEM_COPY: Record<KnownProblemType, Copy> = {
   'urn:rikkaus:problem:method-not-allowed': CLIENT_DEFECT,
   'urn:rikkaus:problem:not-acceptable': CLIENT_DEFECT,
   'urn:rikkaus:problem:unsupported-media-type': CLIENT_DEFECT,
+  // A delete that would unlink other records (409). The screen that offers the delete shows the
+  // `impact` list and asks for confirmation; this is the fallback copy when it reaches a generic view.
+  'urn:rikkaus:problem:linked-records': {
+    title: 'Mục này đang được liên kết',
+    message:
+      'Xóa mục này sẽ gỡ liên kết với các khoản khác. Xem lại danh sách liên kết rồi xác nhận nếu vẫn muốn xóa.',
+    retryable: false,
+  },
   'urn:rikkaus:problem:unauthorized': {
     title: 'Phiên đăng nhập đã hết hạn',
     message:

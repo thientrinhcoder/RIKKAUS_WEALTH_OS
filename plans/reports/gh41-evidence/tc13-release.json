@@ -1,0 +1,14 @@
+{
+  "360": {
+    "path": "/sign-in",
+    "devSectionCount": 0,
+    "devTextInDom": false,
+    "googleUnconfiguredNote": 1
+  },
+  "1440": {
+    "path": "/sign-in",
+    "devSectionCount": 0,
+    "devTextInDom": false,
+    "googleUnconfiguredNote": 1
+  }
+}
