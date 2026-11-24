@@ -15,6 +15,8 @@ import com.rikkaus.wealth.shared.deletion.LinkedRecordReference;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
+import com.rikkaus.wealth.shared.validation.FieldErrors;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -152,24 +154,19 @@ public class LiabilityService {
     private LiabilityDetails validated(UUID ownerId, LiabilityDetails details) {
         LiabilityDetails normalized =
                 new LiabilityDetails(
-                        requireName(details.name()),
+                        TextInput.required(details.name(), "name"),
                         details.outstandingBalance(),
                         details.currency(),
                         details.terms(),
                         details.schedule(),
                         details.collateralAssetId(),
-                        cleaned(details.notes(), "notes"));
+                        TextInput.optional(details.notes(), "notes"));
 
         List<Map<String, String>> errors = new ArrayList<>();
         rejectInconsistentTerms(normalized.terms(), normalized.schedule(), errors);
         rejectHalfASchedule(normalized.schedule(), errors);
         rejectCollateralTheViewerDoesNotOwn(ownerId, normalized.collateralAssetId(), errors);
-        if (!errors.isEmpty()) {
-            throw new ApiException(
-                    ProblemType.VALIDATION_FAILED,
-                    ProblemType.VALIDATION_FAILED.safeDetail(),
-                    Map.of("errors", List.copyOf(errors)));
-        }
+        FieldErrors.rejectIfAny(errors);
         return normalized;
     }
 
@@ -238,57 +235,5 @@ public class LiabilityService {
                             "message",
                             "must identify an asset the signed-in user owns"));
         }
-    }
-
-    /** The name with surrounding blank space removed, refusing one that was nothing else. */
-    private static String requireName(String name) {
-        String value = cleaned(name, "name");
-        if (value == null) {
-            throw new ApiException(
-                    ProblemType.VALIDATION_FAILED,
-                    ProblemType.VALIDATION_FAILED.safeDetail(),
-                    Map.of("errors", List.of(Map.of("field", "name", "message", "must not be blank"))));
-        }
-        return value;
-    }
-
-    /**
-     * One free-text value, stripped, with a blank one reported as absent and a null character refused.
-     *
-     * <p>The same rule {@code AssetService} applies, for the same two measured defects: PostgreSQL
-     * cannot store {@code U+0000} in a {@code text} column, so it is refused with the field named
-     * rather than reaching the client as a 500; and a name of a single non-breaking space passes
-     * {@code @NotBlank}, {@code trim()}, {@code strip()} and {@code btrim} alike, so blank here is the
-     * union of Java whitespace and every Unicode space separator. Repeated in this slice rather than
-     * lifted into {@code shared}, because two slices is not yet the pattern that justifies a shared
-     * text module; the third one should lift it.
-     */
-    private static String cleaned(String value, String field) {
-        if (value == null) {
-            return null;
-        }
-        if (value.indexOf('\u0000') >= 0) {
-            throw new ApiException(
-                    ProblemType.VALIDATION_FAILED,
-                    ProblemType.VALIDATION_FAILED.safeDetail(),
-                    Map.of(
-                            "errors",
-                            List.of(Map.of("field", field, "message", "must not contain a null character"))));
-        }
-        int start = 0;
-        int end = value.length();
-        while (start < end && isBlankToAReader(value.codePointAt(start))) {
-            start += Character.charCount(value.codePointAt(start));
-        }
-        while (end > start && isBlankToAReader(value.codePointBefore(end))) {
-            end -= Character.charCount(value.codePointBefore(end));
-        }
-        String stripped = value.substring(start, end);
-        return stripped.isEmpty() ? null : stripped;
-    }
-
-    private static boolean isBlankToAReader(int codePoint) {
-        return Character.isWhitespace(codePoint)
-                || Character.getType(codePoint) == Character.SPACE_SEPARATOR;
     }
 }

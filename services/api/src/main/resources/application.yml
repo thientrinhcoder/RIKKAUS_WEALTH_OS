@@ -46,6 +46,17 @@ spring:
         # DateTimeFeature, so the Boot 3 key spring.jackson.serialization.write-dates-as-timestamps
         # no longer binds and fails context startup outright.
         write-dates-as-timestamps: false
+      enum:
+        # Jackson otherwise reads a JSON integer as an enum's ordinal, so {"currency": 1} silently became
+        # USD and {"category": 0} the first category. An enum member is its constant name or nothing;
+        # a number is a malformed-request like any other unknown value.
+        fail-on-numbers-for-enums: true
+  web:
+    # Bean-validation messages are interpolated in the request's locale, so Accept-Language: de turned
+    # a default message into German. Every errors[].message is English by contract, whatever the
+    # caller's browser asks for; the client maps Vietnamese copy from the problem type and field.
+    locale: en
+    locale-resolver: fixed
 
 springdoc:
   api-docs:

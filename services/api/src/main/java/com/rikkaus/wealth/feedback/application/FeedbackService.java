@@ -3,12 +3,10 @@ package com.rikkaus.wealth.feedback.application;
 import com.rikkaus.wealth.feedback.domain.FeedbackCategory;
 import com.rikkaus.wealth.feedback.domain.FeedbackEntry;
 import com.rikkaus.wealth.feedback.domain.FeedbackEntryRepository;
-import com.rikkaus.wealth.shared.error.ApiException;
-import com.rikkaus.wealth.shared.error.ProblemType;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,13 +52,7 @@ public class FeedbackService {
      */
     @Transactional
     public FeedbackEntry send(UUID authorId, String screen, FeedbackCategory category, String message) {
-        if (message.indexOf('\u0000') >= 0) {
-            throw invalidMessage("must not contain a null character");
-        }
-        String stripped = stripped(message);
-        if (stripped.isEmpty()) {
-            throw invalidMessage("must not be blank");
-        }
+        String stripped = TextInput.required(message, "message");
         return entries.save(
                 FeedbackEntry.create(
                         authorId,
@@ -68,33 +60,5 @@ public class FeedbackService {
                         category,
                         stripped,
                         clock.instant().truncatedTo(ChronoUnit.MICROS)));
-    }
-
-    private static ApiException invalidMessage(String reason) {
-        return new ApiException(
-                ProblemType.VALIDATION_FAILED,
-                ProblemType.VALIDATION_FAILED.safeDetail(),
-                Map.of("errors", List.of(Map.of("field", "message", "message", reason))));
-    }
-
-    /**
-     * The message with surrounding blank space removed, where blank is Java whitespace plus every
-     * Unicode space separator — the same rule the assets and cash-flow slices apply to their text.
-     */
-    private static String stripped(String value) {
-        int start = 0;
-        int end = value.length();
-        while (start < end && isBlankToAReader(value.codePointAt(start))) {
-            start += Character.charCount(value.codePointAt(start));
-        }
-        while (end > start && isBlankToAReader(value.codePointBefore(end))) {
-            end -= Character.charCount(value.codePointBefore(end));
-        }
-        return value.substring(start, end);
-    }
-
-    private static boolean isBlankToAReader(int codePoint) {
-        return Character.isWhitespace(codePoint)
-                || Character.getType(codePoint) == Character.SPACE_SEPARATOR;
     }
 }

@@ -17,6 +17,9 @@ import com.rikkaus.wealth.shared.deletion.LinkedRecordReference;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
+import com.rikkaus.wealth.shared.validation.EnteredDates;
+import com.rikkaus.wealth.shared.validation.FieldErrors;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -114,10 +117,10 @@ public class AssetService {
         AssetInstrumentDetails normalizedDetails = normalize(instrumentDetails);
         List<Map<String, String>> errors =
                 new ArrayList<>(dateErrors(valuation.effectiveDate(), normalized.purchaseDate()));
-        errors.addAll(InputRules.rateSnapshotErrors(valuation, InputRules.today(clock)));
+        errors.addAll(InputRules.rateSnapshotErrors(valuation, EnteredDates.today(clock)));
         errors.addAll(categoryApplicabilityErrors(category, normalizedDetails));
         if (!errors.isEmpty()) {
-            throw InputRules.validationFailed(errors);
+            throw FieldErrors.validationFailed(errors);
         }
         Instant now = clock.instant();
         Asset asset =
@@ -171,7 +174,7 @@ public class AssetService {
                 new ArrayList<>(dateErrors(earliestValuation, normalized.purchaseDate()));
         errors.addAll(categoryApplicabilityErrors(asset.getCategory(), normalizedDetails));
         if (!errors.isEmpty()) {
-            throw InputRules.validationFailed(errors);
+            throw FieldErrors.validationFailed(errors);
         }
         asset.replaceMetadata(normalized, normalizedDetails, clock.instant());
         Asset saved = assets.save(asset);
@@ -274,20 +277,20 @@ public class AssetService {
      * unrelated instrument or rate problem in the same request cannot suppress the ordering rule.
      */
     private List<Map<String, String>> dateErrors(LocalDate valuationDate, LocalDate purchaseDate) {
-        LocalDate today = InputRules.today(clock);
+        LocalDate today = EnteredDates.today(clock);
         List<Map<String, String>> errors = new ArrayList<>();
         if (valuationDate.isAfter(today)) {
-            errors.add(InputRules.error("valuationDate", "must not be in the future"));
+            errors.add(FieldErrors.error("valuationDate", "must not be in the future"));
         }
         if (purchaseDate != null && purchaseDate.isAfter(today)) {
-            errors.add(InputRules.error("purchaseDate", "must not be in the future"));
+            errors.add(FieldErrors.error("purchaseDate", "must not be in the future"));
         }
         // Only when neither is already rejected for being in the future. A request dated next year in
         // both fields is one mistake, and reporting a third error about their order would describe a
         // problem the user does not have.
         if (errors.isEmpty() && purchaseDate != null && purchaseDate.isAfter(valuationDate)) {
             errors.add(
-                    InputRules.error("purchaseDate", "must not be later than the valuation date"));
+                    FieldErrors.error("purchaseDate", "must not be later than the valuation date"));
         }
         return errors;
     }
@@ -326,7 +329,7 @@ public class AssetService {
 
     private static void refuseIfPresent(List<Map<String, String>> errors, String field, Object value) {
         if (value != null) {
-            errors.add(InputRules.error(field, "must not be set for this asset category"));
+            errors.add(FieldErrors.error(field, "must not be set for this asset category"));
         }
     }
 
@@ -335,27 +338,26 @@ public class AssetService {
      *
      * <p>What "clean" means — surrounding blank space in the widest sense removed, an optional field
      * left with nothing stored as {@code null}, a null character refused — is defined once in {@link
-     * InputRules#cleaned}, because the valuation history has a free-text note that has to be judged by
-     * the same rule.
+     * TextInput}, because every slice with free text has to judge it by the same rule.
      */
     private static AssetMetadata normalize(AssetMetadata metadata) {
         return new AssetMetadata(
-                InputRules.requireName(metadata.name()),
+                TextInput.required(metadata.name(), "name"),
                 metadata.liquidity(),
                 metadata.purchaseValue(),
                 metadata.purchaseDate(),
                 metadata.quantity(),
-                InputRules.cleaned(metadata.institution(), "institution"),
-                InputRules.cleaned(metadata.notes(), "notes"));
+                TextInput.optional(metadata.institution(), "institution"),
+                TextInput.optional(metadata.notes(), "notes"));
     }
 
     /**
      * Cleans the one free-text instrument field.
      *
-     * <p>{@code symbol} goes through {@link InputRules#cleaned} like the institution and the notes, for
-     * the same two reasons: a value of only blank space is an optional field the user left alone
-     * rather than a ticker made of spaces, and a null character cannot be stored in a PostgreSQL
-     * {@code text} column at all and would otherwise reach the client as a 500.
+     * <p>{@code symbol} goes through {@link TextInput#optional(String, String)} like the institution and
+     * the notes, for the same two reasons: a value of only blank space is an optional field the user
+     * left alone rather than a ticker made of spaces, and a null character cannot be stored in a
+     * PostgreSQL {@code text} column at all and would otherwise reach the client as a 500.
      *
      * <p>The three numeric fields are not touched. Their bounds are annotations on the request and
      * check constraints on the table, and a scale the column cannot hold is refused by {@code @Digits}
@@ -364,7 +366,7 @@ public class AssetService {
      */
     private static AssetInstrumentDetails normalize(AssetInstrumentDetails instrumentDetails) {
         return new AssetInstrumentDetails(
-                InputRules.cleaned(instrumentDetails.symbol(), "symbol"),
+                TextInput.optional(instrumentDetails.symbol(), "symbol"),
                 instrumentDetails.costPerUnit(),
                 instrumentDetails.currentPricePerUnit(),
                 instrumentDetails.interestRate());

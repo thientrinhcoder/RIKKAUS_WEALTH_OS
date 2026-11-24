@@ -2,6 +2,7 @@ package com.rikkaus.wealth.cashflow.forecast.application;
 
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
+import com.rikkaus.wealth.shared.validation.EnteredDates;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -56,7 +57,7 @@ public record ForecastHorizon(YearMonth first, LocalDate asOfDate) {
 
         YearMonth first = parse(fromText);
         if (first == null) {
-            throw invalid("must be a month in the form YYYY-MM");
+            throw invalid(EnteredDates.CALENDAR_MONTH);
         }
         if (first.isBefore(next)) {
             throw invalid("must not be before the month after today");

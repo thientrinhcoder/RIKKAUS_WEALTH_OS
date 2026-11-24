@@ -117,6 +117,9 @@ plans/**/*
 !plans/261124-0958-GH-107-a11y-backend-support/
 !plans/261124-0958-GH-107-a11y-backend-support/**
 !plans/reports/manual-verification-261124-0958-GH-107-a11y-backend-support.md
+!plans/261124-1003-GH-98-validation-hardening/
+!plans/261124-1003-GH-98-validation-hardening/**
+!plans/reports/manual-verification-261124-1003-GH-98-validation-hardening.md
 screenshots/*
 docs/screenshots/*
 logs.txt

@@ -91,7 +91,9 @@ Two extension members beyond the RFC's standard ones:
 
 `detail` is always safe to show a user. It never carries a stack trace, an internal class name, a SQL
 fragment or a credential, and for the statuses where Spring's own text would echo your input it is
-replaced with the taxonomy's fixed text. `instance` is the request URI, so it does contain the path you
+replaced with the taxonomy's fixed text. `errors[].message` is English whatever `Accept-Language`
+says and never repeats the value sent; the shared rules and the exact sentences are in
+[Validation hardening](#validation-hardening--implemented). `instance` is the request URI, so it does contain the path you
 sent — that is the RFC's definition, not a leak.
 
 ## Correlation
@@ -388,8 +390,10 @@ it is now the user's chosen name rather than Google's.
 
 `displayName` must be non-blank and at most 120 characters. The bound exists because the column is
 `TEXT` and has none of its own; without it the API would accept a megabyte of text into a field the
-design renders on one line. The value is trimmed before storing, so a name of nothing but spaces is a
-`validation-failed` rather than an empty greeting.
+design renders on one line. Surrounding blank space is removed before storing, in the Unicode sense every
+free-text field uses (a lone `U+00A0` included), so a name of nothing but blank space is a
+`validation-failed` (`must not be blank`) rather than an empty greeting, and a `U+0000` is
+`must not contain a null character` rather than a 500.
 
 ## Exchange-rate settings — implemented
 
@@ -594,7 +598,7 @@ here would also mean storing or recomputing a figure whose rate nobody could see
   complaint, so there is no rule against it.
 - A `name` that is blank once leading and trailing blank space is removed is `validation-failed` with
   `must not be blank`. **Blank here is wider than `@NotBlank`'s own definition**: it includes every
-  Unicode space separator, so a name of a single non-breaking space is refused rather than creating an
+  Unicode space separator and the zero-width `U+200B`, `U+2060` and `U+FEFF`, so a name of a single non-breaking space is refused rather than creating an
   asset that renders as an empty row. The optional text fields are cleaned the same way, and one left
   with nothing becomes `null`.
 - Another user's asset identifier answers `not-found`, for reads and for writes, with a body that
@@ -1265,7 +1269,7 @@ and `from` give the same bytes.
 
 | Input | `message` |
 |---|---|
-| present but not `YYYY-MM` with a four-digit year and a real month, or blank | `must be a month in the form YYYY-MM` |
+| present but not `YYYY-MM` with a four-digit year and a real month, or blank | `must be a calendar month in the form YYYY-MM` (the report's sentence; `must be a month in the form YYYY-MM` before issue #98) |
 | the current month or earlier | `must not be before the month after today` |
 | more than 12 months after the current month | `must be at most 12 months after the current month` |
 
@@ -1367,7 +1371,8 @@ anywhere in this resource.
 
 ### Errors specific to this resource
 
-- An unrecognised `type`, or a date that is not ISO 8601, is **`malformed-request`, not
+- An unrecognised `type`, or a date that is not `YYYY-MM-DD` (see
+  [Validation hardening](#validation-hardening--implemented)), is **`malformed-request`, not
   `validation-failed`**, with no `errors` array. Jackson cannot construct the request record at all.
 - Another user's goal identifier answers `not-found`, for reads and writes, with a body that differs from
   a genuinely missing identifier's only in `instance` and `correlationId`.
@@ -2007,7 +2012,9 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `plans/reports/manual-verification-261114-1843-GH-95-onboarding-checklist.md` and
   `plans/reports/manual-verification-261122-1538-GH-101-search-basic-filters.md` and
   `plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md` (deletion impact and the
-  linked-record guard). Every other route
+  linked-record guard) and
+  `plans/reports/manual-verification-261124-1003-GH-98-validation-hardening.md` (the negative-input
+  matrix across every write route). Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and
@@ -2197,3 +2204,94 @@ resource's section above.
 The scenarios are `plans/261124-0958-GH-107-a11y-backend-support/phase-01-test-scenarios.md`, the
 measuring scripts sit beside them, and the run is
 `plans/reports/manual-verification-261124-0958-GH-107-a11y-backend-support.md`.
+
+## Validation hardening — implemented
+
+Issue #98. Every write route and every query parameter was run through one negative-input matrix — signs,
+column bounds, impossible and out-of-range dates, currencies, Unicode blanks, `U+0000`, lengths, enums,
+JSON types, empty and non-JSON bodies, non-UUID and other users' identifiers — on real PostgreSQL, before
+and after the change. What follows is the rule set that run confirmed. Design #96 for the feature was not
+yet approved when it shipped; the assumptions and the questions left for the Product Owner are in
+`plans/261124-1003-GH-98-validation-hardening/plan.md` and the report.
+
+Three promises hold on every route:
+
+- **No input reaches PostgreSQL as a 500.** Every value the database cannot hold — too many digits, a
+  date outside its calendar, `U+0000` in text — is refused before a statement runs.
+- **No error repeats what was sent.** `detail` is the taxonomy's fixed text, `errors[].message` is one of
+  the sentences below, and neither names a class, column, constraint or value. `instance` is the request
+  path, as RFC 9457 defines it.
+- **What is stored is what was sent**, or the request is refused. No date, enum or text is guessed,
+  shifted or silently truncated.
+
+### Which problem type
+
+| The request | Problem | `errors` |
+|---|---|---|
+| Valid JSON of the right shape, a value breaks a rule | `validation-failed` | one entry per problem, all at once |
+| A query parameter breaks a rule | `validation-failed` | the parameter is the `field` |
+| Jackson cannot build the request record: empty body, `null`, `[]`, truncated JSON, a JSON type the member cannot take (`"abc"` or `true` for an amount), an unknown enum constant, an enum sent as a number, a date not in the form below, a number with more than 1,000 digits or an exponent past `int` | `malformed-request` | none; switch on `type` |
+| A path identifier that is not a UUID, `confirm` that is not a boolean | `malformed-request` | none |
+| A body that is not `application/json` | `unsupported-media-type` (415) | none |
+| Another user's record on the path | `not-found`, byte-identical to an identifier that exists nowhere apart from `instance` and `correlationId` | none |
+| Another user's record named in the body (`collateralAssetId`, `linkedAssetId`, `linkedLiabilityId`, `correctsValuationId`) | `validation-failed` on that member, the same entry as for an identifier that exists nowhere | one |
+
+### Shared rules
+
+| Kind | Rule | Where it lives |
+|---|---|---|
+| Money and amounts | `@Digits` mirrors the column: `NUMERIC(19, 2)` → 17 integer digits and 2 decimals, `NUMERIC(19, 6)` → 13 and 6, `NUMERIC(7, 4)` → 3 and 4, `NUMERIC(5, 2)` → 3 and 2. The sign rule is each field's own (below). An exponent form such as `1e400` is a number like any other and is judged by the same bound | request records |
+| Date in a JSON body | A JSON **string** `YYYY-MM-DD`: four-digit year from `0001`, a real month and day. Refused as `malformed-request`: `2026-02-30`, a day count such as `20000`, an array `[2026,9,12]`, a date-time with or without an offset, a signed or five-digit year, and year `0000` (PostgreSQL stores it as `0001 BC` and hands it back as `0001`). An empty string `""` is `null`, as before | `shared/validation/StrictDateConfiguration` |
+| Date compared with today | Today is the civil date in `Asia/Ho_Chi_Minh`, never UTC | `shared/validation/EnteredDates` |
+| Date in a query parameter | Same grammar; a bad value is `validation-failed` naming the parameter | each route's parser |
+| Currency | `VND` or `USD`, exact case. A number is no longer read as the enum's position: `"currency": 1` was a `201` **USD** liability before this issue | `spring.jackson.datatype.enum.fail-on-numbers-for-enums` |
+| Text | Surrounding blank space removed, where blank is Java whitespace, every Unicode space separator (`U+00A0`, `U+3000`, …) and the zero-width `U+200B`, `U+2060`, `U+FEFF`. A required field left with nothing is `must not be blank`; an optional one becomes `null`. `U+0000` anywhere is refused, never stripped. Lengths are `@Size` on the value sent, in UTF-16 code units | `shared/validation/TextInput` |
+| Unknown members | Dropped, as Spring Boot's default; nothing is applied and nothing is reported | — |
+| Scalar coercion | Left as Jackson does it: a JSON number for a text member is its text (`12345` → `"12345"`), and a JSON string holding a number for an amount is that number (`"2400000000"`) | — |
+| Message language | English. The request locale is fixed to `en` (`spring.web.locale`), and every annotation carries its message | `application.yml`, request records |
+
+### The sentences
+
+One kind of mistake has one sentence on every route. These are the shared ones; a bound particular to one
+field (`must be between 1 and 7`, `must be at most 100`) is in that resource's section. Clients switch on
+`field`; the text is for logs and developers.
+
+| Sentence | When |
+|---|---|
+| `must not be null` | a required body member is absent or `null`, or `""` for a date or an amount |
+| `must be present` | a required query parameter is absent or blank |
+| `must not be blank` | required text with nothing left once blank space is removed |
+| `must not contain a null character` | `U+0000` in any text |
+| `must be at most N characters` | over a length bound |
+| `must not be negative` / `must be greater than zero` | the sign rule of a zero-allowed / strictly positive amount |
+| `must have at most I integer digits and F decimals` | over a column's precision or scale |
+| `must be a calendar date in the form YYYY-MM-DD` | a date query parameter |
+| `must be a calendar month in the form YYYY-MM` | a month query parameter (`month` of the report, `from` of the forecast) |
+| `must not be in the future` | an entered date after today in `Asia/Ho_Chi_Minh` |
+| `must be one of …` | an unknown query filter or sort value, listing the accepted constants, never the value sent |
+
+The cross-field sentences of each resource (`must not be before the start date`, `must match the asset's
+currency`, `must be absent for a VND valuation`, …) are listed in its own section and did not change.
+
+### What changed, by module
+
+| Module | Before | Now |
+|---|---|---|
+| Every JSON body | `"currency": 1` created a USD record and `"category": 0` the first category; a date as a number, an array or a date-time was accepted and silently converted; `-5000-01-01` and `+999999999-12-31` were a 500; `+10000-01-01` and `0000-01-31` were stored, the second read back a year later | `malformed-request` for each |
+| Profile | `displayName` of `U+00A0` was stored and greeted the user with a blank; `U+0000` was a 500; over 120 characters said `size must be between 0 and 120` | `must not be blank`, `must not contain a null character`, `must be at most 120 characters` |
+| Exchange-rate settings | Default validator messages, translated by `Accept-Language` (`muss größer 0 sein`); `must be greater than 0`; `numeric value out of bounds (<13 digits>.<6 digits> expected)` | `must not be null`, `must be greater than zero`, `must have at most 13 integer digits and 6 decimals`, English always |
+| Assets, valuations, liabilities, cash-flow, goals, feedback | A name or note of only `U+200B`, `U+2060` or `U+FEFF` was stored and rendered as nothing | blank, as `U+00A0` already was |
+| Cash-flow forecast | `from` said `must be a month in the form YYYY-MM` | `must be a calendar month in the form YYYY-MM`, the report's sentence |
+| Local development sign-in | `displayName` with `U+0000` was a 500 | `validation-failed` naming it |
+
+Nothing else moved: every `field` name, every sign rule (`amount > 0` on cash flow, `outstandingBalance ≥
+0` on liabilities, `currentValue ≥ 0` on assets), every cross-field rule and every `GET` response is as
+it was. The published contract did not change, because messages and Jackson's reading rules are not part
+of the OpenAPI document.
+
+### Verified by hand, not by the suite
+
+No automated test was added, on Product Owner direction. The matrix, written before the code, is
+`plans/261124-1003-GH-98-validation-hardening/phase-01-test-scenarios.md`, run by
+`scenario-runner.sh` in the same folder; the before and after runs, with the response of every case, are
+in `plans/reports/manual-verification-261124-1003-GH-98-validation-hardening.md`.

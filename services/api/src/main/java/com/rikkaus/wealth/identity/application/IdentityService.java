@@ -15,6 +15,7 @@ import com.rikkaus.wealth.identity.session.RefreshTokenService.Issued;
 import com.rikkaus.wealth.identity.session.RefreshTokenService.RefreshTokenRejectedException;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.time.Clock;
 import java.util.Map;
 import java.util.UUID;
@@ -170,11 +171,16 @@ public class IdentityService {
      * <p>Goes through the same lookup as {@link #requireUser}, so a token whose subject has no account
      * row stays {@code unauthorized} rather than becoming a 500 — the same reasoning as in {@link
      * #renew}.
+     *
+     * <p>The name is cleaned by the rule every other free-text field follows. {@code trim()} alone let a
+     * name of one non-breaking space through as a greeting that renders as nothing, and a {@code U+0000}
+     * reach PostgreSQL, which cannot store it, as a 500.
      */
     @Transactional
     public UserAccount updatePreferredDisplayName(UUID userId, String displayName) {
+        String cleaned = TextInput.required(displayName, "displayName");
         UserAccount user = requireUser(userId);
-        user.changePreferredDisplayName(displayName, clock.instant());
+        user.changePreferredDisplayName(cleaned, clock.instant());
         return users.save(user);
     }
 

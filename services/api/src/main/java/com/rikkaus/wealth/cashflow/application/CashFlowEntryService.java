@@ -1,5 +1,7 @@
 package com.rikkaus.wealth.cashflow.application;
 
+import static com.rikkaus.wealth.shared.validation.FieldErrors.error;
+
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntry;
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntryDetails;
 import com.rikkaus.wealth.cashflow.domain.CashFlowEntryFilter;
@@ -11,6 +13,8 @@ import com.rikkaus.wealth.shared.deletion.DeletionImpact.RecordType;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
+import com.rikkaus.wealth.shared.validation.FieldErrors;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
@@ -219,19 +223,8 @@ public class CashFlowEntryService {
             }
         }
 
-        String notes = details.notes();
-        if (notes != null && notes.indexOf('\u0000') >= 0) {
-            errors.add(error("notes", "must not contain a null character"));
-        } else {
-            notes = stripped(notes);
-        }
-
-        if (!errors.isEmpty()) {
-            throw new ApiException(
-                    ProblemType.VALIDATION_FAILED,
-                    ProblemType.VALIDATION_FAILED.safeDetail(),
-                    Map.of("errors", List.copyOf(errors)));
-        }
+        String notes = TextInput.optional(details.notes(), "notes", errors);
+        FieldErrors.rejectIfAny(errors);
 
         // The column is NUMERIC(19, 2), so a value sent as 45000000 reads back as 45000000.00 on the
         // next GET. Setting the scale here makes the create response say what every later read will
@@ -249,46 +242,5 @@ public class CashFlowEntryService {
                 details.linkedAssetId(),
                 details.linkedLiabilityId(),
                 notes);
-    }
-
-    /**
-     * One free-text value with surrounding blank space removed, and a blank one reported as absent.
-     *
-     * <p>The same rule {@code AssetService} applies to its three text fields. What counts as blank is
-     * wider than {@code trim()} or {@code strip()} know: a note of a single non-breaking space, which a
-     * Vietnamese input method emits with nothing visibly unusual about it, would otherwise be stored
-     * as a note that renders as nothing. Java whitespace plus every Unicode space separator is the
-     * union that closes it.
-     *
-     * <p>The null character is refused by the caller before this runs, for the reason the asset slice
-     * recorded: PostgreSQL cannot store {@code U+0000} in a {@code text} column, so a note carrying one
-     * — legal JSON that satisfies {@code @Size} — would fail inside the driver and reach the client as
-     * {@code internal-error}. It is refused rather than silently stripped, because dropping a character
-     * the client sent and answering 201 would store something other than what was asked for.
-     */
-    private static String stripped(String value) {
-        if (value == null) {
-            return null;
-        }
-        int start = 0;
-        int end = value.length();
-        while (start < end && isBlankToAReader(value.codePointAt(start))) {
-            start += Character.charCount(value.codePointAt(start));
-        }
-        while (end > start && isBlankToAReader(value.codePointBefore(end))) {
-            end -= Character.charCount(value.codePointBefore(end));
-        }
-        String stripped = value.substring(start, end);
-        return stripped.isEmpty() ? null : stripped;
-    }
-
-    /** Whitespace as Java defines it, plus the space separators it deliberately excludes. */
-    private static boolean isBlankToAReader(int codePoint) {
-        return Character.isWhitespace(codePoint)
-                || Character.getType(codePoint) == Character.SPACE_SEPARATOR;
-    }
-
-    private static Map<String, String> error(String field, String message) {
-        return Map.of("field", field, "message", message);
     }
 }

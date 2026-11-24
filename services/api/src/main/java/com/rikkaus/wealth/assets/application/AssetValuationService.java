@@ -8,6 +8,9 @@ import com.rikkaus.wealth.assets.domain.DeclaredValuation;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
+import com.rikkaus.wealth.shared.validation.EnteredDates;
+import com.rikkaus.wealth.shared.validation.FieldErrors;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -147,32 +150,32 @@ public class AssetValuationService {
      * another asset's or another user's; distinguishing them would be a small enumeration oracle.
      */
     private DeclaredValuation accept(Asset asset, DeclaredValuation declared) {
-        LocalDate today = InputRules.today(clock);
+        LocalDate today = EnteredDates.today(clock);
         List<Map<String, String>> errors = new ArrayList<>();
         if (declared.currency() != asset.getCurrency()) {
-            errors.add(InputRules.error("currency", "must match the asset's currency"));
+            errors.add(FieldErrors.error("currency", "must match the asset's currency"));
         }
         if (declared.effectiveDate().isAfter(today)) {
-            errors.add(InputRules.error("effectiveDate", "must not be in the future"));
+            errors.add(FieldErrors.error("effectiveDate", "must not be in the future"));
         } else if (asset.getPurchaseDate() != null
                 && declared.effectiveDate().isBefore(asset.getPurchaseDate())) {
             errors.add(
-                    InputRules.error("effectiveDate", "must not be earlier than the purchase date"));
+                    FieldErrors.error("effectiveDate", "must not be earlier than the purchase date"));
         }
         errors.addAll(InputRules.rateSnapshotErrors(declared, today));
-        String note = InputRules.cleaned(declared.note(), "note");
+        String note = TextInput.optional(declared.note(), "note");
         if (declared.correctsValuationId() != null) {
             if (valuations.findByIdAndAssetId(declared.correctsValuationId(), asset.getId()).isEmpty()) {
                 errors.add(
-                        InputRules.error(
+                        FieldErrors.error(
                                 "correctsValuationId", "must identify a valuation of this asset"));
             }
             if (note == null) {
-                errors.add(InputRules.error("note", "must be given when correcting a valuation"));
+                errors.add(FieldErrors.error("note", "must be given when correcting a valuation"));
             }
         }
         if (!errors.isEmpty()) {
-            throw InputRules.validationFailed(errors);
+            throw FieldErrors.validationFailed(errors);
         }
         return declared.withNote(note);
     }
