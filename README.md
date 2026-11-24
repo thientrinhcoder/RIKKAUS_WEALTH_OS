@@ -11,6 +11,81 @@ an Expo frontend foundation, a Spring Boot modular monolith, and local PostgreSQ
 
 Maven does not need to be installed globally; use the committed Maven Wrapper.
 
+## Run the whole application locally
+
+These steps start PostgreSQL, the API and the Expo web app together, then sign you in with a local
+development account. No Google OAuth client is needed. Run each long-running command in its own
+terminal, from the repository root.
+
+1. **Start PostgreSQL** (Docker):
+
+   ```bash
+   docker compose --env-file .env.example up -d --wait postgres
+   ```
+
+2. **Start the API with the `local` profile.** The profile supplies a fixed development JWT secret,
+   allows the Expo web origin `http://localhost:8081`, and enables the development sign-in endpoint.
+   Without it the API refuses to start, because `RIKKAUS_JWT_SECRET` has no default.
+
+   ```bash
+   ./services/api/mvnw -f services/api/pom.xml spring-boot:run -Dspring-boot.run.profiles=local
+   ```
+
+   If your default `java` is older than 25, point `JAVA_HOME` at a JDK 25 for this command, for
+   example `JAVA_HOME=/opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home` with Homebrew.
+   Flyway applies every migration on startup. The API is ready when
+   `curl http://localhost:8080/actuator/health` returns `{"status":"UP"}`.
+
+3. **Configure the web app** once:
+
+   ```bash
+   cp apps/mobile/.env.example apps/mobile/.env.local
+   ```
+
+   Then set these two values in `apps/mobile/.env.local`:
+
+   ```dotenv
+   EXPO_PUBLIC_API_BASE_URL=http://localhost:8080
+   EXPO_PUBLIC_DEV_SIGN_IN=local
+   ```
+
+4. **Install dependencies and start Expo web.** Run `npm ci` again after every pull that changes
+   `apps/mobile/package-lock.json`; a stale install fails at startup with
+   `PluginError: Failed to resolve plugin for module ...`.
+
+   ```bash
+   npm --prefix apps/mobile ci
+   npm --prefix apps/mobile run web
+   ```
+
+   Keep the default port 8081. The API's CORS allowlist and the Google redirect URI are both set for
+   `http://localhost:8081`, and the refresh cookie is only accepted from that origin.
+
+5. **Sign in.** Open `http://localhost:8081`. The app redirects to `/sign-in`. Scroll to
+   **Đăng nhập phát triển**, keep or change the prefilled email and display name, and choose
+   **Đăng nhập phát triển**. A new email creates a new account; the same email signs back into it.
+   Choose **Mở Tổng quan** to enter the app.
+
+What you can use after signing in:
+
+| URL | What it shows |
+|---|---|
+| `http://localhost:8081/` | The app shell with the five destinations: Tổng quan, Tài sản & Nợ, Dòng tiền, Mục tiêu, Nhận định. Domain screens are still placeholders; they are built by later epics. |
+| `http://localhost:8081/settings/exchange-rate` | The destination of the first-sign-in step. Only the title exists today; the rate form is a later task. Declare a rate through the API (`PUT /api/v1/settings/exchange-rate`) until then. |
+| `http://localhost:8081/profile` | The signed-in account and sign-out. |
+| `http://localhost:8081/catalog/money` | The design-system catalog (also `shell`, `forms`, `data`, `states`, `overlays`). |
+| `http://localhost:8081/diagnostics` | API connectivity check. |
+| `http://localhost:8080/swagger-ui/index.html` | Swagger UI for every backend endpoint (`local` profile only). |
+
+The development sign-in exists only when the API runs under `local` and the web bundle is a
+development build with `EXPO_PUBLIC_DEV_SIGN_IN=local`; `npm --prefix apps/mobile run build:web`
+never includes it. To sign in with a real Google Account instead, see
+[Signing in locally](#signing-in-locally). Step-by-step API checks with `curl` are in
+[`docs/manual-test-guide-auth.md`](docs/manual-test-guide-auth.md).
+
+To stop, press `Ctrl+C` in the Expo and API terminals, then run
+`docker compose --env-file .env.example down` (the database volume is kept).
+
 ## Backend versions
 
 - Java 25
@@ -74,11 +149,11 @@ From the repository root:
 
 ```bash
 ./services/api/mvnw -f services/api/pom.xml clean package
-./services/api/mvnw -f services/api/pom.xml spring-boot:run
+./services/api/mvnw -f services/api/pom.xml spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-The API uses the values from `application.yml` by default. To use a copied `.env`, export it
-before starting the API:
+Without the `local` profile the API needs `RIKKAUS_JWT_SECRET` and refuses to start when it is
+unset. To run without the profile, export a copied `.env` before starting the API:
 
 ```bash
 set -a
