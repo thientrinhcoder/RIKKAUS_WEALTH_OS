@@ -2050,11 +2050,13 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 
 - CI pipeline, coverage thresholds and formatting enforcement. JSON log encoding now exists outside
   the `local` profile (issue #110); log-based metrics, dashboards and alerting do not.
-- Pagination conventions, rate limiting and idempotency keys. The asset catalog returns an unpaginated
-  array; a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has
-  agreed is worse than returning all of them.
+- Pagination conventions, rate limiting and idempotency keys. Every list returns an unpaginated array;
+  a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has agreed
+  is worse than returning all of them. The measured bounds are in *Pilot list bounds, error shape and
+  local fixtures*.
 - **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding,
-  feedback and the wealth snapshot are described above. Insights are still later work.
+  feedback, the wealth snapshot and its insights are described above. Financial-health indicators
+  (#83) are still later work.
 - **Any calculation over the instrument fields.** The four fields are stored and returned; nothing
   accrues interest, projects a yield, computes a gain or loss, or derives a current value from a
   quantity and a unit price. A new unit price does not record a valuation either. Market-price
@@ -2079,9 +2081,11 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - Account deletion, a second identity provider, household or shared access, and roles.
 - **Exchange-rate history.** Declaring a rate overwrites the previous one. There is no change log, no
   history resource, no automatic or fetched rate, and no third currency.
-- **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
-  freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
-  out of date is the client's, per the accepted design for issue #48.
+- **One stale-rate rule, and only in the insights.** The exchange-rate setting and the valuation
+  records report the declared date and the stored timestamp and make no freshness judgement of their
+  own. The only rule that judges the rate's age is the `STALE_EXCHANGE_RATE` insight of
+  `GET /api/v1/wealth-snapshot/insights`, judged against the configured
+  `rikkaus.snapshot.insights.max-exchange-rate-age-days` (see *Wealth snapshot insights*).
 - **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
   report, forecast, wealth snapshot, goal, goal projection and onboarding routes, for the search and
   filter parameters and for deletion impact.** All of
@@ -2112,3 +2116,182 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - **Contract consumption is hand-written this iteration.** `apps/mobile` has no OpenAPI codegen
   dependency and no generate script, so this document and `openapi.json` are review and documentation
   artifacts, not a generation input. If codegen is wanted, it belongs to the frontend task's scope.
+
+## Wealth snapshot insights — implemented
+
+A read-only, derived resource (issue #68) behind the insight cards and details of design #66. One route,
+under `bearerAuth`, owner-scoped by the token, with no path variable and no parameter. It reads the same
+wealth snapshot as `GET /api/v1/wealth-snapshot` through `WealthSnapshotService`, so every total, every
+USD conversion and every due date is the dashboard's own; nothing is stored, there is no cache and no
+migration.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/wealth-snapshot/insights` | none | 200, always six insights in a fixed order; a user with no record gets six `UNAVAILABLE` insights, never 404 |
+
+Package `snapshot/insights`, inside the `snapshot` slice the way `cashflow/reporting` sits inside
+`cashflow`.
+
+### The six rules
+
+Each insight is `{ruleId, status, observed, threshold, evidence[], unavailableReason}`. `status` is
+`ATTENTION` when `observed.value` compares with `threshold.value` as `threshold.comparison` says, `OK`
+when it does not, `UNAVAILABLE` when nothing could be observed (`observed` is then `null` and
+`unavailableReason` set). `ruleId` and every other constant are stable; no Vietnamese label is published.
+
+| `ruleId` | `observed.value` | Comparison, property (initial value) | `evidence` |
+|---|---|---|---|
+| `CATEGORY_CONCENTRATION` | largest `assetsByCategory` amount / total assets, `FRACTION`; `subject` = the category | `GREATER_THAN` `max-category-share` (`0.5`) | the assets of that category |
+| `DEBT_TO_ASSET_RATIO` | `kpis.debtToAssetRatio`, `FRACTION` | `GREATER_THAN` `max-debt-to-asset-ratio` (`0.4`) | every liability (`UPDATED_ON`, balance) |
+| `LOW_LIQUIDITY_SHARE` | assets with `liquidity = LOW` / total assets, `FRACTION` (a real `0.000000` when none is LOW) | `GREATER_THAN` `max-low-liquidity-share` (`0.6`) | the `LOW` assets |
+| `UPCOMING_LIABILITY_DUE` | days from `asOfDate` to the nearest next payment or maturity date, `DAYS`, negative when overdue; `date` = that date | `AT_MOST` `due-window-days` (`30`) | `ATTENTION`: every due date within the window (with `30`, exactly `upcomingLiabilityDues.items`); `OK`: the nearest one |
+| `STALE_VALUATION` | age in days of the oldest asset `valuationDate`, `DAYS`; `date` = that date | `GREATER_THAN` `max-valuation-age-days` (`30`) | `ATTENTION`: every asset older than the threshold, oldest first; `OK`: the oldest asset |
+| `STALE_EXCHANGE_RATE` | age in days of the declared rate's `effectiveDate`, `DAYS`; `date` = that date | `GREATER_THAN` `max-exchange-rate-age-days` (`5`) | the rate (`EXCHANGE_RATE`, `usdToVndRate`), then every USD asset and liability it converts |
+
+- A fraction carries `numeratorVnd` and `denominatorVnd`, the snapshot's own VND totals, so
+  `7500000000.00 / 12002000000.00 = 0.624896` can be shown as the calculation.
+- A value **equal** to a maximum is `OK`, matching the design's "Trên 50%", "Quá 30 ngày". A due date
+  exactly `due-window-days` ahead is inside the window, as in the snapshot.
+- Shares are rounded half up to six decimals and the status compares that rounded value, so a client can
+  re-derive every status from the response alone.
+- Evidence rows are `{sourceType, sourceId, name, category, liquidity, dateKind, date, ageDays,
+  daysUntilDue, overdue, amount, currency, amountVnd, usdToVndRate}`. `sourceId` is what
+  `GET /api/v1/assets/{id}` or `/liabilities/{id}` reads (null for the rate, which
+  `GET /api/v1/settings/exchange-rate` reads); `dateKind` says which date the row carries
+  (`VALUATION_DATE`, `UPDATED_ON`, `NEXT_PAYMENT_DATE`, `MATURITY_DATE`, `RATE_EFFECTIVE_DATE`), `ageDays`
+  counts back from `asOfDate` and `daysUntilDue` forward to it.
+
+### When an insight is unavailable
+
+Nothing that cannot be observed is reported as `0`. The reasons, checked in this order:
+
+| `unavailableReason` | When | Rules | `evidence` |
+|---|---|---|---|
+| `NO_ASSETS` | the user has no asset | the three shares, `STALE_VALUATION` | empty |
+| `MISSING_EXCHANGE_RATE` | a USD record cannot be converted for want of a declared rate (the shares and the debt ratio), or no rate is declared at all (`STALE_EXCHANGE_RATE`) | shares, debt ratio, rate | the USD records that need a rate, `amountVnd: null` |
+| `ZERO_TOTAL_ASSETS` | every asset is valued at zero | the three shares | the zero-valued assets |
+| `NO_LIABILITIES` | the user has no liability | `UPCOMING_LIABILITY_DUE` | empty |
+| `NO_DUE_DATES` | no liability states a next payment or maturity date | `UPCOMING_LIABILITY_DUE` | empty |
+
+Without a declared rate, the three share rules and the rate rule are `UNAVAILABLE` while
+`UPCOMING_LIABILITY_DUE` and `STALE_VALUATION` are still judged; `complete` is `false`, as in the
+snapshot. A user with only VND records and no debt gets a real `0.000000` debt ratio (`OK`).
+
+### Thresholds
+
+System reference thresholds, configured in one place (`application.yml`, `rikkaus.snapshot.insights`) and
+returned in every response's `thresholds` block, so a result can be reproduced after a change. They are
+the review-fixture values of design #66, not an approved business configuration.
+
+| Property | Initial value | Valid |
+|---|---|---|
+| `max-category-share` | `0.5` | `(0, 1]`, at most 6 decimals |
+| `max-debt-to-asset-ratio` | `0.4` | `> 0`, at most 6 decimals (debt may exceed assets) |
+| `max-low-liquidity-share` | `0.6` | `(0, 1]`, at most 6 decimals |
+| `due-window-days` | `30` | `0..3650` |
+| `max-valuation-age-days` | `30` | `0..3650` |
+| `max-exchange-rate-age-days` | `5` | `0..3650` |
+
+Each can be overridden per deployment by its relaxed-binding environment variable, for example
+`RIKKAUS_SNAPSHOT_INSIGHTS_MAXCATEGORYSHARE=0.7`. The application refuses to start when one is missing or
+outside its range, and the failure names the property. `due-window-days` changes the insight only;
+`GET /wealth-snapshot` keeps its 30-day `upcomingLiabilityDues`.
+
+### Time, determinism and errors
+
+Today is the snapshot's `asOfDate` in `Asia/Ho_Chi_Minh`; every age and due day counts from it. Two reads
+on the same day over the same records under the same thresholds return the same bytes. `401` without a
+valid token, `405` for another method, `406` for a non-JSON `Accept`; there is no input, hence no `400`,
+and a `userId` query parameter is ignored.
+
+### Not here
+
+Stored or historical insights, user-set thresholds, notifications, a priority order or a "top three"
+selection (the client picks which `ATTENTION` cards the overview strip shows), Vietnamese copy, an `asOf`
+parameter, and financial-health indicators (#83).
+
+### Verified by hand, not by the suite
+
+Shipped on Product Owner direction with no automated test. The scenarios, written before the code, are
+in `plans/261124-0956-GH-68-snapshot-insights/phase-01-test-scenarios.md`; the run is recorded in
+`plans/reports/manual-verification-261124-1010-GH-68-snapshot-insights.md` and is reproduced by the
+scripts in `plans/261124-0956-GH-68-snapshot-insights/scripts/`.
+
+## Pilot list bounds, error shape and local fixtures — implemented
+
+Issue #107: what the frontend may rely on when a list grows or a form fails, so no screen needs a
+layout-specific workaround on phone or desktop. Nothing here changes the contract; it states, with
+measurements, what the routes above already do. The fixtures that produce the data are described in
+[`local-fixtures-guide.md`](local-fixtures-guide.md).
+
+### Lists are whole, ordered and unpaged
+
+Measured on the long-lists fixture (60 assets, 24 valuations, 40 liabilities, 120 entries, 15 goals,
+20 feedback entries), local API and PostgreSQL 18.6, five requests each:
+
+| Route | Elements | Bytes | Median / slowest |
+|---|---|---|---|
+| `GET /assets` | 60 | 32 454 | 5 ms / 6 ms |
+| `GET /assets/{assetId}/valuations` | 24 | 8 562 | 5 ms / 7 ms |
+| `GET /liabilities` | 40 | 20 408 | 4 ms / 5 ms |
+| `GET /cash-flow-entries` | 120 | 52 394 | 5 ms / 6 ms |
+| `GET /cash-flow-occurrences` (one year) | 367 | 86 113 | 5 ms / 9 ms |
+| `GET /goals` | 15 | 6 435 | 4 ms / 6 ms |
+| `GET /goal-projections` | 15 | 53 953 | 5 ms / 6 ms |
+| `GET /feedback` | 20 | 6 554 | 4 ms / 5 ms |
+| `GET /wealth-snapshot` | object | 63 844 | 6 ms / 11 ms |
+
+- **Every list returns every record.** No route truncates, caps or pages. A client renders the array it
+  gets, and a count it shows is the array's length.
+- **Paging parameters are ignored.** `page`, `limit`, `offset`, `size`, `per_page` and `cursor`, alone or
+  together, return the same bytes as the request without them. Do not send them expecting a page.
+- **Order is stable.** Two identical requests return identical bytes, for the default order and for every
+  `sort` key. Records equal on every sort column are ordered by `id`, so two assets both named
+  `Vàng miếng SJC 1 lượng` on the same date never swap between renders.
+- **Names come back exactly as sent**, up to the 120-character maximum, diacritics intact. Wrapping and
+  truncation are the client's.
+- **Order by `name` follows the database collation.** On the local `postgres:*-alpine` image that is code
+  point order, so `Đất nền Long An` and `Ô tô Kia Morning` sort after every Latin `Z`; the wealth
+  snapshot orders names with a Vietnamese collator instead. Both are stable, but they differ.
+
+Pagination is not needed for the pilot: the largest list a pilot user can plausibly reach is a few
+hundred rows below 100 KB, answered in under 25 ms locally. The [`What is not here`](#what-is-not-here)
+entry on pagination stands.
+
+### Every error can be placed on screen
+
+- Every error under `/api/v1/**` was `application/problem+json` with `type`, `title`, `status`, `detail`,
+  `instance` and `correlationId`, across 400, 404, 405, 406, 409 and 415, and no request returned a 5xx.
+  The `401` from the authentication entry point is the exception: its body has no `instance` member.
+- `validation-failed` names each field in `errors[].field` with the request member's own name, at the top
+  level: request bodies are flat, so the asset's unit count is `quantity`, not `instrument.quantity`. A
+  rejected query parameter is named by the parameter (`sort`, `category`, `q`, `effectiveFrom`, `from`,
+  `to`, `month`).
+- **Field rules are checked before rules that relate fields.** A request that breaks both reports only
+  the field rules; once those pass, every cross-field rule is reported at once. A form may therefore
+  need a second round trip to show everything.
+- `malformed-request` has no `errors`. It is what a request the server cannot parse returns — truncated
+  JSON, a body date such as `2026-13-45` or `12/09/2026`, a body enum in the wrong case, text where a
+  number belongs, a `confirm` that is not a boolean, a path identifier that is not a UUID. A form that sends ISO dates, enum
+  constants and numbers from its own controls never meets it; when it does, show it as a form-level
+  error.
+- Another user's identifier and one that exists nowhere return the same `404` body byte for byte, once
+  the identifier in `instance` is set aside, on every read, edit, delete, preview and valuation route.
+- `409 linked-records` always carries `impact`, the same object the deletion-impact preview returns.
+- `X-Correlation-Id` sent by the client comes back in the header and in `correlationId`, and the header
+  is exposed to `http://localhost:8081`.
+
+### What the published schema tells a form
+
+`openapi.json` carries `maxLength` for every bounded string (so a text input can set `maxlength`),
+`minimum`, `exclusiveMinimum` or `maximum` for every bounded number, `enum` for every choice, `required`
+for mandatory members, and `pattern` for the feedback `screen`. It does not carry the number of decimals
+an amount accepts (`@Digits`, for example 2 for an amount and 6 for a rate), that a required name must not
+be blank (it publishes `minLength: 0`), or any rule about dates and related fields; those are in each
+resource's section above.
+
+### Verified by hand, not by the suite
+
+The scenarios are `plans/261124-0958-GH-107-a11y-backend-support/phase-01-test-scenarios.md`, the
+measuring scripts sit beside them, and the run is
+`plans/reports/manual-verification-261124-0958-GH-107-a11y-backend-support.md`.

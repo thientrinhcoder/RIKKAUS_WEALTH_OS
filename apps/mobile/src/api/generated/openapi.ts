@@ -411,6 +411,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wealth-snapshot/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Judge the six insight rules over the signed-in user's wealth snapshot
+         * @description Always six insights, in a fixed order. CATEGORY_CONCENTRATION is the largest asset category over total assets; DEBT_TO_ASSET_RATIO is total liabilities over total assets; LOW_LIQUIDITY_SHARE is the assets marked LOW over total assets, each a six-decimal fraction rounded HALF_UP from the same VND totals GET /api/v1/wealth-snapshot returns. UPCOMING_LIABILITY_DUE is the days from asOfDate to the nearest next payment or maturity date, negative when overdue. STALE_VALUATION is the age in days of the oldest asset valuation; STALE_EXCHANGE_RATE the age of the declared rate's effective date. An insight is ATTENTION when its observed value compares with its threshold as threshold.comparison says, a value equal to a maximum being OK. Thresholds are system reference values configured centrally and returned in thresholds, so a result can be reproduced. An insight that cannot be observed — no asset, no liability, no due date, no declared rate where one is needed, total assets of zero — is UNAVAILABLE with observed null and unavailableReason set; nothing unavailable is reported as zero. A user with no record gets six UNAVAILABLE insights. Computed on every read; nothing is stored. No Vietnamese text is published: the client maps every constant to its copy.
+         */
+        get: operations["readWealthSnapshotInsights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meta": {
         parameters: {
             query?: never;
@@ -2150,6 +2170,209 @@ export interface components {
             windowEnd?: string;
             /** @description By dueDate, PAYMENT before MATURITY, then Vietnamese name, then liabilityId. */
             items?: components["schemas"]["WealthSnapshotDue"][];
+        };
+        /** @description One rule's result. */
+        SnapshotInsight: {
+            /**
+             * @description The rule. A stable constant the client maps to its copy.
+             * @example CATEGORY_CONCENTRATION
+             * @enum {string}
+             */
+            ruleId?: "CATEGORY_CONCENTRATION" | "DEBT_TO_ASSET_RATIO" | "LOW_LIQUIDITY_SHARE" | "UPCOMING_LIABILITY_DUE" | "STALE_VALUATION" | "STALE_EXCHANGE_RATE";
+            /**
+             * @description ATTENTION when observed.value compares with threshold.value as threshold.comparison says; OK when it does not; UNAVAILABLE when nothing could be observed.
+             * @example ATTENTION
+             * @enum {string}
+             */
+            status?: "ATTENTION" | "OK" | "UNAVAILABLE";
+            /** @description What the rule measured; null exactly when status is UNAVAILABLE. */
+            observed?: components["schemas"]["SnapshotInsightObserved"];
+            threshold?: components["schemas"]["SnapshotInsightThreshold"];
+            /** @description The source records behind the observation, for links to them. Shares: the assets of the largest category, or the LOW ones. Debt: every liability. Due: every date within the window when ATTENTION, else the nearest one. Valuation: every stale asset oldest first when ATTENTION, else the oldest. Rate: the rate, then every USD record it converts. Unavailable for want of a rate: the USD records that need one. */
+            evidence?: components["schemas"]["SnapshotInsightEvidence"][];
+            /**
+             * @description Why nothing could be observed; null unless status is UNAVAILABLE.
+             * @enum {string}
+             */
+            unavailableReason?: "NO_ASSETS" | "NO_LIABILITIES" | "NO_DUE_DATES" | "MISSING_EXCHANGE_RATE" | "ZERO_TOTAL_ASSETS";
+        };
+        /** @description One source record and the figures the rule read from it. */
+        SnapshotInsightEvidence: {
+            /**
+             * @example ASSET
+             * @enum {string}
+             */
+            sourceType?: "ASSET" | "LIABILITY" | "EXCHANGE_RATE";
+            /**
+             * Format: uuid
+             * @description GET /api/v1/assets/{id} or /api/v1/liabilities/{id} reads it; null for EXCHANGE_RATE, which GET /api/v1/settings/exchange-rate reads.
+             * @example 6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531
+             */
+            sourceId?: string;
+            /**
+             * @description null for EXCHANGE_RATE.
+             * @example Căn hộ Thảo Điền
+             */
+            name?: string;
+            /**
+             * @description The asset or liability category code; null for EXCHANGE_RATE.
+             * @example REAL_ESTATE
+             */
+            category?: string;
+            /**
+             * @description HIGH, MEDIUM or LOW for an asset; null otherwise.
+             * @example LOW
+             */
+            liquidity?: string;
+            /**
+             * @description Which date this row carries: an asset's VALUATION_DATE, a liability's UPDATED_ON (the day in timeZone it was last saved), NEXT_PAYMENT_DATE, MATURITY_DATE, or the RATE_EFFECTIVE_DATE.
+             * @example VALUATION_DATE
+             * @enum {string}
+             */
+            dateKind?: "VALUATION_DATE" | "UPDATED_ON" | "NEXT_PAYMENT_DATE" | "MATURITY_DATE" | "RATE_EFFECTIVE_DATE";
+            /**
+             * Format: date
+             * @example 2026-10-07
+             */
+            date?: string;
+            /**
+             * Format: int32
+             * @description asOfDate minus date, for VALUATION_DATE, UPDATED_ON and RATE_EFFECTIVE_DATE; null otherwise.
+             * @example 48
+             */
+            ageDays?: number;
+            /**
+             * Format: int32
+             * @description date minus asOfDate, for NEXT_PAYMENT_DATE and MATURITY_DATE, negative when overdue; null otherwise.
+             */
+            daysUntilDue?: number;
+            /** @description date is before asOfDate; set on due rows only. */
+            overdue?: boolean;
+            /**
+             * @description In the record's currency: an asset's value, a liability's outstanding balance, the recurring payment for NEXT_PAYMENT_DATE (null when none is stated) or the balance for MATURITY_DATE; null for EXCHANGE_RATE.
+             * @example 7500000000
+             */
+            amount?: number;
+            /**
+             * @description null for EXCHANGE_RATE.
+             * @example VND
+             * @enum {string}
+             */
+            currency?: "VND" | "USD";
+            /**
+             * @description amount in VND; null when amount is null or it is USD without a declared rate.
+             * @example 7500000000
+             */
+            amountVnd?: number;
+            /** @description VND for one USD, on the EXCHANGE_RATE row only. */
+            usdToVndRate?: number;
+        };
+        /** @description The measured value and how it was obtained. */
+        SnapshotInsightObserved: {
+            /**
+             * @description A FRACTION with six decimals, HALF_UP (0.624896 is 62.4896 %), or whole DAYS (negative for an overdue due date).
+             * @example 0.624896
+             */
+            value?: number;
+            /**
+             * @example FRACTION
+             * @enum {string}
+             */
+            unit?: "FRACTION" | "DAYS";
+            /**
+             * @description The largest asset category for CATEGORY_CONCENTRATION; null otherwise.
+             * @example REAL_ESTATE
+             */
+            subject?: string;
+            /**
+             * @description For a FRACTION, the VND amount divided; null for DAYS.
+             * @example 7500000000
+             */
+            numeratorVnd?: number;
+            /**
+             * @description For a FRACTION, the VND amount divided by; null for DAYS.
+             * @example 12002000000
+             */
+            denominatorVnd?: number;
+            /**
+             * Format: date
+             * @description For DAYS, the date counted: the nearest due date, the oldest valuation date or the rate's effective date; null for a FRACTION.
+             */
+            date?: string;
+        };
+        /** @description The system reference threshold the rule was judged against. */
+        SnapshotInsightThreshold: {
+            /**
+             * @description GREATER_THAN: ATTENTION when observed.value > value. AT_MOST: ATTENTION when observed.value <= value.
+             * @example GREATER_THAN
+             * @enum {string}
+             */
+            comparison?: "GREATER_THAN" | "AT_MOST";
+            /** @example 0.5 */
+            value?: number;
+            /**
+             * @example FRACTION
+             * @enum {string}
+             */
+            unit?: "FRACTION" | "DAYS";
+        };
+        /** @description Every system reference threshold in force, configured centrally under rikkaus.snapshot.insights. Returned so a result can be reproduced after the configuration changes. */
+        SnapshotInsightThresholds: {
+            /**
+             * @description CATEGORY_CONCENTRATION is ATTENTION above this share.
+             * @example 0.5
+             */
+            maxCategoryShare?: number;
+            /**
+             * @description DEBT_TO_ASSET_RATIO is ATTENTION above this ratio.
+             * @example 0.4
+             */
+            maxDebtToAssetRatio?: number;
+            /**
+             * @description LOW_LIQUIDITY_SHARE is ATTENTION above this share.
+             * @example 0.6
+             */
+            maxLowLiquidityShare?: number;
+            /**
+             * Format: int32
+             * @description UPCOMING_LIABILITY_DUE is ATTENTION when the nearest due date is at most this many days after asOfDate, an overdue one included.
+             * @example 30
+             */
+            dueWindowDays?: number;
+            /**
+             * Format: int32
+             * @description STALE_VALUATION is ATTENTION above this age in days.
+             * @example 30
+             */
+            maxValuationAgeDays?: number;
+            /**
+             * Format: int32
+             * @description STALE_EXCHANGE_RATE is ATTENTION above this age in days.
+             * @example 5
+             */
+            maxExchangeRateAgeDays?: number;
+        };
+        /** @description The six wealth snapshot insight rules judged for the signed-in user, with their evidence. */
+        SnapshotInsightsResponse: {
+            /**
+             * Format: date
+             * @description Today in timeZone; every age and due day counts from it.
+             * @example 2026-11-24
+             */
+            asOfDate?: string;
+            /**
+             * @description The zone asOfDate is read in.
+             * @example Asia/Ho_Chi_Minh
+             */
+            timeZone?: string;
+            /**
+             * @description The wealth snapshot's own flag: false when a USD record could not be converted for want of a declared rate.
+             * @example true
+             */
+            complete?: boolean;
+            thresholds?: components["schemas"]["SnapshotInsightThresholds"];
+            /** @description Always six, in the order CATEGORY_CONCENTRATION, DEBT_TO_ASSET_RATIO, LOW_LIQUIDITY_SHARE, UPCOMING_LIABILITY_DUE, STALE_VALUATION, STALE_EXCHANGE_RATE. */
+            insights?: components["schemas"]["SnapshotInsight"][];
         };
         MetaResponse: {
             application?: string;
@@ -5305,6 +5528,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WealthSnapshotResponse"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    readWealthSnapshotInsights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The six insights, possibly all unavailable for a user with no record yet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotInsightsResponse"];
                 };
             };
             /** @description No access token, or it has expired or been revoked */

@@ -249,19 +249,43 @@ public class WealthSnapshotService {
         return new LargestAssets(items, excluded);
     }
 
-    /**
-     * Every next payment date and maturity date on or before today plus the window. A date already past
-     * is kept and marked overdue: an unpaid obligation does not stop being one because its day went by.
-     */
     private static UpcomingDues upcomingDues(
             List<LiabilityLine> liabilities, LocalDate today, Optional<ExchangeRate> rate, Collator collator) {
         LocalDate windowEnd = today.plusDays(DUE_WINDOW_DAYS);
+        return new UpcomingDues(DUE_WINDOW_DAYS, windowEnd, dues(liabilities, today, windowEnd, rate, collator));
+    }
+
+    /**
+     * Every due date of the snapshot's liabilities on or before {@code until}, in the order the snapshot
+     * lists them, converted with the snapshot's rate. The snapshot's own list is this with {@code until}
+     * at {@code asOfDate} + 30 days; the insights read it with a window of their own, or with no bound to
+     * find the nearest due date at all.
+     */
+    public List<Due> duesUntil(WealthSnapshot snapshot, LocalDate until) {
+        return dues(
+                snapshot.liabilities(),
+                snapshot.asOfDate(),
+                until,
+                snapshot.exchangeRate(),
+                Collator.getInstance(VIETNAMESE));
+    }
+
+    /**
+     * Every next payment date and maturity date on or before {@code until}. A date already past is kept
+     * and marked overdue: an unpaid obligation does not stop being one because its day went by.
+     */
+    private static List<Due> dues(
+            List<LiabilityLine> liabilities,
+            LocalDate today,
+            LocalDate until,
+            Optional<ExchangeRate> rate,
+            Collator collator) {
         List<Due> items = new ArrayList<>();
         for (LiabilityLine line : liabilities) {
-            if (line.nextPaymentDate() != null && !line.nextPaymentDate().isAfter(windowEnd)) {
+            if (line.nextPaymentDate() != null && !line.nextPaymentDate().isAfter(until)) {
                 items.add(due(line, DueKind.PAYMENT, line.nextPaymentDate(), line.recurringPaymentAmount(), today, rate));
             }
-            if (line.maturityDate() != null && !line.maturityDate().isAfter(windowEnd)) {
+            if (line.maturityDate() != null && !line.maturityDate().isAfter(until)) {
                 items.add(due(line, DueKind.MATURITY, line.maturityDate(), line.outstandingBalance(), today, rate));
             }
         }
@@ -269,7 +293,7 @@ public class WealthSnapshotService {
                 .thenComparing(Due::dueKind)
                 .thenComparing(Due::name, collator)
                 .thenComparing(item -> item.liabilityId().toString()));
-        return new UpcomingDues(DUE_WINDOW_DAYS, windowEnd, List.copyOf(items));
+        return List.copyOf(items);
     }
 
     private static Due due(
