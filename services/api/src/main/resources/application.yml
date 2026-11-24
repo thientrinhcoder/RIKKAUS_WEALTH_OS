@@ -127,6 +127,20 @@ rikkaus:
       # with at-risk not below on-track.
       on-track-min-coverage-percent: 100
       at-risk-min-coverage-percent: 80
+  snapshot:
+    insights:
+      # The system reference thresholds the six wealth snapshot insight rules are judged against. An
+      # insight is ATTENTION when its share or age is above the maximum, or when a liability falls due
+      # within the window; a value equal to a maximum is not above it. These are the review fixture values
+      # of the accepted design for issue #66, not an approved business configuration. Every insights
+      # response states them, and SnapshotInsightProperties refuses to start without all six, with a
+      # share outside (0, 1], a fraction with more than six decimals, or a day count outside 0..3650.
+      max-category-share: 0.5
+      max-debt-to-asset-ratio: 0.4
+      max-low-liquidity-share: 0.6
+      due-window-days: 30
+      max-valuation-age-days: 30
+      max-exchange-rate-age-days: 5
   api:
     # Fails closed. An unset or empty value registers no CORS mapping at all rather than guessing
     # an origin, as an explicit environment-specific allowlist requires. Comma-separated.
