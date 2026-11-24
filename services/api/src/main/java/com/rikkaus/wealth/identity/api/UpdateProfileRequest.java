@@ -21,6 +21,6 @@ public record UpdateProfileRequest(
                         description = "The name to show. Trimmed before storing.",
                         example = "An Nguyễn",
                         requiredMode = Schema.RequiredMode.REQUIRED)
-                @NotBlank
-                @Size(max = 120)
+                @NotBlank(message = "must not be blank")
+                @Size(max = 120, message = "must be at most 120 characters")
                 String displayName) {}

@@ -3,6 +3,7 @@ package com.rikkaus.wealth.identity.application;
 import com.rikkaus.wealth.identity.application.IdentityService.AuthenticatedSession;
 import com.rikkaus.wealth.identity.domain.UserAccount;
 import com.rikkaus.wealth.identity.domain.UserAccountRepository;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.time.Clock;
 import java.util.Locale;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public class LocalDevSignInService {
     @Transactional
     public AuthenticatedSession signIn(String email, String displayName) {
         String normalisedEmail = email.trim().toLowerCase(Locale.ROOT);
-        String name = displayName == null || displayName.isBlank() ? null : displayName.trim();
+        String name = TextInput.optional(displayName, "displayName");
         UserAccount user =
                 users.findByGoogleSubject(SUBJECT_PREFIX + normalisedEmail)
                         .map(

@@ -9,10 +9,12 @@ import com.rikkaus.wealth.shared.deletion.DeletionImpact.RecordType;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
 import com.rikkaus.wealth.shared.security.OwnershipGuard;
+import com.rikkaus.wealth.shared.validation.EnteredDates;
+import com.rikkaus.wealth.shared.validation.FieldErrors;
+import com.rikkaus.wealth.shared.validation.TextInput;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,18 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class GoalService {
-
-    /**
-     * The zone the target date is judged in.
-     *
-     * <p>The {@link Clock} bean is UTC and a pilot user in Vietnam is seven hours ahead of it. The
-     * accepted design states the target date must be after the reference day, and "today" for that
-     * rule is the user's day: a goal dated tomorrow, entered at nine in the evening in Ho Chi Minh City,
-     * must be accepted even though UTC still calls tomorrow "today". {@code AssetService} and {@code
-     * SettingsService} judge their dates the same way, so one calendar day cannot be valid on one
-     * resource and refused on another.
-     */
-    private static final ZoneId ENTERED_DATE_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     /** What an omitted allocated amount means: nothing set aside yet, at the column's scale. */
     private static final BigDecimal NOTHING_ALLOCATED = new BigDecimal("0.00");
@@ -170,15 +160,10 @@ public class GoalService {
                     Map.of("field", "currentAllocatedAmount", "message", "must not exceed the target amount"));
         }
         boolean dateIsNew = storedTargetDate == null || !fields.targetDate().equals(storedTargetDate);
-        if (dateIsNew && !fields.targetDate().isAfter(LocalDate.now(clock.withZone(ENTERED_DATE_ZONE)))) {
+        if (dateIsNew && !fields.targetDate().isAfter(EnteredDates.today(clock))) {
             errors.add(Map.of("field", "targetDate", "message", "must be after today"));
         }
-        if (!errors.isEmpty()) {
-            throw new ApiException(
-                    ProblemType.VALIDATION_FAILED,
-                    ProblemType.VALIDATION_FAILED.safeDetail(),
-                    Map.of("errors", List.copyOf(errors)));
-        }
+        FieldErrors.rejectIfAny(errors);
     }
 
     /**
@@ -191,57 +176,12 @@ public class GoalService {
      */
     private static GoalFields normalize(GoalFields fields) {
         return new GoalFields(
-                requireName(fields.name()),
+                TextInput.required(fields.name(), "name"),
                 fields.type(),
                 fields.targetAmount(),
                 fields.currentAllocatedAmount() == null ? NOTHING_ALLOCATED : fields.currentAllocatedAmount(),
                 fields.targetDate(),
                 fields.plannedMonthlyContribution(),
                 fields.expectedAnnualReturnPercent());
-    }
-
-    /**
-     * The name with surrounding blank space removed, refusing one that was nothing else or that
-     * carries a null character.
-     *
-     * <p>The same two rules {@code AssetService} applies, for the same two reasons found there by review
-     * and measurement: {@code U+0000} cannot be stored in a PostgreSQL {@code text} column and would
-     * otherwise surface as a 500, and {@code U+00A0} is not whitespace to {@code Character.isWhitespace},
-     * so a name of a single non-breaking space passes {@code @NotBlank} and renders as an empty row.
-     * Blank here is the union of Java whitespace and every Unicode space separator.
-     */
-    private static String requireName(String name) {
-        if (name == null) {
-            throw validationFailed("name", "must not be blank");
-        }
-        if (name.indexOf('\u0000') >= 0) {
-            throw validationFailed("name", "must not contain a null character");
-        }
-        int start = 0;
-        int end = name.length();
-        while (start < end && isBlankToAReader(name.codePointAt(start))) {
-            start += Character.charCount(name.codePointAt(start));
-        }
-        while (end > start && isBlankToAReader(name.codePointBefore(end))) {
-            end -= Character.charCount(name.codePointBefore(end));
-        }
-        String stripped = name.substring(start, end);
-        if (stripped.isEmpty()) {
-            throw validationFailed("name", "must not be blank");
-        }
-        return stripped;
-    }
-
-    /** Whitespace as Java defines it, plus the space separators it deliberately excludes. */
-    private static boolean isBlankToAReader(int codePoint) {
-        return Character.isWhitespace(codePoint)
-                || Character.getType(codePoint) == Character.SPACE_SEPARATOR;
-    }
-
-    private static ApiException validationFailed(String field, String message) {
-        return new ApiException(
-                ProblemType.VALIDATION_FAILED,
-                ProblemType.VALIDATION_FAILED.safeDetail(),
-                Map.of("errors", List.of(Map.of("field", field, "message", message))));
     }
 }

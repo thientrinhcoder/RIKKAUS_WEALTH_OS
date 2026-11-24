@@ -3,6 +3,7 @@ package com.rikkaus.wealth.cashflow.reporting.application;
 import com.rikkaus.wealth.cashflow.application.OccurrenceWindow;
 import com.rikkaus.wealth.shared.error.ApiException;
 import com.rikkaus.wealth.shared.error.ProblemType;
+import com.rikkaus.wealth.shared.validation.EnteredDates;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -47,7 +48,7 @@ public record ReportMonth(YearMonth value) {
                 // Reported below with the same message as a malformed value.
             }
         }
-        throw invalid("must be a calendar month in the form YYYY-MM");
+        throw invalid(EnteredDates.CALENDAR_MONTH);
     }
 
     /** The first day of the month. */

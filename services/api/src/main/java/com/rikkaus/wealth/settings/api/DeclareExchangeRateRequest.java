@@ -23,14 +23,14 @@ public record DeclareExchangeRateRequest(
                         description = "How many VND one USD buys. Must be greater than zero.",
                         example = "25100.000000",
                         requiredMode = Schema.RequiredMode.REQUIRED)
-                @NotNull
-                @DecimalMin(value = "0", inclusive = false)
-                @Digits(integer = 13, fraction = 6)
+                @NotNull(message = "must not be null")
+                @DecimalMin(value = "0", inclusive = false, message = "must be greater than zero")
+                @Digits(integer = 13, fraction = 6, message = "must have at most 13 integer digits and 6 decimals")
                 BigDecimal usdToVndRate,
         @Schema(
                         description =
                                 "The date you confirm this rate took effect. Must not be in the future.",
                         example = "2026-09-12",
                         requiredMode = Schema.RequiredMode.REQUIRED)
-                @NotNull
+                @NotNull(message = "must not be null")
                 LocalDate effectiveDate) {}
