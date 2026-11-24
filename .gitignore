@@ -114,6 +114,9 @@ plans/**/*
 !plans/261122-1842-GH-104-safe-edit-delete/
 !plans/261122-1842-GH-104-safe-edit-delete/**
 !plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md
+!plans/261124-0958-GH-107-a11y-backend-support/
+!plans/261124-0958-GH-107-a11y-backend-support/**
+!plans/reports/manual-verification-261124-0958-GH-107-a11y-backend-support.md
 screenshots/*
 docs/screenshots/*
 logs.txt
