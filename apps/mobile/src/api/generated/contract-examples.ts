@@ -3,7 +3,7 @@
  * Do not edit: run `npm run api:generate` after the contract changes.
  */
 
-/** 61 examples, copied verbatim from the contract. */
+/** 64 examples, copied verbatim from the contract. */
 export const contractExamples = {
   "GET /api/v1/settings/exchange-rate": {
     "200": {
@@ -1183,6 +1183,598 @@ export const contractExamples = {
           "sourceDates": [],
           "assets": [],
           "liabilities": []
+        }
+      }
+    }
+  },
+  "GET /api/v1/wealth-snapshot/insights": {
+    "200": {
+      "contentType": "application/json",
+      "examples": {
+        "the design fixture: 12,002,000,000 VND of assets, a stale rate": {
+          "asOfDate": "2026-11-24",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "complete": true,
+          "thresholds": {
+            "maxCategoryShare": 0.5,
+            "maxDebtToAssetRatio": 0.4,
+            "maxLowLiquidityShare": 0.6,
+            "dueWindowDays": 30,
+            "maxValuationAgeDays": 30,
+            "maxExchangeRateAgeDays": 5
+          },
+          "insights": [
+            {
+              "ruleId": "CATEGORY_CONCENTRATION",
+              "status": "ATTENTION",
+              "observed": {
+                "value": 0.624896,
+                "unit": "FRACTION",
+                "subject": "REAL_ESTATE",
+                "numeratorVnd": 7500000000,
+                "denominatorVnd": 12002000000,
+                "date": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.5,
+                "unit": "FRACTION"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "d714c0bd-c311-4264-a7e6-453cb5254135",
+                  "name": "Căn hộ Thảo Điền",
+                  "category": "REAL_ESTATE",
+                  "liquidity": "LOW",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-10-07",
+                  "ageDays": 48,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 7500000000,
+                  "currency": "VND",
+                  "amountVnd": 7500000000,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            },
+            {
+              "ruleId": "DEBT_TO_ASSET_RATIO",
+              "status": "OK",
+              "observed": {
+                "value": 0.127645,
+                "unit": "FRACTION",
+                "subject": null,
+                "numeratorVnd": 1532000000,
+                "denominatorVnd": 12002000000,
+                "date": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.4,
+                "unit": "FRACTION"
+              },
+              "evidence": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "a16f71f4-416f-44d0-94ef-19d56449426d",
+                  "name": "Khoản vay mua căn hộ",
+                  "category": "BANK_LOAN",
+                  "liquidity": null,
+                  "dateKind": "UPDATED_ON",
+                  "date": "2026-11-24",
+                  "ageDays": 0,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 1500000000,
+                  "currency": "VND",
+                  "amountVnd": 1500000000,
+                  "usdToVndRate": null
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "ecdd66f2-ddd6-432f-8a88-79e6e39bc943",
+                  "name": "Dư nợ thẻ tín dụng",
+                  "category": "CREDIT_CARD_BALANCE",
+                  "liquidity": null,
+                  "dateKind": "UPDATED_ON",
+                  "date": "2026-11-24",
+                  "ageDays": 0,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 32000000,
+                  "currency": "VND",
+                  "amountVnd": 32000000,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            },
+            {
+              "ruleId": "LOW_LIQUIDITY_SHARE",
+              "status": "ATTENTION",
+              "observed": {
+                "value": 0.624896,
+                "unit": "FRACTION",
+                "subject": null,
+                "numeratorVnd": 7500000000,
+                "denominatorVnd": 12002000000,
+                "date": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.6,
+                "unit": "FRACTION"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "d714c0bd-c311-4264-a7e6-453cb5254135",
+                  "name": "Căn hộ Thảo Điền",
+                  "category": "REAL_ESTATE",
+                  "liquidity": "LOW",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-10-07",
+                  "ageDays": 48,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 7500000000,
+                  "currency": "VND",
+                  "amountVnd": 7500000000,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            },
+            {
+              "ruleId": "UPCOMING_LIABILITY_DUE",
+              "status": "ATTENTION",
+              "observed": {
+                "value": 12,
+                "unit": "DAYS",
+                "subject": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null,
+                "date": "2026-12-06"
+              },
+              "threshold": {
+                "comparison": "AT_MOST",
+                "value": 30,
+                "unit": "DAYS"
+              },
+              "evidence": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "a16f71f4-416f-44d0-94ef-19d56449426d",
+                  "name": "Khoản vay mua căn hộ",
+                  "category": "BANK_LOAN",
+                  "liquidity": null,
+                  "dateKind": "NEXT_PAYMENT_DATE",
+                  "date": "2026-12-06",
+                  "ageDays": null,
+                  "daysUntilDue": 12,
+                  "overdue": false,
+                  "amount": 18750000,
+                  "currency": "VND",
+                  "amountVnd": 18750000,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            },
+            {
+              "ruleId": "STALE_VALUATION",
+              "status": "ATTENTION",
+              "observed": {
+                "value": 48,
+                "unit": "DAYS",
+                "subject": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null,
+                "date": "2026-10-07"
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 30,
+                "unit": "DAYS"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "d714c0bd-c311-4264-a7e6-453cb5254135",
+                  "name": "Căn hộ Thảo Điền",
+                  "category": "REAL_ESTATE",
+                  "liquidity": "LOW",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-10-07",
+                  "ageDays": 48,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 7500000000,
+                  "currency": "VND",
+                  "amountVnd": 7500000000,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            },
+            {
+              "ruleId": "STALE_EXCHANGE_RATE",
+              "status": "ATTENTION",
+              "observed": {
+                "value": 73,
+                "unit": "DAYS",
+                "subject": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null,
+                "date": "2026-09-12"
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 5,
+                "unit": "DAYS"
+              },
+              "evidence": [
+                {
+                  "sourceType": "EXCHANGE_RATE",
+                  "sourceId": null,
+                  "name": null,
+                  "category": null,
+                  "liquidity": null,
+                  "dateKind": "RATE_EFFECTIVE_DATE",
+                  "date": "2026-09-12",
+                  "ageDays": 73,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": null,
+                  "currency": null,
+                  "amountVnd": null,
+                  "usdToVndRate": 25100
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "5590ab36-5bf7-4248-8ddc-b9abb41a11f7",
+                  "name": "Tiền gửi USD",
+                  "category": "BANK_ACCOUNT",
+                  "liquidity": "HIGH",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-11-19",
+                  "ageDays": 5,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 20000,
+                  "currency": "USD",
+                  "amountVnd": 502000000,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            }
+          ]
+        },
+        "a USD account and a USD loan before any rate is declared": {
+          "asOfDate": "2026-11-24",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "complete": false,
+          "thresholds": {
+            "maxCategoryShare": 0.5,
+            "maxDebtToAssetRatio": 0.4,
+            "maxLowLiquidityShare": 0.6,
+            "dueWindowDays": 30,
+            "maxValuationAgeDays": 30,
+            "maxExchangeRateAgeDays": 5
+          },
+          "insights": [
+            {
+              "ruleId": "CATEGORY_CONCENTRATION",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.5,
+                "unit": "FRACTION"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "3897dd94-10c9-467d-9998-53dbb6429778",
+                  "name": "Tài khoản USD",
+                  "category": "BANK_ACCOUNT",
+                  "liquidity": "HIGH",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-11-21",
+                  "ageDays": 3,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 20000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": "MISSING_EXCHANGE_RATE"
+            },
+            {
+              "ruleId": "DEBT_TO_ASSET_RATIO",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.4,
+                "unit": "FRACTION"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "3897dd94-10c9-467d-9998-53dbb6429778",
+                  "name": "Tài khoản USD",
+                  "category": "BANK_ACCOUNT",
+                  "liquidity": "HIGH",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-11-21",
+                  "ageDays": 3,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 20000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "5d55a3cc-4211-4e0c-bcb0-e9b018f99e91",
+                  "name": "Khoản vay USD từ người thân",
+                  "category": "PERSONAL_LOAN",
+                  "liquidity": null,
+                  "dateKind": "UPDATED_ON",
+                  "date": "2026-11-24",
+                  "ageDays": 0,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 5000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": "MISSING_EXCHANGE_RATE"
+            },
+            {
+              "ruleId": "LOW_LIQUIDITY_SHARE",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.6,
+                "unit": "FRACTION"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "3897dd94-10c9-467d-9998-53dbb6429778",
+                  "name": "Tài khoản USD",
+                  "category": "BANK_ACCOUNT",
+                  "liquidity": "HIGH",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-11-21",
+                  "ageDays": 3,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 20000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": "MISSING_EXCHANGE_RATE"
+            },
+            {
+              "ruleId": "UPCOMING_LIABILITY_DUE",
+              "status": "ATTENTION",
+              "observed": {
+                "value": 20,
+                "unit": "DAYS",
+                "subject": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null,
+                "date": "2026-12-14"
+              },
+              "threshold": {
+                "comparison": "AT_MOST",
+                "value": 30,
+                "unit": "DAYS"
+              },
+              "evidence": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "5d55a3cc-4211-4e0c-bcb0-e9b018f99e91",
+                  "name": "Khoản vay USD từ người thân",
+                  "category": "PERSONAL_LOAN",
+                  "liquidity": null,
+                  "dateKind": "MATURITY_DATE",
+                  "date": "2026-12-14",
+                  "ageDays": null,
+                  "daysUntilDue": 20,
+                  "overdue": false,
+                  "amount": 5000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            },
+            {
+              "ruleId": "STALE_VALUATION",
+              "status": "OK",
+              "observed": {
+                "value": 3,
+                "unit": "DAYS",
+                "subject": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null,
+                "date": "2026-11-21"
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 30,
+                "unit": "DAYS"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "3897dd94-10c9-467d-9998-53dbb6429778",
+                  "name": "Tài khoản USD",
+                  "category": "BANK_ACCOUNT",
+                  "liquidity": "HIGH",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-11-21",
+                  "ageDays": 3,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 20000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": null
+            },
+            {
+              "ruleId": "STALE_EXCHANGE_RATE",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 5,
+                "unit": "DAYS"
+              },
+              "evidence": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "3897dd94-10c9-467d-9998-53dbb6429778",
+                  "name": "Tài khoản USD",
+                  "category": "BANK_ACCOUNT",
+                  "liquidity": "HIGH",
+                  "dateKind": "VALUATION_DATE",
+                  "date": "2026-11-21",
+                  "ageDays": 3,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 20000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "5d55a3cc-4211-4e0c-bcb0-e9b018f99e91",
+                  "name": "Khoản vay USD từ người thân",
+                  "category": "PERSONAL_LOAN",
+                  "liquidity": null,
+                  "dateKind": "UPDATED_ON",
+                  "date": "2026-11-24",
+                  "ageDays": 0,
+                  "daysUntilDue": null,
+                  "overdue": null,
+                  "amount": 5000,
+                  "currency": "USD",
+                  "amountVnd": null,
+                  "usdToVndRate": null
+                }
+              ],
+              "unavailableReason": "MISSING_EXCHANGE_RATE"
+            }
+          ]
+        },
+        "a user with no record yet": {
+          "asOfDate": "2026-11-24",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "complete": true,
+          "thresholds": {
+            "maxCategoryShare": 0.5,
+            "maxDebtToAssetRatio": 0.4,
+            "maxLowLiquidityShare": 0.6,
+            "dueWindowDays": 30,
+            "maxValuationAgeDays": 30,
+            "maxExchangeRateAgeDays": 5
+          },
+          "insights": [
+            {
+              "ruleId": "CATEGORY_CONCENTRATION",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.5,
+                "unit": "FRACTION"
+              },
+              "evidence": [],
+              "unavailableReason": "NO_ASSETS"
+            },
+            {
+              "ruleId": "DEBT_TO_ASSET_RATIO",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.4,
+                "unit": "FRACTION"
+              },
+              "evidence": [],
+              "unavailableReason": "NO_ASSETS"
+            },
+            {
+              "ruleId": "LOW_LIQUIDITY_SHARE",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.6,
+                "unit": "FRACTION"
+              },
+              "evidence": [],
+              "unavailableReason": "NO_ASSETS"
+            },
+            {
+              "ruleId": "UPCOMING_LIABILITY_DUE",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "AT_MOST",
+                "value": 30,
+                "unit": "DAYS"
+              },
+              "evidence": [],
+              "unavailableReason": "NO_LIABILITIES"
+            },
+            {
+              "ruleId": "STALE_VALUATION",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 30,
+                "unit": "DAYS"
+              },
+              "evidence": [],
+              "unavailableReason": "NO_ASSETS"
+            },
+            {
+              "ruleId": "STALE_EXCHANGE_RATE",
+              "status": "UNAVAILABLE",
+              "observed": null,
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 5,
+                "unit": "DAYS"
+              },
+              "evidence": [],
+              "unavailableReason": "MISSING_EXCHANGE_RATE"
+            }
+          ]
         }
       }
     }
