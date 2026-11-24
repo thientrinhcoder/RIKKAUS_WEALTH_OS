@@ -1958,7 +1958,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   array; a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has
   agreed is worse than returning all of them.
 - **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding,
-  feedback and the wealth snapshot are described above. Insights are still later work.
+  feedback, the wealth snapshot and its insights are described above. Financial-health indicators
+  (#83) are still later work.
 - **Any calculation over the instrument fields.** The four fields are stored and returned; nothing
   accrues interest, projects a yield, computes a gain or loss, or derives a current value from a
   quantity and a unit price. A new unit price does not record a valuation either. Market-price
@@ -1983,9 +1984,11 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
 - Account deletion, a second identity provider, household or shared access, and roles.
 - **Exchange-rate history.** Declaring a rate overwrites the previous one. There is no change log, no
   history resource, no automatic or fetched rate, and no third currency.
-- **No stale-rate rule.** The API reports the declared date and the stored timestamp and makes no
-  freshness judgement. There is no N-day threshold anywhere in the backend; deciding what counts as
-  out of date is the client's, per the accepted design for issue #48.
+- **One stale-rate rule, and only in the insights.** The exchange-rate setting and the valuation
+  records report the declared date and the stored timestamp and make no freshness judgement of their
+  own. The only rule that judges the rate's age is the `STALE_EXCHANGE_RATE` insight of
+  `GET /api/v1/wealth-snapshot/insights`, judged against the configured
+  `rikkaus.snapshot.insights.max-exchange-rate-age-days` (see *Wealth snapshot insights*).
 - **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
   report, forecast, wealth snapshot, goal, goal projection and onboarding routes, for the search and
   filter parameters and for deletion impact.** All of
@@ -2028,8 +2031,7 @@ migration.
 | `GET /api/v1/wealth-snapshot/insights` | none | 200, always six insights in a fixed order; a user with no record gets six `UNAVAILABLE` insights, never 404 |
 
 Package `snapshot/insights`, inside the `snapshot` slice the way `cashflow/reporting` sits inside
-`cashflow`. This section supersedes two bullets of *What is not here*: "No stale-rate rule" (the backend
-now judges the declared rate's age against a configured threshold) and "Insights are still later work".
+`cashflow`.
 
 ### The six rules
 
