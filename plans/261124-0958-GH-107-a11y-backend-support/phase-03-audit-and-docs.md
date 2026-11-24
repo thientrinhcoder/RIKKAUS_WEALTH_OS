@@ -7,7 +7,7 @@ Status: completed.
 - `audit-lists.sh` (L01–L07) và `audit-errors.sh` (E01–E11) trong thư mục plan này; chạy sau các script
   fixture.
 - `docs/api-contract-conventions.md`: mục "Pilot list bounds, error shape and local fixtures —
-  implemented" trước "What is not here"; bullet pagination trỏ tới số đo.
+  implemented" ở cuối file, sau mục insights của #68; bullet pagination trỏ tới số đo.
 - `plans/reports/manual-verification-261124-0958-GH-107-a11y-backend-support.md`.
 
 ## Kết luận

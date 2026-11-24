@@ -1948,85 +1948,6 @@ No automated test exercises the preview or the guard, on Product Owner direction
 procedure and `plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md` is what it
 returned, including the `SET NULL` and `CASCADE` results read straight from PostgreSQL.
 
-## Pilot list bounds, error shape and local fixtures — implemented
-
-Issue #107: what the frontend may rely on when a list grows or a form fails, so no screen needs a
-layout-specific workaround on phone or desktop. Nothing here changes the contract; it states, with
-measurements, what the routes above already do. The fixtures that produce the data are described in
-[`local-fixtures-guide.md`](local-fixtures-guide.md).
-
-### Lists are whole, ordered and unpaged
-
-Measured on the long-lists fixture (60 assets, 24 valuations, 40 liabilities, 120 entries, 15 goals,
-20 feedback entries), local API and PostgreSQL 18.6, five requests each:
-
-| Route | Elements | Bytes | Median / slowest |
-|---|---|---|---|
-| `GET /assets` | 60 | 32 454 | 5 ms / 6 ms |
-| `GET /assets/{assetId}/valuations` | 24 | 8 562 | 5 ms / 7 ms |
-| `GET /liabilities` | 40 | 20 408 | 4 ms / 5 ms |
-| `GET /cash-flow-entries` | 120 | 52 394 | 5 ms / 6 ms |
-| `GET /cash-flow-occurrences` (one year) | 367 | 86 113 | 5 ms / 9 ms |
-| `GET /goals` | 15 | 6 435 | 4 ms / 6 ms |
-| `GET /goal-projections` | 15 | 53 953 | 5 ms / 6 ms |
-| `GET /feedback` | 20 | 6 554 | 4 ms / 5 ms |
-| `GET /wealth-snapshot` | object | 63 844 | 6 ms / 11 ms |
-
-- **Every list returns every record.** No route truncates, caps or pages. A client renders the array it
-  gets, and a count it shows is the array's length.
-- **Paging parameters are ignored.** `page`, `limit`, `offset`, `size`, `per_page` and `cursor`, alone or
-  together, return the same bytes as the request without them. Do not send them expecting a page.
-- **Order is stable.** Two identical requests return identical bytes, for the default order and for every
-  `sort` key. Records equal on every sort column are ordered by `id`, so two assets both named
-  `Vàng miếng SJC 1 lượng` on the same date never swap between renders.
-- **Names come back exactly as sent**, up to the 120-character maximum, diacritics intact. Wrapping and
-  truncation are the client's.
-- **Order by `name` follows the database collation.** On the local `postgres:*-alpine` image that is code
-  point order, so `Đất nền Long An` and `Ô tô Kia Morning` sort after every Latin `Z`; the wealth
-  snapshot orders names with a Vietnamese collator instead. Both are stable, but they differ.
-
-Pagination is not needed for the pilot: the largest list a pilot user can plausibly reach is a few
-hundred rows below 100 KB, answered in under 25 ms locally. The [`What is not here`](#what-is-not-here)
-entry on pagination stands.
-
-### Every error can be placed on screen
-
-- Every error under `/api/v1/**` was `application/problem+json` with `type`, `title`, `status`, `detail`,
-  `instance` and `correlationId`, across 400, 404, 405, 406, 409 and 415, and no request returned a 5xx.
-  The `401` from the authentication entry point is the exception: its body has no `instance` member.
-- `validation-failed` names each field in `errors[].field` with the request member's own name, at the top
-  level: request bodies are flat, so the asset's unit count is `quantity`, not `instrument.quantity`. A
-  rejected query parameter is named by the parameter (`sort`, `category`, `q`, `effectiveFrom`, `from`,
-  `to`, `month`).
-- **Field rules are checked before rules that relate fields.** A request that breaks both reports only
-  the field rules; once those pass, every cross-field rule is reported at once. A form may therefore
-  need a second round trip to show everything.
-- `malformed-request` has no `errors`. It is what a request the server cannot parse returns — truncated
-  JSON, a body date such as `2026-13-45` or `12/09/2026`, a body enum in the wrong case, text where a
-  number belongs, a `confirm` that is not a boolean, a path identifier that is not a UUID. A form that sends ISO dates, enum
-  constants and numbers from its own controls never meets it; when it does, show it as a form-level
-  error.
-- Another user's identifier and one that exists nowhere return the same `404` body byte for byte, once
-  the identifier in `instance` is set aside, on every read, edit, delete, preview and valuation route.
-- `409 linked-records` always carries `impact`, the same object the deletion-impact preview returns.
-- `X-Correlation-Id` sent by the client comes back in the header and in `correlationId`, and the header
-  is exposed to `http://localhost:8081`.
-
-### What the published schema tells a form
-
-`openapi.json` carries `maxLength` for every bounded string (so a text input can set `maxlength`),
-`minimum`, `exclusiveMinimum` or `maximum` for every bounded number, `enum` for every choice, `required`
-for mandatory members, and `pattern` for the feedback `screen`. It does not carry the number of decimals
-an amount accepts (`@Digits`, for example 2 for an amount and 6 for a rate), that a required name must not
-be blank (it publishes `minLength: 0`), or any rule about dates and related fields; those are in each
-resource's section above.
-
-### Verified by hand, not by the suite
-
-The scenarios are `plans/261124-0958-GH-107-a11y-backend-support/phase-01-test-scenarios.md`, the
-measuring scripts sit beside them, and the run is
-`plans/reports/manual-verification-261124-0958-GH-107-a11y-backend-support.md`.
-
 ## What is not here
 
 Named explicitly, so nothing above is read as a guarantee it does not make.
@@ -2197,3 +2118,82 @@ Shipped on Product Owner direction with no automated test. The scenarios, writte
 in `plans/261124-0956-GH-68-snapshot-insights/phase-01-test-scenarios.md`; the run is recorded in
 `plans/reports/manual-verification-261124-1010-GH-68-snapshot-insights.md` and is reproduced by the
 scripts in `plans/261124-0956-GH-68-snapshot-insights/scripts/`.
+
+## Pilot list bounds, error shape and local fixtures — implemented
+
+Issue #107: what the frontend may rely on when a list grows or a form fails, so no screen needs a
+layout-specific workaround on phone or desktop. Nothing here changes the contract; it states, with
+measurements, what the routes above already do. The fixtures that produce the data are described in
+[`local-fixtures-guide.md`](local-fixtures-guide.md).
+
+### Lists are whole, ordered and unpaged
+
+Measured on the long-lists fixture (60 assets, 24 valuations, 40 liabilities, 120 entries, 15 goals,
+20 feedback entries), local API and PostgreSQL 18.6, five requests each:
+
+| Route | Elements | Bytes | Median / slowest |
+|---|---|---|---|
+| `GET /assets` | 60 | 32 454 | 5 ms / 6 ms |
+| `GET /assets/{assetId}/valuations` | 24 | 8 562 | 5 ms / 7 ms |
+| `GET /liabilities` | 40 | 20 408 | 4 ms / 5 ms |
+| `GET /cash-flow-entries` | 120 | 52 394 | 5 ms / 6 ms |
+| `GET /cash-flow-occurrences` (one year) | 367 | 86 113 | 5 ms / 9 ms |
+| `GET /goals` | 15 | 6 435 | 4 ms / 6 ms |
+| `GET /goal-projections` | 15 | 53 953 | 5 ms / 6 ms |
+| `GET /feedback` | 20 | 6 554 | 4 ms / 5 ms |
+| `GET /wealth-snapshot` | object | 63 844 | 6 ms / 11 ms |
+
+- **Every list returns every record.** No route truncates, caps or pages. A client renders the array it
+  gets, and a count it shows is the array's length.
+- **Paging parameters are ignored.** `page`, `limit`, `offset`, `size`, `per_page` and `cursor`, alone or
+  together, return the same bytes as the request without them. Do not send them expecting a page.
+- **Order is stable.** Two identical requests return identical bytes, for the default order and for every
+  `sort` key. Records equal on every sort column are ordered by `id`, so two assets both named
+  `Vàng miếng SJC 1 lượng` on the same date never swap between renders.
+- **Names come back exactly as sent**, up to the 120-character maximum, diacritics intact. Wrapping and
+  truncation are the client's.
+- **Order by `name` follows the database collation.** On the local `postgres:*-alpine` image that is code
+  point order, so `Đất nền Long An` and `Ô tô Kia Morning` sort after every Latin `Z`; the wealth
+  snapshot orders names with a Vietnamese collator instead. Both are stable, but they differ.
+
+Pagination is not needed for the pilot: the largest list a pilot user can plausibly reach is a few
+hundred rows below 100 KB, answered in under 25 ms locally. The [`What is not here`](#what-is-not-here)
+entry on pagination stands.
+
+### Every error can be placed on screen
+
+- Every error under `/api/v1/**` was `application/problem+json` with `type`, `title`, `status`, `detail`,
+  `instance` and `correlationId`, across 400, 404, 405, 406, 409 and 415, and no request returned a 5xx.
+  The `401` from the authentication entry point is the exception: its body has no `instance` member.
+- `validation-failed` names each field in `errors[].field` with the request member's own name, at the top
+  level: request bodies are flat, so the asset's unit count is `quantity`, not `instrument.quantity`. A
+  rejected query parameter is named by the parameter (`sort`, `category`, `q`, `effectiveFrom`, `from`,
+  `to`, `month`).
+- **Field rules are checked before rules that relate fields.** A request that breaks both reports only
+  the field rules; once those pass, every cross-field rule is reported at once. A form may therefore
+  need a second round trip to show everything.
+- `malformed-request` has no `errors`. It is what a request the server cannot parse returns — truncated
+  JSON, a body date such as `2026-13-45` or `12/09/2026`, a body enum in the wrong case, text where a
+  number belongs, a `confirm` that is not a boolean, a path identifier that is not a UUID. A form that sends ISO dates, enum
+  constants and numbers from its own controls never meets it; when it does, show it as a form-level
+  error.
+- Another user's identifier and one that exists nowhere return the same `404` body byte for byte, once
+  the identifier in `instance` is set aside, on every read, edit, delete, preview and valuation route.
+- `409 linked-records` always carries `impact`, the same object the deletion-impact preview returns.
+- `X-Correlation-Id` sent by the client comes back in the header and in `correlationId`, and the header
+  is exposed to `http://localhost:8081`.
+
+### What the published schema tells a form
+
+`openapi.json` carries `maxLength` for every bounded string (so a text input can set `maxlength`),
+`minimum`, `exclusiveMinimum` or `maximum` for every bounded number, `enum` for every choice, `required`
+for mandatory members, and `pattern` for the feedback `screen`. It does not carry the number of decimals
+an amount accepts (`@Digits`, for example 2 for an amount and 6 for a rate), that a required name must not
+be blank (it publishes `minLength: 0`), or any rule about dates and related fields; those are in each
+resource's section above.
+
+### Verified by hand, not by the suite
+
+The scenarios are `plans/261124-0958-GH-107-a11y-backend-support/phase-01-test-scenarios.md`, the
+measuring scripts sit beside them, and the run is
+`plans/reports/manual-verification-261124-0958-GH-107-a11y-backend-support.md`.
