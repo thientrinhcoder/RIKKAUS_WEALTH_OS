@@ -1146,8 +1146,9 @@ with today.
 
 ### Not here
 
-No forecast (#80), no financial-health indicators (#83), no insights, no export, no multi-month
-comparison in one request (the client asks once per month), no historical exchange rate.
+No export, no multi-month comparison in one request (the client asks once per month), no historical
+exchange rate. The forecast (#80) and the financial-health indicators (#83) are routes of their own; the
+indicators read this report for the same month (see *Financial-health indicators and insights*).
 
 ### Verified by hand, not by the suite
 
@@ -1277,7 +1278,9 @@ and `from` give the same bytes.
 
 The difference between a covered liability's schedule and its linked entries, as a number; a stale-rate
 judgement by the rate's age; a user-set threshold; projecting the days before the horizon; any horizon
-other than three months; financial-health indicators (#83) and insights.
+other than three months. The financial-health indicators (#83) read this forecast's `minimumBalance` and
+band it against their own reference, a month of recurring essential expense, not against
+`minimumBalance.referenceThreshold` (see *Financial-health indicators and insights*).
 
 ### Verified by hand, not by the suite
 
@@ -1762,7 +1765,8 @@ no migration, so recording a valuation, editing a liability or declaring a rate 
 
 A singular noun like `/settings/exchange-rate`: each user has exactly one current picture of their
 wealth. `dashboard` is left out of the path because the dashboard is the client's screen; insights
-(#68) and financial-health indicators (#83) read the same resource without drawing it.
+(#68) read the same resource without drawing it. The financial-health indicators (#83) do not read it:
+they live in the `cashflow` slice and read assets and liabilities through its own native queries.
 
 ### The formulas
 
@@ -1963,9 +1967,9 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   a pilot user's catalog is tens of rows, and committing the frontend to a page shape nobody has agreed
   is worse than returning all of them. The measured bounds are in *Pilot list bounds, error shape and
   local fixtures*.
-- **The remaining domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding,
-  feedback, the wealth snapshot and its insights are described above. Financial-health indicators
-  (#83) are still later work.
+- **Further domain resources.** Assets, liabilities, cash-flow entries, goals, onboarding, feedback,
+  the wealth snapshot and its insights are described above, and the financial-health indicators and
+  insights (#83) at the end of this document. The MVP backbone names no other resource.
 - **Any calculation over the instrument fields.** The four fields are stored and returned; nothing
   accrues interest, projects a yield, computes a gain or loss, or derives a current value from a
   quantity and a unit price. A new unit price does not record a valuation either. Market-price
@@ -1996,8 +2000,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `GET /api/v1/wealth-snapshot/insights`, judged against the configured
   `rikkaus.snapshot.insights.max-exchange-rate-age-days` (see *Wealth snapshot insights*).
 - **Automated tests for the profile, exchange-rate, asset, valuation, cash-flow, occurrence, monthly
-  report, forecast, wealth snapshot, goal, goal projection and onboarding routes, for the search and
-  filter parameters and for deletion impact.** All of
+  report, forecast, wealth snapshot, snapshot insights, financial-health, goal, goal projection and
+  onboarding routes, for the search and filter parameters and for deletion impact.** All of
   them shipped on Product Owner direction with manual verification only, recorded in
   `plans/reports/manual-verification-261101-1320-GH-50-profile-exchange-rate-settings.md`,
   `plans/reports/manual-verification-261103-2231-GH-53-asset-catalog-common-crud.md`,
@@ -2014,7 +2018,10 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   `plans/reports/manual-verification-261122-1842-GH-104-safe-edit-delete.md` (deletion impact and the
   linked-record guard) and
   `plans/reports/manual-verification-261124-1003-GH-98-validation-hardening.md` (the negative-input
-  matrix across every write route). Every other route
+  matrix across every write route),
+  `plans/reports/manual-verification-261124-1010-GH-68-snapshot-insights.md` and
+  `plans/reports/manual-verification-261127-1241-GH-83-financial-health.md` (the five indicators and
+  six rules). Every other route
   named in this document is covered by the suite. What the suite still enforces across all of them:
   `ApplicationContextIT` fails on a table no migration declares, `OpenApiContractIT` fails on a
   published path that is not declared or a declared one that is not published, and
@@ -2117,7 +2124,8 @@ and a `userId` query parameter is ignored.
 
 Stored or historical insights, user-set thresholds, notifications, a priority order or a "top three"
 selection (the client picks which `ATTENTION` cards the overview strip shows), Vietnamese copy, an `asOf`
-parameter, and financial-health indicators (#83).
+parameter. The financial-health indicators (#83) are a separate route with their own rules and
+thresholds (see *Financial-health indicators and insights*).
 
 ### Verified by hand, not by the suite
 
@@ -2295,3 +2303,156 @@ No automated test was added, on Product Owner direction. The matrix, written bef
 `plans/261124-1003-GH-98-validation-hardening/phase-01-test-scenarios.md`, run by
 `scenario-runner.sh` in the same folder; the before and after runs, with the response of every case, are
 in `plans/reports/manual-verification-261124-1003-GH-98-validation-hardening.md`.
+
+## Financial-health indicators and insights — implemented
+
+A read-only, derived resource (issue #83) behind the financial-health screens of design #81: the five
+indicators and six insight rules of the backbone (`RIKKAUS_WEALTH_OS_MVP_BACKBONE.md:273-288`). One route,
+under `bearerAuth`, owner-scoped by the token. It reads the monthly report of
+`GET /api/v1/cash-flow-reports/monthly` and the forecast of `GET /api/v1/cash-flow-forecast` through
+their own services, so every cash-flow figure is theirs, and reads assets and liabilities through the
+`cashflow` slice's native queries (`ForecastSourceReader`), never through `assets`, `liabilities` or
+`snapshot`. Nothing is stored, there is no cache and no migration.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/financial-health` | `month` (optional, `YYYY-MM`, default the current month in `Asia/Ho_Chi_Minh`) | 200, always five indicators and six rules in a fixed order; a user with no record gets five `UNAVAILABLE` indicators and six `NOT_EVALUATED` rules, never 404 |
+
+Package `cashflow/health`, inside the `cashflow` slice beside `cashflow/reporting` and `cashflow/forecast`.
+
+### The five indicators
+
+Each indicator is `{indicatorId, availability, value, unit, band, bandNotDeterminedReason,
+unavailableReason, partialReason, calculation}`, and `calculation` is `{formula, numeratorVnd,
+denominatorVnd, referenceVnd, observedOn, sources[]}`.
+
+| `indicatorId` | `formula` | Inputs | `unit` | `band` |
+|---|---|---|---|---|
+| `EMERGENCY_RESERVE_MONTHS` | `LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE` | assets in `CASH`, `BANK_ACCOUNT`, `TERM_DEPOSIT` (by category, not by `liquidity`) ÷ every recurring essential `EXPENSE` entry in effect in the month at its monthly equivalent (`MONTHLY` ×1, `QUARTERLY` ÷3, `YEARLY` ÷12, each rounded half up to two decimals); one-time expenses never count | `MONTHS`, one decimal | `OK` ≥ `reserve-ok-min-months`, `WATCH` ≥ `min-reserve-months`, else `ATTENTION` |
+| `DEBT_PAYMENT_BURDEN` | `DEBT_PAYMENTS_OVER_INCOME` | the month's `DEBT_PRINCIPAL_PAYMENT` + `INTEREST_PAYMENT` occurrences ÷ `totals.income` | `FRACTION` | `OK` ≤ `debt-burden-ok-max`, `WATCH` ≤ `max-debt-payment-burden`, else `ATTENTION` |
+| `FORECAST_MINIMUM_CASH_BALANCE` | `LOWEST_PROJECTED_CASH_BALANCE` | `minimumBalance.amount` and `.date` of the forecast without `from` (the three months after the current one, whatever `month` is asked for) | `VND` | `OK` ≥ `referenceVnd` (the reserve's denominator), `WATCH` ≥ 0, else `ATTENTION` |
+| `PASSIVE_INCOME_SHARE` | `ASSET_LINKED_INCOME_OVER_INCOME` | `passiveIncome.total` (income linked to an asset, as in the report) ÷ `totals.income` | `FRACTION` | informational: `HIGH` ≥ `passive-income-high-min`, `MEDIUM` ≥ `passive-income-medium-min`, else `LOW` |
+| `ESSENTIAL_EXPENSE_SHARE` | `ESSENTIAL_EXPENSE_OVER_EXPENSE` | the month's occurrences in `essential-categories` ÷ `totals.expense` | `FRACTION` | `OK` ≤ `essential-share-ok-max`, `WATCH` ≤ `essential-share-watch-max`, else `ATTENTION` |
+
+- Fractions are rounded half up to six decimals, the reserve to one; every band and every rule status
+  compares that rounded value, and a value **equal** to a limit is not beyond it.
+- `numeratorVnd` and `denominatorVnd` are the report's own VND figures, so on the design baseline
+  `16250000.00 / 180000000.00 = 0.090278` and `1850000000.00 / 61600000.00 = 30.0` can be shown as the
+  calculation. Both are `null` for the minimum balance, which carries `referenceVnd` and `observedOn`
+  instead, and for an `UNAVAILABLE` indicator.
+- The minimum balance is banded against one month of recurring essential expense, as design #81 shows,
+  not against the forecast's own `minimumBalance.referenceThreshold` (the average projected expense).
+- Only the two debt categories count as debt payments. A `HOUSING` entry linked to the same loan is not
+  added, and the forecast already leaves a liability schedule out when recurring entries are linked to it
+  (`COVERED_BY_LINKED_ENTRIES`): design #81's rule against counting one payment twice.
+- `sources[]` rows are `{sourceType, sourceId, category, role, date, amount, currency, amountVnd, cadence,
+  monthlyEquivalentVnd}`; `sourceId` is what `GET /api/v1/cash-flow-entries/{id}`, `/assets/{id}` or
+  `/liabilities/{id}` reads. `role` says what a row contributes: `NUMERATOR` / `DENOMINATOR` for the
+  reserve and the burden; `SHARE_PART` (numerator and denominator) / `SHARE_REST` (denominator only) for
+  the two shares; `OPENING_BALANCE`, then every `PROJECTED_INCOME` and `PROJECTED_EXPENSE` up to
+  `observedOn`, for the minimum balance, so the opening balance plus those rows is the value. A USD row
+  with no declared rate has `amountVnd: null`.
+
+### The six rules
+
+Each rule is `{ruleId, status, dependsOn, observed, threshold, evidence[], notEvaluatedReason}`. `status`
+is `ATTENTION` when `observed.value` compares with `threshold.value` as `threshold.comparison` says, `OK`
+when it does not, `NOT_EVALUATED` when it could not be judged (`observed` is then `null`).
+`threshold.property` names the configuration property the value comes from.
+
+| `ruleId` | `observed.value` | Comparison, threshold | `dependsOn` | `evidence` |
+|---|---|---|---|---|
+| `SPENDING_EXCEEDS_INCOME` | `totals.net`, `VND` | `LESS_THAN` `0` | none | every occurrence of the month (`INCOME`, `EXPENSE`) |
+| `FORECAST_CASH_NEGATIVE` | the minimum balance, `VND`; `date` = its date | `LESS_THAN` `0` | `FORECAST_MINIMUM_CASH_BALANCE` | the indicator's sources |
+| `RESERVE_BELOW_REFERENCE` | the reserve, `MONTHS` | `LESS_THAN` `min-reserve-months` (`3`) | `EMERGENCY_RESERVE_MONTHS` | the indicator's sources |
+| `HIGH_DEBT_PAYMENT_BURDEN` | the burden, `FRACTION` | `GREATER_THAN` `max-debt-payment-burden` (`0.35`) | `DEBT_PAYMENT_BURDEN` | the indicator's sources |
+| `LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS` | `CASH` + `BANK_ACCOUNT` today, `VND` (the forecast's opening balance) | `LESS_THAN` the VND sum of obligations in `assumptions.obligationWindow` (`due-window-days`, `30`) | none | the `CASH_ACCOUNT` assets, then each `PAYMENT_DUE` and `MATURITY_DUE` by date |
+| `INCOME_CONCENTRATION` | the largest `incomeComposition` row ÷ `totals.income`, `FRACTION`; `subject` = its category | `GREATER_THAN` `max-income-source-share` (`0.6`) | none | that category's occurrences |
+
+- An obligation is a liability whose `maturityDate` falls in the window, for its whole
+  `outstandingBalance` (which already holds every payment left, so its scheduled payments are not added
+  again), or else each payment its stated schedule places in the window. A payment before today is not
+  counted, as in the forecast. A liability with a due date but no recurring amount (a credit card) adds
+  nothing.
+- A "source" of income is a category, as the report's composition groups it.
+- A rule on an indicator is `NOT_EVALUATED` when that indicator is `PARTIAL` or `UNAVAILABLE`. It never
+  reports `OK` on incomplete data.
+
+### When an indicator is unavailable or partial
+
+Nothing that cannot be computed is reported as `0`: `value` is `null` and `unavailableReason` is set.
+
+| Reason | When | Indicators, rules |
+|---|---|---|
+| `NO_LIQUID_ASSETS` | no asset in a liquid category | reserve |
+| `NO_RECURRING_ESSENTIAL_EXPENSES` | no recurring essential expense in effect in the month | reserve; the minimum balance keeps its value but has no band (`bandNotDeterminedReason`) |
+| `NO_INCOME` | no income occurrence in the month | burden, passive share; `INCOME_CONCENTRATION` |
+| `NO_EXPENSES` | no expense occurrence in the month | essential share |
+| `NO_CASH_ACCOUNTS` | no `CASH` or `BANK_ACCOUNT` asset | minimum balance; liquidity rule |
+| `NO_LIABILITIES` | no liability | liquidity rule |
+| `NO_CASH_FLOW_IN_MONTH` | no occurrence at all in the month | `SPENDING_EXCEEDS_INCOME` |
+| `MISSING_EXCHANGE_RATE` | a USD record the figure needs has no declared rate: `UNAVAILABLE` when nothing else is left, otherwise `PARTIAL` (`partialReason`) | any; the three rules that read records directly |
+| `FORECAST_INCOMPLETE` | the forecast is `partial` for another reason, such as a liability maturing in the horizon with no payment schedule | minimum balance, as `partialReason` |
+| `INDICATOR_PARTIAL`, `INDICATOR_UNAVAILABLE` | the indicator in `dependsOn` is not `COMPLETE` | the three rules on an indicator (`notEvaluatedReason`) |
+
+A `PARTIAL` indicator keeps the value computed from what could be converted but has no band
+(`bandNotDeterminedReason: PARTIAL_INPUTS`), because the whole value may fall in another one. A real
+zero is still reported: income with no debt payment is a `0.000000` burden (`OK`).
+
+### Thresholds and assumptions
+
+System reference values, configured in one place (`application.yml`, `rikkaus.cashflow.health`) and
+returned in every response's `thresholds` block. They are the review-fixture values of design #81, not an
+approved business configuration.
+
+| Property | Initial value | Valid |
+|---|---|---|
+| `reserve-ok-min-months` | `6` | `> 0`, at most 1 decimal, at most 1200 |
+| `min-reserve-months` | `3` | as above, not above `reserve-ok-min-months` |
+| `debt-burden-ok-max` | `0.25` | `> 0`, at most 6 decimals, not above `max-debt-payment-burden` |
+| `max-debt-payment-burden` | `0.35` | `> 0`, at most 6 decimals (payments may exceed income) |
+| `passive-income-high-min` | `0.5` | `(0, 1]`, at most 6 decimals |
+| `passive-income-medium-min` | `0.2` | `(0, 1]`, not above `passive-income-high-min` |
+| `essential-share-ok-max` | `0.7` | `(0, 1]`, not above `essential-share-watch-max` |
+| `essential-share-watch-max` | `0.8` | `(0, 1]` |
+| `due-window-days` | `30` | `0..3650` |
+| `max-income-source-share` | `0.6` | `(0, 1]` |
+| `essential-categories` | `LIVING_COSTS, HOUSING, HEALTHCARE, INSURANCE, TAX_AND_FEES, DEBT_PRINCIPAL_PAYMENT, INTEREST_PAYMENT` | at least one, expense categories only, none twice |
+
+Each can be overridden per deployment by its relaxed-binding environment variable, for example
+`RIKKAUS_CASHFLOW_HEALTH_MINRESERVEMONTHS=5` or
+`RIKKAUS_CASHFLOW_HEALTH_ESSENTIALCATEGORIES=LIVING_COSTS,HOUSING,EDUCATION,…`. The application refuses to
+start when one is missing or invalid, and the failure names the property. `EDUCATION` and
+`OTHER_EXPENSE` are design #81's adjustable group and start outside the list.
+
+`assumptions` returns `{asOfDate, timeZone, month, monthFrom, monthTo, forecastHorizon {from, to},
+obligationWindow {from, to}, liquidAssetCategories, cashAccountCategories, essentialCategories,
+debtPaymentCategories, exchangeRate {usdToVndRate, effectiveDate} | null}`, so a result can be reproduced
+from the response and the records it names.
+
+### Time, determinism and errors
+
+Today is `asOfDate` in `Asia/Ho_Chi_Minh`, the forecast's own. Two reads on the same day over the same
+records under the same configuration return the same bytes, and `month` equal to the current month
+returns what no `month` does. Past and future months are accepted; the forecast horizon does not move
+with them.
+
+| Input | `message` |
+|---|---|
+| `month` present but blank, or not four digits, a hyphen and a real two-digit month (`2026-13`, `11/2026`, `2026-9`, a second `month`) | `must be a calendar month in the form YYYY-MM` |
+
+`400 validation-failed` naming `month`, the value never echoed; `401` without a valid token, `405` for
+another method, `406` for a non-JSON `Accept`. A `userId` query parameter is ignored.
+
+### Not here
+
+Stored or historical indicators, per-user thresholds or essential mapping, notifications, a priority
+order among rules, Vietnamese copy, an `asOf` parameter, a forecast horizon chosen by the request, passive
+income by category, and any reading of the wealth snapshot.
+
+### Verified by hand, not by the suite
+
+Shipped on Product Owner direction with no automated test. The scenarios, written before the code, are
+in `plans/261127-1241-GH-83-financial-health/phase-01-test-scenarios.md`; the run is recorded in
+`plans/reports/manual-verification-261127-1241-GH-83-financial-health.md` and is reproduced by the
+scripts in `plans/261127-1241-GH-83-financial-health/scripts/`.
