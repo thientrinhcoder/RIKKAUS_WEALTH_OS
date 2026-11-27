@@ -17,8 +17,8 @@ import com.rikkaus.wealth.cashflow.forecast.application.CashFlowForecast.Month;
 import com.rikkaus.wealth.cashflow.forecast.application.CashFlowForecast.OpeningBalance;
 import com.rikkaus.wealth.cashflow.forecast.application.CashFlowForecast.OpeningSource;
 import com.rikkaus.wealth.cashflow.forecast.application.CashFlowForecast.SourceType;
-import com.rikkaus.wealth.cashflow.forecast.application.ForecastSourceReader.CashAccount;
 import com.rikkaus.wealth.cashflow.forecast.application.ForecastSourceReader.ScheduledLiability;
+import com.rikkaus.wealth.cashflow.forecast.application.ForecastSourceReader.ValuedAsset;
 import com.rikkaus.wealth.cashflow.forecast.application.LiabilityPaymentSchedule.Payment;
 import com.rikkaus.wealth.shared.money.ConversionTrace;
 import com.rikkaus.wealth.shared.money.Currency;
@@ -231,7 +231,7 @@ public class CashFlowForecastService {
     private OpeningBalance openingBalance(UUID ownerId, ForecastHorizon horizon, Accumulator acc) {
         List<OpeningSource> included = new ArrayList<>();
         Money total = Money.zero(Currency.VND);
-        for (CashAccount account : sources.cashAccountsOf(ownerId)) {
+        for (ValuedAsset account : sources.cashAccountsOf(ownerId)) {
             Optional<Money> vnd = acc.toVnd(account.value(), account.currency());
             if (vnd.isEmpty()) {
                 acc.exclude(SourceType.ASSET, account.id(), ExclusionReason.EXCHANGE_RATE_MISSING, Set.of());

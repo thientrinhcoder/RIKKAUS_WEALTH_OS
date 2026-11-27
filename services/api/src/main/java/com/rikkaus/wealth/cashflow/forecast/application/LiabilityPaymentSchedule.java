@@ -17,15 +17,15 @@ import java.util.List;
  * <p>An anchor in the past is still the anchor. Payments it produces before the window are not added
  * to the forecast: an overdue payment is a fact about today's balance, not a projection.
  */
-final class LiabilityPaymentSchedule {
+public final class LiabilityPaymentSchedule {
 
     private LiabilityPaymentSchedule() {}
 
     /** One payment date, with its position counted from the anchor and whether it was moved. */
-    record Payment(LocalDate date, int sequence, boolean shiftedToMonthEnd) {}
+    public record Payment(LocalDate date, int sequence, boolean shiftedToMonthEnd) {}
 
     /** The calendar months between two payments for each frequency {@code V7__liabilities.sql} allows. */
-    static int monthsBetweenPayments(String frequency) {
+    public static int monthsBetweenPayments(String frequency) {
         return switch (frequency) {
             case "MONTHLY" -> 1;
             case "QUARTERLY" -> 3;
@@ -35,7 +35,7 @@ final class LiabilityPaymentSchedule {
         };
     }
 
-    static List<Payment> paymentsOf(
+    public static List<Payment> paymentsOf(
             LocalDate anchor, int step, LocalDate maturityDate, LocalDate from, LocalDate to) {
         LocalDate last = maturityDate == null || maturityDate.isAfter(to) ? to : maturityDate;
         List<Payment> payments = new ArrayList<>();

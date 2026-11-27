@@ -120,6 +120,9 @@ plans/**/*
 !plans/261124-1003-GH-98-validation-hardening/
 !plans/261124-1003-GH-98-validation-hardening/**
 !plans/reports/manual-verification-261124-1003-GH-98-validation-hardening.md
+!plans/261127-1241-GH-83-financial-health/
+!plans/261127-1241-GH-83-financial-health/**
+!plans/reports/manual-verification-261127-1241-GH-83-financial-health.md
 screenshots/*
 docs/screenshots/*
 logs.txt
