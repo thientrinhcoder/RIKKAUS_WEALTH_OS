@@ -3,24 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#F7F5EF">
+  <meta name="theme-color" content="#0A2240">
   <title>Rikkaus Wealth OS | Basic Advisor rule-based report review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
-      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
-      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
-      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
-      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
-      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
-      --display:"Noto Serif Display",Georgia,serif;
+      --canvas:#F6F4EF; --surface:#FFFFFF; --surface-subtle:#F1EEE7;
+      --ink:#121A26; --ink-secondary:#5A6472; --border:#DDD8CD; --rule:#121A26; --control:#8C909A;
+      --navy:#0A2240; --primary:#0F2E57; --primary-pressed:#0A2240;
+      --primary-container:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D;
+      --warning:#8A5A00; --error:#A6192E; --info:#1F4E8C; --focus:#1F4E8C;
+      --scrim:rgba(10,34,64,.62); --font:"Inter","Segoe UI",system-ui,sans-serif;
+      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
       --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
-      --s8:2rem; --s12:3rem; --s16:4rem;
-      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
+      --s8:2rem; --s12:3rem; --s16:4.5rem;
+      --r-input:2px; --r-card:2px; --r-sheet:4px;
       --line:1px solid var(--border); --control-line:1px solid var(--control);
-      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
-      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+      --raised:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --modal:0 24px 48px rgba(10,34,64,.28);
+      --motion:180ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth}
     body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
@@ -197,11 +200,321 @@
       *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
       html{scroll-behavior:auto}
     }
+
+    /* ===== Private banking layer (đồng bộ #51, #57, #72) ===== */
+    body{font:400 .9375rem/1.6 var(--font);-webkit-font-smoothing:antialiased}
+    button{border-color:var(--primary);color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
+    button:hover{transform:none;background:var(--primary-container)}button:active{transform:none}
+    button:disabled{border-color:var(--control);color:var(--ink-secondary);opacity:.5}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus)}
+    .primary{color:#FFFFFF}.primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
+    .tonal{background:transparent;border-color:var(--primary)}.tonal:hover{background:var(--primary-container)}
+    .danger{background:var(--surface)}.danger:hover{background:#FBEDEF}
+    .text-btn{border-color:transparent;padding-inline:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}.text-btn:hover{background:transparent;color:var(--navy)}
+    .page{padding:0 var(--s4) var(--s4)}
+    .masthead,.hero{position:relative;isolation:isolate}
+    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
+    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:4rem;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
+    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
+    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
+    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
+    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
+    .hero{padding:var(--s16) 0 var(--s12);border-bottom:0;color:#FFFFFF}
+    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:var(--gold-light)}
+    h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em}
+    .hero-copy{gap:var(--s6)}
+    .hero .meta{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65;max-width:40rem}
+    .hero .kicker{color:var(--gold-light)}
+    .hero-note{padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);border-radius:0;background:rgba(255,255,255,.04)}
+    .hero-note strong{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF}
+    .hero-note .meta{font-size:.875rem;color:rgba(255,255,255,.72)}
+    h2{font:400 1.75rem/1.25 var(--display);letter-spacing:-.01em;color:var(--navy)}
+    h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
+    .kicker{color:var(--gold);font-size:.6875rem;letter-spacing:.18em}
+    main > section{padding:var(--s16) 0}
+    main > section:last-of-type{border-bottom:0}
+    .section-head{margin-bottom:var(--s8);padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
+    .section-head > div{display:grid;gap:var(--s2)}
+    .section-mark{display:flex;align-items:center;gap:var(--s3);font-size:.6875rem;letter-spacing:.18em}
+    .section-mark::after{content:"";width:2.5rem;height:1px;background:var(--gold)}
+    .card{padding:var(--s6);border-top:2px solid var(--navy)}
+    .callout{padding:var(--s6);border:var(--line);border-left:2px solid var(--gold)}
+    .callout > strong{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}
+    .status{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase}
+    .status::before{width:.5rem;height:.5rem}
+    .status.warn::before,.status.bad::before{border-radius:1px}
+    .status.none::before{width:.625rem;height:.625rem;border-width:1.5px}
+    .switches{gap:0}
+    .switches button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--ink-secondary);min-width:3.25rem}
+    .switches button:hover{color:var(--primary);background:var(--surface)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{position:relative;z-index:1;color:#FFFFFF}
+    .flow{gap:0;border:var(--line);background:var(--surface);counter-reset:step}
+    .flow div{counter-increment:step;border-right:var(--line);border-top:2px solid var(--navy);display:grid;gap:var(--s1);align-content:start}
+    .flow div:last-child{border-right:0}
+    .flow div::before{content:counter(step,decimal-leading-zero);font:400 1.5rem/1 var(--display);color:var(--gold)}
+    .tokens{gap:0;border:var(--line);background:var(--surface)}
+    .token{border:0;border-right:var(--line);border-bottom:var(--line);border-radius:0}
+    .swatch{border-radius:0}
+    table{font-size:.875rem}
+    caption{font:400 1.125rem/1.3 var(--display);color:var(--navy);padding-bottom:var(--s3)}
+    th{font-size:.6875rem;font-weight:600;letter-spacing:.12em;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);white-space:nowrap}
+    th,td{padding:var(--s3)}
+    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+    tbody tr:hover td{background:rgba(232,237,244,.45)}
+    .device-wrap{padding:var(--s8) var(--s4);border:var(--line);border-radius:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--surface-subtle)}
+    .device{border:1px solid #C9CDD4;border-radius:6px;box-shadow:var(--raised)}
+    .topbar{height:3.75rem;background:var(--navy);border-bottom:2px solid var(--gold-light)}
+    .wordmark{font:500 1rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
+    .avatar{width:40px;min-height:40px;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}.avatar:hover{background:rgba(255,255,255,.1)}
+    .nav-btn{background:transparent;border-top:2px solid transparent;font-size:.5625rem;letter-spacing:.08em}
+    .nav-btn:hover{background:var(--surface-subtle)}
+    .nav-btn.active{color:var(--navy);border-top-color:var(--navy)}
+    .ico{stroke-width:1.5}
+    .product-main{padding:var(--s6) var(--s4) 2rem}
+    .view h2{font-size:1.625rem}
+    .view .card,.view .callout{padding:var(--s4)}
+    .screen-head{padding-bottom:var(--s3);border-bottom:var(--line)}
+    .screen-head .meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+    input,select,textarea{border:0;border-bottom:1px solid var(--control);border-radius:0;box-shadow:inset 0 0 0 1px var(--border)}
+    input:hover,select:hover,textarea:hover{box-shadow:inset 0 0 0 1px var(--control)}
+    input:focus,select:focus,textarea:focus{border-bottom-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+    input[type=checkbox],input[type=radio]{box-shadow:none;accent-color:var(--navy)}
+    .summary-box{border-left:2px solid var(--navy)}
+    .summary-box strong{color:var(--navy);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase}
+    .summary-sentence{font:400 1.125rem/1.5 var(--display)}
+    .tag{border-radius:1px;font-size:.625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--surface)}
+    .tag.warn{border-color:#D9C49A;background:#FBF6EC}
+    .tag.brand{color:var(--navy);border-color:#B9C4D4;background:var(--primary-container)}
+    .facts{gap:0}
+    .fact{padding:var(--s2) 0;font-size:.875rem}
+    .fact dt{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;padding-top:.125rem}
+    .fact dd{font-weight:500;text-align:right}
+    .skeleton span{border-radius:0}
+
+    /* Advisor report */
+    .disclaimer{border-radius:0;border:var(--line);border-left:2px solid var(--gold);background:var(--surface-subtle)}
+    .disclaimer strong{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase}
+    .period-bar{border-radius:0;border:0;border-top:2px solid var(--navy);border-bottom:var(--line);padding:var(--s3) 0;background:transparent}
+    .group{gap:0;margin-top:var(--s4)}
+    .group-head{padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
+    .group-title{font:400 1.125rem/1.3 var(--display);letter-spacing:0;text-transform:none;color:var(--navy)}
+    .group-count{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase}
+    .group-note{padding-top:var(--s2)}
+    .finding{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s3) var(--s4) var(--s4);background:var(--surface);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none;position:relative}
+    button.finding:hover{background:var(--surface-subtle);border-color:var(--border)}
+    .finding.attn{border-left:0;box-shadow:inset 3px 0 0 var(--warning)}
+    .finding.ok{border-left:0;box-shadow:inset 3px 0 0 var(--success)}
+    .finding.unknown{border-left:0;box-shadow:none;background:repeating-linear-gradient(180deg,var(--control) 0 4px,transparent 4px 8px) left/3px 100% no-repeat,var(--surface)}
+    .finding-title{font-weight:600;color:var(--navy)}
+    .finding-metric{font-size:.75rem;letter-spacing:.02em}
+    .prio{border-radius:1px;padding:.125rem .5rem;font-size:.5625rem;letter-spacing:.12em;text-transform:uppercase;background:var(--navy)}
+    .rank{border-radius:0;width:1.75rem;height:1.75rem;background:transparent;border:1px solid var(--border);font:400 .875rem/1 var(--display);color:var(--gold)}
+    .src{border-radius:1px;font-size:.5625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--surface)}
+    .src.snapshot{border-color:#B9C8DE;background:#EEF3FA}
+    .src.health{color:var(--navy);border-color:#B9C4D4;background:var(--primary-container)}
+    .src.goal{border-color:#D9C49A;background:#FBF6EC}
+    .anatomy{gap:0;border-top:1px solid var(--rule)}
+    .anatomy-row{padding:var(--s3) 0;border-bottom:var(--line)}
+    .anatomy-row:last-child{border-bottom:1px solid var(--rule);padding-bottom:var(--s3)}
+    .anatomy-row dt{font-size:.625rem;letter-spacing:.14em;color:var(--gold)}
+    .record-row{border:0;border-bottom:var(--line);border-radius:0;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
+    .record-row:hover{background:var(--surface-subtle);border-color:var(--border)}
+    .record-amount{font-weight:500}
+    .merge-box{border-radius:0;border-left:2px solid var(--navy)}
+    .completion{border-radius:0;border:1px dashed var(--control)}
+    .lex{gap:0;border-top:var(--line)}
+    .lex-row{border-radius:0;border-bottom:var(--line);padding:var(--s3) 0;background:transparent}
+    .lex-row .mark{font-size:.625rem;letter-spacing:.14em}
+    .pipe{gap:0;border-top:1px solid var(--rule)}
+    .pipe-step{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) 0}
+    .pipe-num{border-radius:0;background:transparent;border:1px solid var(--border);font:400 1rem/1 var(--display);color:var(--gold)}
+    .check-row{border-bottom:var(--line);font-size:.875rem}.check-row:last-child{border-bottom:0}
+    .review-list{gap:0;border-top:var(--line)}
+    .review-row{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s3) 0}
+    .review-row strong{color:var(--navy)}
+    .review-choice input{accent-color:var(--navy)}
+    dialog{border-top:3px solid var(--navy);padding:var(--s8) var(--s6) var(--s6)}
+    dialog h2{font-size:1.5rem}
+    dialog::backdrop{backdrop-filter:blur(2px)}
+    .dialog-actions{padding-top:var(--s4);border-top:var(--line)}
+    .toast{border-radius:2px;border-left:3px solid var(--gold-light)}
+    footer{border-top:1px solid var(--rule);font-size:.8125rem}
+    @container (min-width:44rem){
+      .group{column-gap:var(--s4)}
+      .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
+      .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
+    }
+    @container (min-width:60rem){.nav-btn{font-size:.6875rem}}
+    @media (max-width:60rem){main > section{padding:var(--s12) 0}.mast-sub{display:none}}
+
+
+    /* ===== Insight visuals · private bank style ===== */
+    .ins{display:grid;gap:var(--s3);width:100%;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink)}
+    .ins.side{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+    .kf{display:grid;gap:1px;min-width:0}
+    .kf-fig{font:400 1.625rem/1.1 var(--display);font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em;color:var(--navy)}
+    .kf.lg .kf-fig{font-size:2.5rem}
+    .kf-fig.ok{color:var(--success)}.kf-fig.attn{color:#8A5A00}.kf-fig.neg{color:var(--error)}
+    .kf-cap{font-size:.8125rem;color:var(--ink)}
+    .kf-ref{font-size:.6875rem;color:var(--ink-secondary)}
+    .kf-ref::before{content:"";display:inline-block;width:10px;height:2px;margin-right:.35rem;background:var(--navy);vertical-align:3px}
+    .donut{display:block;flex:none}
+    .vx{display:block;width:100%}
+    .vx svg{display:block;width:100%;height:auto;overflow:visible}
+    .vlegend{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);font-size:.6875rem;color:var(--ink-secondary)}
+    .vlegend i{display:inline-block;width:.625rem;height:.625rem;margin-right:.3rem;vertical-align:-1px}
+    .vlegend b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+    /* zone scale */
+    .zs{display:grid;gap:4px;padding-top:1.375rem}
+    .zs-track{position:relative;display:block;height:22px}
+    .zs-z{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border-right:2px solid var(--surface)}
+    .zs-z em{font-style:normal;font-size:.625rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+    .zs-z.ok{background:#E3F1E8;color:#14532D}.zs-z.attn{background:#FBEFD9;color:#7A4E00}.zs-z.bad{background:#F8E1E4;color:#7F1424}
+    .zs-mk{position:absolute;top:-1.375rem;bottom:-3px;width:0;border-left:2px solid var(--navy)}
+    .zs-mk b{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;font-size:.6875rem;font-weight:600;color:#FFFFFF;background:var(--navy);padding:1px 6px}
+    .zs-mk.edge-l b{transform:none}.zs-mk.edge-r b{transform:translateX(-100%)}
+    .zs-ticks{position:relative;display:block;height:14px;font-size:.625rem;color:var(--ink-secondary)}
+    .zs-ticks span{position:absolute;transform:translateX(-50%);font-variant-numeric:tabular-nums}
+    .zs-ticks span:first-child{transform:none}.zs-ticks span:last-child{transform:translateX(-100%)}
+    /* date tile */
+    .dt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3);align-items:center}
+    .dt-cal{display:grid;width:3.25rem;text-align:center;border:1px solid var(--navy)}
+    .dt-cal span{background:var(--navy);color:#FFFFFF;font-size:.5625rem;font-weight:600;letter-spacing:.12em;padding:2px 0}
+    .dt-cal b{font:400 1.5rem/1.3 var(--display);color:var(--navy)}
+    .dt-info{display:grid;gap:1px;font-size:.75rem;color:var(--ink-secondary)}
+    .dt-info b{font-size:1rem;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+    .dt-info .due{color:#8A5A00;font-weight:600}
+    /* freshness */
+    .fr{display:grid;gap:4px}
+    .fr-track{position:relative;display:block;height:8px;background:#E3F1E8}
+    .fr-over{position:absolute;top:0;bottom:0;background:#E9B44C}
+    .fr-lim{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--navy)}
+    .fr-now{position:absolute;top:-5px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--surface);border:2px solid #8A5A00;transform:translateY(3px)}
+    .fr-axis{display:flex;justify-content:space-between;gap:var(--s2);font-size:.625rem;color:var(--ink-secondary)}
+    .fr-axis b{color:var(--navy);font-weight:600}
+    /* runway */
+    .rw{display:grid;gap:4px}
+    .rw-blocks{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+    .rw-b{position:relative;display:block;height:18px;background:var(--surface-subtle);border:1px solid var(--border);overflow:hidden}
+    .rw-b span{position:absolute;inset:0 auto 0 0;background:var(--success)}
+    .rw.attn .rw-b span{background:#E9B44C}
+    .rw-b.ref{border-right:2px solid var(--navy)}
+    .rw-axis{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;font-size:.625rem;color:var(--ink-secondary);text-align:center}
+    /* bars (coverage, funding) */
+    .hb{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px var(--s2);align-items:center;font-size:.75rem}
+    .hb > span:nth-child(3n+1){color:var(--ink-secondary);white-space:nowrap}
+    .hb-bar{display:block;height:12px;background:transparent}
+    .hb-bar span{display:block;height:100%}
+    .hb-val{text-align:right;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .c-navy{background:var(--navy)}.c-amber{background:#E9B44C}.c-green{background:var(--success)}.c-red{background:var(--error)}
+    .c-out{background:transparent !important;border:1.5px dashed var(--navy)}
+    .gap-line{font-size:.75rem;color:var(--ink-secondary)}
+    .gap-line b{font-weight:600;font-variant-numeric:tabular-nums}
+    .gap-line b.neg{color:var(--error)}.gap-line b.ok{color:var(--success)}
+    .ins .meta-sm{font-size:.6875rem;color:var(--ink-secondary)}
+    .finding .ins{margin:.125rem 0 .25rem}
+    .viz-empty{display:block;padding:.5rem .625rem;border:1px dashed var(--control);font-size:.75rem;color:var(--ink-secondary)}
+    .viz-card{display:grid;gap:var(--s4);padding:var(--s4);border:var(--line);border-top:2px solid var(--navy);background:var(--surface)}
+    .viz-card .v-title{font-size:.625rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+    .viz-card .lg-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s4);align-items:center}
+    /* overview strip */
+    .ov{display:grid;gap:var(--s3)}
+    .ov-title{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);flex-wrap:wrap;padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
+    .ov-title h3{font-size:1.125rem}
+    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:2px solid var(--navy);background:var(--surface);border-left:var(--line)}
+    .kpi{display:grid;gap:2px;align-content:start;padding:var(--s3);border-right:var(--line);border-bottom:var(--line);min-width:0}
+    .kpi-l{font-size:.625rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-secondary)}
+    .kpi-v{font:400 1.5rem/1.15 var(--display);font-variant-numeric:lining-nums tabular-nums;color:var(--navy);overflow-wrap:anywhere}
+    .kpi-v.ok{color:var(--success)}.kpi-v.neg{color:var(--error)}.kpi-v.attn{color:#8A5A00}
+    .kpi-s{font-size:.6875rem;color:var(--ink-secondary)}
+    .chip{display:inline-flex;align-items:center;gap:4px;width:fit-content;margin-top:2px;padding:1px 6px;font-size:.5625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+    .chip.ok{background:#E3F1E8;color:#14532D}.chip.attn{background:#FBEFD9;color:#7A4E00}.chip.neg{background:#F8E1E4;color:#7F1424}.chip.none{border:1px dashed var(--control);color:var(--ink-secondary)}
+    .ov-count{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3);align-items:center;font-size:.75rem;color:var(--ink-secondary)}
+    .ov-count b{color:var(--ink);font-weight:600}
+    .stack{display:flex;height:8px;gap:2px}
+    .stack span{display:block;height:100%}
+    .stack .s-a{background:#E9B44C}.stack .s-o{background:var(--success)}.stack .s-u{background:var(--surface);border:1px dashed var(--control)}
+    @container (min-width:44rem){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+    /* ===== Gauge bán nguyệt (đồng bộ #36) ===== */
+    .kf-ref::before{display:none}
+    .gauge{display:block;height:auto;flex:none}
+    .gauge.sm{width:7.5rem}
+    .gauge.lg{width:100%;max-width:15rem}
+    .bands{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(5.5rem,1fr));gap:var(--s2)}
+    .bands li{display:grid;gap:1px;justify-items:center;text-align:center;margin:0;padding:var(--s2) var(--s1);background:var(--surface-subtle);font-size:.6875rem;font-weight:600;color:var(--ink-secondary)}
+    .bands li span{font-weight:400;font-variant-numeric:tabular-nums}
+    .bands li i{width:.5rem;height:.5rem;border-radius:50%}
+    .bands li.on.ok{background:#E3F1E8;color:#14532D;box-shadow:inset 0 0 0 1px #9FD0B1}
+    .bands li.on.attn{background:#FBEFD9;color:#7A4E00;box-shadow:inset 0 0 0 1px #E8C98A}
+    .bands li.on.bad{background:#F8E1E4;color:#7F1424;box-shadow:inset 0 0 0 1px #E3A3AD}
+    .g-say{font-size:.8125rem;line-height:1.5;color:var(--ink)}
+    .viz-card .lg-row{grid-template-columns:minmax(0,15rem) minmax(0,1fr)}
+    @container (max-width:30rem){.viz-card .lg-row{grid-template-columns:1fr;justify-items:center}}
+    /* ===== Waffle 100 ô + trục độ mới dữ liệu ===== */
+    .waffle{display:block;flex:none;width:76px;height:auto}.waffle.lg{width:100%;max-width:166px;justify-self:center}
+    .wf-row{display:grid;gap:var(--s4,16px);align-items:center;grid-template-columns:auto minmax(0,1fr)}
+    .wf-legend{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid #DDD8CD}
+    .wf-legend li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 8px;align-items:center;margin:0;padding:6px 0;border-bottom:1px solid #DDD8CD;font-size:.75rem;color:#5A6472}
+    .wf-legend b{color:#121A26;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+    .wf-legend span{grid-column:2 / -1;font-size:.6875rem;font-variant-numeric:tabular-nums;text-align:right;margin-top:-4px}
+    .wf-legend i{width:10px;height:10px;display:inline-block}
+    .wf-on{background:#15803D}.wf-on.attn{background:#C98A16}.wf-gap{background:#FFFFFF;border:1.5px dashed #C98A16}.wf-rest{background:#E4E8EE}
+    .wf-parts{font-size:.6875rem;color:#5A6472}
+    .age{display:grid;gap:6px;width:100%}
+    .age-bar{display:flex;height:10px;gap:2px;background:transparent}
+    .age-bar span{display:block;height:100%}
+    .age-ok{background:#9FD0B1}.age-over{background:#E9B44C}
+    .age-pts{position:relative;display:flex;justify-content:space-between;gap:8px;min-height:2.6rem;font-size:.6875rem;color:#5A6472;font-variant-numeric:tabular-nums}
+    .age-pts > span{display:grid;gap:0;align-content:start}
+    .age-pts .p2{text-align:right;justify-items:end}
+    .age-pts .p1{position:absolute;top:0;transform:translateX(-50%);text-align:center;justify-items:center}
+    .age-pts b{font-weight:600;color:#121A26;font-size:.6875rem}
+    .age-pts i{width:9px;height:9px;border-radius:50%;margin-bottom:2px}
+    .d-ok{background:#15803D}.d-attn{background:#C98A16}.d-ring{background:#FFFFFF;border:2px solid #C98A16}
+    .age-note{display:flex;flex-wrap:wrap;gap:6px}
+    .pill-ok,.pill-attn{padding:1px 8px;font-size:.625rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    .pill-ok{background:#E3F1E8;color:#14532D}.pill-attn{background:#FBEFD9;color:#7A4E00}
+    /* ===== Kiểu ngân hàng: tiến độ mục tiêu + thẻ nhắc cập nhật ===== */
+    .ring{display:block;flex:none}
+    .goal-title{font-size:.625rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8A6A3F}
+    .goal-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+    .goal-facts{display:grid;gap:0;border-top:1px solid #DDD8CD}
+    .goal-facts > span{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 8px;padding:6px 0;border-bottom:1px solid #DDD8CD}
+    .goal-facts em{font-style:normal;font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;color:#5A6472}
+    .goal-facts b{font-weight:600;font-variant-numeric:tabular-nums;text-align:right;color:#121A26}
+    .goal-facts small{grid-column:1 / -1;font-size:.6875rem;color:#5A6472}
+    .goal-facts .gap b{color:#8A5A00}.goal-facts .done b{color:#15803D}
+    .goal-note{font-size:.75rem;color:#5A6472;line-height:1.5}
+    .rmd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:10px 12px;background:#FFFFFF;border:1px solid #DDD8CD;border-left:3px solid #15803D}
+    .rmd:has(.due){border-left-color:#C98A16;background:#FFFCF5}
+    .rmd.big{padding:14px}
+    .rmd-ico{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#E3F1E8;color:#14532D}
+    .rmd-ico.due{background:#FBEFD9;color:#7A4E00}
+    .rmd-ico svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+    .rmd-txt{display:grid;gap:1px;min-width:0}
+    .rmd-txt b{font-size:.875rem;font-weight:600;color:#121A26}
+    .rmd-txt span{font-size:.75rem;color:#5A6472}
+    .rmd-chip{padding:2px 8px;font-size:.625rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+    .rmd-chip.due{background:#FBEFD9;color:#7A4E00}.rmd-chip.ok{background:#E3F1E8;color:#14532D}
+    .cals{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:6px;align-items:center}
+    .cal{display:grid;justify-items:center;text-align:center;border:1px solid #DDD8CD;background:#FFFFFF;padding-bottom:4px;min-width:0}
+    .cal-m{width:100%;padding:2px 0;background:#E8EDF4;color:#0A2240;font-size:.5625rem;font-weight:600;letter-spacing:.12em}
+    .cal b{font:400 1.5rem/1.25 "Source Serif 4",Georgia,serif;color:#0A2240}
+    .cal-l{font-size:.625rem;color:#5A6472;line-height:1.2;padding:0 2px}
+    .cal.warn{border-color:#E8C98A}.cal.warn .cal-m{background:#FBEFD9;color:#7A4E00}
+    .cal.due{border-color:#C98A16}.cal.due .cal-m{background:#C98A16;color:#FFFFFF}.cal.due b{color:#7A4E00}
+    .cal.ok .cal-m{background:#15803D;color:#FFFFFF}
+    .cal-arrow{color:#8C909A;font-size:1.25rem}
+    @media(max-width:420px){.rmd{grid-template-columns:auto minmax(0,1fr)}.rmd-chip{grid-column:2;justify-self:start}}
+
+    .kf-ref.is-gap{color:#8A5A00;font-weight:600}.kf-ref.is-ok{color:#15803D;font-weight:600}
   </style>
 </head>
 <body>
 <a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
 <div class="page">
+  <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #90 · Basic Advisor</span></div>
   <header class="hero">
     <div class="hero-copy">
       <p class="kicker">Rikkaus Wealth OS · MVP 1C · Issue #90</p>
@@ -305,12 +618,12 @@
       </div>
 
       <div class="tokens">
-        <div class="token"><span class="swatch" style="background:#0F5C5A"></span><p><strong>color.primary</strong></p><p class="meta">Hành động chính, dấu Ưu tiên, nhãn dòng bằng chứng.</p></div>
-        <div class="token"><span class="swatch" style="background:#1E6A45"></span><p><strong>color.success</strong></p><p class="meta">Viền trái nhóm Đang ổn, luôn kèm chữ và hình.</p></div>
+        <div class="token"><span class="swatch" style="background:#0F2E57"></span><p><strong>color.primary</strong></p><p class="meta">Hành động chính, dấu Ưu tiên, nhãn dòng bằng chứng.</p></div>
+        <div class="token"><span class="swatch" style="background:#15803D"></span><p><strong>color.success</strong></p><p class="meta">Viền trái nhóm Đang ổn, luôn kèm chữ và hình.</p></div>
         <div class="token"><span class="swatch" style="background:#8A5A00"></span><p><strong>color.warning</strong></p><p class="meta">Viền trái nhóm Cần chú ý, luôn kèm chữ và hình.</p></div>
-        <div class="token"><span class="swatch" style="background:#A87428"></span><p><strong>color.heritageGold</strong></p><p class="meta">Chỉ dùng làm vạch trang trí của khối lưu ý và huy hiệu nguồn Mục tiêu.</p></div>
-        <div class="token"><span class="swatch" style="background:#2458A6"></span><p><strong>color.info</strong></p><p class="meta">Huy hiệu nguồn Wealth Snapshot. Trung tính, không phải trạng thái.</p></div>
-        <div class="token"><span class="swatch" style="background:#8B877E"></span><p><strong>color.controlBorder</strong></p><p class="meta">Viền nét đứt của mục chưa đánh giá được.</p></div>
+        <div class="token"><span class="swatch" style="background:#8A6A3F"></span><p><strong>color.heritageGold</strong></p><p class="meta">Chỉ dùng làm vạch trang trí của khối lưu ý và huy hiệu nguồn Mục tiêu.</p></div>
+        <div class="token"><span class="swatch" style="background:#1F4E8C"></span><p><strong>color.info</strong></p><p class="meta">Huy hiệu nguồn Wealth Snapshot. Trung tính, không phải trạng thái.</p></div>
+        <div class="token"><span class="swatch" style="background:#8C909A"></span><p><strong>color.controlBorder</strong></p><p class="meta">Viền nét đứt của mục chưa đánh giá được.</p></div>
       </div>
 
       <div class="grid two" style="margin-top:var(--s6)">
@@ -462,6 +775,34 @@
           <button type="button" data-go="states">Mở mẫu trạng thái</button>
           <button type="button" data-go="compose">Mở cách tổng hợp</button>
         </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="viz-title">
+      <div class="section-head">
+        <div><span class="section-mark">03B</span><h2 id="viz-title">Visual hoá nhận định</h2></div>
+        <p class="meta">Mỗi nhận định đi kèm một biểu đồ nhỏ cho thấy “đang ở đâu so với ngưỡng”, để người xem hiểu lời khuyên trước khi đọc câu chữ.</p>
+      </div>
+      <div class="table-wrap"><table>
+        <caption>Quy tắc → dạng biểu đồ</caption>
+        <thead><tr><th>Quy tắc</th><th>Dạng</th><th>Người xem thấy gì</th></tr></thead>
+        <tbody>
+          <tr><td>Mọi nhận định</td><td>Con số chính + một câu</td><td>Ví dụ “62,5% tài sản đang nằm ở bất động sản · Tham chiếu: tối đa 50%”. Đọc được trong 3 giây trước khi xem biểu đồ.</td></tr>
+          <tr><td>S-LIQ</td><td>Tiến độ mục tiêu</td><td>Vòng tiến độ “đã đạt 77% mức tối thiểu”, kèm hiện có, mức tối thiểu và phần còn thiếu, giống cách ngân hàng hiển thị quỹ dự phòng.</td></tr>
+          <tr><td>S-VAL, S-FX</td><td>Thẻ nhắc cập nhật</td><td>Biểu tượng, “Cập nhật lần cuối N ngày trước”, nhãn “Quá hạn N ngày”; chi tiết có ba ô lịch: lần cập nhật → hạn nên cập nhật → hôm nay.</td></tr>
+          <tr><td>S-CONC, S-DEBT, H-INC, H-DEBT, H-RES</td><td>Đồng hồ bán nguyệt</td><td>Vòng cung chia vùng màu nhạt có tên (ví dụ An toàn / Cần theo dõi / Rủi ro cao); phần đã dùng tô đậm theo màu vùng, kết thúc bằng núm tròn; giữa vòng là con số và tên vùng. Màn chi tiết thêm mốc ranh giới và chú giải vùng, ô vùng hiện tại được tô sáng. Không dùng vạch kim hay vạch đen.</td></tr>
+          <tr><td>S-DEBT (chi tiết)</td><td>Bảng cân đối</td><td>Tài sản, công nợ, tài sản ròng; vùng 0–40% / 40–60% / trên 60% đồng bộ với shell #36.</td></tr>
+          <tr><td>H-CF1</td><td>Thác nước dòng tiền</td><td>Thu → Chi → Ròng.</td></tr>
+          <tr><td>H-CF2</td><td>Đường dự báo</td><td>Số dư 3 tháng, vùng đỏ dưới 0 ₫.</td></tr>
+          <tr><td>H-LIQ</td><td>Mức bao phủ</td><td>“Đủ 12,8 lần” hoặc “Thiếu 8,75 tr”, với tiền hiện có và khoản đến hạn.</td></tr>
+          <tr><td>S-DUE</td><td>Ô lịch</td><td>Ngày, số tiền, số ngày còn lại.</td></tr>
+          <tr><td>G-1 … G-6</td><td>Đồng hồ + mức đáp ứng</td><td>Đồng hồ “Chậm / Có rủi ro / Đúng kế hoạch”, kèm đang góp so với cần góp mỗi tháng và phần còn thiếu; chi tiết có vòng tiến độ đã tích luỹ.</td></tr>
+          <tr><td>Đầu báo cáo</td><td>Dải chỉ số tổng quan</td><td>Tài sản ròng, dòng tiền ròng kỳ, tỷ trọng thanh khoản, số mục tiêu đúng kế hoạch, mỗi ô có nhãn trạng thái.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="grid two" style="margin-top:var(--s4)">
+        <div class="callout"><strong>Không tạo số mới</strong><p class="meta">Biểu đồ chỉ vẽ lại các con số đã có trong nhận định (chỉ số, ngưỡng, bản ghi). Mục chưa đánh giá được hiển thị khung nét đứt thay vì biểu đồ rỗng hoặc bằng 0.</p></div>
+        <div class="callout"><strong>Đọc được không cần màu</strong><p class="meta">Mỗi biểu đồ có nhãn giá trị và ngưỡng bằng chữ, vùng kích hoạt dùng hoạ tiết gạch chéo, và có mô tả cho trình đọc màn hình.</p></div>
       </div>
     </section>
 
@@ -1177,7 +1518,7 @@
     return '<button class="finding ' + f.state + '" type="button" data-item="' + esc(f.code) + '">' +
       '<div class="finding-top">' + statusOf(f) + (tag || "") + "</div>" +
       '<p class="finding-title">' + esc(f.title) + "</p>" +
-      '<p class="finding-metric">' + esc(f.metric) + "</p>" +
+      vizOf(f, false) +
       '<div class="tag-row">' + srcBadge(f) + '<span class="tag muted fig">' + esc(f.code) + "</span></div></button>";
   }
 
@@ -1189,10 +1530,245 @@
     return '<button class="finding attn" type="button" data-item="' + esc(s.id) + '">' +
       '<div class="finding-top">' + statusOf(f) + tag + "</div>" +
       '<p class="finding-title">' + esc(f.title) + "</p>" +
-      '<p class="finding-metric">' + esc(f.metric) + "</p>" +
+      vizOf(f, false) +
       '<p class="finding-action">' + esc(f.action) + "</p>" +
       (s.merged ? '<p class="finding-metric">Gộp từ ' + s.members.length + " nhận định cùng họ hành động.</p>" : "") +
       '<div class="tag-row">' + srcs + codes + "</div></button>";
+  }
+
+  // ---------- visual hoá: chỉ đọc lại số đã có trong nhận định, không tạo kết luận mới ----------
+  function vnNum(t) { return Number(String(t).replace(/\./g, "").replace(",", ".").replace("−", "-")); }
+  function pctOf(t) { var m = String(t).match(/(−?[\d.]*\d(?:,\d+)?)\s*%/); return m ? vnNum(m[1]) : null; }
+  function grab(text, re) { var m = String(text).match(re); return m ? vnNum(m[1]) : null; }
+  function f1(v) { return (Math.round(v * 10) / 10).toFixed(1).replace(".", ","); }
+  function fmt(v) { return new Intl.NumberFormat("vi-VN").format(Math.round(v)); }
+  function mShort(v) { var a = Math.abs(v), sg = v < 0 ? "−" : ""; if (a >= 1e9) return sg + (a / 1e9).toFixed(2).replace(".", ",").replace(/,?0+$/, "") + " tỷ"; if (a >= 1e6) return sg + (a >= 1e8 ? Math.round(a / 1e6) : f1(a / 1e6)) + " tr"; return sg + fmt(a); }
+  function clamp(v) { return Math.max(0, Math.min(100, v)); }
+  var C = { ok: "#15803D", attn: "#E9B44C", navy: "#0F2E57", red: "#A6192E", rest: "#DCE2EA", ink: "#121A26", sub: "#5A6472" };
+
+  function kf(fig, cap, ref, tone, lg) {
+    return '<span class="kf' + (lg ? " lg" : "") + '"><span class="kf-fig ' + (tone || "") + '">' + fig + '</span><span class="kf-cap">' + esc(cap) + '</span>' + (ref ? '<span class="kf-ref">' + esc(ref) + '</span>' : '') + '</span>';
+  }
+  function donut(pct, ref, tone, size, aria) {
+    var r = 15.9155, p = clamp(pct), ang = (ref / 100) * 2 * Math.PI - Math.PI / 2;
+    var p1 = [21 + 11.5 * Math.cos(ang), 21 + 11.5 * Math.sin(ang)], p2 = [21 + 20.6 * Math.cos(ang), 21 + 20.6 * Math.sin(ang)];
+    return '<svg class="donut" width="' + size + '" height="' + size + '" viewBox="0 0 42 42" role="img" aria-label="' + esc(aria) + '">' +
+      '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="' + C.rest + '" stroke-width="6.5"/>' +
+      '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="' + (tone === "ok" ? C.ok : C.attn) + '" stroke-width="6.5" stroke-dasharray="' + p + ' ' + (100 - p) + '" transform="rotate(-90 21 21)"/>' +
+      '<line x1="' + p1[0] + '" y1="' + p1[1] + '" x2="' + p2[0] + '" y2="' + p2[1] + '" stroke="#0A2240" stroke-width="1.4"/>' +
+      '<text x="21" y="23.6" text-anchor="middle" font-size="7.2" font-weight="600" fill="' + C.ink + '" font-family="Inter,system-ui,sans-serif">' + f1(pct) + '%</text></svg>';
+  }
+  function dateTile(due, amount, days, what) {
+    var d = String(due).split("/");
+    return '<span class="dt"><span class="dt-cal"><span>THG ' + Number(d[1]) + '</span><b>' + Number(d[0]) + '</b></span><span class="dt-info"><b>' + esc(amount) + '</b><span>' + esc(what) + '</span><span class="due">Còn ' + days + ' ngày</span></span></span>';
+  }
+  function hbars(rows, aria) {
+    var max = Math.max.apply(null, rows.map(function (r) { return r.v; })) || 1;
+    return '<span class="hb" role="img" aria-label="' + esc(aria) + '">' + rows.map(function (r) {
+      return '<span>' + esc(r.label) + '</span><span class="hb-bar"><span class="' + r.cls + '" style="width:' + clamp(r.v / max * 100) + '%"></span></span><span class="hb-val">' + esc(r.text || mShort(r.v)) + '</span>';
+    }).join("") + '</span>';
+  }
+  function waterfall(inc, exp, lg) {
+    var net = inc - exp, w = 300, h = lg ? 150 : 84, top = 14, bot = 16;
+    var mx = Math.max(inc, exp, 0), mn = Math.min(0, net), sp = (mx - mn) || 1, y = function (v) { return top + (mx - v) / sp * (h - top - bot); };
+    var bw = 54, xs = [40, 125, 210];
+    function bar(x, v1, v2, col, lab, val) {
+      var a = y(Math.max(v1, v2)), b = y(Math.min(v1, v2));
+      return '<rect x="' + x + '" y="' + a + '" width="' + bw + '" height="' + Math.max(1, b - a) + '" fill="' + col + '"/>' +
+        '<text x="' + (x + bw / 2) + '" y="' + (a - 4) + '" text-anchor="middle" font-size="10" font-weight="600" fill="' + C.ink + '">' + val + '</text>' +
+        '<text x="' + (x + bw / 2) + '" y="' + (h - 3) + '" text-anchor="middle" font-size="9.5" fill="' + C.sub + '">' + lab + '</text>';
+    }
+    return '<span class="vx" role="img" aria-label="' + esc("Thu " + fmt(inc) + " ₫, chi " + fmt(exp) + " ₫, ròng " + fmt(net) + " ₫") + '"><svg viewBox="0 0 ' + w + ' ' + h + '" font-family="Inter,system-ui,sans-serif">' +
+      '<line x1="20" x2="' + (w - 20) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="' + C.ink + '"/>' +
+      bar(xs[0], 0, inc, C.ok, "Thu", "+" + mShort(inc)) +
+      '<line x1="' + (xs[0] + bw) + '" x2="' + xs[1] + '" y1="' + y(inc) + '" y2="' + y(inc) + '" stroke="' + C.sub + '" stroke-dasharray="2 2"/>' +
+      bar(xs[1], inc, net, C.red, "Chi", "−" + mShort(exp)) +
+      '<line x1="' + (xs[1] + bw) + '" x2="' + xs[2] + '" y1="' + y(net) + '" y2="' + y(net) + '" stroke="' + C.sub + '" stroke-dasharray="2 2"/>' +
+      bar(xs[2], 0, net, net < 0 ? C.red : C.navy, "Ròng", (net < 0 ? "" : "+") + mShort(net)) + '</svg></span>';
+  }
+  function lineProj(pts, lg) {
+    var w = 300, h = lg ? 150 : 90, l = 8, r = 8, top = 18, bot = 18, vals = pts.map(function (p) { return p.v; });
+    var mx = Math.max(0, Math.max.apply(null, vals)), mn = Math.min(0, Math.min.apply(null, vals)), sp = (mx - mn) || 1;
+    var x = function (i) { return l + 24 + i * (w - l - r - 48) / (pts.length - 1); }, y = function (v) { return top + (mx - v) / sp * (h - top - bot); };
+    var path = pts.map(function (p, i) { return (i ? "L" : "M") + x(i) + " " + y(p.v); }).join(" ");
+    var neg = mn < 0 ? '<rect x="0" y="' + y(0) + '" width="' + w + '" height="' + (y(mn) - y(0) + 4) + '" fill="#F8E1E4"/><text x="' + (w - 2) + '" y="' + (y(mn) + 2) + '" text-anchor="end" font-size="8.5" fill="#7F1424">Vùng số dư âm</text>' : '';
+    var dots = pts.map(function (p, i) {
+      var below = p.v < 0;
+      return '<circle cx="' + x(i) + '" cy="' + y(p.v) + '" r="3.5" fill="' + (below ? C.red : C.navy) + '"/>' +
+        '<text x="' + x(i) + '" y="' + (y(p.v) - 7) + '" text-anchor="middle" font-size="10" font-weight="600" fill="' + (below ? C.red : C.ink) + '">' + mShort(p.v) + '</text>' +
+        '<text x="' + x(i) + '" y="' + (h - 3) + '" text-anchor="middle" font-size="9.5" fill="' + C.sub + '">' + esc(p.label) + '</text>';
+    }).join("");
+    return '<span class="vx" role="img" aria-label="' + esc("Số dư tiền dự báo: " + pts.map(function (p) { return p.label + " " + fmt(p.v) + " ₫"; }).join(", ")) + '"><svg viewBox="0 0 ' + w + ' ' + h + '" font-family="Inter,system-ui,sans-serif">' + neg +
+      '<line x1="0" x2="' + w + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="' + C.ink + '" stroke-width="1"/><text x="2" y="' + (y(0) - 3) + '" font-size="8.5" fill="' + C.sub + '">0 ₫</text>' +
+      '<path d="' + path + '" fill="none" stroke="' + C.navy + '" stroke-width="2"/>' + dots + '</svg></span>';
+  }
+  function lgItem(col, label, val) { return '<span><i style="background:' + col + '"></i>' + esc(label) + ' <b>' + esc(val) + '</b></span>'; }
+
+  // vizOf cơ sở: các nhận định không dùng đồng hồ
+  function vizOf(f, lg) {
+    if (f.state === "unknown") return '<span class="viz-empty">Chưa có dữ liệu để vẽ biểu đồ. Hệ thống không tạo con số thay thế.</span>';
+    var o = f.observation, ok = f.state === "ok", tone = ok ? "ok" : "attn", v;
+    switch (f.code) {
+      case "S-DUE": {
+        var days = Number((o.match(/còn (\d+) ngày/) || [0, 0])[1]), amt = f.metric.split(" · ")[0], due = f.due || f.metric.split(" · ")[1];
+        return '<span class="ins">' + dateTile(due, amt, days, "Khoản vay mua căn hộ") + (lg ? '<span class="meta-sm">Nằm trong cửa sổ 30 ngày tới tính từ ngày chốt báo cáo. Có thể kiểm tra số dư tài khoản thanh toán trước ngày này.</span>' : '') + '</span>';
+      }
+      case "H-CF1": {
+        var inc = grab(o, /[Tt]ổng thu ([\d.]+) ₫/), exp = grab(o, /[Tt]ổng chi ([\d.]+) ₫/), net = inc - exp;
+        return '<span class="ins">' + kf((net < 0 ? "" : "+") + mShort(net), "dòng tiền ròng trong kỳ", "Cảnh báo khi chi lớn hơn thu", net < 0 ? "neg" : "ok", lg) + waterfall(inc, exp, lg) + '</span>';
+      }
+      case "H-CF2": {
+        var pts = f.records.map(function (r) { var p = r.label.split(" · "); return { label: p[0], v: vnNum(p[1].replace(" ₫", "")) }; });
+        var low = pts.reduce(function (a, p) { return p.v < a.v ? p : a; });
+        return '<span class="ins">' + kf(mShort(low.v), "số dư tiền thấp nhất trong 3 tháng tới · " + low.label, "Cảnh báo khi bất kỳ tháng nào dưới 0 ₫", low.v < 0 ? "neg" : "ok", lg) + lineProj(pts, lg) + '</span>';
+      }
+      case "H-LIQ": {
+        var cash = grab(o, /ngân hàng ([\d.]+) ₫/), dueA = grab(o, /30 ngày ([\d.]+) ₫/), gap = cash - dueA;
+        var fig = gap >= 0 ? f1(cash / dueA) + " lần" : "Thiếu " + mShort(-gap);
+        return '<span class="ins">' + kf(fig, gap >= 0 ? "tiền hiện có so với các khoản đến hạn trong 30 ngày" : "tiền hiện có chưa đủ cho các khoản đến hạn trong 30 ngày", "Tham chiếu: tối thiểu 1 lần", gap >= 0 ? "ok" : "neg", lg) +
+          hbars([{ label: "Tiền hiện có", v: cash, cls: "c-navy" }, { label: "Đến hạn 30 ngày", v: dueA, cls: "c-amber" }], "Tiền hiện có " + fmt(cash) + " ₫, đến hạn " + fmt(dueA) + " ₫") + '</span>';
+      }
+    }
+    return "";
+  }
+
+
+  // ---------- Gauge bán nguyệt: thay thanh có vạch và donut có vạch tham chiếu ----------
+  var G_TINT = { ok: "#CFE9D8", attn: "#F5DDA9", bad: "#F1C3CA" }, G_SOLID = { ok: "#15803D", attn: "#C98A16", bad: "#B3263A" }, G_TEXT = { ok: "#14532D", attn: "#7A4E00", bad: "#7F1424" };
+  function bandOf(v, bands) { for (var i = 0; i < bands.length; i++) { if (v < bands[i].to || i === bands.length - 1) return bands[i]; } }
+  function gaugeSvg(v, max, bands, valueText, size, aria) {
+    var cx = 80, cy = 78, R = 58, sm = size === "sm";
+    function pt(p, r) { var a = Math.PI * (1 - Math.max(0, Math.min(100, p)) / 100); return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; }
+    function arc(p1, p2) { var a = pt(p1, R), b = pt(p2, R); return "M" + a[0].toFixed(2) + " " + a[1].toFixed(2) + " A" + R + " " + R + " 0 " + ((p2 - p1) > 50 ? 1 : 0) + " 1 " + b[0].toFixed(2) + " " + b[1].toFixed(2); }
+    var pc = function (x) { return x / max * 100; }, from = 0, g = "";
+    bands.forEach(function (b, i) { var a = pc(from) + (i ? .6 : 0), e = pc(Math.min(b.to, max)); if (e > a) g += '<path d="' + arc(a, e) + '" fill="none" stroke="' + G_TINT[b.tone] + '" stroke-width="14"/>'; from = b.to; });
+    var cur = bandOf(v, bands), pv = Math.max(.01, Math.min(100, pc(v)));
+    g += '<path d="' + arc(0, pv) + '" fill="none" stroke="' + G_SOLID[cur.tone] + '" stroke-width="14"/>';
+    var k = pt(pv, R); g += '<circle cx="' + k[0].toFixed(2) + '" cy="' + k[1].toFixed(2) + '" r="8.5" fill="#FFFFFF" stroke="' + G_SOLID[cur.tone] + '" stroke-width="3.5"/>';
+    if (!sm) {
+      var f0 = 0; bands.slice(0, -1).forEach(function (b) { var t = pt(pc(b.to), R + 15); g += '<text x="' + t[0].toFixed(1) + '" y="' + t[1].toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="#5A6472">' + esc(b.toText) + '</text>'; });
+      g += '<text x="' + (cx - R) + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="8.5" fill="#5A6472">' + esc(bands[0].fromText) + '</text><text x="' + (cx + R) + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="8.5" fill="#5A6472">' + esc(bands[bands.length - 1].endText) + '</text>';
+    }
+    g += '<text x="' + cx + '" y="' + (cy - 10) + '" text-anchor="middle" font-size="' + (sm ? 26 : 24) + '" font-weight="300" fill="' + G_SOLID[cur.tone] + '" font-family="Source Serif 4,Georgia,serif">' + esc(valueText) + '</text>';
+    g += '<text x="' + cx + '" y="' + (cy + 7) + '" text-anchor="middle" font-size="' + (sm ? 10 : 8.5) + '" font-weight="600" letter-spacing="1.1" fill="' + G_TEXT[cur.tone] + '">' + esc(cur.label.toUpperCase()) + '</text>';
+    return '<svg class="gauge ' + (sm ? "sm" : "lg") + '" viewBox="0 ' + (sm ? 10 : 0) + ' 160 ' + (sm ? 80 : 100) + '" role="img" aria-label="' + esc(aria + ". " + valueText + ", vùng " + cur.label + ". " + bands.map(function (b) { return b.label + " " + b.range; }).join("; ")) + '" font-family="Inter,system-ui,sans-serif">' + g + '</svg>';
+  }
+  function bandList(v, bands) {
+    var cur = bandOf(v, bands);
+    return '<ul class="bands">' + bands.map(function (b) { return '<li class="' + (b === cur ? "on " + b.tone : "") + '"><i style="background:' + G_SOLID[b.tone] + '"></i>' + esc(b.label) + '<span>' + esc(b.range) + '</span></li>'; }).join("") + '</ul>';
+  }
+  function gaugeBlock(o, lg) {
+    var cur = bandOf(o.v, o.bands), tone = cur.tone === "bad" ? "neg" : cur.tone;
+    if (!lg) return '<span class="ins side">' + kf(o.fig, o.cap, o.ref, tone) + gaugeSvg(o.v, o.max, o.bands, o.short || o.fig, "sm", o.cap) + '</span>';
+    return '<span class="ins"><span class="lg-row">' + gaugeSvg(o.v, o.max, o.bands, o.short || o.fig, "lg", o.cap) +
+      '<span class="ins">' + kf(o.fig, o.cap, o.ref, tone, true) + (o.say ? '<span class="g-say">' + o.say + '</span>' : '') + bandList(o.v, o.bands) + '</span></span>' + (o.extra || "") + '</span>';
+  }
+  function B(to, label, tone, range, toText, fromText, endText) { return { to: to, label: label, tone: tone, range: range, toText: toText, fromText: fromText, endText: endText }; }
+
+      // ---------- Waffle 100 ô (tỷ trọng) và trục thời gian (độ mới dữ liệu) ----------
+      function nvF1(v){return (Math.round(v*10)/10).toFixed(1).replace('.',',')}
+      function nvShort(v){var a=Math.abs(v);return a>=1e9?(a/1e9).toFixed(2).replace('.',',').replace(/,?0+$/,'')+' tỷ':Math.round(a/1e6)+' tr'}
+      // ---------- Kiểu ngân hàng: tiến độ mục tiêu (thanh khoản) và thẻ nhắc cập nhật (định giá, tỷ giá) ----------
+      function nvRing(prog,ok,size,center,sub,aria){var r=15.9155,p=Math.max(0,Math.min(100,prog)),col=ok?'#15803D':'#C98A16';
+        return '<svg class="ring" width="'+size+'" height="'+size+'" viewBox="0 0 42 42" role="img" aria-label="'+aria+'"><circle cx="21" cy="21" r="'+r+'" fill="none" stroke="#E4E8EE" stroke-width="4.2"/><circle cx="21" cy="21" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="4.2" stroke-linecap="round" stroke-dasharray="'+p+' '+(100-p)+'" transform="rotate(-90 21 21)"/><text x="21" y="'+(sub?21.6:23.4)+'" text-anchor="middle" font-size="8.6" font-weight="300" fill="'+col+'" font-family="Source Serif 4,Georgia,serif">'+center+'</text>'+(sub?'<text x="21" y="27.4" text-anchor="middle" font-size="3.5" font-weight="600" letter-spacing=".3" fill="#5A6472" font-family="Inter,system-ui,sans-serif">'+sub+'</text>':'')+'</svg>'}
+      function liqBlock(o,lg){var ok=o.pct>=o.target,prog=o.pct/o.target*100,need=o.total*o.target/100,gap=need-o.liquid;
+        var aria='Thanh khoản bằng '+nvF1(o.pct)+'% tổng tài sản, mức tối thiểu '+o.target+'%. Hiện có '+nvShort(o.liquid)+', mức tối thiểu '+nvShort(need)+(gap>0?', còn thiếu khoảng '+nvShort(gap):'');
+        var status=gap>0?'Còn thiếu ≈ '+nvShort(gap)+' để đạt mức tối thiểu':'Đã đạt mức tối thiểu '+o.target+'%';
+        var head='<span class="kf"><span class="kf-fig '+(ok?'ok':'attn')+'">'+nvF1(o.pct)+'%</span><span class="kf-cap">tài sản có thể dùng ngay</span><span class="kf-ref '+(ok?'is-ok':'is-gap')+'">'+status+'</span></span>';
+        if(!lg)return '<span class="ins side">'+head+nvRing(prog,ok,68,nvF1(o.pct)+'%','/ '+o.target+'%',aria)+'</span>';
+        return '<span class="ins"><span class="goal-title">Mức thanh khoản tối thiểu · '+o.target+'% tổng tài sản</span><span class="goal-row">'+nvRing(prog,ok,132,nvF1(o.pct)+'%','TỐI THIỂU '+o.target+'%',aria)+
+          '<span class="goal-facts"><span><em>Hiện có</em><b>'+nvShort(o.liquid)+'</b><small>'+nvF1(o.pct)+'% tổng tài sản</small></span><span><em>Mức tối thiểu</em><b>'+nvShort(need)+'</b><small>'+o.target+'% tổng tài sản</small></span>'+
+          (gap>0?'<span class="gap"><em>Còn thiếu</em><b>≈ '+nvShort(gap)+'</b><small>để đạt mức tối thiểu</small></span>':'<span class="done"><em>Trạng thái</em><b>Đã đạt</b><small>từ mức tối thiểu trở lên</small></span>')+'</span></span>'+
+          '<span class="goal-note">Vòng tròn đầy khi tỷ trọng thanh khoản đạt '+o.target+'% tổng tài sản.'+(o.parts?' '+o.parts:'')+'</span></span>'}
+      var RM_ICON={'Định giá':'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>','Tỷ giá':'<circle cx="9" cy="9" r="5"/><circle cx="15" cy="15" r="5"/><path d="M15 13v4M13.5 14.5h3"/>'};
+      function rmTile(d,label,cls){var p=String(d).split('/');return '<span class="cal '+(cls||'')+'"><span class="cal-m">THG '+Number(p[1])+'</span><b>'+p[0]+'</b><span class="cal-l">'+label+'</span></span>'}
+      function ageBlock(o,lg){var over=o.days-o.limit,due=over>0,icon='<span class="rmd-ico'+(due?' due':'')+'" aria-hidden="true"><svg viewBox="0 0 24 24">'+(RM_ICON[o.what]||RM_ICON['Định giá'])+'</svg></span>';
+        var line='<span class="rmd-txt"><b>Cập nhật lần cuối '+o.days+' ngày trước</b><span>'+o.what+' ngày '+o.start+' · nên cập nhật mỗi '+o.limit+' ngày</span></span>';
+        var chip=due?'<span class="rmd-chip due">Quá hạn '+over+' ngày</span>':'<span class="rmd-chip ok">Còn mới</span>';
+        if(!lg)return '<span class="rmd">'+icon+line+chip+'</span>';
+        return '<span class="ins"><span class="rmd big">'+icon+'<span class="rmd-txt"><b>'+(due?'Đã đến lúc cập nhật '+o.what.toLowerCase():o.what+' vẫn còn mới')+'</b><span>Cập nhật lần cuối '+o.days+' ngày trước · nên cập nhật mỗi '+o.limit+' ngày</span></span>'+chip+'</span>'+
+          '<span class="cals" role="img" aria-label="'+o.what+' ngày '+o.start+', hạn nên cập nhật '+o.deadline+', hôm nay '+o.today+'">'+rmTile(o.start,'Lần cập nhật','')+'<span class="cal-arrow" aria-hidden="true">›</span>'+rmTile(o.deadline,'Hạn nên cập nhật',due?'warn':'')+'<span class="cal-arrow" aria-hidden="true">›</span>'+rmTile(o.today,'Hôm nay',due?'due':'ok')+'</span>'+
+          (o.say?'<span class="goal-note">'+o.say+'</span>':'')+'</span>'}
+
+  function addDays(d,n){var p=d.split("/").map(Number),t=new Date(Date.UTC(p[2],p[1]-1,p[0]+n));return ("0"+t.getUTCDate()).slice(-2)+"/"+("0"+(t.getUTCMonth()+1)).slice(-2)+"/"+t.getUTCFullYear()}
+  var vizOfBase = vizOf;
+  vizOf = function (f, lg) {
+    if (f.state === "unknown") return vizOfBase(f, lg);
+    var o = f.observation, v, max;
+    switch (f.code) {
+      case "S-CONC": {
+        v = pctOf(f.metric); var re = grab(o, /Bất động sản ([\d.]+) ₫/), tot = grab(o, /tổng tài sản ([\d.]+) ₫/);
+        return gaugeBlock({ v: v, max: 100, fig: f1(v) + "%", cap: "tài sản đang nằm ở bất động sản", ref: "Tham chiếu: tối đa 50%",
+          bands: [B(50, "Cân bằng", "ok", "0–50%", "50%", "0%"), B(100, "Tập trung cao", "attn", "trên 50%", "", "", "100%")],
+          say: "Bất động sản " + mShort(re) + " trên tổng tài sản " + mShort(tot) + ".",
+          extra: lg ? '<span class="vlegend">' + lgItem("#C98A16", "Bất động sản", mShort(re)) + lgItem(C.rest, "Tài sản khác", mShort(tot - re)) + '</span>' : "" }, lg);
+      }
+      case "S-LIQ": {
+        return liqBlock({ pct: pctOf(f.metric), target: 20, liquid: grab(o, /bằng ([\d.]+) ₫/), total: grab(o, /tổng tài sản ([\d.]+) ₫/), parts: "Gồm tiền và ngân hàng " + nvShort(grab(o, /ngân hàng ([\d.]+) ₫/)) + ", tiền gửi có kỳ hạn " + nvShort(grab(o, /kỳ hạn ([\d.]+) ₫/) || 0) + "." }, lg);
+      }
+      case "S-DEBT": {
+        v = pctOf(f.metric); var debt = grab(o, /Tổng công nợ ([\d.]+) ₫/), ast = grab(o, /tổng tài sản ([\d.]+) ₫/);
+        return gaugeBlock({ v: v, max: 100, fig: f1(v) + "%", cap: "tài sản đang được tài trợ bằng nợ", ref: "Tham chiếu: tối đa 40%",
+          bands: [B(40, "An toàn", "ok", "0–40%", "40%", "0%"), B(60, "Cần theo dõi", "attn", "40–60%", "60%"), B(100, "Rủi ro cao", "bad", "trên 60%", "", "", "100%")],
+          say: "Cứ 100 đồng tài sản có khoảng <b>" + Math.round(v) + " đồng</b> là nợ.",
+          extra: lg ? hbars([{ label: "Tài sản", v: ast, cls: "c-navy" }, { label: "Công nợ", v: debt, cls: "c-red" }, { label: "Tài sản ròng", v: ast - debt, cls: "c-green" }], "Bảng cân đối: tài sản, công nợ, tài sản ròng") : "" }, lg);
+      }
+      case "H-INC": {
+        v = pctOf(f.metric); var src = f.metric.split(" · ")[0];
+        return gaugeBlock({ v: v, max: 100, fig: f1(v) + "%", cap: "thu nhập đến từ " + src, ref: "Tham chiếu: tối đa 60%",
+          bands: [B(60, "Đa dạng", "ok", "0–60%", "60%", "0%"), B(100, "Phụ thuộc", "attn", "trên 60%", "", "", "100%")] }, lg);
+      }
+      case "H-DEBT": {
+        v = pctOf(f.metric); max = Math.max(100, Math.ceil(v / 10) * 10 + 10);
+        var pay = grab(o, /định kỳ ([\d.]+) ₫/), inc0 = grab(o, /tổng thu nhập ([\d.]+) ₫/);
+        return gaugeBlock({ v: v, max: max, fig: f1(v) + "%", cap: "thu nhập trong kỳ dùng để trả nợ", ref: "Tham chiếu: tối đa 35%",
+          bands: [B(35, "Vừa sức", "ok", "0–35%", "35%", "0%"), B(50, "Cần theo dõi", "attn", "35–50%", "50%"), B(max, "Gánh nặng cao", "bad", "trên 50%", "", "", max + "%")],
+          say: "Trả nợ " + mShort(pay) + " trên thu nhập " + mShort(inc0) + " trong kỳ." }, lg);
+      }
+      case "H-RES": {
+        v = grab(f.metric, /([\d,]+) tháng/); max = Math.max(6, Math.ceil(v * 1.1));
+        return gaugeBlock({ v: v, max: max, fig: f1(v) + " tháng", short: f1(v) + " th", cap: "chi phí thiết yếu được tiền dự phòng bao phủ", ref: "Tham chiếu: tối thiểu 3 tháng",
+          bands: [B(3, "Mỏng", "attn", "dưới 3 tháng", "3 th", "0"), B(max, "Đủ dự phòng", "ok", "từ 3 tháng", "", "", max + " th")] }, lg);
+      }
+      case "S-VAL": {
+        v = grab(f.metric, /(\d+) ngày/); var st = (o.match(/ngày (\d{2}\/\d{2}\/\d{4}), cách/) || [0, ""])[1], td = (o.match(/ngày chốt (\d{2}\/\d{2}\/\d{4})/) || [0, R ? R.scen.asof : ""])[1];
+        return ageBlock({ days: v, limit: 30, what: "Định giá", start: st, deadline: addDays(st, 30), today: td, cap: "kể từ lần định giá căn hộ gần nhất", say: "Giá trị căn hộ trong tổng tài sản đang dựa trên định giá ngày " + st + "." }, lg);
+      }
+      case "S-FX": {
+        v = grab(o, /(\d+) ngày,/); var st2 = (o.match(/ngày (\d{2}\/\d{2}\/\d{4}), cách/) || [0, ""])[1], td2 = R ? R.scen.asof : addDays(st2, v);
+        return ageBlock({ days: v, limit: 5, what: "Tỷ giá", start: st2, deadline: addDays(st2, 5), today: td2, cap: "kể từ lần cập nhật tỷ giá USD/VND", say: "Tỷ giá này đang quy đổi 20.000 USD thành 502.000.000 ₫ trong tổng tài sản." }, lg);
+      }
+    }
+    if (f.src === "goal") {
+      v = grab(f.metric, /([\d,]+)% mức cần thiết/); max = Math.max(130, Math.ceil(v / 10) * 10 + 10);
+      var planned = grab(o, /kế hoạch ([\d.]+) ₫/), need = grab(o, /cần thiết ([\d.]+) ₫/), done = grab(o, /Đã đạt ([\d,]+)%/), diff = planned - need;
+      var bars = hbars([{ label: "Đang góp", v: planned, cls: diff >= 0 ? "c-green" : "c-amber", text: mShort(planned) + "/th" }, { label: "Cần góp", v: need, cls: "c-out", text: mShort(need) + "/th" }], "Đang góp " + fmt(planned) + " ₫, cần " + fmt(need) + " ₫ mỗi tháng");
+      var gap = '<span class="gap-line">' + (diff < 0 ? 'Còn thiếu <b class="neg">' + fmt(-diff) + ' ₫ mỗi tháng</b> để đúng kế hoạch.' : 'Đang góp dư <b class="ok">' + fmt(diff) + ' ₫ mỗi tháng</b> so với mức cần.') + '</span>';
+      var ring = lg ? '<span class="lg-row">' + donut(done, 100, "ok", 84, "Đã đạt " + f1(done) + "% số tiền đích").replace(/<line[^>]*\/>/, "") + '<span class="kf"><span class="kf-cap">Tiến độ đã tích luỹ</span><span class="kf-ref">' + esc((o.match(/Đã đạt [^.]+\./) || [""])[0]) + '</span></span></span>' : "";
+      var out = gaugeBlock({ v: v, max: max, fig: f1(v) + "%", cap: "mức đóng góp cần thiết mỗi tháng · " + f.metric.split(" · ")[0], ref: "Đúng kế hoạch từ 100%",
+        bands: [B(80, "Chậm", "bad", "dưới 80%", "80%", "0%"), B(100, "Có rủi ro", "attn", "80–100%", "100%"), B(max, "Đúng kế hoạch", "ok", "từ 100%", "", "", max + "%")],
+        extra: lg ? bars + gap + ring : "" }, lg);
+      return lg ? out : '<span class="ins">' + out + bars + gap + '</span>';
+    }
+    return vizOfBase(f, lg);
+  };
+
+  function overview() {
+    function by(code) { return R.all.filter(function (x) { return x.code === code; })[0]; }
+    function tile(label, val, sub, tone, chip) {
+      return '<div class="kpi"><span class="kpi-l">' + esc(label) + '</span><span class="kpi-v ' + (tone || "") + '">' + val + '</span><span class="kpi-s">' + sub + '</span>' + (chip ? '<span class="chip ' + chip[0] + '">' + esc(chip[1]) + '</span>' : '') + '</div>';
+    }
+    function st(f) { return !f || f.state === "unknown" ? ["none", "Chưa đủ dữ liệu"] : f.state === "ok" ? ["ok", "Đang ổn"] : ["attn", "Cần chú ý"]; }
+    var d = by("S-DEBT"), cf = by("H-CF1"), lq = by("S-LIQ"), goals = R.all.filter(function (x) { return x.src === "goal"; });
+    var t1 = d && d.state !== "unknown" ? (function () { var a = grab(d.observation, /tổng tài sản ([\d.]+) ₫/), b = grab(d.observation, /Tổng công nợ ([\d.]+) ₫/); return tile("Tài sản ròng", mShort(a - b), "Tài sản " + mShort(a) + " − Công nợ " + mShort(b), "", st(d)); })() : tile("Tài sản ròng", "—", "Chưa đủ dữ liệu", "", st(d));
+    var t2 = cf && cf.state !== "unknown" ? (function () { var i = grab(cf.observation, /[Tt]ổng thu ([\d.]+) ₫/), e = grab(cf.observation, /[Tt]ổng chi ([\d.]+) ₫/); return tile("Dòng tiền ròng kỳ", (i - e < 0 ? "" : "+") + mShort(i - e), "Thu " + mShort(i) + " · Chi " + mShort(e), i - e < 0 ? "neg" : "ok", st(cf)); })() : tile("Dòng tiền ròng kỳ", "—", "Chưa có thu nhập trong kỳ", "", st(cf));
+    var t3 = lq && lq.state !== "unknown" ? tile("Tài sản thanh khoản", f1(pctOf(lq.metric)) + "%", "Tham chiếu tối thiểu 20%", lq.state === "ok" ? "ok" : "attn", st(lq)) : tile("Tài sản thanh khoản", "—", "Chưa đủ dữ liệu", "", st(lq));
+    var gOk = goals.filter(function (g) { return g.state === "ok"; }).length;
+    var t4 = goals.length ? tile("Mục tiêu đúng kế hoạch", gOk + "/" + goals.length, (goals.length - gOk) + " mục tiêu cần xem lại mức đóng góp", gOk === goals.length ? "ok" : "attn", gOk === goals.length ? ["ok", "Đang ổn"] : ["attn", "Cần chú ý"]) : tile("Mục tiêu đúng kế hoạch", "—", "Chưa có mục tiêu", "", ["none", "Chưa đủ dữ liệu"]);
+    return '<div class="ov"><div class="ov-title"><h3>Tổng quan tài chính</h3><p class="meta">Chốt ngày ' + esc(R.scen.asof) + '</p></div>' +
+      '<div class="kpis">' + t1 + t2 + t3 + t4 + '</div>' +
+      '<div class="ov-count"><span><b>' + R.attn.length + '</b> cần chú ý · <b>' + R.ok.length + '</b> đang ổn · <b>' + R.unknown.length + '</b> chưa đánh giá</span>' +
+      '<span class="stack" aria-hidden="true">' + (R.attn.length ? '<span class="s-a" style="flex:' + R.attn.length + '"></span>' : '') + (R.ok.length ? '<span class="s-o" style="flex:' + R.ok.length + '"></span>' : '') + (R.unknown.length ? '<span class="s-u" style="flex:' + R.unknown.length + '"></span>' : '') + '</span></div></div>';
   }
 
   var R = null;
@@ -1221,7 +1797,8 @@
         '<div class="tag-row">' + R.unknown.map(function (f) { return '<span class="tag muted fig">' + esc(f.code) + "</span>"; }).join("") + "</div></div>";
     }
 
-    html += '<div class="group-head"><p class="group-title">Hành động có thể cân nhắc</p><p class="group-count fig">' + R.actions.length + " mục</p></div>";
+    html += overview();
+    html += '<div class="group-head" style="margin-top:var(--s4)"><p class="group-title">Hành động có thể cân nhắc</p><p class="group-count fig">' + R.actions.length + " mục</p></div>";
     if (!R.actions.length) {
       html += '<div class="card"><p class="status ok">Không có mục nào cần chú ý</p><p>Mọi quy tắc đã đánh giá đều nằm trong ngưỡng tham chiếu của hệ thống, nên chưa có hành động nào được đề xuất cho kỳ ' + esc(R.scen.period) + ".</p></div>";
     } else {
@@ -1287,6 +1864,10 @@
       '<span class="tag muted fig">' + esc(s.members.map(function (m) { return m.code; }).join(" + ")) + "</span></div>" +
       '<p class="summary-sentence">' + esc(f.metric) + "</p>" +
       '<div class="tag-row">' + s.members.map(srcBadge).join("") + "</div></div>";
+    html += s.members.map(function (m) {
+      var chart = vizOf(m, true);
+      return chart ? '<div class="viz-card"><p class="v-title">' + esc(m.rule) + ' · ' + esc(m.code) + '</p>' + chart + '</div>' : "";
+    }).join("");
     if (s.merged) {
       html += '<div class="merge-box"><p><strong>Hành động đã gộp.</strong> ' + s.members.length +
         " nhận định cùng họ hành động “" + esc(FAMILY_TEXT[f.family]) + "” và trùng bản ghi " +
