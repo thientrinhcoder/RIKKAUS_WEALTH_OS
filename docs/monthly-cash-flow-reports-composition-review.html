@@ -3,27 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0A2240">
+  <meta name="theme-color" content="#F7F5EF">
   <title>Rikkaus Wealth OS | Monthly cash-flow reports review</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F6F4EF; --surface:#FFFFFF; --surface-subtle:#F1EEE7;
-      --ink:#121A26; --ink-secondary:#5A6472; --border:#DDD8CD; --rule:#121A26; --control:#8C909A;
-      --navy:#0A2240; --primary:#0F2E57; --primary-pressed:#0A2240;
-      --primary-container:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D;
-      --warning:#8A5A00; --error:#A6192E; --info:#1F4E8C; --focus:#1F4E8C;
-      --scrim:rgba(10,34,64,.62); --font:"Inter","Segoe UI",system-ui,sans-serif;
-      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
       --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
-      --s8:2rem; --s12:3rem; --s16:4.5rem;
-      --r-input:2px; --r-card:2px; --r-sheet:4px;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
       --line:1px solid var(--border); --control-line:1px solid var(--control);
-      --raised:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --modal:0 24px 48px rgba(10,34,64,.28);
-      --motion:180ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth}
     body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
@@ -258,176 +255,11 @@
       *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
       html{scroll-behavior:auto}
     }
-    /* ===== Private banking layer (đồng bộ #36, #43, #51, #57, #60, #66, #69, #72, #81, #84, #90) ===== */
-    body{font:400 .9375rem/1.6 var(--font);-webkit-font-smoothing:antialiased}
-    button{border-color:var(--primary);color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
-    button:hover{transform:none;background:var(--primary-container)}button:active{transform:none}
-    button:disabled{border-color:var(--control);color:var(--ink-secondary);opacity:.5}
-    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus)}
-    .primary{color:#FFFFFF}.primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
-    .tonal{background:transparent;border-color:var(--primary)}.tonal:hover{background:var(--primary-container)}
-    .danger{background:var(--surface)}.danger:hover{background:#FBEDEF}
-    .text-btn{border-color:transparent;padding-inline:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}.text-btn:hover{background:transparent;color:var(--navy)}
-    .page{padding:0 var(--s4) var(--s4)}
-    .masthead,.hero{position:relative;isolation:isolate}
-    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
-    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:4rem;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
-    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
-    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
-    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
-    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
-    .hero{padding:var(--s16) 0 var(--s12);border-bottom:0;color:#FFFFFF}
-    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:var(--gold-light)}
-    h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em}
-    .hero-copy{gap:var(--s6)}
-    .hero .meta{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65;max-width:40rem}
-    .hero .kicker{color:var(--gold-light)}
-    .hero-note{padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);border-radius:0;background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font-size:.875rem}
-    .hero-note strong{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF}
-    h2{font:400 1.75rem/1.25 var(--display);letter-spacing:-.01em;color:var(--navy)}
-    h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
-    .kicker{color:var(--gold);font-size:.6875rem;letter-spacing:.18em}
-    main > section{padding:var(--s16) 0}
-    main > section:last-of-type{border-bottom:0}
-    .section-head{margin-bottom:var(--s8);padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
-    .section-head > div{display:grid;gap:var(--s2)}
-    .section-mark{display:flex;align-items:center;gap:var(--s3);font-size:.6875rem;letter-spacing:.18em}
-    .section-mark::after{content:"";width:2.5rem;height:1px;background:var(--gold)}
-    .card{padding:var(--s6);border-top:2px solid var(--navy)}
-    .callout{padding:var(--s6);border:var(--line);border-left:2px solid var(--gold)}
-    .status{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase}
-    .status::before{width:.5rem;height:.5rem}
-    .switches{gap:0}
-    .switches button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--ink-secondary);min-width:3.25rem}
-    .switches button:hover{color:var(--primary);background:var(--surface)}
-    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{position:relative;z-index:1;color:#FFFFFF}
-    .flow{gap:0;border:var(--line);background:var(--surface);counter-reset:step}
-    .flow div{counter-increment:step;border-right:var(--line);border-top:2px solid var(--navy);display:grid;gap:var(--s1);align-content:start}
-    .flow div:last-child{border-right:0}
-    .flow div::before{content:counter(step,decimal-leading-zero);font:400 1.5rem/1 var(--display);color:var(--gold)}
-    .tokens{gap:0;border:var(--line);background:var(--surface)}
-    .token{border:0;border-right:var(--line);border-bottom:var(--line);border-radius:0}
-    .swatch{border-radius:0}
-    table{font-size:.875rem}
-    caption{font:400 1.125rem/1.3 var(--display);color:var(--navy);padding-bottom:var(--s3)}
-    th{font-size:.6875rem;font-weight:600;letter-spacing:.12em;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);white-space:nowrap}
-    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
-    tbody tr:hover td{background:rgba(232,237,244,.45)}
-    .device-wrap{padding:var(--s8) var(--s4);border:var(--line);border-radius:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--surface-subtle)}
-    .device{border:1px solid #C9CDD4;border-radius:6px;box-shadow:var(--raised)}
-    .topbar{height:3.75rem;background:var(--navy);border-bottom:2px solid var(--gold-light)}
-    .wordmark{font:500 1rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
-    .avatar{width:40px;min-height:40px;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}.avatar:hover{background:rgba(255,255,255,.1)}
-    .nav-btn{background:transparent;border-top:2px solid transparent;font-size:.5625rem;letter-spacing:.08em}
-    .nav-btn:hover{background:var(--surface-subtle)}
-    .nav-btn.active{color:var(--navy);border-top-color:var(--navy)}
-    .ico{stroke-width:1.5}
-    .product-main{padding:var(--s6) var(--s4) 2rem}
-    .view h2{font-size:1.625rem}
-    .view .card,.view .callout{padding:var(--s4)}
-    .screen-head{padding-bottom:var(--s3);border-bottom:var(--line)}
-    input,select,textarea{border:0;border-bottom:1px solid var(--control);border-radius:0;box-shadow:inset 0 0 0 1px var(--border)}
-    input[type=checkbox],input[type=radio]{box-shadow:none;accent-color:var(--navy)}
-    .summary-box{border-left:2px solid var(--navy)}
-    .summary-box strong{color:var(--navy);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase}
-    .tag{border-radius:1px;font-size:.625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--surface)}
-    .tag.brand{color:var(--navy);border-color:#B9C4D4;background:var(--primary-container)}
-    .facts{gap:0}.fact{padding:var(--s2) 0;font-size:.875rem}
-    .fact dt{font-size:.75rem;letter-spacing:.04em}
-    .skeleton span{border-radius:0}
-    .period-bar{border-radius:0;border:0;border-top:2px solid var(--navy);border-bottom:var(--line);padding:var(--s3) 0;background:transparent}
-    .kpi-grid{gap:0;border-top:1px solid var(--rule)}
-    .kpi{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s2);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    button.kpi:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .kpi.lead{border-left:0;box-shadow:inset 3px 0 0 var(--navy)}
-    .kpi-name{color:var(--navy)}
-    .kpi-value{font:300 2rem/1.1 var(--display);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
-    .kpi-value .unit{font:500 .875rem/1 var(--font);margin-left:.35rem}
-    .kpi-value.na{font:600 1rem/1.3 var(--font)}
-    .na-note{border-radius:0;border:1px dashed var(--control);background:var(--surface)}
-    .group-title{font:400 1.125rem/1.3 var(--display);letter-spacing:0;text-transform:none;color:var(--navy);padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
-    .group{gap:0}
-    .insight{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s3);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    button.insight:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .insight.fired{border-left:0;box-shadow:inset 3px 0 0 #C98A16}
-    .insight.clear{border-left:0;box-shadow:inset 3px 0 0 var(--success)}
-    .insight.unknown{border-left:0;background:repeating-linear-gradient(180deg,var(--control) 0 4px,transparent 4px 8px) left/3px 100% no-repeat,var(--surface)}
-    .insight-title{color:var(--navy)}
-    .anatomy{gap:0;border-top:1px solid var(--rule)}
-    .anatomy-row{padding:var(--s3) 0;border-bottom:var(--line)}
-    .anatomy-row dt{font-size:.625rem;letter-spacing:.14em;color:var(--gold)}
-    .record-row{border:0;border-bottom:var(--line);border-radius:0;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .record-row:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .formula{border-radius:0;border-left:2px solid var(--navy)}
-    .check-row{border-bottom:var(--line);font-size:.875rem}
-    .review-list{gap:0;border-top:var(--line)}
-    .review-row{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s3) 0}
-    dialog{border-top:3px solid var(--navy);padding:var(--s8) var(--s6) var(--s6)}
-    dialog::backdrop{backdrop-filter:blur(2px)}
-    .dialog-actions{padding-top:var(--s4);border-top:var(--line)}
-    .toast{border-radius:2px;border-left:3px solid var(--gold-light)}
-    footer{border-top:1px solid var(--rule);font-size:.8125rem}
-    @container (min-width:44rem){
-      .kpi-grid{column-gap:var(--s4)}
-      .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
-      .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
-    }
-    @container (min-width:60rem){.nav-btn{font-size:.6875rem}}
-    @media (max-width:60rem){main > section{padding:var(--s12) 0}.mast-sub{display:none}}
-
-    .hero-note p{color:rgba(255,255,255,.78)}
-    .device:not([data-mode="phone"]):not([data-mode="p375"]) .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
-    .device:not([data-mode="phone"]):not([data-mode="p375"]) .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
-    /* ===== Báo cáo dòng tiền: thu xanh, chi đỏ, thẻ KPI, thanh xếp hạng ===== */
-    .kpis{gap:0;border-top:2px solid var(--navy);border-left:var(--line);background:var(--surface)}
-    .kpi{border:0;border-right:var(--line);border-bottom:var(--line);border-radius:0;color:var(--ink);font-size:.9375rem;letter-spacing:0;text-transform:none;font-weight:400}
-    .kpi:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .kpi-label{font-size:.625rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-secondary)}
-    .kpi-value{font:400 1.5rem/1.2 var(--display);font-variant-numeric:lining-nums tabular-nums}
-    .kpi.hero-kpi{background:var(--primary-container);border-color:var(--border);box-shadow:inset 0 3px 0 var(--navy)}
-    .kpi.hero-kpi .kpi-value{font:300 2.25rem/1.15 var(--display);color:var(--navy)}
-    .kpi.hero-kpi.neg{box-shadow:inset 0 3px 0 #A6192E}.kpi.hero-kpi.neg .kpi-value{color:#A6192E}
-    .kpi.inflow .kpi-value{color:#15803D}
-    .kpi[data-type="out"] .kpi-value{color:#A6192E}
-    .chart-card{border-radius:0;border-top:2px solid var(--navy)}
-    .cmp-col{border-radius:0}
-    .cmp-col[aria-pressed="true"]{border-color:var(--navy);background:var(--primary-container);box-shadow:inset 0 -2px 0 var(--navy)}
-    .cmp-bar{border-radius:0}
-    .cmp-bar.in{background:#15803D}.cmp-bar.out{background:#A6192E}
-    .cmp-net{color:#15803D}.cmp-net.neg{color:#A6192E}
-    .legend i{border-radius:0}
-    .comp-list{gap:0;border-top:1px solid var(--rule)}
-    .comp-row{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s3) var(--s2);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .comp-row:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .comp-row[aria-pressed="true"]{background:var(--primary-container);box-shadow:inset 3px 0 0 var(--navy)}
-    .comp-track{border-radius:0;height:6px}
-    .comp-fill{border-radius:0;background:#15803D}
-    .comp-row.in .comp-name{color:#14633A}
-    .comp-row.out .comp-name{color:#8C1D2C}
-    .comp-row.out .comp-fill{background:#A6192E}
-    .comp-row.rest .comp-fill{background:var(--control)}
-    .comp-row.in .comp-amt{color:#15803D}.comp-row.out .comp-amt{color:#A6192E}
-    .entry-row,.asset-row{border:0;border-bottom:var(--line);border-radius:0;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .entry-row:hover,.asset-row:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .entry-amt{color:#A6192E}.entry-amt.in{color:#15803D}
-    .detail-amount{font:300 2.25rem/1.15 var(--display);font-variant-numeric:lining-nums tabular-nums;color:#A6192E}
-    .detail-amount.in{color:#15803D}.detail-amount.neg{color:#A6192E}
-    .banner{border-radius:0}
-    .recon{border-radius:0;border-left:2px solid var(--navy)}
-    .period-btn{border-color:var(--primary);color:var(--primary)}
-    .mini{border-radius:0;border-top:2px solid var(--navy)}
-    .empty-state{border-radius:0}
-    tfoot td{border-top:1px solid var(--rule);border-bottom:3px double var(--rule);font-weight:600}
-
-    .comp-row[data-cat]:not(.out):not(.rest) .comp-name{color:#14633A}
-    .comp-row[data-cat]:not(.out):not(.rest) .comp-amt{color:#15803D}
-    .comp-row[data-month] .comp-fill{background:var(--navy)}
   </style>
 </head>
 <body>
 <a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
 <div class="page">
-  <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #75 · Báo cáo dòng tiền</span></div>
   <header class="hero">
     <div class="hero-copy">
       <p class="kicker">MVP 1B · Issue #75 · Design review</p>
@@ -468,17 +300,17 @@
         <p class="meta">Quiet Ledger cho toàn bộ tác vụ; Modern Heritage chỉ xuất hiện ở wordmark, tiêu đề lớn và đường vàng. Vàng heritage dùng làm màu chuỗi dữ liệu chi phí, không dùng làm màu trạng thái.</p>
       </div>
       <div class="tokens" aria-label="Token màu được sử dụng">
-        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><strong>canvas</strong><p class="meta">#F6F4EF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><strong>canvas</strong><p class="meta">#F7F5EF</p></div>
         <div class="token"><span class="swatch" style="background:var(--surface);border:var(--line)"></span><strong>surface</strong><p class="meta">#FFFFFF</p></div>
-        <div class="token"><span class="swatch" style="background:var(--surface-subtle)"></span><strong>surfaceSubtle</strong><p class="meta">#F1EEE7</p></div>
-        <div class="token"><span class="swatch" style="background:var(--ink)"></span><strong>ink</strong><p class="meta">#121A26</p></div>
-        <div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>brandNavy</strong><p class="meta">#0A2240</p></div>
-        <div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>primary</strong><p class="meta">#0F2E57 · chuỗi thu nhập</p></div>
-        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>primaryContainer</strong><p class="meta">#E8EDF4</p></div>
-        <div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>heritageGold</strong><p class="meta">#8A6A3F · chuỗi chi phí</p></div>
-        <div class="token"><span class="swatch" style="background:var(--success)"></span><strong>success</strong><p class="meta">#15803D</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface-subtle)"></span><strong>surfaceSubtle</strong><p class="meta">#EFEBE2</p></div>
+        <div class="token"><span class="swatch" style="background:var(--ink)"></span><strong>ink</strong><p class="meta">#17212B</p></div>
+        <div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>brandNavy</strong><p class="meta">#182B45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>primary</strong><p class="meta">#0F5C5A · chuỗi thu nhập</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>primaryContainer</strong><p class="meta">#D9EFEC</p></div>
+        <div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>heritageGold</strong><p class="meta">#A87428 · chuỗi chi phí</p></div>
+        <div class="token"><span class="swatch" style="background:var(--success)"></span><strong>success</strong><p class="meta">#1E6A45</p></div>
         <div class="token"><span class="swatch" style="background:var(--warning)"></span><strong>warning</strong><p class="meta">#8A5A00</p></div>
-        <div class="token"><span class="swatch" style="background:var(--error)"></span><strong>error</strong><p class="meta">#A6192E</p></div>
+        <div class="token"><span class="swatch" style="background:var(--error)"></span><strong>error</strong><p class="meta">#B42318</p></div>
         <div class="token"><span class="swatch" style="background:var(--focus)"></span><strong>focus</strong><p class="meta">#147D79</p></div>
       </div>
       <div class="grid three" style="margin-top:var(--s4)">
@@ -1438,7 +1270,7 @@
       g.list.reduce(function (s, x) { return s + x.count; }, 0) + "</td></tr></tfoot></table>";
   }
 
-  var DONUT_COLORS = ["#0A2240", "#3E5F8A", "#8A6A3F", "#7FA0C4", "#B9C0CA"];
+  var DONUT_COLORS = ["var(--primary)", "var(--gold)", "var(--navy)", "var(--info)", "var(--control)"];
 
   function renderDonut(g) {
     var C = 2 * Math.PI * 15.9155, off = 0, segs = "", legend = "";

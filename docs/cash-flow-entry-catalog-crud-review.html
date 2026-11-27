@@ -3,27 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0A2240">
+  <meta name="theme-color" content="#F7F5EF">
   <title>Rikkaus Wealth OS | Cash-flow catalog review</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F6F4EF; --surface:#FFFFFF; --surface-subtle:#F1EEE7;
-      --ink:#121A26; --ink-secondary:#5A6472; --border:#DDD8CD; --rule:#121A26; --control:#8C909A;
-      --navy:#0A2240; --primary:#0F2E57; --primary-pressed:#0A2240;
-      --primary-container:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D; --negative:#A6192E;
-      --warning:#8A5A00; --error:#A6192E; --info:#1F4E8C; --focus:#1F4E8C;
-      --scrim:rgba(10,34,64,.62); --font:"Inter","Segoe UI",system-ui,sans-serif;
-      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
       --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
-      --s8:2rem; --s12:3rem; --s16:4.5rem;
-      --r-input:2px; --r-card:2px; --r-sheet:4px;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
       --line:1px solid var(--border); --control-line:1px solid var(--control);
-      --raised:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --modal:0 24px 48px rgba(10,34,64,.28);
-      --motion:180ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
     body:has(dialog[open]){overflow:hidden} button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
@@ -86,169 +83,11 @@
     @media(max-width:720px){.hero,.section-head,.two,.three{grid-template-columns:1fr}.hero{padding-top:var(--s12)}.review-row{grid-template-columns:1fr}.flow{grid-template-columns:repeat(6,11rem)}.device-wrap{padding:0;background:transparent}.device{border-radius:0;border-left:0;border-right:0;box-shadow:none}.page{padding:var(--s3)}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
     @media print{.switches,.fab,.app-nav,.toast{display:none!important}.device{max-width:none;border:0;box-shadow:none}.view{display:grid!important}section{break-inside:avoid}}
-
-    /* ===== Private banking layer (đồng bộ #51, #57, #72, #90) ===== */
-    body{font:400 .9375rem/1.6 var(--font);-webkit-font-smoothing:antialiased}
-    button{border-color:var(--primary);color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
-    button:hover{transform:none;background:var(--primary-container)}button:active{transform:none}
-    button:disabled{border-color:var(--control);color:var(--ink-secondary);opacity:.5}
-    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus)}
-    .primary{color:#FFFFFF}.primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
-    .tonal{background:transparent;border-color:var(--primary)}.tonal:hover{background:var(--primary-container)}
-    .danger{background:var(--surface)}.danger:hover{background:#FBEDEF}
-    .text-btn{border-color:transparent;padding-inline:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}.text-btn:hover{background:transparent;color:var(--navy)}
-    .page{padding:0 var(--s4) var(--s4)}
-    .masthead,.hero{position:relative;isolation:isolate}
-    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
-    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:4rem;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
-    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
-    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
-    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
-    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
-    .hero{padding:var(--s16) 0 var(--s12);border-bottom:0;color:#FFFFFF}
-    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:var(--gold-light)}
-    h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em;max-width:17ch}
-    .hero-copy{gap:var(--s6)}
-    .hero .meta{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65;max-width:40rem}
-    .hero .kicker{color:var(--gold-light)}
-    .hero-note{padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);border-radius:0;background:rgba(255,255,255,.04);color:rgba(255,255,255,.78)}
-    .hero-note strong{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF}
-    .hero-note p{font-size:.875rem}
-    .hero-note .status.info{color:var(--gold-light)}
-    h2{font:400 1.75rem/1.25 var(--display);letter-spacing:-.01em;color:var(--navy)}
-    h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
-    .kicker{color:var(--gold);font-size:.6875rem;letter-spacing:.18em}
-    main > section{padding:var(--s16) 0}
-    main > section:last-of-type{border-bottom:0}
-    .section-head{margin-bottom:var(--s8);padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
-    .section-head > div{display:grid;gap:var(--s2)}
-    .section-mark{display:flex;align-items:center;gap:var(--s3);font-size:.6875rem;letter-spacing:.18em}
-    .section-mark::after{content:"";width:2.5rem;height:1px;background:var(--gold)}
-    .card{padding:var(--s6);border-top:2px solid var(--navy)}
-    .callout{padding:var(--s6);border:var(--line);border-left:2px solid var(--gold)}
-    .status{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase}
-    .status::before{width:.5rem;height:.5rem}
-    .status.warn::before{border-radius:1px}.status.bad::before{border-radius:1px;transform:rotate(45deg)}
-    .switches,.segments{gap:0}
-    .switches button,.segments button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--ink-secondary);min-width:3.25rem}
-    .switches button:hover,.segments button:hover{color:var(--primary);background:var(--surface)}
-    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{position:relative;z-index:1;color:#FFFFFF}
-    .flow{gap:0;border:var(--line);background:var(--surface);counter-reset:step}
-    .flow div{counter-increment:step;border-right:var(--line);border-top:2px solid var(--navy);display:grid;gap:var(--s1);align-content:start}
-    .flow div:last-child{border-right:0}
-    .flow div::before{content:counter(step,decimal-leading-zero);font:400 1.5rem/1 var(--display);color:var(--gold)}
-    .tokens{gap:0;border:var(--line);background:var(--surface)}
-    .token{border:0;border-right:var(--line);border-bottom:var(--line);border-radius:0}
-    .swatch{border-radius:0}
-    table{font-size:.875rem}
-    caption{font:400 1.125rem/1.3 var(--display);color:var(--navy);padding-bottom:var(--s3);text-align:left}
-    th{font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-secondary);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);white-space:nowrap}
-    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
-    tbody tr:hover td{background:rgba(232,237,244,.45)}
-    .device-wrap{padding:var(--s8) var(--s4);border:var(--line);border-radius:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--surface-subtle)}
-    .device{border:1px solid #C9CDD4;border-radius:6px;box-shadow:var(--raised)}
-    .topbar{height:3.75rem;background:var(--navy);border-bottom:2px solid var(--gold-light)}
-    .wordmark{font:500 1rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
-    .avatar{width:40px;min-height:40px;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}.avatar:hover{background:rgba(255,255,255,.1)}
-    .nav-btn{background:transparent;border-top:2px solid transparent;font-size:.5625rem;letter-spacing:.08em}
-    .nav-btn:hover{background:var(--surface-subtle)}
-    .nav-btn.active{color:var(--navy);border-top-color:var(--navy)}
-    .device[data-mode="tablet"] .nav-btn,.device[data-mode="desktop"] .nav-btn,.device[data-mode="wide"] .nav-btn{border-top:0;border-left:2px solid transparent}
-    .device[data-mode="tablet"] .nav-btn.active,.device[data-mode="desktop"] .nav-btn.active,.device[data-mode="wide"] .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
-    .device[data-mode="desktop"] .nav-btn,.device[data-mode="wide"] .nav-btn{font-size:.6875rem}
-    .ico{stroke-width:1.5}
-    .product-main{padding:var(--s6) var(--s4) 5.5rem}
-    .view h2{font-size:1.625rem}
-    .view .card,.view .callout{padding:var(--s4)}
-    .screen-head{padding-bottom:var(--s3);border-bottom:var(--line)}
-    .screen-head .meta,.screen-head .kicker{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
-    /* metric strip như sao kê */
-    .metric-strip{gap:0;border-top:2px solid var(--navy);border-left:var(--line);background:var(--surface)}
-    .metric{border-top:0;border-right:var(--line);border-bottom:var(--line);padding:var(--s3)}
-    .metric .meta{font-size:.625rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-    .metric strong{font:400 1.375rem/1.2 var(--display);font-variant-numeric:lining-nums tabular-nums}
-    .metric.inc strong{color:var(--success)}.metric.exp strong{color:var(--negative)}
-    .metric.net{background:var(--primary-container);border-color:var(--border)}.metric.net strong{color:var(--navy)}
-    /* sổ cái */
-    .ledger{border-top:1px solid var(--rule)}
-    .ledger-row{color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .ledger-row:hover{background:var(--surface-subtle)}
-    .record-main strong{color:var(--navy)}
-    .amount{font-weight:500}
-    .amount.in{color:var(--success)}.amount.out{color:var(--negative)}
-    .cadence::before{border-width:1.5px;border-color:var(--navy);box-shadow:1rem 0 0 -.2rem var(--navy)}
-    .cadence.once::before{border-color:var(--gold);box-shadow:none}
-    .fab{border-radius:2px;color:#FFFFFF}
-    input,select,textarea{border:0;border-bottom:1px solid var(--control);border-radius:0;box-shadow:inset 0 0 0 1px var(--border)}
-    input:hover,select:hover,textarea:hover{box-shadow:inset 0 0 0 1px var(--control)}
-    input:focus,select:focus,textarea:focus{border-bottom-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
-    input[type=checkbox],input[type=radio]{box-shadow:none;accent-color:var(--navy)}
-    .field > label,.field > span:first-child,legend{font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-secondary)}
-    .choice{border:var(--line)}
-    .choice:has(input:checked){border-color:var(--navy);box-shadow:inset 3px 0 0 var(--navy);background:var(--primary-container)}
-    .error-summary{border:1px solid var(--error);border-left:3px solid var(--error);background:#FDF5F6}
-    .sticky-actions{border-top:1px solid var(--rule)}
-    .detail-amount{font:300 2.25rem/1.15 var(--display);font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em}
-    .detail-amount.amount-in{color:var(--success)}.detail-amount.amount-out{color:var(--negative)}
-    .facts{gap:0}
-    .fact span{font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase}
-    .check-row{border-bottom:var(--line);padding-bottom:var(--s2);font-size:.875rem}
-    .review-row strong{color:var(--navy)}
-    dialog{border-top:3px solid var(--navy);padding:var(--s8) var(--s6) var(--s6)}
-    dialog h2{font-size:1.5rem}
-    dialog::backdrop{backdrop-filter:blur(2px)}
-    .option-list button{text-transform:none;letter-spacing:0;font-size:.875rem;font-weight:500;color:var(--ink);border-color:var(--border)}
-    .option-list button:hover{border-color:var(--primary)}
-    .option-list button.danger{color:var(--error)}
-    .dialog-actions{padding-top:var(--s4);border-top:var(--line)}
-    .toast{border-radius:2px;border-left:3px solid var(--gold-light)}
-    footer{border-top:1px solid var(--rule);font-size:.8125rem}
-    @media(max-width:720px){main > section{padding:var(--s12) 0}.mast-sub{display:none}}
-
-    /* Tên danh mục: phân biệt dòng tiền vào / ra */
-    .ledger-row.is-in .cat-title,#detail-heading.cat-in{color:#14633A}
-    .ledger-row.is-out .cat-title,#detail-heading.cat-out{color:#8C1D2C}
-    .ledger-row .cat-title{display:inline-flex;align-items:center;gap:.5rem}
-    .ledger-row .cat-title::before{content:"";width:3px;height:1em;flex:none}
-    .ledger-row.is-in .cat-title::before{background:#15803D}
-    .ledger-row.is-out .cat-title::before{background:#A6192E}
-
-    /* ===== Dòng tiền dự kiến theo quý / năm ===== */
-    .fc-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:2px solid var(--navy);border-left:var(--line);background:var(--surface)}
-    .fc-kpis div{display:grid;gap:2px;padding:var(--s3);border-right:var(--line);border-bottom:var(--line);min-width:0}
-    .fc-kpis span{font-size:.625rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-secondary)}
-    .fc-kpis strong{font:400 1.25rem/1.2 var(--display);font-variant-numeric:lining-nums tabular-nums;overflow-wrap:anywhere}
-    .fc-kpis .in strong{color:var(--success)}.fc-kpis .out strong{color:var(--negative)}.fc-kpis .net strong{color:var(--navy)}
-    .fc-kpis .net{background:var(--primary-container)}
-    .fc-chart{padding:var(--s3);border:var(--line);background:var(--surface)}
-    .fc-chart svg{display:block;width:100%;height:auto}
-    .fc-legend{display:flex;flex-wrap:wrap;gap:var(--s4);font-size:.6875rem;color:var(--ink-secondary);margin-top:var(--s2)}
-    .fc-legend i{display:inline-block;width:.625rem;height:.625rem;margin-right:.3rem;vertical-align:-1px}
-    .fc-table td,.fc-table th{padding:var(--s2) var(--s2)}
-    .fc-table td.fig,.fc-table th.fig{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-    .fc-table .in{color:var(--success)}.fc-table .out{color:var(--negative)}.fc-table .net{color:var(--navy);font-weight:600}.fc-table .net.neg{color:var(--negative)}
-    .fc-table tbody tr{cursor:pointer}
-    .fc-table tbody tr[aria-selected="true"] td{background:var(--primary-container)}
-    .fc-table tbody tr[aria-selected="true"] td:first-child{box-shadow:inset 3px 0 0 var(--navy)}
-    .fc-table td:first-child{white-space:nowrap}
-    .fc-table .sub{display:block;font-size:.6875rem;color:var(--ink-secondary);font-weight:400}
-    .fc-break{display:grid;gap:var(--s3)}
-    .fc-break h3{font-size:1.125rem}
-    .fc-grp{display:grid;border-top:1px solid var(--rule)}
-    .fc-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);padding:var(--s2) 0;border-bottom:var(--line);font-size:.875rem}
-    .fc-row .c-in{color:#14633A;font-weight:600}.fc-row .c-out{color:#8C1D2C;font-weight:600}
-    .fc-row .meta{display:block;font-size:.6875rem}
-    .fc-row .v{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500}
-    .fc-row .v.in{color:var(--success)}.fc-row .v.out{color:var(--negative)}
-    .fc-total{display:grid;grid-template-columns:minmax(0,1fr) auto;padding:var(--s2) 0;border-bottom:3px double var(--rule);font-weight:600}
-    .device[data-mode="phone"] .fc-table .hide-sm{display:none}
-    .device[data-mode="phone"] .fc-kpis strong{font-size:1rem}
   </style>
 </head>
 <body>
   <a class="skip" href="#main">Bỏ qua đến nội dung chính</a>
   <div class="page">
-    <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #69 · Feature #19</span></div>
     <header class="hero">
       <div class="hero-copy"><span class="kicker">Issue #69 · MVP 1B · Design review</span><h1>Nhịp dòng tiền, rõ đến từng nguồn</h1><p class="meta">Danh mục và CRUD thu nhập, chi phí. Hiện vật mô phỏng để Product Owner duyệt UX/UI, không phải frontend production.</p></div>
       <div class="hero-note"><strong>Ranh giới duyệt</strong><p>Luồng danh mục, quick-entry, recurrence, liên kết và trạng thái. Không tích hợp API, dự báo, báo cáo, phép tính backend hay dữ liệu thật.</p><span class="status info">Dữ liệu giả lập, nhất quán</span></div>
@@ -262,15 +101,15 @@
       </section>
 
       <section aria-labelledby="system-title">
-        <div class="section-head"><div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div><p class="meta">Phong cách private banking: navy cho hành động và điều hướng, serif cho tiêu đề và số liệu lớn, đường kẻ mảnh kiểu sổ cái. Thu nhập xanh lá, chi phí đỏ kèm dấu trừ.</p></div>
-        <div class="tokens"><div class="token"><span class="swatch" style="background:var(--canvas)"></span><strong>Canvas</strong><p class="meta">#F6F4EF</p></div><div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>Heritage navy</strong><p class="meta">Brand anchor · #0A2240</p></div><div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>Navy</strong><p class="meta">Action và focus · #0F2E57</p></div><div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>Tonal surface</strong><p class="meta">Selected và info</p></div><div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>Bronze</strong><p class="meta">Chỉ dùng cho đường nhấn · #8A6A3F</p></div></div>
+        <div class="section-head"><div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div><p class="meta">Quiet Ledger cho tác vụ; Modern Heritage chỉ ở tiêu đề và đường vàng.</p></div>
+        <div class="tokens"><div class="token"><span class="swatch" style="background:var(--canvas)"></span><strong>Canvas</strong><p class="meta">#F7F5EF</p></div><div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>Heritage navy</strong><p class="meta">Brand anchor</p></div><div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>Deep teal</strong><p class="meta">Action và focus</p></div><div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>Tonal surface</strong><p class="meta">Selected và info</p></div><div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>Antique gold</strong><p class="meta">Chỉ dùng cho đường nhấn</p></div></div>
         <div class="grid two" style="margin-top:var(--s4)"><div class="card"><h3>Reusable components</h3><p>Button, segmented control, search, money input, category picker, recurrence controls, ledger row, status, sheet, dialog, skeleton, banner và toast.</p></div><div class="card"><h3>Nhịp dòng tiền</h3><div class="cadence">Định kỳ hàng tháng từ 01/09/2026</div><div class="cadence once">Một lần ngày 15/09/2026</div><p class="helper">Dấu nhịp giúp nhận dạng cadence mà không dựa riêng vào màu.</p></div></div>
       </section>
 
       <section aria-labelledby="prototype-title">
         <div class="section-head"><div><span class="section-mark">03</span><h2 id="prototype-title">Prototype clickable</h2></div><p class="meta">Chọn kích thước và màn hình. Tất cả tương tác là mô phỏng xác định.</p></div>
         <div class="stage">
-          <div class="stage-bar"><div class="switches" role="group" aria-label="Chọn chiều rộng mô phỏng"><button type="button" data-width="360" aria-pressed="true">360</button><button type="button" data-width="375" aria-pressed="false">375</button><button type="button" data-width="768" aria-pressed="false">768</button><button type="button" data-width="1024" aria-pressed="false">1024</button><button type="button" data-width="1440" aria-pressed="false">1440</button></div><div class="switches" role="group" aria-label="Chọn màn hình"><button type="button" data-go="catalog" aria-pressed="true">Danh mục</button><button type="button" data-go="forecast" aria-pressed="false">Dự kiến</button><button type="button" data-go="form" aria-pressed="false">Quick-entry</button><button type="button" data-go="detail" aria-pressed="false">Chi tiết</button><button type="button" data-go="states" aria-pressed="false">Trạng thái</button></div></div>
+          <div class="stage-bar"><div class="switches" role="group" aria-label="Chọn chiều rộng mô phỏng"><button type="button" data-width="360" aria-pressed="true">360</button><button type="button" data-width="375" aria-pressed="false">375</button><button type="button" data-width="768" aria-pressed="false">768</button><button type="button" data-width="1024" aria-pressed="false">1024</button><button type="button" data-width="1440" aria-pressed="false">1440</button></div><div class="switches" role="group" aria-label="Chọn màn hình"><button type="button" data-go="catalog" aria-pressed="true">Danh mục</button><button type="button" data-go="form" aria-pressed="false">Quick-entry</button><button type="button" data-go="detail" aria-pressed="false">Chi tiết</button><button type="button" data-go="states" aria-pressed="false">Trạng thái</button></div></div>
           <div class="device-wrap">
             <div class="device" id="device" data-mode="phone">
               <div class="app">
@@ -278,8 +117,8 @@
                 <div class="app-body product-shell">
                   <main class="product-main" id="product-main">
                     <div class="view active" data-view="catalog" tabindex="-1">
-                      <div class="screen-head"><div><p class="meta">Dòng tiền</p><h2 id="catalog-heading">Tháng 09/2026</h2></div><div class="actions"><button type="button" class="text-btn" data-go="forecast">Dự kiến theo quý, năm</button><button type="button" class="tonal" aria-label="Chọn kỳ">Đổi kỳ</button></div></div>
-                      <div class="metric-strip"><div class="metric inc"><span class="meta">Thu nhập</span><strong class="fig">+ 180.000.000 ₫</strong></div><div class="metric exp"><span class="meta">Chi phí</span><strong class="fig">− 92.000.000 ₫</strong></div><div class="metric net"><span class="meta">Dòng tiền ròng</span><strong class="fig">+ 88.000.000 ₫</strong></div></div>
+                      <div class="screen-head"><div><p class="meta">Dòng tiền</p><h2 id="catalog-heading">Tháng 09/2026</h2></div><button type="button" class="tonal" aria-label="Chọn kỳ">Đổi kỳ</button></div>
+                      <div class="metric-strip"><div class="metric"><span class="meta">Thu nhập</span><strong class="fig">180.000.000 ₫</strong></div><div class="metric"><span class="meta">Chi phí</span><strong class="fig">92.000.000 ₫</strong></div><div class="metric net"><span class="meta">Dòng tiền ròng</span><strong class="fig">88.000.000 ₫</strong></div></div>
                       <div class="segments" role="group" aria-label="Lọc loại bản ghi"><button type="button" data-segment="all" aria-pressed="true">Tất cả</button><button type="button" data-segment="income" aria-pressed="false">Thu nhập</button><button type="button" data-segment="expense" aria-pressed="false">Chi phí</button></div>
                       <div class="search-row"><label class="field"><span class="hidden">Tìm bản ghi</span><input id="search" type="search" placeholder="Tìm theo danh mục hoặc liên kết" aria-label="Tìm bản ghi"></label><button type="button" id="filter-trigger">Bộ lọc</button></div>
                       <p id="result-count" class="meta" aria-live="polite">16 bản ghi · Dữ liệu nhập thủ công</p>
@@ -304,16 +143,7 @@
                       <div class="actions"><button type="button" data-go="catalog">Về danh mục</button><button class="tonal" type="button" id="detail-link">Mở bản ghi liên kết</button></div>
                     </div>
 
-                                          <div class="view" data-view="forecast" tabindex="-1" aria-labelledby="forecast-heading">
-                        <div class="screen-head"><div><p class="meta">Dòng tiền · Dự kiến</p><h2 id="forecast-heading">Dòng tiền dự kiến</h2></div><button class="text-btn" type="button" data-go="catalog">Về danh mục</button></div>
-                        <div class="switches" role="group" aria-label="Chọn cách tổng hợp"><button type="button" data-fc="quarter" aria-pressed="true">Theo quý</button><button type="button" data-fc="year" aria-pressed="false">Theo năm</button></div>
-                        <div class="fc-kpis" id="fc-kpis" aria-live="polite"></div>
-                        <div class="fc-chart" id="fc-chart"></div>
-                        <div class="table-wrap"><table class="fc-table"><caption id="fc-caption">—</caption><thead><tr><th>Kỳ</th><th class="fig">Thu vào</th><th class="fig">Chi ra</th><th class="fig">Ròng</th><th class="fig hide-sm">Lũy kế</th></tr></thead><tbody id="fc-body"></tbody></table></div>
-                        <div class="fc-break" id="fc-break"></div>
-                        <div class="callout"><strong>Cách ước tính</strong><p class="helper">Khoản định kỳ lặp theo chu kỳ từ ngày bắt đầu và chưa có ngày kết thúc; khoản một lần chỉ tính trong tháng phát sinh. Khoản USD dùng giá trị VND đã quy đổi theo tỷ giá đã nhập. Đây là ước tính từ danh mục hiện có, không phải cam kết.</p></div>
-                      </div>
-<div class="view" data-view="states" tabindex="-1">
+                    <div class="view" data-view="states" tabindex="-1">
                       <div class="screen-head"><button class="text-btn" type="button" data-go="catalog">Quay lại</button><h2 id="states-heading">Mẫu trạng thái</h2></div>
                       <div class="switches" role="group" aria-label="Chọn trạng thái"><button type="button" data-state="loading">Đang tải</button><button type="button" data-state="empty">Trống</button><button type="button" data-state="filtered">Không khớp lọc</button><button type="button" data-state="partial">Thiếu liên kết</button><button type="button" data-state="request">Lỗi yêu cầu</button><button type="button" data-state="success">Thành công</button><button type="button" data-state="unavailable">Không thể mở</button></div>
                       <div id="state-panel" class="card state-panel" aria-live="polite"><span class="status info">Chọn trạng thái</span><p>Mỗi trạng thái nêu điều đã xảy ra, dữ liệu được giữ và hành động phục hồi.</p></div>
@@ -330,23 +160,9 @@
         </div>
       </section>
 
-              <section aria-labelledby="forecast-title">
-          <div class="section-head"><div><span class="section-mark">03B</span><h2 id="forecast-title">Dòng tiền dự kiến theo quý, năm</h2></div><p class="meta">Màn “Dự kiến” trong prototype tổng hợp các bản ghi của danh mục thành thu vào, chi ra và dòng tiền ròng cho từng quý hoặc năm.</p></div>
-          <div class="grid two">
-            <div class="card"><h3>Cách tổng hợp</h3><ul>
-              <li>Khoản định kỳ lặp theo chu kỳ (tháng, quý, năm) kể từ ngày bắt đầu; chưa có ngày kết thúc nên lặp đến hết 12/2027.</li>
-              <li>Khoản một lần chỉ tính trong tháng phát sinh.</li>
-              <li>Q3/2026 và năm 2026 chỉ có các tháng từ 09/2026, nên được gắn nhãn “chưa đủ kỳ”.</li>
-              <li>Chọn một kỳ trong bảng để xem chi tiết theo danh mục: thu xanh lá, chi đỏ, có số lần phát sinh.</li>
-              <li>Ba ô đầu màn là 12 tháng tới, 10/2026–09/2027.</li>
-            </ul></div>
-            <div class="callout"><strong>Cần Product Owner quyết định</strong><p class="meta">Ranh giới của #69 ghi rõ không gồm dự báo hay báo cáo. Phần này là đề xuất mở rộng; nên chuyển sang Feature #20 (recurring schedule expansion, #72) hoặc tính năng dự báo dòng tiền trước khi đưa vào contract.</p><p class="meta">Danh mục hiện có cả “Nhà ở” 18.750.000 ₫ và cặp gốc + lãi 16.250.000 ₫ cùng liên kết Khoản vay mua căn hộ. Nếu đó là cùng một khoản trả, chi ra dự kiến đang bị đếm hai lần.</p></div>
-          </div>
-        </section>
-
-        <section aria-labelledby="fixture-title">
+      <section aria-labelledby="fixture-title">
         <div class="section-head"><div><span class="section-mark">04</span><h2 id="fixture-title">Fixture và contract</h2></div><p class="meta">Số liệu tháng 09/2026 được đối chiếu từ cùng danh sách trong prototype.</p></div>
-        <div class="grid two"><div class="card"><h3>Đối chiếu số tiền</h3><div class="table-wrap"><table><thead><tr><th>Nhóm</th><th>Số bản ghi</th><th>Tổng VND</th></tr></thead><tbody><tr><td>Thu nhập</td><td>7</td><td class="fig">180.000.000</td></tr><tr><td>Chi phí</td><td>9</td><td class="fig">92.000.000</td></tr><tr><td><strong>Dòng tiền ròng</strong></td><td>16</td><td class="fig"><strong>88.000.000</strong></td></tr></tbody></table></div><p class="helper">Dividend 150 USD ≈ 3.765.000 VND theo tỷ giá 25.100 ngày 12/09/2026.</p></div><div class="card"><h3>Quy tắc trường</h3><ul><li>Số tiền luôn dương; loại bản ghi xác định chiều tiền.</li><li>Một lần dùng ngày hiệu lực.</li><li>Định kỳ dùng tháng, quý hoặc năm; ngày kết thúc là tùy chọn.</li><li>Liên kết chỉ là tham chiếu, không tự sinh lịch hoặc tính dự báo.</li><li>Không gắn nhãn stale khi chưa có ngưỡng do contract sở hữu.</li></ul></div></div>
+        <div class="grid two"><div class="card"><h3>Đối chiếu số tiền</h3><div class="table-wrap"><table><thead><tr><th>Nhóm</th><th>Số bản ghi</th><th>Tổng VND</th></tr></thead><tbody><tr><td>Thu nhập</td><td>7</td><td class="fig">180.000.000</td></tr><tr><td>Chi phí</td><td>9</td><td class="fig">92.000.000</td></tr><tr><td><strong>Dòng tiền ròng</strong></td><td>16</td><td class="fig"><strong>88.000.000</strong></td></tr></tbody></table></div><p class="helper">Dividend 150 USD = 3.765.000 VND theo tỷ giá 25.100 ngày 12/09/2026.</p></div><div class="card"><h3>Quy tắc trường</h3><ul><li>Số tiền luôn dương; loại bản ghi xác định chiều tiền.</li><li>Một lần dùng ngày hiệu lực.</li><li>Định kỳ dùng tháng, quý hoặc năm; ngày kết thúc là tùy chọn.</li><li>Liên kết chỉ là tham chiếu, không tự sinh lịch hoặc tính dự báo.</li><li>Không gắn nhãn stale khi chưa có ngưỡng do contract sở hữu.</li></ul></div></div>
       </section>
 
       <section aria-labelledby="matrix-title">
@@ -378,7 +194,7 @@
       {id:1,type:"income",category:"Lương",amount:132000000,display:"132.000.000 ₫",timing:"recurring",cadence:"Hàng tháng",date:"01/09/2026",link:"Không liên kết",notes:"Thu nhập chính"},
       {id:2,type:"income",category:"Thu nhập kinh doanh",amount:26200000,display:"26.200.000 ₫",timing:"once",cadence:"Một lần",date:"05/09/2026",link:"Không liên kết",notes:"Phân phối lợi nhuận tháng 9"},
       {id:3,type:"income",category:"Thu nhập cho thuê",amount:14800000,display:"14.800.000 ₫",timing:"recurring",cadence:"Hàng tháng",date:"03/09/2026",link:"Căn hộ cho thuê Quận 2",notes:"Theo hợp đồng hiện tại"},
-      {id:4,type:"income",category:"Cổ tức",amount:3765000,display:"150 USD ≈ 3.765.000 ₫",timing:"recurring",cadence:"Hàng quý",date:"15/09/2026",link:"Danh mục cổ phiếu HOSE",notes:"Tỷ giá 25.100 ngày 12/09/2026",usd:true},
+      {id:4,type:"income",category:"Cổ tức",amount:3765000,display:"150 USD · 3.765.000 ₫",timing:"recurring",cadence:"Hàng quý",date:"15/09/2026",link:"Danh mục cổ phiếu HOSE",notes:"Tỷ giá 25.100 ngày 12/09/2026",usd:true},
       {id:5,type:"income",category:"Lãi tiền gửi",amount:1500000,display:"1.500.000 ₫",timing:"recurring",cadence:"Hàng tháng",date:"20/09/2026",link:"Tiền gửi kỳ hạn 12 tháng",notes:""},
       {id:6,type:"income",category:"Thu nhập trái phiếu hoặc quỹ",amount:1500000,display:"1.500.000 ₫",timing:"recurring",cadence:"Hàng quý",date:"22/09/2026",link:"Quỹ trái phiếu An Tâm",notes:""},
       {id:7,type:"income",category:"Thu nhập khác",amount:235000,display:"235.000 ₫",timing:"once",cadence:"Một lần",date:"26/09/2026",link:"Không liên kết",notes:"Hoàn phí"},
@@ -392,62 +208,17 @@
       {id:15,type:"expense",category:"Thanh toán lãi",amount:6250000,display:"6.250.000 ₫",timing:"recurring",cadence:"Hàng tháng",date:"20/09/2026",link:"Khoản vay mua căn hộ",notes:"Không tự phân bổ gốc/lãi"},
       {id:16,type:"expense",category:"Chi phí khác",amount:2500000,display:"2.500.000 ₫",timing:"once",cadence:"Một lần",date:"28/09/2026",link:"Không liên kết",notes:"Bảo trì thiết bị"}
     ];
-    /* ---------- Dòng tiền dự kiến ---------- */
-    const FC_START={y:2026,m:9},FC_END={y:2027,m:12};
-    const fcVND=n=>new Intl.NumberFormat("vi-VN").format(Math.round(n));
-    const fcShort=n=>{const a=Math.abs(n),sg=n<0?"−":"";return a>=1e9?sg+(a/1e9).toFixed(2).replace(".",",")+" tỷ":sg+(a>=1e8?Math.round(a/1e6):(a/1e6).toFixed(1).replace(".",","))+" tr"};
-    const fcStep={"Hàng tháng":1,"Hàng quý":3,"Hàng năm":12};
-    function fcMonths(){const out=[];let y=FC_START.y,m=FC_START.m;while(y<FC_END.y||(y===FC_END.y&&m<=FC_END.m)){out.push({y,m});m++;if(m>12){m=1;y++}}return out}
-    function fcHits(r,y,m){const p=r.date.split("/").map(Number),sy=p[2],sm=p[1];const diff=(y-sy)*12+(m-sm);if(diff<0)return 0;if(r.timing==="once")return diff===0?1:0;const st=fcStep[r.cadence]||1;return diff%st===0?1:0}
-    let fcMode="quarter",fcSel=null;
-    function fcPeriods(){
-      const months=fcMonths(),map=new Map();
-      months.forEach(({y,m})=>{const key=fcMode==="quarter"?`Q${Math.ceil(m/3)}/${y}`:`${y}`;if(!map.has(key))map.set(key,{key,months:[],inc:0,out:0,cats:{}});const p=map.get(key);p.months.push(m);
-        records.forEach(r=>{const n=fcHits(r,y,m);if(!n)return;const v=r.amount*n;if(r.type==="income")p.inc+=v;else p.out+=v;const c=p.cats[r.category]||(p.cats[r.category]={type:r.type,v:0,n:0,cad:r.cadence});c.v+=v;c.n+=n})});
-      let cum=0;return [...map.values()].map(p=>{p.net=p.inc-p.out;cum+=p.net;p.cum=cum;const lo=Math.min(...p.months),hi=Math.max(...p.months);p.range=lo===hi?`T${lo}`:`T${lo}–T${hi}`;p.partial=p.months.length<(fcMode==="quarter"?3:12);return p});
-    }
-    function fcChart(ps){
-      const w=320,h=170,top=18,bot=22,l=6,r=6,mx=Math.max(...ps.map(p=>Math.max(p.inc,p.out)),1),sl=(w-l-r)/ps.length,bw=Math.min(22,sl*.3);
-      const y=v=>top+(1-v/mx)*(h-top-bot);
-      let g=`<line x1="${l}" x2="${w-r}" y1="${y(0)}" y2="${y(0)}" stroke="#121A26"/>`;
-      ps.forEach((p,i)=>{const cx=l+sl*i+sl/2;
-        g+=`<rect x="${cx-bw-1}" y="${y(p.inc)}" width="${bw}" height="${y(0)-y(p.inc)}" fill="#15803D"/><rect x="${cx+1}" y="${y(p.out)}" width="${bw}" height="${y(0)-y(p.out)}" fill="#A6192E"/>`;
-        g+=`<text x="${cx}" y="${y(p.inc)-5}" text-anchor="middle" font-size="9.5" font-weight="600" fill="${p.net<0?"#A6192E":"#0F2E57"}">${p.net<0?"":"+"}${fcShort(p.net)}</text>`;
-        g+=`<text x="${cx}" y="${h-8}" text-anchor="middle" font-size="9.5" fill="#5A6472">${p.key.replace(/\/20(\d\d)$/,"/$1")}${p.partial?"*":""}</text>`});
-      const aria=ps.map(p=>`${p.key}: thu ${fcVND(p.inc)} ₫, chi ${fcVND(p.out)} ₫, ròng ${fcVND(p.net)} ₫`).join("; ");
-      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${aria}" font-family="Inter,system-ui,sans-serif">${g}</svg><div class="fc-legend"><span><i style="background:#15803D"></i>Thu vào</span><span><i style="background:#A6192E"></i>Chi ra</span><span>Số trên cột: dòng tiền ròng</span><span>* Kỳ chưa đủ tháng</span></div>`;
-    }
-    function fcBreak(p){
-      const rows=t=>Object.entries(p.cats).filter(([,c])=>c.type===t).sort((a,b)=>b[1].v-a[1].v).map(([k,c])=>`<div class="fc-row"><span><span class="${t==="income"?"c-in":"c-out"}">${k}</span><span class="meta">${c.cad} · ${c.n} lần</span></span><span class="v ${t==="income"?"in":"out"}">${t==="income"?"+":"−"} ${fcVND(c.v)} ₫</span></div>`).join("");
-      return `<h3>Chi tiết ${p.key} <span class="meta">(${p.range}${p.partial?", chưa đủ kỳ":""})</span></h3>
-        <div class="fc-grp">${rows("income")}<div class="fc-total"><span>Tổng thu vào</span><span class="fig" style="color:var(--success)">+ ${fcVND(p.inc)} ₫</span></div></div>
-        <div class="fc-grp">${rows("expense")}<div class="fc-total"><span>Tổng chi ra</span><span class="fig" style="color:var(--negative)">− ${fcVND(p.out)} ₫</span></div></div>
-        <div class="fc-total"><span>Dòng tiền ròng</span><span class="fig" style="color:${p.net<0?"var(--negative)":"var(--navy)"}">${p.net<0?"−":"+"} ${fcVND(Math.abs(p.net))} ₫</span></div>`;
-    }
-    function renderForecast(){
-      const ps=fcPeriods();if(!ps.some(p=>p.key===fcSel))fcSel=(ps.find(p=>!p.partial)||ps[0]).key;
-      // 12 tháng tới: 10/2026–09/2027
-      let i12=0,o12=0;fcMonths().filter(({y,m})=>(y===2026&&m>=10)||(y===2027&&m<=9)).forEach(({y,m})=>records.forEach(r=>{const n=fcHits(r,y,m);if(n){if(r.type==="income")i12+=r.amount*n;else o12+=r.amount*n}}));
-      document.querySelector("#fc-kpis").innerHTML=`<div class="in"><span>Thu vào 12 tháng tới</span><strong>+ ${fcShort(i12)}</strong></div><div class="out"><span>Chi ra 12 tháng tới</span><strong>− ${fcShort(o12)}</strong></div><div class="net"><span>Ròng 10/2026–09/2027</span><strong>${i12-o12<0?"−":"+"} ${fcShort(Math.abs(i12-o12))}</strong></div>`;
-      document.querySelector("#fc-chart").innerHTML=fcChart(ps);
-      document.querySelector("#fc-caption").textContent=fcMode==="quarter"?"Tổng hợp theo quý · 09/2026–12/2027":"Tổng hợp theo năm · 09/2026–12/2027";
-      document.querySelector("#fc-body").innerHTML=ps.map(p=>`<tr data-fc-key="${p.key}" aria-selected="${p.key===fcSel}" tabindex="0"><td>${p.key}<span class="sub">${p.range}${p.partial?" · chưa đủ kỳ":""}</span></td><td class="fig in">+ ${fcVND(p.inc)}</td><td class="fig out">− ${fcVND(p.out)}</td><td class="fig net${p.net<0?" neg":""}">${p.net<0?"−":"+"} ${fcVND(Math.abs(p.net))}</td><td class="fig hide-sm">${fcVND(p.cum)}</td></tr>`).join("");
-      document.querySelectorAll("#fc-body tr").forEach(tr=>{const pick=()=>{fcSel=tr.dataset.fcKey;renderForecast()};tr.addEventListener("click",pick);tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}})});
-      document.querySelector("#fc-break").innerHTML=fcBreak(ps.find(p=>p.key===fcSel));
-    }
-    document.querySelectorAll("[data-fc]").forEach(b=>b.addEventListener("click",()=>{fcMode=b.dataset.fc;fcSel=null;document.querySelectorAll("[data-fc]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderForecast()}));
-
     const views=[...document.querySelectorAll("[data-view]")]; const device=document.querySelector("#device"); const form=document.querySelector("#entry-form");
     let segment="all",timingFilter="all",current=records[0],dirty=false,lastTrigger=null,editMode=false;
     const openDialog=(selector,trigger)=>{lastTrigger=trigger;document.querySelector(selector).showModal()};
     const closeDialog=dialog=>{dialog.close();lastTrigger?.focus()};
     document.querySelectorAll("dialog [data-close]").forEach(button=>button.addEventListener("click",()=>closeDialog(button.closest("dialog"))));
     document.querySelectorAll("dialog").forEach(dialog=>dialog.addEventListener("cancel",event=>{event.preventDefault();closeDialog(dialog)}));
-    const go=name=>{views.forEach(view=>view.classList.toggle("active",view.dataset.view===name));document.querySelectorAll("[data-go]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.go===name)));if(name==="forecast")renderForecast();const active=document.querySelector(`[data-view="${name}"]`);active?.focus();document.querySelector("#add-trigger").classList.toggle("hidden",name!=="catalog")};
+    const go=name=>{views.forEach(view=>view.classList.toggle("active",view.dataset.view===name));document.querySelectorAll("[data-go]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.go===name)));const active=document.querySelector(`[data-view="${name}"]`);active?.focus();document.querySelector("#add-trigger").classList.toggle("hidden",name!=="catalog")};
     document.querySelectorAll("[data-go]").forEach(button=>button.addEventListener("click",()=>go(button.dataset.go)));
     const widthNotes={360:"360px: điều hướng dưới, một cột, số tiền được xuống dòng thay vì cắt, hành động lưu nằm trên vùng an toàn.",375:"375px: nhịp ledger rộng hơn nhưng vẫn một cột và ưu tiên thao tác bằng ngón cái.",768:"768px: navigation rail 92px, summary ba cột và form ghép các trường liên quan.",1024:"1024px: sidebar ổn định 240px, form và chi tiết có bề rộng giới hạn.",1440:"1440px: giữ cùng hierarchy, tăng khoảng thở; không kéo giãn form hoặc thêm hành vi desktop-only."};
     document.querySelectorAll("[data-width]").forEach(button=>button.addEventListener("click",()=>{document.querySelectorAll("[data-width]").forEach(item=>item.setAttribute("aria-pressed",String(item===button)));const width=Number(button.dataset.width);device.dataset.mode=width<768?"phone":width<1024?"tablet":width<1440?"desktop":"wide";document.querySelector("#viewport-note").textContent=widthNotes[width]}));
-    function renderLedger(){const query=document.querySelector("#search").value.trim().toLocaleLowerCase("vi");const filtered=records.filter(record=>(segment==="all"||record.type===segment)&&(timingFilter==="all"||record.timing===timingFilter)&&(!query||`${record.category} ${record.link} ${record.notes}`.toLocaleLowerCase("vi").includes(query)));const ledger=document.querySelector("#ledger");ledger.innerHTML=filtered.length?filtered.map(record=>`<button type="button" class="ledger-row ${record.type==='income'?'is-in':'is-out'}" data-record="${record.id}"><span class="record-main"><strong class="cat-title">${record.category}</strong><span class="cadence ${record.timing==='once'?'once':''}">${record.cadence} · ${record.date}</span></span><span class="record-meta"><span>${record.link}</span><span>${record.notes||'Không có ghi chú'}</span></span><span class="amount ${record.type==='income'?'in':'out'}">${record.type==='income'?'+':'−'} ${record.display}</span></button>`).join(""):`<div class="card"><span class="status info">Không có kết quả phù hợp</span><p>Bộ lọc và từ khóa vẫn được giữ. Xóa lọc để xem toàn bộ danh mục.</p><button type="button" id="reset-results">Xóa bộ lọc</button></div>`;document.querySelector("#result-count").textContent=`${filtered.length} bản ghi · Dữ liệu nhập thủ công`;ledger.querySelectorAll("[data-record]").forEach(button=>button.addEventListener("click",()=>showDetail(Number(button.dataset.record))));ledger.querySelector("#reset-results")?.addEventListener("click",()=>{segment="all";timingFilter="all";document.querySelector("#search").value="";document.querySelectorAll("[data-segment]").forEach(item=>item.setAttribute("aria-pressed",String(item.dataset.segment==="all")));renderLedger()})}
+    function renderLedger(){const query=document.querySelector("#search").value.trim().toLocaleLowerCase("vi");const filtered=records.filter(record=>(segment==="all"||record.type===segment)&&(timingFilter==="all"||record.timing===timingFilter)&&(!query||`${record.category} ${record.link} ${record.notes}`.toLocaleLowerCase("vi").includes(query)));const ledger=document.querySelector("#ledger");ledger.innerHTML=filtered.length?filtered.map(record=>`<button type="button" class="ledger-row" data-record="${record.id}"><span class="record-main"><strong>${record.category}</strong><span class="cadence ${record.timing==='once'?'once':''}">${record.cadence} · ${record.date}</span></span><span class="record-meta"><span>${record.link}</span><span>${record.notes||'Không có ghi chú'}</span></span><span class="amount ${record.type==='income'?'in':'out'}">${record.type==='income'?'+':'−'} ${record.display}</span></button>`).join(""):`<div class="card"><span class="status info">Không có kết quả phù hợp</span><p>Bộ lọc và từ khóa vẫn được giữ. Xóa lọc để xem toàn bộ danh mục.</p><button type="button" id="reset-results">Xóa bộ lọc</button></div>`;document.querySelector("#result-count").textContent=`${filtered.length} bản ghi · Dữ liệu nhập thủ công`;ledger.querySelectorAll("[data-record]").forEach(button=>button.addEventListener("click",()=>showDetail(Number(button.dataset.record))));ledger.querySelector("#reset-results")?.addEventListener("click",()=>{segment="all";timingFilter="all";document.querySelector("#search").value="";document.querySelectorAll("[data-segment]").forEach(item=>item.setAttribute("aria-pressed",String(item.dataset.segment==="all")));renderLedger()})}
     document.querySelectorAll("[data-segment]").forEach(button=>button.addEventListener("click",()=>{segment=button.dataset.segment;document.querySelectorAll("[data-segment]").forEach(item=>item.setAttribute("aria-pressed",String(item===button)));renderLedger()}));document.querySelector("#search").addEventListener("input",renderLedger);
     document.querySelector("#filter-trigger").addEventListener("click",event=>openDialog("#filter-sheet",event.currentTarget));document.querySelector("#apply-filter").addEventListener("click",()=>{timingFilter=document.querySelector("#timing-filter").value;closeDialog(document.querySelector("#filter-sheet"));renderLedger()});document.querySelector("#clear-filter").addEventListener("click",()=>{document.querySelector("#timing-filter").value="all";timingFilter="all";closeDialog(document.querySelector("#filter-sheet"));renderLedger()});
     function resetForm(type="",editing=false){form.reset();editMode=editing;dirty=false;document.querySelector("#form-mode").textContent=editing?"Sửa bản ghi":"Tạo bản ghi";document.querySelector("#save-entry").textContent=editing?"Lưu thay đổi":"Lưu bản ghi";document.querySelector("#category-trigger").textContent="Chọn danh mục";document.querySelector("#category").value="";document.querySelector("#link-value").textContent="Chưa liên kết. Đây là trường tùy chọn.";document.querySelectorAll(".error-copy,.error-summary").forEach(item=>item.classList.add("hidden"));if(type)form.elements.entryType.value=type;document.querySelector("#effective-date").value="2026-09-19";syncTiming();syncCurrency()}
@@ -465,7 +236,7 @@
     function validateForm(){const type=form.elements.entryType.value;const amount=Number(document.querySelector("#amount").value.replaceAll(".","").replace(",","."));const category=document.querySelector("#category").value;const recurring=form.elements.timing.value==="recurring";const date=recurring?document.querySelector("#start-date").value:document.querySelector("#effective-date").value;const frequency=document.querySelector("#frequency").value;const values={type:Boolean(type),amount:amount>0,category:Boolean(category),date:Boolean(date),frequency:!recurring||Boolean(frequency)};document.querySelector("#type-error").classList.toggle("hidden",values.type);document.querySelector("#amount-error").classList.toggle("hidden",values.amount);document.querySelector("#category-error").classList.toggle("hidden",values.category);document.querySelector("#date-error").classList.toggle("hidden",values.date);document.querySelector("#frequency-error").classList.toggle("hidden",values.frequency);const valid=Object.values(values).every(Boolean);document.querySelector("#form-errors").classList.toggle("hidden",valid);if(!valid){document.querySelector("#form-errors").focus();setTimeout(()=>document.querySelector(!values.type?'input[name="entryType"]':!values.amount?'#amount':!values.category?'#category-trigger':!values.date?(recurring?'#start-date':'#effective-date'):'#frequency').focus(),0)}return valid}
     form.addEventListener("submit",event=>{event.preventDefault();if(!validateForm())return;const save=document.querySelector("#save-entry");save.disabled=true;save.textContent="Đang lưu…";setTimeout(()=>{save.disabled=false;save.textContent=editMode?"Lưu thay đổi":"Lưu bản ghi";dirty=false;current=records.find(record=>record.category===document.querySelector("#category").value)||records[0];showDetail(current.id);showToast(editMode?"Đã lưu thay đổi mô phỏng.":"Đã lưu bản ghi mô phỏng.")},450)});
     document.querySelectorAll("[data-leave]").forEach(button=>button.addEventListener("click",event=>{if(dirty)openDialog("#unsaved-dialog",event.currentTarget);else go("catalog")}));document.querySelector("#discard-entry").addEventListener("click",()=>{dirty=false;closeDialog(document.querySelector("#unsaved-dialog"));go("catalog")});
-    function showDetail(id){current=records.find(record=>record.id===id)||records[0];document.querySelector("#detail-type").textContent=current.type==="income"?"Thu nhập":"Chi phí";document.querySelector("#detail-type").className=`status ${current.type==='income'?'ok':'info'}`;document.querySelector("#detail-amount").className="detail-amount "+(current.type==='income'?'amount-in':'amount-out');document.querySelector("#detail-amount").textContent=`${current.type==='income'?'+':'−'} ${current.display}`;document.querySelector("#detail-heading").textContent=current.category;document.querySelector("#detail-heading").className=current.type==='income'?'cat-in':'cat-out';const cadence=document.querySelector("#detail-cadence");cadence.className=`cadence ${current.timing==='once'?'once':''}`;cadence.textContent=current.timing==="once"?`Một lần ngày ${current.date}`:`Định kỳ ${current.cadence.toLocaleLowerCase('vi')} từ ${current.date}`;document.querySelector("#detail-facts").innerHTML=`<div class="fact"><span>Danh mục</span><strong>${current.category}</strong></div><div class="fact"><span>Liên kết</span><strong>${current.link}</strong></div><div class="fact"><span>Ngày</span><strong>${current.date}</strong></div><div class="fact"><span>Ghi chú</span><strong>${current.notes||'Không có'}</strong></div>`;document.querySelector("#detail-trace").innerHTML=current.usd?'<strong>Dấu vết quy đổi</strong><p>150 USD × 25.100 = 3.765.000 VND</p><span class="helper">Tỷ giá người dùng nhập ngày 12/09/2026.</span>':'<strong>Nguồn và quy đổi</strong><p>Dữ liệu nhập thủ công. Giá trị báo cáo bằng VND.</p>';document.querySelector("#detail-link").classList.toggle("hidden",current.link==="Không liên kết");go("detail")}
+    function showDetail(id){current=records.find(record=>record.id===id)||records[0];document.querySelector("#detail-type").textContent=current.type==="income"?"Thu nhập":"Chi phí";document.querySelector("#detail-type").className=`status ${current.type==='income'?'ok':'info'}`;document.querySelector("#detail-amount").textContent=`${current.type==='income'?'+':'−'} ${current.display}`;document.querySelector("#detail-heading").textContent=current.category;const cadence=document.querySelector("#detail-cadence");cadence.className=`cadence ${current.timing==='once'?'once':''}`;cadence.textContent=current.timing==="once"?`Một lần ngày ${current.date}`:`Định kỳ ${current.cadence.toLocaleLowerCase('vi')} từ ${current.date}`;document.querySelector("#detail-facts").innerHTML=`<div class="fact"><span>Danh mục</span><strong>${current.category}</strong></div><div class="fact"><span>Liên kết</span><strong>${current.link}</strong></div><div class="fact"><span>Ngày</span><strong>${current.date}</strong></div><div class="fact"><span>Ghi chú</span><strong>${current.notes||'Không có'}</strong></div>`;document.querySelector("#detail-trace").innerHTML=current.usd?'<strong>Dấu vết quy đổi</strong><p>150 USD × 25.100 = 3.765.000 VND</p><span class="helper">Tỷ giá người dùng nhập ngày 12/09/2026.</span>':'<strong>Nguồn và quy đổi</strong><p>Dữ liệu nhập thủ công. Giá trị báo cáo bằng VND.</p>';document.querySelector("#detail-link").classList.toggle("hidden",current.link==="Không liên kết");go("detail")}
     document.querySelector("#edit-entry").addEventListener("click",()=>{resetForm(current.type,true);document.querySelector("#amount").value=String(current.usd?150:current.amount);document.querySelector("#currency").value=current.usd?"USD":"VND";document.querySelector("#category").value=current.category;document.querySelector("#category-trigger").textContent=current.category;form.elements.timing.value=current.timing;document.querySelector("#effective-date").value="2026-09-15";if(current.timing==="recurring"){document.querySelector("#frequency").value=current.cadence.includes("tháng")?"monthly":current.cadence.includes("quý")?"quarterly":"yearly";document.querySelector("#start-date").value="2026-09-01"}document.querySelector("#notes").value=current.notes;document.querySelector("#link-value").textContent=current.link==="Không liên kết"?"Chưa liên kết. Đây là trường tùy chọn.":`Đã liên kết: ${current.link}`;syncTiming();syncCurrency();dirty=false;go("form")});
     document.querySelector("#delete-trigger").addEventListener("click",event=>openDialog("#delete-dialog",event.currentTarget));document.querySelector("#confirm-delete").addEventListener("click",()=>{const button=document.querySelector("#confirm-delete");button.disabled=true;button.textContent="Đang xóa…";setTimeout(()=>{button.disabled=false;button.textContent="Xóa bản ghi";closeDialog(document.querySelector("#delete-dialog"));go("catalog");showToast("Đã xóa trong phiên mô phỏng. Hoàn tác")},350)});document.querySelector("#detail-link").addEventListener("click",()=>showToast("Bản ghi liên kết nằm ngoài phạm vi issue #69."));
     const statePanels={loading:'<span class="status info">Đang tải danh mục</span><p>Skeleton giữ nguyên không gian để giao diện không nhảy.</p>',empty:'<span class="status info">Chưa có dòng tiền</span><p>Danh mục vẫn hiện hữu. Dùng Thêm để ghi nhận thu nhập hoặc chi phí đầu tiên.</p><button class="tonal" type="button" data-state-action="add">Thêm bản ghi</button>',filtered:'<span class="status info">Không có kết quả phù hợp</span><p>Tháng, từ khóa và bộ lọc đang được giữ.</p><button class="tonal" type="button" data-state-action="catalog">Xóa bộ lọc</button>',partial:'<span class="status warn">Thiếu bản ghi liên kết</span><p>Khoản chi vẫn đọc được. Liên kết không khả dụng không làm mất số tiền, ngày hoặc ghi chú.</p><button class="tonal" type="button" data-state-action="catalog">Về danh mục</button>',request:'<span class="status bad">Chưa tải được danh mục</span><p>Ngữ cảnh tháng và bộ lọc được giữ. Không có dữ liệu nào bị thay đổi.</p><button class="tonal" type="button" data-state-action="catalog">Thử lại</button>',success:'<span class="status ok">Đã lưu bản ghi</span><p>Số tiền, cadence và liên kết mô phỏng đã được ghi nhận.</p><button class="tonal" type="button" data-state-action="detail">Xem chi tiết</button>',unavailable:'<span class="status bad">Không thể mở mục này</span><p>Không cung cấp thông tin về sự tồn tại, tài khoản hoặc quyền truy cập.</p><button class="tonal" type="button" data-state-action="catalog">Quay lại danh mục</button>'};

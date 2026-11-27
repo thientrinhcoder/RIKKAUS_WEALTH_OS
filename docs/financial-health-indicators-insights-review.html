@@ -3,27 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0A2240">
+  <meta name="theme-color" content="#F7F5EF">
   <title>Rikkaus Wealth OS | Financial-health indicators review</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F6F4EF; --surface:#FFFFFF; --surface-subtle:#F1EEE7;
-      --ink:#121A26; --ink-secondary:#5A6472; --border:#DDD8CD; --rule:#121A26; --control:#8C909A;
-      --navy:#0A2240; --primary:#0F2E57; --primary-pressed:#0A2240;
-      --primary-container:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D;
-      --warning:#8A5A00; --error:#A6192E; --info:#1F4E8C; --focus:#1F4E8C;
-      --scrim:rgba(10,34,64,.62); --font:"Inter","Segoe UI",system-ui,sans-serif;
-      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
       --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
-      --s8:2rem; --s12:3rem; --s16:4.5rem;
-      --r-input:2px; --r-card:2px; --r-sheet:4px;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
       --line:1px solid var(--border); --control-line:1px solid var(--control);
-      --raised:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --modal:0 24px 48px rgba(10,34,64,.28);
-      --motion:180ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth}
     body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
@@ -204,199 +201,11 @@
       *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
       html{scroll-behavior:auto}
     }
-
-    /* ===== Private banking layer (đồng bộ #36, #51, #57, #66, #69, #72, #90) ===== */
-    body{font:400 .9375rem/1.6 var(--font);-webkit-font-smoothing:antialiased}
-    button{border-color:var(--primary);color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
-    button:hover{transform:none;background:var(--primary-container)}button:active{transform:none}
-    button:disabled{border-color:var(--control);color:var(--ink-secondary);opacity:.5}
-    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus)}
-    .primary{color:#FFFFFF}.primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
-    .tonal{background:transparent;border-color:var(--primary)}.tonal:hover{background:var(--primary-container)}
-    .danger{background:var(--surface)}.danger:hover{background:#FBEDEF}
-    .text-btn{border-color:transparent;padding-inline:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}.text-btn:hover{background:transparent;color:var(--navy)}
-    .page{padding:0 var(--s4) var(--s4)}
-    .masthead,.hero{position:relative;isolation:isolate}
-    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
-    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:4rem;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
-    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
-    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
-    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
-    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
-    .hero{padding:var(--s16) 0 var(--s12);border-bottom:0;color:#FFFFFF}
-    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:var(--gold-light)}
-    h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em}
-    .hero-copy{gap:var(--s6)}
-    .hero .meta{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65;max-width:40rem}
-    .hero .kicker{color:var(--gold-light)}
-    .hero-note{padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);border-radius:0;background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font-size:.875rem}
-    .hero-note strong{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF}
-    h2{font:400 1.75rem/1.25 var(--display);letter-spacing:-.01em;color:var(--navy)}
-    h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
-    .kicker{color:var(--gold);font-size:.6875rem;letter-spacing:.18em}
-    main > section{padding:var(--s16) 0}
-    main > section:last-of-type{border-bottom:0}
-    .section-head{margin-bottom:var(--s8);padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
-    .section-head > div{display:grid;gap:var(--s2)}
-    .section-mark{display:flex;align-items:center;gap:var(--s3);font-size:.6875rem;letter-spacing:.18em}
-    .section-mark::after{content:"";width:2.5rem;height:1px;background:var(--gold)}
-    .card{padding:var(--s6);border-top:2px solid var(--navy)}
-    .callout{padding:var(--s6);border:var(--line);border-left:2px solid var(--gold)}
-    .status{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase}
-    .status::before{width:.5rem;height:.5rem}
-    .switches{gap:0}
-    .switches button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--ink-secondary);min-width:3.25rem}
-    .switches button:hover{color:var(--primary);background:var(--surface)}
-    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{position:relative;z-index:1;color:#FFFFFF}
-    .flow{gap:0;border:var(--line);background:var(--surface);counter-reset:step}
-    .flow div{counter-increment:step;border-right:var(--line);border-top:2px solid var(--navy);display:grid;gap:var(--s1);align-content:start}
-    .flow div:last-child{border-right:0}
-    .flow div::before{content:counter(step,decimal-leading-zero);font:400 1.5rem/1 var(--display);color:var(--gold)}
-    .tokens{gap:0;border:var(--line);background:var(--surface)}
-    .token{border:0;border-right:var(--line);border-bottom:var(--line);border-radius:0}
-    .swatch{border-radius:0}
-    table{font-size:.875rem}
-    caption{font:400 1.125rem/1.3 var(--display);color:var(--navy);padding-bottom:var(--s3)}
-    th{font-size:.6875rem;font-weight:600;letter-spacing:.12em;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);white-space:nowrap}
-    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
-    tbody tr:hover td{background:rgba(232,237,244,.45)}
-    .device-wrap{padding:var(--s8) var(--s4);border:var(--line);border-radius:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--surface-subtle)}
-    .device{border:1px solid #C9CDD4;border-radius:6px;box-shadow:var(--raised)}
-    .topbar{height:3.75rem;background:var(--navy);border-bottom:2px solid var(--gold-light)}
-    .wordmark{font:500 1rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
-    .avatar{width:40px;min-height:40px;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}.avatar:hover{background:rgba(255,255,255,.1)}
-    .nav-btn{background:transparent;border-top:2px solid transparent;font-size:.5625rem;letter-spacing:.08em}
-    .nav-btn:hover{background:var(--surface-subtle)}
-    .nav-btn.active{color:var(--navy);border-top-color:var(--navy)}
-    .ico{stroke-width:1.5}
-    .product-main{padding:var(--s6) var(--s4) 2rem}
-    .view h2{font-size:1.625rem}
-    .view .card,.view .callout{padding:var(--s4)}
-    .screen-head{padding-bottom:var(--s3);border-bottom:var(--line)}
-    input,select,textarea{border:0;border-bottom:1px solid var(--control);border-radius:0;box-shadow:inset 0 0 0 1px var(--border)}
-    input[type=checkbox],input[type=radio]{box-shadow:none;accent-color:var(--navy)}
-    .summary-box{border-left:2px solid var(--navy)}
-    .summary-box strong{color:var(--navy);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase}
-    .tag{border-radius:1px;font-size:.625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--surface)}
-    .tag.brand{color:var(--navy);border-color:#B9C4D4;background:var(--primary-container)}
-    .facts{gap:0}.fact{padding:var(--s2) 0;font-size:.875rem}
-    .fact dt{font-size:.75rem;letter-spacing:.04em}
-    .skeleton span{border-radius:0}
-    .period-bar{border-radius:0;border:0;border-top:2px solid var(--navy);border-bottom:var(--line);padding:var(--s3) 0;background:transparent}
-    .kpi-grid{gap:0;border-top:1px solid var(--rule)}
-    .kpi{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s2);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    button.kpi:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .kpi.lead{border-left:0;box-shadow:inset 3px 0 0 var(--navy)}
-    .kpi-name{color:var(--navy)}
-    .kpi-value{font:300 2rem/1.1 var(--display);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
-    .kpi-value .unit{font:500 .875rem/1 var(--font);margin-left:.35rem}
-    .kpi-value.na{font:600 1rem/1.3 var(--font)}
-    .na-note{border-radius:0;border:1px dashed var(--control);background:var(--surface)}
-    .group-title{font:400 1.125rem/1.3 var(--display);letter-spacing:0;text-transform:none;color:var(--navy);padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
-    .group{gap:0}
-    .insight{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s3);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    button.insight:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .insight.fired{border-left:0;box-shadow:inset 3px 0 0 #C98A16}
-    .insight.clear{border-left:0;box-shadow:inset 3px 0 0 var(--success)}
-    .insight.unknown{border-left:0;background:repeating-linear-gradient(180deg,var(--control) 0 4px,transparent 4px 8px) left/3px 100% no-repeat,var(--surface)}
-    .insight-title{color:var(--navy)}
-    .anatomy{gap:0;border-top:1px solid var(--rule)}
-    .anatomy-row{padding:var(--s3) 0;border-bottom:var(--line)}
-    .anatomy-row dt{font-size:.625rem;letter-spacing:.14em;color:var(--gold)}
-    .record-row{border:0;border-bottom:var(--line);border-radius:0;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .record-row:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .formula{border-radius:0;border-left:2px solid var(--navy)}
-    .check-row{border-bottom:var(--line);font-size:.875rem}
-    .review-list{gap:0;border-top:var(--line)}
-    .review-row{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s3) 0}
-    dialog{border-top:3px solid var(--navy);padding:var(--s8) var(--s6) var(--s6)}
-    dialog::backdrop{backdrop-filter:blur(2px)}
-    .dialog-actions{padding-top:var(--s4);border-top:var(--line)}
-    .toast{border-radius:2px;border-left:3px solid var(--gold-light)}
-    footer{border-top:1px solid var(--rule);font-size:.8125rem}
-    @container (min-width:44rem){
-      .kpi-grid{column-gap:var(--s4)}
-      .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
-      .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
-    }
-    @container (min-width:60rem){.nav-btn{font-size:.6875rem}}
-    @media (max-width:60rem){main > section{padding:var(--s12) 0}.mast-sub{display:none}}
-    /* ===== Visual chỉ số: đồng hồ, đường dự báo, thanh cơ cấu ===== */
-    .kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center}
-    .kv-l{display:grid;gap:var(--s1);min-width:0}
-    .gauge{display:block;height:auto;flex:none}.gauge.sm{width:7.5rem}.gauge.lg{width:100%;max-width:15rem;justify-self:center}
-    .bands{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s2)}
-    .bands li{display:grid;gap:1px;justify-items:center;text-align:center;margin:0;padding:var(--s2) var(--s1);background:var(--surface-subtle);font-size:.6875rem;font-weight:600;color:var(--ink-secondary)}
-    .bands li span{font-weight:400;font-variant-numeric:tabular-nums}
-    .bands li i{width:.5rem;height:.5rem;border-radius:50%}
-    .bands li.on.ok{background:#E3F1E8;color:#14532D;box-shadow:inset 0 0 0 1px #9FD0B1}
-    .bands li.on.attn{background:#FBEFD9;color:#7A4E00;box-shadow:inset 0 0 0 1px #E8C98A}
-    .bands li.on.bad{background:#F8E1E4;color:#7F1424;box-shadow:inset 0 0 0 1px #E3A3AD}
-    .bands li.on.info{background:var(--primary-container);color:var(--navy);box-shadow:inset 0 0 0 1px #B9C4D4}
-    .vx{display:block;width:100%}.vx svg{display:block;width:100%;height:auto}
-    .pbar{display:flex;height:12px;gap:2px}.pbar span{display:block;height:100%}
-    .pbar .p-on{background:var(--navy)}.pbar .p-off{background:#E4E8EE}
-    .plegend{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);font-size:.6875rem;color:var(--ink-secondary)}
-    .plegend i{display:inline-block;width:.625rem;height:.625rem;margin-right:.3rem;vertical-align:-1px}
-    .plegend b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
-    .viz-lg{display:grid;gap:var(--s3)}
-    .viz-lg .lg-row{display:grid;gap:var(--s4);align-items:center}
-    @container (min-width:44rem){.viz-lg .lg-row{grid-template-columns:15rem minmax(0,1fr)}}
-
-    /* ===== Biểu đồ kiểu báo cáo quản lý tài sản: so sánh, phân bổ 100 đồng, cơ cấu chi tiêu ===== */
-    .cmp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px var(--s2);align-items:center;font-size:.75rem}
-    .cmp > .c-l{color:var(--ink-secondary);white-space:nowrap}
-    .cmp > .c-v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
-    .c-bar{display:block;height:14px;background:transparent}
-    .c-bar span{display:block;height:100%}
-    .c-you.ok{background:#15803D}.c-you.attn{background:#C98A16}.c-you.bad{background:#B3263A}.c-you.info{background:var(--navy)}
-    .c-ref{background:#FFFFFF;border:1.5px dashed #8C909A}
-    .c-ref.soft{border-color:#9FD0B1;background:#F2F9F4}
-    .say{font-size:.8125rem;line-height:1.5;color:var(--ink)}
-    .say b{font-weight:600}
-    .say .ok{color:#15803D}.say .attn{color:#8A5A00}.say .bad{color:#A6192E}
-    .split100{display:flex;height:16px;gap:2px}
-    .split100 span{display:block;height:100%}
-    .split100 .s-debt.ok{background:#15803D}.split100 .s-debt.attn{background:#C98A16}.split100 .s-debt.bad{background:#B3263A}
-    .split100 .s-rest{background:#E4E8EE}
-    .s100-legend{display:flex;justify-content:space-between;gap:var(--s2);font-size:.6875rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
-    .s100-legend b{color:var(--ink);font-weight:600}
-    .mix{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3);align-items:center}
-    .mix-donut{display:block;flex:none}
-    .mix-legend{list-style:none;margin:0;padding:0;display:grid;border-top:1px solid var(--border)}
-    .mix-legend li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 8px;align-items:center;margin:0;padding:6px 0;border-bottom:1px solid var(--border);font-size:.75rem;color:var(--ink-secondary)}
-    .mix-legend li i{width:10px;height:10px}
-    .mix-legend li b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
-    .mix-legend li small{grid-column:2 / -1;font-size:.6875rem;text-align:right;margin-top:-4px;font-variant-numeric:tabular-nums}
-    .kv .mix-donut{width:4.5rem;height:4.5rem}
-
-    /* ===== Thẻ chỉ số tách khối rõ ràng ===== */
-    .kpi-grid{gap:var(--s4);border-top:0;counter-reset:kpi}
-    .kpi{counter-increment:kpi;padding:0;gap:0;border:1px solid var(--border);border-top:3px solid var(--control);background:var(--surface);box-shadow:0 1px 2px rgba(10,34,64,.05);transition:box-shadow var(--motion) var(--ease),border-color var(--motion) var(--ease),transform var(--motion) var(--ease);overflow:hidden}
-    .kpi.lead{box-shadow:0 1px 2px rgba(10,34,64,.05)}
-    .kpi:has(.status.ok){border-top-color:#15803D}
-    .kpi:has(.status.warn){border-top-color:#C98A16}
-    .kpi:has(.status.bad){border-top-color:#B3263A}
-    .kpi:has(.status.info){border-top-color:var(--navy)}
-    .kpi:has(.status.none){border-top-color:var(--control);border-top-style:dashed}
-    button.kpi:hover,button.kpi:focus-visible{background:var(--surface);border-color:#B9C4D4;box-shadow:0 2px 4px rgba(10,34,64,.06),0 12px 28px rgba(10,34,64,.12);transform:translateY(-2px)}
-    .kpi > *{margin-inline:var(--s4)}
-    .kpi-head{margin:0;padding:var(--s3) var(--s4);background:var(--surface-subtle);border-bottom:1px solid var(--border);align-items:center}
-    .kpi-head .kpi-name::before{content:counter(kpi,decimal-leading-zero);display:inline-block;margin-right:.6rem;font:400 .875rem/1 var(--display);color:var(--gold)}
-    .kpi:has(.status.ok) .kpi-head{background:#F2F9F4}
-    .kpi:has(.status.warn) .kpi-head{background:#FDF7EC}
-    .kpi:has(.status.bad) .kpi-head{background:#FCF1F3}
-    .kpi:has(.status.info) .kpi-head{background:var(--primary-container)}
-    .kpi > .kpi-value,.kpi > .kv,.kpi > .viz-lg,.kpi > .na-note{margin-top:var(--s4)}
-    .kpi > .kpi-sub{margin-top:var(--s3)}
-    .kpi > .tag{margin:var(--s3) var(--s4) var(--s4);justify-self:start}
-    .kpi .status{padding:2px 8px;background:var(--surface);border:1px solid var(--border)}
   </style>
 </head>
 <body>
 <a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
 <div class="page">
-  <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #81 · Sức khỏe tài chính</span></div>
   <header class="hero">
     <div class="hero-copy">
       <p class="kicker">Rikkaus Wealth OS · MVP 1B · Issue #81</p>
@@ -452,14 +261,14 @@
       </div>
 
       <div class="tokens" aria-label="Token màu được dùng">
-        <div class="token"><span class="swatch" style="background:#F6F4EF;border:1px solid #DDD8CD"></span><p class="kicker">canvas</p><p class="meta fig">#F6F4EF</p></div>
-        <div class="token"><span class="swatch" style="background:#FFFFFF;border:1px solid #DDD8CD"></span><p class="kicker">surface</p><p class="meta fig">#FFFFFF</p></div>
-        <div class="token"><span class="swatch" style="background:#0F2E57"></span><p class="kicker">primary</p><p class="meta fig">#0F2E57</p></div>
-        <div class="token"><span class="swatch" style="background:#15803D"></span><p class="kicker">success</p><p class="meta fig">#15803D</p></div>
+        <div class="token"><span class="swatch" style="background:#F7F5EF;border:1px solid #D7D2C7"></span><p class="kicker">canvas</p><p class="meta fig">#F7F5EF</p></div>
+        <div class="token"><span class="swatch" style="background:#FFFFFF;border:1px solid #D7D2C7"></span><p class="kicker">surface</p><p class="meta fig">#FFFFFF</p></div>
+        <div class="token"><span class="swatch" style="background:#0F5C5A"></span><p class="kicker">primary</p><p class="meta fig">#0F5C5A</p></div>
+        <div class="token"><span class="swatch" style="background:#1E6A45"></span><p class="kicker">success</p><p class="meta fig">#1E6A45</p></div>
         <div class="token"><span class="swatch" style="background:#8A5A00"></span><p class="kicker">warning</p><p class="meta fig">#8A5A00</p></div>
-        <div class="token"><span class="swatch" style="background:#A6192E"></span><p class="kicker">error</p><p class="meta fig">#A6192E</p></div>
-        <div class="token"><span class="swatch" style="background:#1F4E8C"></span><p class="kicker">info</p><p class="meta fig">#1F4E8C</p></div>
-        <div class="token"><span class="swatch" style="background:#8A6A3F"></span><p class="kicker">heritageGold</p><p class="meta fig">#8A6A3F</p></div>
+        <div class="token"><span class="swatch" style="background:#B42318"></span><p class="kicker">error</p><p class="meta fig">#B42318</p></div>
+        <div class="token"><span class="swatch" style="background:#2458A6"></span><p class="kicker">info</p><p class="meta fig">#2458A6</p></div>
+        <div class="token"><span class="swatch" style="background:#A87428"></span><p class="kicker">heritageGold</p><p class="meta fig">#A87428</p></div>
       </div>
 
       <div class="grid two" style="margin-top:var(--s6)">
@@ -1385,130 +1194,11 @@
     return '<div class="rail" role="img" aria-label="' + esc(i.name + ": " + i.statusText) + '">' + track + scale + "</div>";
   }
 
-
-  // ---------- Visual chỉ số (đồng bộ #36, #66, #90): đồng hồ bán nguyệt, đường dự báo, thanh cơ cấu ----------
-  var G_TINT = {ok:"#CFE9D8", attn:"#F5DDA9", bad:"#F1C3CA", info:"#DCE3EE"}, G_SOLID = {ok:"#15803D", attn:"#C98A16", bad:"#B3263A", info:"#0F2E57"}, G_TEXT = {ok:"#14532D", attn:"#7A4E00", bad:"#7F1424", info:"#0A2240"};
-  function gTone(t){ return t === "warn" ? "attn" : t; }
-  function gaugeSvg(v, max, bands, valueText, word, tone, size, aria){
-    var cx = 80, cy = 78, R = 58, sm = size === "sm";
-    function pt(p, r){ var a = Math.PI * (1 - Math.max(0, Math.min(100, p)) / 100); return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; }
-    function arc(p1, p2){ var a = pt(p1, R), b = pt(p2, R); return "M" + a[0].toFixed(2) + " " + a[1].toFixed(2) + " A" + R + " " + R + " 0 " + ((p2 - p1) > 50 ? 1 : 0) + " 1 " + b[0].toFixed(2) + " " + b[1].toFixed(2); }
-    var pc = function(x){ return x / max * 100; }, from = 0, g = "";
-    bands.forEach(function(b, i){ var a = pc(from) + (i ? .6 : 0), e = pc(Math.min(b.to, max)); if(e > a){ g += '<path d="' + arc(a, e) + '" fill="none" stroke="' + G_TINT[b.tone] + '" stroke-width="14"/>'; } from = b.to; });
-    var pv = Math.max(.01, Math.min(100, pc(v)));
-    g += '<path d="' + arc(0, pv) + '" fill="none" stroke="' + G_SOLID[tone] + '" stroke-width="14"/>';
-    var k = pt(pv, R); g += '<circle cx="' + k[0].toFixed(2) + '" cy="' + k[1].toFixed(2) + '" r="8.5" fill="#FFFFFF" stroke="' + G_SOLID[tone] + '" stroke-width="3.5"/>';
-    if(!sm){
-      bands.slice(0, -1).forEach(function(b){ var t = pt(pc(b.to), R + 15); g += '<text x="' + t[0].toFixed(1) + '" y="' + t[1].toFixed(1) + '" text-anchor="middle" font-size="8.5" fill="#5A6472">' + esc(b.tick) + '</text>'; });
-      g += '<text x="' + (cx - R) + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="8.5" fill="#5A6472">0</text><text x="' + (cx + R) + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="8.5" fill="#5A6472">' + esc(bands[bands.length - 1].endTick) + '</text>';
-    }
-    g += '<text x="' + cx + '" y="' + (cy - 10) + '" text-anchor="middle" font-size="' + (sm ? 26 : 24) + '" font-weight="300" fill="' + G_SOLID[tone] + '" font-family="Source Serif 4,Georgia,serif">' + esc(valueText) + '</text>';
-    g += '<text x="' + cx + '" y="' + (cy + 7) + '" text-anchor="middle" font-size="' + (sm ? 10 : 8.5) + '" font-weight="600" letter-spacing="1.1" fill="' + G_TEXT[tone] + '">' + esc(word.toUpperCase()) + '</text>';
-    return '<svg class="gauge ' + (sm ? "sm" : "lg") + '" viewBox="0 ' + (sm ? 10 : 0) + ' 160 ' + (sm ? 80 : 100) + '" role="img" aria-label="' + esc(aria) + '" font-family="Inter,system-ui,sans-serif">' + g + '</svg>';
-  }
-  function bandList(i){
-    return '<ul class="bands">' + i.bands.map(function(b, k){ var t = gTone(b.tone); return '<li class="' + (i.available && k === i.bandIndex ? "on " + t : "") + '"><i style="background:' + G_SOLID[t] + '"></i>' + esc(b.short || TONE_TEXT[b.tone]) + '<span>' + esc(b.short ? b.label.split(" · ")[1] : b.label) + '</span></li>'; }).join("") + '</ul>';
-  }
-  var GAUGE_CFG = {
-    reserve: function(i){ return { cuts:[3, 6], ticks:["3", "6"], max: Math.max(12, Math.ceil(i.raw * 1.1)), v: i.raw, text: i.display + " th", end: function(m){ return m + " th"; } }; },
-    debt:    function(i){ var mx = Math.max(100, Math.ceil(i.raw * 110 / 10) * 10); return { cuts:[25, 35], ticks:["25%", "35%"], max: mx, v: i.raw * 100, text: i.display + "%", end: function(){ return mx + "%"; } }; },
-    ess:     function(i){ return { cuts:[70, 80], ticks:["70%", "80%"], max: 100, v: i.raw * 100, text: i.display + "%", end: function(){ return "100%"; } }; }
-  };
-  function gaugeOf(i, size){
-    var c = GAUGE_CFG[i.id](i), tone = gTone(i.tone), word = i.chipText;
-    var bands = i.bands.map(function(b, k){ return { to: k < 2 ? c.cuts[k] : c.max, tone: gTone(b.tone), tick: c.ticks[k] || "", endTick: c.end(c.max) }; });
-    return gaugeSvg(c.v, c.max, bands, c.text, word, tone, size, i.name + ": " + i.display + " " + i.unit + ", " + i.statusText);
-  }
-  function cashChart(lg){
-    var pts = D.balances, ess = S.essMonthly, w = 300, h = lg ? 160 : 96, top = 16, bot = 18;
-    var vals = pts.map(function(p){ return p.bal; }).concat([0, ess]);
-    var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals), pad = (mx - mn) * .12 || 1; mx += pad; mn -= pad;
-    var y = function(v){ return top + (mx - v) / (mx - mn) * (h - top - bot); }, x = function(k){ return 34 + k * (w - 68) / (pts.length - 1); };
-    var g = '<rect x="0" y="' + y(mx) + '" width="' + w + '" height="' + (y(ess) - y(mx)) + '" fill="#E3F1E8"/>' +
-      '<rect x="0" y="' + y(ess) + '" width="' + w + '" height="' + (y(0) - y(ess)) + '" fill="#FBEFD9"/>' +
-      '<rect x="0" y="' + y(0) + '" width="' + w + '" height="' + (y(mn) - y(0)) + '" fill="#F8E1E4"/>';
-    if(lg){ g += '<text x="' + (w - 4) + '" y="' + (y(mx) + 10) + '" text-anchor="end" font-size="8.5" fill="#14532D">Từ 1 tháng chi phí thiết yếu</text><text x="' + (w - 4) + '" y="' + (y(0) - 3) + '" text-anchor="end" font-size="8.5" fill="#7A4E00">0 – 1 tháng chi phí</text><text x="' + (w - 4) + '" y="' + (y(mn) - 3) + '" text-anchor="end" font-size="8.5" fill="#7F1424">Dưới 0 ₫</text>'; }
-    g += '<path d="' + pts.map(function(p, k){ return (k ? "L" : "M") + x(k) + " " + y(p.bal); }).join(" ") + '" fill="none" stroke="#0F2E57" stroke-width="2"/>';
-    pts.forEach(function(p, k){
-      var neg = p.bal < 0, low = p.m === D.minMonth;
-      g += '<circle cx="' + x(k) + '" cy="' + y(p.bal) + '" r="' + (low ? 5 : 3.5) + '" fill="' + (low ? "#FFFFFF" : (neg ? "#B3263A" : "#0F2E57")) + '" stroke="' + (neg ? "#B3263A" : "#0F2E57") + '" stroke-width="' + (low ? 2.5 : 0) + '"/>' +
-        '<text x="' + x(k) + '" y="' + (y(p.bal) - 8) + '" text-anchor="middle" font-size="9.5" font-weight="600" fill="' + (neg ? "#A6192E" : "#121A26") + '">' + shortM(p.bal) + '</text>' +
-        '<text x="' + x(k) + '" y="' + (h - 4) + '" text-anchor="middle" font-size="9" fill="#5A6472">' + esc(p.m) + '</text>';
-    });
-    return '<span class="vx" role="img" aria-label="' + esc("Số dư tiền dự báo: " + pts.map(function(p){ return p.m + " " + money(p.bal); }).join(", ") + ". Thấp nhất " + D.minMonth) + '"><svg viewBox="0 0 ' + w + ' ' + h + '" font-family="Inter,system-ui,sans-serif">' + g + '</svg></span>';
-  }
-  function shortM(v){ var a = Math.abs(v), sg = v < 0 ? "−" : ""; return a >= 1e9 ? sg + (a / 1e9).toFixed(2).replace(".", ",").replace(/,?0+$/, "") + " tỷ" : sg + (a >= 1e8 ? Math.round(a / 1e6) : dec(a / 1e6)) + " tr"; }
-  function passiveBar(i){
-    var p = i.raw * 100;
-    return '<span class="pbar" role="img" aria-label="' + esc("Thu nhập thụ động " + i.display + "% tổng thu nhập") + '"><span class="p-on" style="flex:' + Math.max(p, .5) + '"></span><span class="p-off" style="flex:' + (100 - p) + '"></span></span>' +
-      '<span class="plegend"><span><i style="background:#0A2240"></i>Thụ động <b>' + esc(i.display) + '%</b></span><span><i style="background:#E4E8EE"></i>Từ công việc và nguồn khác <b>' + dec(100 - p) + '%</b></span></span>';
-  }
-
-  // ---------- Ba chỉ số an toàn: so sánh mức khuyến nghị, phân bổ 100 đồng thu nhập, cơ cấu chi tiêu ----------
-  function cmpRows(rows, aria){
-    var mx = Math.max.apply(null, rows.map(function(r){ return r.v; })) || 1;
-    return '<span class="cmp" role="img" aria-label="' + esc(aria) + '">' + rows.map(function(r){
-      return '<span class="c-l">' + esc(r.label) + '</span><span class="c-bar"><span class="' + r.cls + '" style="width:' + Math.max(1, Math.min(100, r.v / mx * 100)) + '%"></span></span><span class="c-v">' + esc(r.text) + '</span>';
-    }).join("") + '</span>';
-  }
-  function reserveViz(i, lg){
-    var t = gTone(i.tone), target = 6 * S.essMonthly, times = i.raw / 6;
-    var say = i.raw >= 6
-      ? 'Quỹ thanh khoản đủ trang trải <b class="ok">' + i.display + ' tháng</b> chi phí thiết yếu, gấp <b class="ok">' + dec(times) + ' lần</b> mức khuyến nghị 6 tháng.'
-      : 'Quỹ thanh khoản đủ trang trải <b class="' + t + '">' + i.display + ' tháng</b>; cần thêm khoảng <b class="' + t + '">' + shortM(target - D.liquid) + '</b> để đạt mức khuyến nghị 6 tháng.';
-    var bars = cmpRows([
-      { label: "Quỹ hiện có", v: D.liquid, cls: "c-you " + t, text: shortM(D.liquid) },
-      { label: "Khuyến nghị 6 tháng", v: target, cls: "c-ref soft", text: shortM(target) },
-      { label: "Tối thiểu 3 tháng", v: 3 * S.essMonthly, cls: "c-ref", text: shortM(3 * S.essMonthly) }
-    ], "Quỹ hiện có " + money(D.liquid) + ", khuyến nghị 6 tháng " + money(target) + ", tối thiểu 3 tháng " + money(3 * S.essMonthly));
-    return '<div class="viz-lg">' + bars + '<p class="say">' + say + '</p>' + (lg ? '<p class="helper">Chi phí thiết yếu định kỳ: ' + money(S.essMonthly) + ' mỗi tháng.</p>' + bandList(i) : '') + '</div>';
-  }
-  function debtViz(i, lg){
-    var t = gTone(i.tone), p = i.raw * 100, per = Math.round(p);
-    var bar = p <= 100
-      ? '<span class="split100" role="img" aria-label="' + esc("Cứ 100 đồng thu nhập có " + i.display + " đồng dùng trả nợ") + '"><span class="s-debt ' + t + '" style="flex:' + Math.max(p, .5) + '"></span><span class="s-rest" style="flex:' + (100 - p) + '"></span></span><span class="s100-legend"><span>Trả nợ <b>' + i.display + '%</b></span><span>Còn lại cho chi tiêu và tích luỹ <b>' + dec(100 - p) + '%</b></span></span>'
-      : '<span class="split100" role="img" aria-label="Khoản trả nợ vượt thu nhập trong kỳ"><span class="s-debt bad" style="flex:1"></span></span><span class="s100-legend"><span>Trả nợ vượt toàn bộ thu nhập kỳ</span><span><b>' + i.display + '%</b></span></span>';
-    var cmp = cmpRows([
-      { label: "Của bạn", v: p, cls: "c-you " + t, text: i.display + "%" },
-      { label: "Mức an toàn", v: 25, cls: "c-ref soft", text: "≤ 25%" },
-      { label: "Mức tối đa", v: 35, cls: "c-ref", text: "35%" }
-    ], "Gánh nặng trả nợ " + i.display + "%, mức an toàn 25%, mức tối đa 35%");
-    var say = 'Cứ 100 đồng thu nhập trong kỳ, <b class="' + t + '">' + per + ' đồng</b> dùng để trả nợ định kỳ (' + shortM(D.debtPay) + ' trên ' + shortM(D.incomeTotal) + ').';
-    return '<div class="viz-lg">' + bar + (lg ? cmp : '') + '<p class="say">' + say + '</p>' + (lg ? bandList(i) : '') + '</div>';
-  }
-  function mixDonut(pEss, t, size){
-    var r = 15.9155, col = G_SOLID[t];
-    return '<svg class="mix-donut" width="' + size + '" height="' + size + '" viewBox="0 0 42 42" role="img" aria-label="' + esc("Chi phí thiết yếu " + dec(pEss) + "%, có thể điều chỉnh " + dec(100 - pEss) + "%") + '">' +
-      '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="#C9D2DE" stroke-width="7"/>' +
-      '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="7" stroke-dasharray="' + Math.max(.01, pEss - (pEss < 100 ? .6 : 0)) + ' ' + (100 - pEss + (pEss < 100 ? .6 : 0)) + '" transform="rotate(-90 21 21)"/>' +
-      '<text x="21" y="23.5" text-anchor="middle" font-size="7.4" font-weight="300" fill="' + col + '" font-family="Source Serif 4,Georgia,serif">' + dec(pEss) + '%</text></svg>';
-  }
-  function essViz(i, lg){
-    var t = gTone(i.tone), p = i.raw * 100;
-    if(!lg){ return mixDonut(p, t, 72); }
-    var legend = '<ul class="mix-legend"><li><i style="background:' + G_SOLID[t] + '"></i>Thiết yếu<b>' + i.display + '%</b><small>' + money(D.essentialExp) + '</small></li><li><i style="background:#C9D2DE"></i>Có thể điều chỉnh<b>' + dec(100 - p) + '%</b><small>' + money(D.flexExp) + '</small></li></ul>';
-    var say = p > 70
-      ? 'Phần lớn chi tiêu là khoản khó cắt giảm; phần có thể điều chỉnh chỉ còn <b class="' + t + '">' + dec(100 - p) + '%</b>. Mức tham chiếu: thiết yếu tới 70%.'
-      : 'Chi phí thiết yếu ở mức tham chiếu (tới 70%), còn <b class="ok">' + dec(100 - p) + '%</b> có thể điều chỉnh khi cần.';
-    return '<div class="viz-lg"><div class="mix">' + mixDonut(p, t, 132) + legend + '</div><p class="say">' + say + '</p>' + bandList(i) + '</div>';
-  }
-
-  function visual(i, lg){
-    if(!i.available){ return ""; }
-    if(i.id === "reserve"){ return reserveViz(i, lg); }
-    if(i.id === "debt"){ return debtViz(i, lg); }
-    if(i.id === "ess"){ return essViz(i, lg); }
-    if(GAUGE_CFG[i.id]){ return lg ? '<div class="viz-lg"><div class="lg-row">' + gaugeOf(i, "lg") + bandList(i) + '</div></div>' : gaugeOf(i, "sm"); }
-    if(i.id === "minbal"){ return '<div class="viz-lg">' + cashChart(lg) + (lg ? bandList(i) : "") + '</div>'; }
-    if(i.id === "passive"){ return '<div class="viz-lg">' + passiveBar(i) + bandList(i) + '</div>'; }
-    return "";
-  }
-
   function kpiCard(i){
     var value = i.available
       ? '<p class="kpi-value fig">' + esc(i.display) + '<span class="unit">' + esc(i.unit) + "</span></p>"
       : '<p class="kpi-value na">Không khả dụng</p>';
-    var body = (i.available && i.id === "ess") ? '<div class="kv"><div class="kv-l">' + value + '</div>' + visual(i, false) + '</div>' : value + visual(i, false);
+    var body = value + rail(i);
     if(i.available){
       body += '<p class="kpi-sub">' + esc(i.sub) + "</p>";
       if(i.partialNote){ body += '<div class="na-note"><strong>Một phần</strong><span>' + esc(i.partialNote) + "</span></div>"; }
@@ -1539,7 +1229,7 @@
     html += i.available
       ? '<p class="kpi-value fig">' + esc(i.display) + '<span class="unit">' + esc(i.unit) + "</span></p>"
       : '<p class="kpi-value na">Không khả dụng</p>';
-    html += '<span class="status ' + i.tone + '">' + esc(i.statusText) + "</span>" + visual(i, true) + "</div>";
+    html += '<span class="status ' + i.tone + '">' + esc(i.statusText) + "</span>" + rail(i) + "</div>";
 
     if(i.available){
       html += '<div class="card"><h3>Phép tính</h3><p class="formula">' + esc(i.formula) + "</p>";

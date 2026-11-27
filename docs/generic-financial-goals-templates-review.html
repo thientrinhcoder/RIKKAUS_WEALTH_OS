@@ -3,27 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0A2240">
+  <meta name="theme-color" content="#F7F5EF">
   <title>Rikkaus Wealth OS | Generic financial goals &amp; templates review</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F6F4EF; --surface:#FFFFFF; --surface-subtle:#F1EEE7;
-      --ink:#121A26; --ink-secondary:#5A6472; --border:#DDD8CD; --rule:#121A26; --control:#8C909A;
-      --navy:#0A2240; --primary:#0F2E57; --primary-pressed:#0A2240;
-      --primary-container:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D;
-      --warning:#8A5A00; --error:#A6192E; --info:#1F4E8C; --focus:#1F4E8C;
-      --scrim:rgba(10,34,64,.62); --font:"Inter","Segoe UI",system-ui,sans-serif;
-      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
       --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
-      --s8:2rem; --s12:3rem; --s16:4.5rem;
-      --r-input:2px; --r-card:2px; --r-sheet:4px;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
       --line:1px solid var(--border); --control-line:1px solid var(--control);
-      --raised:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --modal:0 24px 48px rgba(10,34,64,.28);
-      --motion:180ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth}
     body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
@@ -208,192 +205,12 @@
       *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
       button:hover,button:active{transform:none}
     }
-    /* ===== Private banking layer (đồng bộ #36, #51, #57, #66, #69, #72, #81, #90) ===== */
-    body{font:400 .9375rem/1.6 var(--font);-webkit-font-smoothing:antialiased}
-    button{border-color:var(--primary);color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
-    button:hover{transform:none;background:var(--primary-container)}button:active{transform:none}
-    button:disabled{border-color:var(--control);color:var(--ink-secondary);opacity:.5}
-    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus)}
-    .primary{color:#FFFFFF}.primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
-    .tonal{background:transparent;border-color:var(--primary)}.tonal:hover{background:var(--primary-container)}
-    .danger{background:var(--surface)}.danger:hover{background:#FBEDEF}
-    .text-btn{border-color:transparent;padding-inline:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}.text-btn:hover{background:transparent;color:var(--navy)}
-    .page{padding:0 var(--s4) var(--s4)}
-    .masthead,.hero{position:relative;isolation:isolate}
-    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
-    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:4rem;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
-    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
-    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
-    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
-    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
-    .hero{padding:var(--s16) 0 var(--s12);border-bottom:0;color:#FFFFFF}
-    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:var(--gold-light)}
-    h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em}
-    .hero-copy{gap:var(--s6)}
-    .hero .meta{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65;max-width:40rem}
-    .hero .kicker{color:var(--gold-light)}
-    .hero-note{padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);border-radius:0;background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font-size:.875rem}
-    .hero-note strong{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF}
-    h2{font:400 1.75rem/1.25 var(--display);letter-spacing:-.01em;color:var(--navy)}
-    h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
-    .kicker{color:var(--gold);font-size:.6875rem;letter-spacing:.18em}
-    main > section{padding:var(--s16) 0}
-    main > section:last-of-type{border-bottom:0}
-    .section-head{margin-bottom:var(--s8);padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
-    .section-head > div{display:grid;gap:var(--s2)}
-    .section-mark{display:flex;align-items:center;gap:var(--s3);font-size:.6875rem;letter-spacing:.18em}
-    .section-mark::after{content:"";width:2.5rem;height:1px;background:var(--gold)}
-    .card{padding:var(--s6);border-top:2px solid var(--navy)}
-    .callout{padding:var(--s6);border:var(--line);border-left:2px solid var(--gold)}
-    .status{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase}
-    .status::before{width:.5rem;height:.5rem}
-    .switches{gap:0}
-    .switches button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--ink-secondary);min-width:3.25rem}
-    .switches button:hover{color:var(--primary);background:var(--surface)}
-    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{position:relative;z-index:1;color:#FFFFFF}
-    .flow{gap:0;border:var(--line);background:var(--surface);counter-reset:step}
-    .flow div{counter-increment:step;border-right:var(--line);border-top:2px solid var(--navy);display:grid;gap:var(--s1);align-content:start}
-    .flow div:last-child{border-right:0}
-    .flow div::before{content:counter(step,decimal-leading-zero);font:400 1.5rem/1 var(--display);color:var(--gold)}
-    .tokens{gap:0;border:var(--line);background:var(--surface)}
-    .token{border:0;border-right:var(--line);border-bottom:var(--line);border-radius:0}
-    .swatch{border-radius:0}
-    table{font-size:.875rem}
-    caption{font:400 1.125rem/1.3 var(--display);color:var(--navy);padding-bottom:var(--s3)}
-    th{font-size:.6875rem;font-weight:600;letter-spacing:.12em;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);white-space:nowrap}
-    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
-    tbody tr:hover td{background:rgba(232,237,244,.45)}
-    .device-wrap{padding:var(--s8) var(--s4);border:var(--line);border-radius:0;background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--surface-subtle)}
-    .device{border:1px solid #C9CDD4;border-radius:6px;box-shadow:var(--raised)}
-    .topbar{height:3.75rem;background:var(--navy);border-bottom:2px solid var(--gold-light)}
-    .wordmark{font:500 1rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
-    .avatar{width:40px;min-height:40px;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}.avatar:hover{background:rgba(255,255,255,.1)}
-    .nav-btn{background:transparent;border-top:2px solid transparent;font-size:.5625rem;letter-spacing:.08em}
-    .nav-btn:hover{background:var(--surface-subtle)}
-    .nav-btn.active{color:var(--navy);border-top-color:var(--navy)}
-    .ico{stroke-width:1.5}
-    .product-main{padding:var(--s6) var(--s4) 2rem}
-    .view h2{font-size:1.625rem}
-    .view .card,.view .callout{padding:var(--s4)}
-    .screen-head{padding-bottom:var(--s3);border-bottom:var(--line)}
-    input,select,textarea{border:0;border-bottom:1px solid var(--control);border-radius:0;box-shadow:inset 0 0 0 1px var(--border)}
-    input[type=checkbox],input[type=radio]{box-shadow:none;accent-color:var(--navy)}
-    .summary-box{border-left:2px solid var(--navy)}
-    .summary-box strong{color:var(--navy);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase}
-    .tag{border-radius:1px;font-size:.625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--surface)}
-    .tag.brand{color:var(--navy);border-color:#B9C4D4;background:var(--primary-container)}
-    .facts{gap:0}.fact{padding:var(--s2) 0;font-size:.875rem}
-    .fact dt{font-size:.75rem;letter-spacing:.04em}
-    .skeleton span{border-radius:0}
-    .period-bar{border-radius:0;border:0;border-top:2px solid var(--navy);border-bottom:var(--line);padding:var(--s3) 0;background:transparent}
-    .kpi-grid{gap:0;border-top:1px solid var(--rule)}
-    .kpi{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s2);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    button.kpi:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .kpi.lead{border-left:0;box-shadow:inset 3px 0 0 var(--navy)}
-    .kpi-name{color:var(--navy)}
-    .kpi-value{font:300 2rem/1.1 var(--display);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
-    .kpi-value .unit{font:500 .875rem/1 var(--font);margin-left:.35rem}
-    .kpi-value.na{font:600 1rem/1.3 var(--font)}
-    .na-note{border-radius:0;border:1px dashed var(--control);background:var(--surface)}
-    .group-title{font:400 1.125rem/1.3 var(--display);letter-spacing:0;text-transform:none;color:var(--navy);padding-bottom:var(--s2);border-bottom:1px solid var(--rule)}
-    .group{gap:0}
-    .insight{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s3);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    button.insight:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .insight.fired{border-left:0;box-shadow:inset 3px 0 0 #C98A16}
-    .insight.clear{border-left:0;box-shadow:inset 3px 0 0 var(--success)}
-    .insight.unknown{border-left:0;background:repeating-linear-gradient(180deg,var(--control) 0 4px,transparent 4px 8px) left/3px 100% no-repeat,var(--surface)}
-    .insight-title{color:var(--navy)}
-    .anatomy{gap:0;border-top:1px solid var(--rule)}
-    .anatomy-row{padding:var(--s3) 0;border-bottom:var(--line)}
-    .anatomy-row dt{font-size:.625rem;letter-spacing:.14em;color:var(--gold)}
-    .record-row{border:0;border-bottom:var(--line);border-radius:0;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .record-row:hover{background:var(--surface-subtle);border-color:var(--border)}
-    .formula{border-radius:0;border-left:2px solid var(--navy)}
-    .check-row{border-bottom:var(--line);font-size:.875rem}
-    .review-list{gap:0;border-top:var(--line)}
-    .review-row{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s3) 0}
-    dialog{border-top:3px solid var(--navy);padding:var(--s8) var(--s6) var(--s6)}
-    dialog::backdrop{backdrop-filter:blur(2px)}
-    .dialog-actions{padding-top:var(--s4);border-top:var(--line)}
-    .toast{border-radius:2px;border-left:3px solid var(--gold-light)}
-    footer{border-top:1px solid var(--rule);font-size:.8125rem}
-    @container (min-width:44rem){
-      .kpi-grid{column-gap:var(--s4)}
-      .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
-      .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
-    }
-    @container (min-width:60rem){.nav-btn{font-size:.6875rem}}
-    @media (max-width:60rem){main > section{padding:var(--s12) 0}.mast-sub{display:none}}
-
-    .hero-note h2{font-size:.6875rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF;font-family:var(--font)}
-    .hero-note p{color:rgba(255,255,255,.78)}
-    .hero-note .meta{color:var(--gold-light);font-size:.75rem}
-    .device:not([data-mode="phone"]) .nav-btn{border-top:0;border-left:2px solid transparent;border-radius:0}
-    .device:not([data-mode="phone"]) .nav-btn.active{border-left-color:var(--navy);background:var(--primary-container)}
-    /* ===== Mục tiêu: thẻ tách khối, vòng tiến độ, so sánh đóng góp ===== */
-    #goal-list{gap:var(--s4)}
-    .goal-card{padding:0;gap:0;border:1px solid var(--border);border-top:3px solid var(--control);border-radius:0;background:var(--surface);box-shadow:0 1px 2px rgba(10,34,64,.05);color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none;transition:box-shadow var(--motion) var(--ease),transform var(--motion) var(--ease),border-color var(--motion) var(--ease);overflow:hidden}
-    .goal-card:has(.status.ok){border-top-color:#15803D}.goal-card:has(.status.warn){border-top-color:#C98A16}.goal-card:has(.status.bad){border-top-color:#B3263A}.goal-card:has(.status.info){border-top-color:var(--control);border-top-style:dashed}
-    .goal-card:hover,.goal-card:focus-visible{background:var(--surface);border-color:#B9C4D4;box-shadow:0 2px 4px rgba(10,34,64,.06),0 12px 28px rgba(10,34,64,.12);transform:translateY(-2px)}
-    .goal-card > *{margin-inline:var(--s4)}
-    .goal-top{margin:0;padding:var(--s3) var(--s4);background:var(--surface-subtle);border-bottom:1px solid var(--border)}
-    .goal-card:has(.status.ok) .goal-top{background:#F2F9F4}.goal-card:has(.status.warn) .goal-top{background:#FDF7EC}.goal-card:has(.status.bad) .goal-top{background:#FCF1F3}
-    .goal-name{font:400 1.125rem/1.3 var(--display);color:var(--navy)}
-    .goal-top .status{padding:2px 8px;background:var(--surface);border:1px solid var(--border)}
-    .goal-card > .gprog{margin-top:var(--s4)}
-    .goal-card > .gcmp{margin-top:var(--s3)}
-    .goal-card > .progress-meta:last-child{margin:var(--s3) var(--s4) var(--s4);padding-top:var(--s2);border-top:1px solid var(--border)}
-    .gprog{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3);align-items:center}
-    .gring{display:block;flex:none}
-    .gfacts{display:grid;gap:2px;min-width:0}
-    .gfacts .g-now{font:400 1.375rem/1.15 var(--display);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
-    .gfacts .g-of{font-size:.75rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
-    .gcmp{display:grid;gap:6px}
-    .cmp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px var(--s2);align-items:center;font-size:.75rem}
-    .cmp > .c-l{color:var(--ink-secondary);white-space:nowrap}
-    .cmp > .c-v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
-    .c-bar{display:block;height:12px}.c-bar span{display:block;height:100%}
-    .c-you.ok{background:#15803D}.c-you.warn{background:#C98A16}.c-you.bad{background:#B3263A}.c-you.info{background:#8C909A}
-    .c-ref{background:#FFFFFF;border:1.5px dashed #0F2E57}
-    .gsay{font-size:.8125rem;color:var(--ink)}
-    .gsay b{font-weight:600}.gsay .ok{color:#15803D}.gsay .warn{color:#8A5A00}.gsay .bad{color:#A6192E}
-    .gap-line{background:transparent;padding:0;border-radius:0}
-    #detail-gap-img,.gap-line > .gap-scale{display:none}
-    .hero-figure{grid-template-columns:auto minmax(0,1fr);column-gap:var(--s4);align-items:center;border:1px solid var(--border);border-top:2px solid var(--navy);border-radius:0}
-    #detail-ring{grid-row:1 / span 4}
-    .hero-figure .progress-track{display:none}
-    .hero-figure .detail-amount{font:300 2rem/1.15 var(--display);font-variant-numeric:lining-nums tabular-nums}
-    .tpl{border:1px solid var(--border);border-radius:0;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .tpl:hover{border-color:var(--navy);background:var(--primary-container);box-shadow:inset 3px 0 0 var(--navy)}
-    .tpl-ico{border-radius:50%;background:var(--primary-container);color:var(--navy);width:2.75rem;height:2.75rem}
-    .tpl-name{color:var(--navy)}
-    .assump{border-radius:0;background:#FBF6EC}
-    .progress-track{border-radius:0;height:6px}.progress-fill{border-radius:0;background:var(--navy)}
-    .steppers output{font:400 1.25rem/1.2 var(--display);color:var(--navy)}
-
-    /* ===== Trạng thái mục tiêu: cùng một vị trí ở mọi thẻ và mọi khổ màn hình ===== */
-    .goal-top{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;gap:6px;align-items:start;align-content:start;flex-wrap:nowrap}
-    .goal-top .status{order:-1;justify-self:start;align-self:start;margin:0;min-width:9.25rem;justify-content:flex-start}
-    .goal-top > span:first-child{display:grid;gap:4px;min-width:0}
-    .goal-top .tag-row{margin-top:0 !important}
-    .goal-name{display:block}
-    #goal-list{align-items:stretch}
-    .goal-card{align-content:start;grid-template-rows:auto}
-    .device:not([data-mode="phone"]) .goal-top{min-height:7.25rem}
-    .device[data-mode="tablet"] .goal-top{min-height:6.75rem}
-
-    /* Trạng thái mục tiêu: góc phải trên, chữ nhỏ hơn tiêu đề, cùng vị trí ở mọi thẻ */
-    .goal-top{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto;column-gap:var(--s3)}
-    .goal-top > span:first-child{grid-column:1;grid-row:1}
-    .goal-top .status{order:0;grid-column:2;grid-row:1;justify-self:end;align-self:start;min-width:0;margin-top:3px;padding:2px 7px;gap:5px;font-size:.5625rem;letter-spacing:.1em;line-height:1.4;white-space:nowrap}
-    .goal-top .status::before{width:.4375rem;height:.4375rem}
   </style>
 </head>
 <body>
 <a class="skip" href="#main">Bỏ qua, đến nội dung chính</a>
 <div class="page">
 
-  <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #84 · Mục tiêu tài chính</span></div>
   <header class="hero">
     <div class="hero-copy">
       <p class="kicker">Issue #84 · MVP 1C · Design review</p>
@@ -503,16 +320,16 @@
       </div>
 
       <div class="tokens">
-        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><p>color.canvas</p><p class="meta">#F6F4EF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><p>color.canvas</p><p class="meta">#F7F5EF</p></div>
         <div class="token"><span class="swatch" style="background:var(--surface);border:var(--line)"></span><p>color.surface</p><p class="meta">#FFFFFF</p></div>
-        <div class="token"><span class="swatch" style="background:var(--surface-subtle)"></span><p>color.surfaceSubtle</p><p class="meta">#F1EEE7</p></div>
-        <div class="token"><span class="swatch" style="background:var(--primary)"></span><p>color.primary</p><p class="meta">#0F2E57</p></div>
-        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><p>color.primaryContainer</p><p class="meta">#E8EDF4</p></div>
-        <div class="token"><span class="swatch" style="background:var(--navy)"></span><p>color.brandNavy</p><p class="meta">#0A2240</p></div>
-        <div class="token"><span class="swatch" style="background:var(--gold)"></span><p>color.heritageGold</p><p class="meta">#8A6A3F · chỉ trang trí</p></div>
-        <div class="token"><span class="swatch" style="background:var(--success)"></span><p>color.success</p><p class="meta">#15803D</p></div>
+        <div class="token"><span class="swatch" style="background:var(--surface-subtle)"></span><p>color.surfaceSubtle</p><p class="meta">#EFEBE2</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary)"></span><p>color.primary</p><p class="meta">#0F5C5A</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><p>color.primaryContainer</p><p class="meta">#D9EFEC</p></div>
+        <div class="token"><span class="swatch" style="background:var(--navy)"></span><p>color.brandNavy</p><p class="meta">#182B45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--gold)"></span><p>color.heritageGold</p><p class="meta">#A87428 · chỉ trang trí</p></div>
+        <div class="token"><span class="swatch" style="background:var(--success)"></span><p>color.success</p><p class="meta">#1E6A45</p></div>
         <div class="token"><span class="swatch" style="background:var(--warning)"></span><p>color.warning</p><p class="meta">#8A5A00</p></div>
-        <div class="token"><span class="swatch" style="background:var(--error)"></span><p>color.error</p><p class="meta">#A6192E</p></div>
+        <div class="token"><span class="swatch" style="background:var(--error)"></span><p>color.error</p><p class="meta">#B42318</p></div>
       </div>
 
       <div class="grid two" style="margin-top:var(--s6)">
@@ -721,7 +538,6 @@
                     </div>
 
                     <div class="hero-figure">
-                      <div id="detail-ring" aria-hidden="true"></div>
                       <p class="meta">Đã phân bổ</p>
                       <p class="detail-amount" id="detail-current">—</p>
                       <div class="progress">
@@ -740,7 +556,6 @@
                           <div class="gap-mark need" style="left:80%"></div>
                         </div>
                         <div class="gap-scale" aria-hidden="true"><span style="left:64%">80%</span><span class="need" style="left:80%">100%</span></div>
-                        <div id="detail-cmp"></div>
                         <p class="gap-legend"><span>Kế hoạch <b id="detail-planned">—</b></span><span>Cần <b id="detail-need">—</b></span></p>
                       </div>
                       <p id="detail-reason"></p>
@@ -1236,29 +1051,7 @@
   var listEmpty = document.getElementById("goal-list-empty");
   var filter = "all";
 
-
-  // ---------- Kiểu ngân hàng: vòng tiến độ mục tiêu + so sánh đang góp / cần góp ----------
-  var G_COL = { ok: "#15803D", warn: "#C98A16", bad: "#B3263A", info: "#8C909A" };
-  function shortV(n) { var a = Math.abs(n); return a >= 1e9 ? (a / 1e9).toFixed(2).replace(".", ",").replace(/,?0+$/, "") + " tỷ" : (a >= 1e8 ? Math.round(a / 1e6) : (Math.round(a / 1e5) / 10).toString().replace(".", ",")) + " tr"; }
-  function ringSvg(pct, size) {
-    var r = 15.9155, p = Math.max(0, Math.min(100, pct));
-    return '<svg class="gring" width="' + size + '" height="' + size + '" viewBox="0 0 42 42"><circle cx="21" cy="21" r="' + r + '" fill="none" stroke="#E4E8EE" stroke-width="4.2"/>' +
-      '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="#0F2E57" stroke-width="4.2" stroke-linecap="round" stroke-dasharray="' + Math.max(p, .01) + ' ' + (100 - p) + '" transform="rotate(-90 21 21)"/>' +
-      '<text x="21" y="21.8" text-anchor="middle" font-size="8.4" font-weight="300" fill="#0A2240" font-family="Source Serif 4,Georgia,serif">' + nf.format(Math.round(p)) + '%</text>' +
-      '<text x="21" y="27.4" text-anchor="middle" font-size="3.4" font-weight="600" letter-spacing=".3" fill="#5A6472" font-family="Inter,system-ui,sans-serif">ĐÃ CÓ</text></svg>';
-  }
-  function cmpMarkup(p, planned, lg) {
-    if (p.need === null || p.need === undefined) return '<span class="gcmp"><span class="gsay">Chưa đủ dữ liệu để tính mức đóng góp cần thiết.</span></span>';
-    var mx = Math.max(planned, p.need) || 1, k = p.key, diff = planned - p.need;
-    var rows = '<span class="cmp" role="img" aria-label="Đang góp ' + vnd(planned) + ' mỗi tháng, cần góp ' + vnd(p.need) + ' mỗi tháng">' +
-      '<span class="c-l">Đang góp</span><span class="c-bar"><span class="c-you ' + k + '" style="width:' + Math.max(1, planned / mx * 100) + '%"></span></span><span class="c-v">' + (lg ? vnd(planned) : shortV(planned)) + '/th</span>' +
-      '<span class="c-l">Cần góp</span><span class="c-bar"><span class="c-ref" style="width:' + Math.max(1, p.need / mx * 100) + '%"></span></span><span class="c-v">' + (lg ? vnd(p.need) : shortV(p.need)) + '/th</span></span>';
-    var say = diff < 0 ? 'Còn thiếu <b class="' + k + '">' + vnd(-diff) + ' mỗi tháng</b> để đúng kế hoạch.' : 'Đang góp dư <b class="ok">' + vnd(diff) + ' mỗi tháng</b> so với mức cần.';
-    return '<span class="gcmp">' + rows + '<span class="gsay">' + say + '</span></span>';
-  }
-
   function gapMarkup(p, planned) {
-    return cmpMarkup(p, planned, false);
     var ratio = p.ratio === null ? 1 : p.ratio;
     var width = Math.min(ratio, 1.25) / 1.25 * 100;
     var cls = p.key === "ok" ? "" : (p.key === "warn" ? " warn" : " bad");
@@ -1290,7 +1083,8 @@
         '<span class="tag-row" style="margin-top:.25rem"><span class="tag">' + tplById(g.tpl).name + '</span>' +
         (g.stale ? '<span class="tag warn">Dữ liệu tham chiếu cũ</span>' : '') + '</span></span>' +
         '<span class="status ' + p.key + '">' + p.label + '</span></span>' +
-        '<span class="gprog">' + ringSvg(p.pct, 64) + '<span class="gfacts"><span class="g-now">' + vnd(g.allocated) + '</span><span class="g-of">đã có trên mục tiêu ' + vnd(g.goalAmount) + '</span></span></span>' +
+        '<span class="progress"><span class="progress-track"><span class="progress-fill" style="width:' + p.pct.toFixed(1) + '%"></span></span>' +
+        '<span class="progress-meta"><span>' + pctText(p.pct) + ' · ' + vnd(g.allocated) + '</span><span>' + vnd(g.goalAmount) + '</span></span></span>' +
         gapMarkup(p, g.planned) +
         '<span class="progress-meta"><span>Còn lại ' + vnd(p.remaining) + '</span><span>' + durationText(p.months) + ' · đến ' + dmy(g.date) + '</span></span>';
       listEl.appendChild(btn);
@@ -1313,17 +1107,7 @@
     });
   });
 
-  var renderDetailBase = renderDetail;
-  renderDetail = function () {
-    renderDetailBase();
-    var g = currentGoal, planned = monthlyOverride === null ? g.planned : monthlyOverride;
-    var p = project({ goalAmount: g.goalAmount, allocated: g.allocated, date: g.date, annual: g.annual, planned: planned });
-    document.getElementById("detail-ring").innerHTML = ringSvg(p.pct, 104);
-    document.getElementById("detail-cmp").innerHTML = cmpMarkup(p, planned, true);
-  };
-
   // ---------- templates ----------
-  var TPL_ICON = {"emergency": "<path d=\"M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z\"/><path d=\"M9 12l2 2 4-4\"/>", "home": "<path d=\"M4 11l8-7 8 7\"/><path d=\"M6 10v10h12V10\"/><path d=\"M10 20v-5h4v5\"/>", "education": "<path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11v5c3 2 9 2 12 0v-5\"/><path d=\"M22 9v6\"/>", "retirement": "<circle cx=\"12\" cy=\"9\" r=\"4\"/><path d=\"M12 1v2M4.9 4.9l1.4 1.4M19.1 4.9l-1.4 1.4M3 20h18M6 17h12\"/>", "networth": "<path d=\"M4 20h16\"/><path d=\"M6 16l4-4 3 3 5-6\"/><path d=\"M15 9h3v3\"/>", "debt": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"1\"/><path d=\"M3 10h18\"/><path d=\"M8 15h3\"/>", "other": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>"};
   var tplList = document.getElementById("tpl-list");
   TEMPLATES.forEach(function (t) {
     var b = document.createElement("button");
@@ -1331,7 +1115,7 @@
     b.className = "tpl";
     b.setAttribute("data-tpl", t.id);
     b.innerHTML = '<span class="tpl-ico" aria-hidden="true">' +
-      '<svg class="ico" viewBox="0 0 24 24">' + (TPL_ICON[t.id] || TPL_ICON.other) + '</svg></span>' +
+      '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span>' +
       '<span class="tpl-body"><span class="tpl-name">' + t.name + '</span>' +
       '<span class="meta">' + t.note + ' · lợi suất gợi ý ' + nf.format(t.annual) + '% · thời hạn gợi ý ' + t.months + ' tháng</span>' +
       '<span class="meta">' + t.decide + '</span></span>';

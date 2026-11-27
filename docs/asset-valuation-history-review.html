@@ -5,36 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <title>Rikkaus Wealth OS | Lịch sử định giá tài sản</title>
-  <meta name="theme-color" content="#0A2240">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas: #F6F4EF;
+      --canvas: #F7F5EF;
       --surface: #FFFFFF;
-      --surface-subtle: #F1EEE7;
-      --ink: #121A26;
-      --ink-secondary: #5A6472;
-      --border: #DDD8CD;
-      --control-border: #8C909A;
-      --brand-navy: #0A2240;
-      --primary: #0F2E57;
-      --primary-pressed: #0A2240;
-      --primary-container: #E8EDF4;
-      --heritage-gold: #8A6A3F;
-      --success: #15803D;
+      --surface-subtle: #EFEBE2;
+      --ink: #17212B;
+      --ink-secondary: #52606D;
+      --border: #D7D2C7;
+      --control-border: #8B877E;
+      --brand-navy: #182B45;
+      --primary: #0F5C5A;
+      --primary-pressed: #0B4746;
+      --primary-container: #D9EFEC;
+      --heritage-gold: #A87428;
+      --success: #1E6A45;
       --warning: #8A5A00;
-      --warning-container: #FBF6EC;
-      --error: #A6192E;
-      --error-container: #FDF5F6;
-      --info: #1F4E8C;
-      --focus: #1F4E8C;
-      --nav-backdrop: rgba(246, 244, 239, .97);
-      --scrim: rgba(10, 34, 64, .62);
-      --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
-      --font-display: "Source Serif 4", "Source Serif Pro", Georgia, serif;
+      --warning-container: #FFF8E8;
+      --error: #B42318;
+      --error-container: #FDECE9;
+      --info: #2458A6;
+      --focus: #147D79;
+      --nav-backdrop: rgba(247, 245, 239, .96);
+      --scrim: rgba(23, 33, 43, .56);
+      --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-display: "Noto Serif Display", Georgia, serif;
       --space-1: 4px;
       --space-2: 8px;
       --space-3: 12px;
@@ -43,19 +39,17 @@
       --space-8: 32px;
       --space-12: 48px;
       --space-16: 64px;
-      --radius-control: 2px;
-      --radius-card: 2px;
-      --radius-dialog: 4px;
+      --radius-control: 12px;
+      --radius-card: 16px;
+      --radius-dialog: 24px;
       --line: 1px solid var(--border);
       --control-line: 1px solid var(--control-border);
-      --shadow-raised: 0 1px 2px rgba(10,34,64,.06), 0 8px 24px rgba(10,34,64,.08);
-      --shadow-modal: 0 24px 48px rgba(10,34,64,.28);
+      --shadow-raised: 0 2px 8px rgba(24, 43, 69, .12);
+      --shadow-modal: 0 12px 32px rgba(24, 43, 69, .22);
       --duration-press: 120ms;
       --duration-state: 220ms;
       --ease-state: cubic-bezier(.25, 1, .5, 1);
       --content: 1180px;
-      --rule: #121A26;
-      --gold-light: #C9A66B;
       --reading: 720px;
     }
 
@@ -286,134 +280,11 @@
       html { scroll-behavior: auto; }
       *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
     }
-
-    /* ===== Private banking layer (đồng bộ #51, #72) ===== */
-    body { font: 400 15px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-    h1, h2, h3 { color: var(--brand-navy); }
-    h2 { font: 400 1.75rem/1.25 var(--font-display); letter-spacing: -.01em; }
-    h3 { font: 400 1.25rem/1.3 var(--font-display); }
-    :focus-visible { outline: 2px solid var(--focus); }
-    button, .button { border-color: var(--primary); color: var(--primary); font-size: .75rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
-    button:hover, .button:hover { transform: none; background: var(--primary-container); }
-    button:active, .button:active { transform: none; }
-    button:disabled { border-color: var(--control-border); color: var(--ink-secondary); opacity: .5; }
-    .button-primary { color: #FFFFFF; }
-    .button-primary:hover { background: var(--primary-pressed); }
-    .button-tonal { background: transparent; border-color: var(--primary); }
-    .button-text { border-color: transparent; padding-inline: 0; text-decoration: underline; text-underline-offset: .3em; text-decoration-thickness: 1px; }
-    .button-text:hover { background: transparent; color: var(--brand-navy); }
-    .button-danger { background: var(--surface); }
-    .button-danger:hover { background: #FBEDEF; }
-    .icon { stroke-width: 1.5; }
-    .page { padding-bottom: var(--space-4); }
-
-    .masthead, .review-hero { position: relative; isolation: isolate; }
-    .masthead::before, .review-hero::before { content: ""; position: absolute; inset: 0 -100vmax; background: var(--brand-navy); z-index: -1; }
-    .masthead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; min-height: 64px; border-bottom: 1px solid rgba(255,255,255,.14); color: #FFFFFF; }
-    .mast-brand { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
-    .mast-mark { font: 500 1.25rem/1 var(--font-display); letter-spacing: .22em; text-transform: uppercase; }
-    .mast-sub { font-size: .6875rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.66); }
-    .mast-meta { font-size: .6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-light); }
-    .review-hero { padding-block: 72px var(--space-12); border-bottom: 0; color: #FFFFFF; }
-    .review-hero::after { content: ""; position: absolute; left: 0; bottom: 0; width: 64px; height: 2px; background: var(--gold-light); }
-    .review-hero h1 { color: #FFFFFF; font: 300 clamp(2.5rem, 5.2vw, 4.25rem)/1.06 var(--font-display); letter-spacing: -.015em; }
-    .review-kicker { color: var(--gold-light); font-size: .6875rem; letter-spacing: .18em; }
-    .review-lede { color: rgba(255,255,255,.74); font-size: 1rem; line-height: 1.65; }
-    .scope-note { padding: var(--space-6); border: 1px solid rgba(255,255,255,.18); border-left: 2px solid var(--gold-light); background: rgba(255,255,255,.04); color: rgba(255,255,255,.78); font-size: .875rem; }
-    .scope-note strong { display: block; margin-bottom: var(--space-2); color: #FFFFFF; font-size: .6875rem; letter-spacing: .16em; text-transform: uppercase; }
-
-    .review-nav { border-bottom: 1px solid var(--rule); }
-    .review-nav ul { gap: 0; }
-    .review-nav a { border-radius: 0; color: var(--ink-secondary); font-size: .6875rem; letter-spacing: .14em; text-transform: uppercase; }
-    .review-nav a:hover { background: transparent; color: var(--brand-navy); box-shadow: inset 0 -2px 0 var(--brand-navy); }
-    .review-section:last-of-type { border-bottom: 0; }
-    .section-head { grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); padding-bottom: var(--space-4); border-bottom: 1px solid var(--rule); }
-    .section-head h2 { margin-bottom: 0; }
-    .section-index { display: flex; align-items: center; gap: var(--space-3); color: var(--heritage-gold); font-size: .6875rem; font-weight: 600; letter-spacing: .18em; }
-    .section-index::after { content: ""; width: 40px; height: 1px; background: var(--heritage-gold); }
-    .card { padding: var(--space-6); border-top: 2px solid var(--brand-navy); }
-    .callout { padding: var(--space-6); border: var(--line); border-left: 2px solid var(--heritage-gold); }
-    .callout.pending { border: 1px solid #D9C49A; border-left: 2px solid var(--warning); }
-    .mini-label, .control-label { font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-secondary); }
-    .status { font-size: .6875rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
-    .status::before { width: 8px; height: 8px; border: 0; background: currentColor; }
-    .status.warning::before { border-radius: 1px; }
-    .status.error::before { border-radius: 1px; transform: rotate(45deg); }
-    .review-switches { gap: 0; }
-    .review-switches button { margin: 0 -1px -1px 0; border-color: var(--border); color: var(--ink-secondary); min-width: 52px; }
-    .review-switches button:hover { color: var(--primary); background: var(--surface); }
-    .review-switches button[aria-pressed="true"] { position: relative; z-index: 1; }
-
-    .table-wrap { border: 0; background: transparent; }
-    table { font-size: .875rem; background: var(--surface); }
-    caption { padding: 0 0 var(--space-3); font: 400 1.125rem/1.3 var(--font-display); color: var(--brand-navy); background: var(--canvas); }
-    th { background: transparent; font-size: .6875rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-secondary); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); white-space: nowrap; }
-    td { border-top: var(--line); }
-    tbody tr:last-child td { border-bottom: 1px solid var(--rule); }
-    tbody tr:hover td { background: rgba(232,237,244,.45); }
-
-    .device-stage { padding: var(--space-8) var(--space-4); border: var(--line); background: repeating-linear-gradient(0deg, transparent 0 23px, rgba(10,34,64,.035) 23px 24px), var(--surface-subtle); }
-    .app-shell { border: 1px solid #C9CDD4; border-radius: 6px; box-shadow: var(--shadow-raised); }
-    .app-bar { min-height: 60px; background: var(--brand-navy); border-bottom: 2px solid var(--gold-light); }
-    .wordmark { font: 500 1rem/1 var(--font-display); letter-spacing: .22em; text-transform: uppercase; color: #FFFFFF; }
-    .avatar { width: 40px; min-height: 40px; border-color: rgba(255,255,255,.5); background: transparent; color: #FFFFFF; letter-spacing: .06em; }
-    .avatar:hover { background: rgba(255,255,255,.1); }
-    .nav-button { background: transparent; font-size: .625rem; letter-spacing: .08em; }
-    .nav-button.active { background: transparent; color: var(--brand-navy); box-shadow: inset 0 2px 0 var(--brand-navy); }
-    .device-stage[data-viewport="768"] .nav-button.active, .device-stage[data-viewport="1024"] .nav-button.active, .device-stage[data-viewport="1440"] .nav-button.active { box-shadow: inset 2px 0 0 var(--brand-navy); background: var(--primary-container); }
-    .icon-button { border-color: var(--border); color: var(--ink); }
-    .screen-head { padding-bottom: var(--space-3); border-bottom: var(--line); }
-    .screen-eyebrow { display: flex; align-items: center; gap: var(--space-2); color: var(--heritage-gold); font-size: .6875rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
-    .cat-ico { display: inline-grid; place-items: center; width: 24px; height: 24px; flex: none; border: 1px solid #C9D2DE; background: var(--primary-container); color: var(--brand-navy); }
-    .cat-ico svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-    .app-view h2 { font-size: 1.625rem; }
-    .summary-card { padding: var(--space-4); border-top: 2px solid var(--brand-navy); }
-    .current-value { font: 300 clamp(1.875rem, 7vw, 2.25rem)/1.15 var(--font-display); font-variant-numeric: tabular-nums lining-nums; letter-spacing: -.01em; }
-    .trace-grid { gap: 0 var(--space-4); }
-    .trace-grid dt, .trace-grid dd { padding: var(--space-2) 0; border-top: var(--line); }
-    .trace-grid dt { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; }
-    .trace-grid dd { font-weight: 500; }
-    .history-head { padding-bottom: var(--space-2); border-bottom: 1px solid var(--rule); }
-    .history-head h3 { font-size: 1.125rem; }
-    .history-spine::before { left: 7px; background: var(--control-border); }
-    .valuation-row { border-radius: var(--radius-control); color: var(--ink); font-size: .9375rem; letter-spacing: 0; text-transform: none; }
-    .valuation-row:hover { background: var(--surface); }
-    .valuation-row::before { left: 2px; width: 11px; height: 11px; border: 1.5px solid var(--brand-navy); background: var(--surface); }
-    .valuation-row.current::before { background: var(--brand-navy); }
-    .valuation-row.current { border-color: var(--brand-navy); box-shadow: inset 3px 0 0 var(--brand-navy); }
-    .row-value strong { font: 500 1.0625rem/1.3 var(--font-body); font-variant-numeric: tabular-nums; }
-    .row-meta { font-size: .75rem; }
-    .record-detail { border-top: 2px solid var(--brand-navy); }
-    .contract-note { border-left: 2px solid var(--heritage-gold); }
-    .field label, legend { font-size: .6875rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-secondary); }
-    .field input, .field select, .field textarea { border: 0; border-bottom: 1px solid var(--control-border); border-radius: 0; box-shadow: inset 0 0 0 1px var(--border); }
-    .field input:hover, .field select:hover, .field textarea:hover { box-shadow: inset 0 0 0 1px var(--control-border); }
-    .field input:focus, .field select:focus, .field textarea:focus { border-bottom-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
-    .field input[readonly] { background: var(--surface-subtle); }
-    .field .invalid { border: 0; box-shadow: inset 0 0 0 2px var(--error); }
-    .field small { font-size: .8125rem; }
-    .error-summary { border: 1px solid var(--error); border-left: 3px solid var(--error); }
-    .sticky-actions { border-top: 1px solid var(--rule); }
-    .state-panel { border-top: 2px solid var(--brand-navy); }
-    .state-symbol { border-width: 1.5px; }
-    .skeleton { border-radius: 0; }
-    .toast { border-left: 3px solid var(--gold-light); }
-    dialog { border-top: 3px solid var(--brand-navy); padding: var(--space-8) var(--space-6) var(--space-6); }
-    dialog::backdrop { backdrop-filter: blur(2px); }
-    .dialog-actions { padding-top: var(--space-4); border-top: var(--line); }
-    .check { border-bottom: var(--line); padding-bottom: var(--space-2); font-size: .875rem; }
-    .check:last-child { border-bottom: 0; }
-    .check input { accent-color: var(--brand-navy); }
-    .review-result { border-left: 2px solid var(--brand-navy); color: var(--brand-navy); }
-    footer { border-top: 1px solid var(--rule); font-size: .8125rem; }
-    @media (max-width: 760px) { .mast-sub { display: none; } td::before { font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-secondary); } }
-
   </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Bỏ qua đến nội dung chính</a>
   <div class="page">
-    <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #57 · Định giá tài sản</span></div>
     <header class="review-hero">
       <div>
         <p class="review-kicker">Issue #57 · Hiện vật xem xét thiết kế · 15/09/2026</p>
@@ -528,7 +399,7 @@
                     <button class="button-text" type="button" data-safe-back>Quay lại</button>
                     <button class="icon-button" type="button" aria-label="Mở thao tác tài sản"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
                   </div>
-                  <div><p class="screen-eyebrow"><span class="cat-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 4l9 5.5H3z"/><path d="M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18"/></svg></span>Tiền và tương đương tiền · Tài khoản ngân hàng</p><h2 id="detail-title" tabindex="-1">Tài khoản USD</h2></div>
+                  <div><p class="screen-eyebrow">Tài khoản ngân hàng</p><h2 id="detail-title" tabindex="-1">Tài khoản USD</h2></div>
                   <div class="detail-layout">
                     <div class="summary-card">
                       <div class="summary-top"><span class="mini-label">Giá trị hiện tại</span><span class="status success" id="freshness-status">Mới cập nhật</span></div>

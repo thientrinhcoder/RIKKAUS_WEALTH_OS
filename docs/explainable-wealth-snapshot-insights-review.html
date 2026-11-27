@@ -5,22 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <title>Rikkaus Wealth OS | Nhận định Wealth Snapshot có thể giải thích</title>
-  <meta name="theme-color" content="#0A2240">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F6F4EF; --surface:#FFFFFF; --subtle:#F1EEE7; --ink:#121A26; --muted:#5A6472;
-      --border:#DDD8CD; --control:#8C909A; --navy:#0A2240; --primary:#0F2E57;
-      --primary-pressed:#0A2240; --primary-soft:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D; --rule:#121A26;
-      --warning:#8A5A00; --warning-soft:#FBF6EC; --error:#A6192E; --error-soft:#FDF5F6;
-      --info:#1F4E8C; --info-soft:#EEF3FA; --focus:#1F4E8C; --scrim:rgba(10,34,64,.62);
-      --font:"Inter","Segoe UI",system-ui,sans-serif; --serif:"Source Serif 4","Source Serif Pro",Georgia,serif;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --subtle:#EFEBE2; --ink:#17212B; --muted:#52606D;
+      --border:#D7D2C7; --control:#8B877E; --navy:#182B45; --primary:#0F5C5A;
+      --primary-pressed:#0B4746; --primary-soft:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --warning-soft:#FFF8E8; --error:#B42318; --error-soft:#FDECE9;
+      --info:#2458A6; --info-soft:#EAF1FB; --focus:#147D79; --scrim:rgba(23,33,43,.56);
+      --font:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; --serif:"Noto Serif Display",Georgia,serif;
       --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s6:24px; --s8:32px; --s12:48px; --s16:64px;
-      --r-control:2px; --r-card:2px; --r-dialog:4px; --line:1px solid var(--border);
-      --shadow:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --shadow-modal:0 24px 48px rgba(10,34,64,.28);
+      --r-control:12px; --r-card:16px; --r-dialog:24px; --line:1px solid var(--border);
+      --shadow:0 2px 8px rgba(24,43,69,.12); --shadow-modal:0 12px 32px rgba(24,43,69,.22);
       --fast:120ms; --state:220ms; --ease:cubic-bezier(.25,1,.5,1); --content:1180px; --reading:720px;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--canvas);color:var(--ink);font:400 16px/1.5 var(--font)}
@@ -52,200 +48,11 @@
     .stage[data-width="360"] .hero-metric .value,.stage[data-width="375"] .hero-metric .value{font-size:1.5rem;white-space:nowrap;overflow-wrap:normal}
     .stage[data-width="360"] .kpis,.stage[data-width="375"] .kpis{grid-template-columns:1fr}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
-
-    /* ===== Private banking layer (đồng bộ #36, #51, #57, #69, #72, #90) ===== */
-    body{font:400 15px/1.6 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-    h2{font:400 1.75rem/1.25 var(--serif);letter-spacing:-.01em}
-    h3{font:400 1.25rem/1.3 var(--serif)}
-    :focus-visible{outline:2px solid var(--focus)}
-    button,.button{border-color:var(--primary);color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
-    button:hover,.button:hover{transform:none;background:var(--primary-soft)}button:active,.button:active{transform:none}
-    .primary{color:#FFFFFF}.primary:hover{background:var(--primary-pressed)}
-    .tonal{background:transparent;border-color:var(--primary)}
-    .text-button{border-color:transparent;padding-inline:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}.text-button:hover{background:transparent;color:var(--navy)}
-    .masthead,.hero{position:relative;isolation:isolate}
-    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
-    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:64px;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
-    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
-    .mast-mark{font:500 1.25rem/1 var(--serif);letter-spacing:.22em;text-transform:uppercase}
-    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
-    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
-    .hero{padding-block:72px var(--s12);border-bottom:0;color:#FFFFFF}
-    .hero::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:2px;background:var(--gold-light)}
-    .hero h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--serif);letter-spacing:-.015em}
-    .hero .kicker{color:var(--gold-light);font-size:.6875rem;font-weight:600;letter-spacing:.18em}
-    .hero .lede{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65}
-    .scope{padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);background:rgba(255,255,255,.04);color:rgba(255,255,255,.78);font-size:.875rem}
-    .scope strong{display:block;margin-bottom:var(--s2);color:#FFFFFF;font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase}
-    .review-nav{background:rgba(246,244,239,.97);border-bottom:1px solid var(--rule)}
-    .review-nav ul{gap:0}
-    .review-nav a{border-radius:0;color:var(--muted);font-size:.6875rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
-    .review-nav a:hover{background:transparent;color:var(--navy);box-shadow:inset 0 -2px 0 var(--navy)}
-    section.review:last-of-type{border-bottom:0}
-    .section-head{padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
-    .index{display:flex;align-items:center;gap:var(--s3);font-size:.6875rem;font-weight:600;letter-spacing:.18em}
-    .index::after{content:"";width:40px;height:1px;background:var(--gold)}
-    .card{padding:var(--s6);border-top:2px solid var(--navy)}
-    .callout{padding:var(--s6);border:var(--line);border-left:2px solid var(--gold)}
-    .kicker,.eyebrow{color:var(--gold);font-size:.6875rem;font-weight:600;letter-spacing:.16em}
-    .label{font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-    .status{font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-    .status:before{width:8px;height:8px;border:0;background:currentColor}
-    .status.attn:before{border-radius:1px}.status.bad:before{border-radius:1px;transform:rotate(45deg)}
-    .switches{gap:0}
-    .switches button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--muted);min-width:52px}
-    .switches button:hover{color:var(--primary);background:var(--surface)}
-    .switches button[aria-pressed="true"]{position:relative;z-index:1;color:#FFFFFF}
-    .stage{border:var(--line);padding:var(--s8) var(--s4);background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--subtle)}
-    .shell{border:1px solid #C9CDD4;border-radius:6px;box-shadow:var(--shadow)}
-    .appbar{min-height:60px;background:var(--navy);border-bottom:2px solid var(--gold-light)}
-    .wordmark{font:500 1rem/1 var(--serif);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
-    .avatar{width:40px;min-height:40px;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}.avatar:hover{background:rgba(255,255,255,.1)}
-    .navbtn{background:transparent;font-size:.625rem;letter-spacing:.08em}
-    .navbtn.active{background:transparent;color:var(--navy);box-shadow:inset 0 2px 0 var(--navy)}
-    .stage[data-width="768"] .navbtn.active,.stage[data-width="1024"] .navbtn.active,.stage[data-width="1440"] .navbtn.active{box-shadow:inset 2px 0 0 var(--navy);background:var(--primary-soft)}
-    .icon{stroke-width:1.5}
-    .screen-head{padding-bottom:var(--s3);border-bottom:var(--line)}
-    .hero-metric{padding:var(--s4);border-top:2px solid var(--navy)}
-    .hero-metric .value{font:300 clamp(1.8rem,7vw,2.25rem)/1.15 var(--serif);font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em}
-    .group-title{font-size:1.125rem;border-bottom:1px solid var(--rule)}
-    .insight{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s4) var(--s3);color:var(--ink);font-size:.9375rem;letter-spacing:0;text-transform:none}
-    .insight-list{gap:0;border-top:1px solid var(--rule)}
-    .insight:hover{border-color:var(--border);background:var(--subtle)}
-    .insight-top strong{color:var(--navy);font-weight:600}
-    .source-line strong{color:var(--primary);font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase;text-decoration:underline;text-underline-offset:.3em}
-    .evidence{border:0;border-top:1px solid var(--rule);border-radius:0}
-    .evidence div{padding:var(--s3) 0}
-    .evidence dt{font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
-    .evidence dd{font-weight:500}
-    .trace{border-left:2px solid var(--navy)}
-    .note{border-left:2px solid var(--gold);border-radius:0}
-    .source-record{border:0;border-bottom:var(--line);border-radius:0;padding:var(--s3) 0}
-    .state-panel{border-top:2px solid var(--navy)}
-    .skeleton{border-radius:0}
-    .toast{border-left:3px solid var(--gold-light)}
-    .table-wrap{border:0;background:transparent}
-    caption{font:400 1.125rem/1.3 var(--serif);padding:0 0 var(--s3)}
-    th{background:transparent;font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
-    .check{border-bottom:var(--line);padding-bottom:var(--s2);font-size:.875rem}.check:last-child{border-bottom:0}
-    .check input,.decision input,.table-wrap input{accent-color:var(--navy)}
-    .decision label:has(input:checked){border-color:var(--navy);box-shadow:inset 3px 0 0 var(--navy);background:var(--primary-soft)}
-    .decision-output{border-left:2px solid var(--navy);color:var(--navy)}
-    dialog{border-top:3px solid var(--navy);padding:var(--s8) var(--s6) var(--s6)}
-    dialog::backdrop{backdrop-filter:blur(2px)}
-    .dialog-actions{padding-top:var(--s4);border-top:var(--line)}
-    footer{border-top:1px solid var(--rule);font-size:.8125rem}
-    /* Insight visuals */
-    .ins{display:grid;gap:var(--s3);width:100%}
-    .ins.side{grid-template-columns:minmax(0,1fr) auto;align-items:center}
-    .kf{display:grid;gap:1px;min-width:0}
-    .kf-fig{font:400 1.625rem/1.1 var(--serif);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
-    .kf-fig.ok{color:var(--success)}.kf-fig.attn{color:#8A5A00}.kf-fig.neg{color:var(--error)}
-    .kf-cap{font-size:.8125rem;color:var(--ink)}
-    .kf-ref{font-size:.6875rem;color:var(--muted)}
-    .gauge{display:block;height:auto;flex:none}.gauge.sm{width:7.5rem}.gauge.lg{width:100%;max-width:15rem;justify-self:center}
-    .bands{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(5.5rem,1fr));gap:var(--s2)}
-    .bands li{display:grid;gap:1px;justify-items:center;text-align:center;padding:var(--s2) var(--s1);background:var(--subtle);font-size:.6875rem;font-weight:600;color:var(--muted)}
-    .bands li span{font-weight:400;font-variant-numeric:tabular-nums}
-    .bands li i{width:8px;height:8px;border-radius:50%}
-    .bands li.on.ok{background:#E3F1E8;color:#14532D;box-shadow:inset 0 0 0 1px #9FD0B1}
-    .bands li.on.attn{background:#FBEFD9;color:#7A4E00;box-shadow:inset 0 0 0 1px #E8C98A}
-    .bands li.on.bad{background:#F8E1E4;color:#7F1424;box-shadow:inset 0 0 0 1px #E3A3AD}
-    .g-say{font-size:.8125rem;line-height:1.5}
-    .viz-card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-top:2px solid var(--navy);background:var(--surface)}
-    .viz-card .lg-row{display:grid;gap:var(--s4);align-items:center}
-    .stage[data-width="768"] .viz-card .lg-row,.stage[data-width="1024"] .viz-card .lg-row,.stage[data-width="1440"] .viz-card .lg-row{grid-template-columns:15rem minmax(0,1fr)}
-    .dt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3);align-items:center}
-    .dt-cal{display:grid;width:3.25rem;text-align:center;border:1px solid var(--navy)}
-    .dt-cal span{background:var(--navy);color:#FFFFFF;font-size:.5625rem;font-weight:600;letter-spacing:.12em;padding:2px 0}
-    .dt-cal b{font:400 1.5rem/1.3 var(--serif);color:var(--navy)}
-    .dt-info{display:grid;gap:1px;font-size:.75rem;color:var(--muted)}
-    .dt-info b{font-size:1rem;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
-    .dt-info .due{color:#8A5A00;font-weight:600}
-    /* Overview: cơ cấu + đồng hồ công nợ */
-    .bs{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-top:2px solid var(--navy);background:var(--surface)}
-    .bs-l{font-size:.625rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-    .bs-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);flex-wrap:wrap}
-    .bs-bar{display:flex;height:14px;gap:2px}.bs-bar span{display:block;height:100%}
-    .bs-debt,.i-debt{background:#A6192E}.bs-net,.i-net{background:var(--navy)}
-    .bs-legend{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}
-    .bs-legend div{display:grid;gap:1px;border-top:var(--line);padding-top:var(--s2);min-width:0}
-    .bs-legend span{font-size:.6875rem;color:var(--muted);white-space:nowrap}
-    .bs-legend i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
-    .bs-legend b{font:400 1.25rem/1.15 var(--serif);font-variant-numeric:lining-nums tabular-nums;color:var(--navy)}
-    .bs-legend b.neg{color:#A6192E}
-    .bs-legend em{font-style:normal;font-size:.75rem;font-variant-numeric:tabular-nums}
-    .kpis{gap:0;border-top:2px solid var(--navy);border-left:var(--line);background:var(--surface)}
-    .kpi{border-top:0;border-right:var(--line);border-bottom:var(--line)}
-    .kpi span{font-size:.625rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-    .kpi em{display:block;font-style:normal;font-size:.6875rem;color:var(--muted)}
-    .kpi strong.neg{color:#A6192E}
-    @media(max-width:760px){.mast-sub{display:none}td:before{font-size:.625rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}}
-    /* ===== Waffle 100 ô + trục độ mới dữ liệu ===== */
-    .waffle{display:block;flex:none;width:76px;height:auto}.waffle.lg{width:100%;max-width:166px;justify-self:center}
-    .wf-row{display:grid;gap:var(--s4,16px);align-items:center;grid-template-columns:auto minmax(0,1fr)}
-    .wf-legend{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid #DDD8CD}
-    .wf-legend li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 8px;align-items:center;margin:0;padding:6px 0;border-bottom:1px solid #DDD8CD;font-size:.75rem;color:#5A6472}
-    .wf-legend b{color:#121A26;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
-    .wf-legend span{grid-column:2 / -1;font-size:.6875rem;font-variant-numeric:tabular-nums;text-align:right;margin-top:-4px}
-    .wf-legend i{width:10px;height:10px;display:inline-block}
-    .wf-on{background:#15803D}.wf-on.attn{background:#C98A16}.wf-gap{background:#FFFFFF;border:1.5px dashed #C98A16}.wf-rest{background:#E4E8EE}
-    .wf-parts{font-size:.6875rem;color:#5A6472}
-    .age{display:grid;gap:6px;width:100%}
-    .age-bar{display:flex;height:10px;gap:2px;background:transparent}
-    .age-bar span{display:block;height:100%}
-    .age-ok{background:#9FD0B1}.age-over{background:#E9B44C}
-    .age-pts{position:relative;display:flex;justify-content:space-between;gap:8px;min-height:2.6rem;font-size:.6875rem;color:#5A6472;font-variant-numeric:tabular-nums}
-    .age-pts > span{display:grid;gap:0;align-content:start}
-    .age-pts .p2{text-align:right;justify-items:end}
-    .age-pts .p1{position:absolute;top:0;transform:translateX(-50%);text-align:center;justify-items:center}
-    .age-pts b{font-weight:600;color:#121A26;font-size:.6875rem}
-    .age-pts i{width:9px;height:9px;border-radius:50%;margin-bottom:2px}
-    .d-ok{background:#15803D}.d-attn{background:#C98A16}.d-ring{background:#FFFFFF;border:2px solid #C98A16}
-    .age-note{display:flex;flex-wrap:wrap;gap:6px}
-    .pill-ok,.pill-attn{padding:1px 8px;font-size:.625rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-    .pill-ok{background:#E3F1E8;color:#14532D}.pill-attn{background:#FBEFD9;color:#7A4E00}
-    /* ===== Kiểu ngân hàng: tiến độ mục tiêu + thẻ nhắc cập nhật ===== */
-    .ring{display:block;flex:none}
-    .goal-title{font-size:.625rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8A6A3F}
-    .goal-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
-    .goal-facts{display:grid;gap:0;border-top:1px solid #DDD8CD}
-    .goal-facts > span{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 8px;padding:6px 0;border-bottom:1px solid #DDD8CD}
-    .goal-facts em{font-style:normal;font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;color:#5A6472}
-    .goal-facts b{font-weight:600;font-variant-numeric:tabular-nums;text-align:right;color:#121A26}
-    .goal-facts small{grid-column:1 / -1;font-size:.6875rem;color:#5A6472}
-    .goal-facts .gap b{color:#8A5A00}.goal-facts .done b{color:#15803D}
-    .goal-note{font-size:.75rem;color:#5A6472;line-height:1.5}
-    .rmd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:10px 12px;background:#FFFFFF;border:1px solid #DDD8CD;border-left:3px solid #15803D}
-    .rmd:has(.due){border-left-color:#C98A16;background:#FFFCF5}
-    .rmd.big{padding:14px}
-    .rmd-ico{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#E3F1E8;color:#14532D}
-    .rmd-ico.due{background:#FBEFD9;color:#7A4E00}
-    .rmd-ico svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-    .rmd-txt{display:grid;gap:1px;min-width:0}
-    .rmd-txt b{font-size:.875rem;font-weight:600;color:#121A26}
-    .rmd-txt span{font-size:.75rem;color:#5A6472}
-    .rmd-chip{padding:2px 8px;font-size:.625rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-    .rmd-chip.due{background:#FBEFD9;color:#7A4E00}.rmd-chip.ok{background:#E3F1E8;color:#14532D}
-    .cals{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:6px;align-items:center}
-    .cal{display:grid;justify-items:center;text-align:center;border:1px solid #DDD8CD;background:#FFFFFF;padding-bottom:4px;min-width:0}
-    .cal-m{width:100%;padding:2px 0;background:#E8EDF4;color:#0A2240;font-size:.5625rem;font-weight:600;letter-spacing:.12em}
-    .cal b{font:400 1.5rem/1.25 "Source Serif 4",Georgia,serif;color:#0A2240}
-    .cal-l{font-size:.625rem;color:#5A6472;line-height:1.2;padding:0 2px}
-    .cal.warn{border-color:#E8C98A}.cal.warn .cal-m{background:#FBEFD9;color:#7A4E00}
-    .cal.due{border-color:#C98A16}.cal.due .cal-m{background:#C98A16;color:#FFFFFF}.cal.due b{color:#7A4E00}
-    .cal.ok .cal-m{background:#15803D;color:#FFFFFF}
-    .cal-arrow{color:#8C909A;font-size:1.25rem}
-    @media(max-width:420px){.rmd{grid-template-columns:auto minmax(0,1fr)}.rmd-chip{grid-column:2;justify-self:start}}
-
-    .kf-ref.is-gap{color:#8A5A00;font-weight:600}.kf-ref.is-ok{color:#15803D;font-weight:600}
   </style>
 </head>
 <body>
   <a class="skip" href="#main">Bỏ qua đến nội dung chính</a>
   <div class="page">
-    <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #66 · Wealth Snapshot</span></div>
     <header class="hero">
       <div><p class="kicker">Issue #66 · Hiện vật xem xét thiết kế · 19/09/2026</p><h1>Nhìn thấy điều kiện.<br>Kiểm tra được căn cứ.</h1><p class="lede">Một bản thiết kế Wealth Snapshot nơi mỗi nhận định đều dẫn từ số liệu quan sát đến quy tắc, nguồn và đường quay lại an toàn.</p></div>
       <p class="scope"><strong>Dữ liệu và hành vi mô phỏng.</strong> Hiện vật ngoại tuyến này chỉ dùng để Product Owner duyệt UX/UI. Không có API, lưu trữ, xác thực, phân quyền hay phép tính nghiệp vụ thật.</p>
@@ -266,7 +73,7 @@
             <li><button class="navbtn" data-nav="report"><svg class="icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 2 5-7M18 6v4"/></svg><span>Nhận định</span></button></li>
           </ul></nav>
           <div class="appmain" id="appmain" tabindex="-1">
-            <section class="view active" data-view="overview" aria-labelledby="overview-title"><div><p class="eyebrow">Wealth Snapshot · 19/09/2026</p><h2 id="overview-title" tabindex="-1">Tổng quan</h2></div><article class="hero-metric"><span class="label">Giá trị ròng</span><strong class="value fig">10.470.000.000 VND</strong><span class="status info">Dữ liệu nhập thủ công · cập nhật 12/09/2026</span></article><div class="bs" aria-label="Cơ cấu tài sản và công nợ"><div class="bs-head"><span class="bs-l">Tổng tài sản</span><strong class="fig">12.002.000.000 VND</strong></div><div class="bs-bar" role="img" aria-label="Tổng tài sản gồm công nợ 12,8% và giá trị ròng 87,2%"><span class="bs-debt" style="flex:12.76"></span><span class="bs-net" style="flex:87.24"></span></div><div class="bs-legend"><div><span><i class="i-debt"></i>Công nợ</span><b class="neg">12,8%</b><em>1.532.000.000</em></div><div><span><i class="i-net"></i>Giá trị ròng</span><b>87,2%</b><em>10.470.000.000</em></div></div></div><div class="viz-card" id="ov-debt"></div><div class="kpis"><div class="kpi"><span>Tổng tài sản</span><strong class="fig">12.002.000.000 VND</strong><em>100%</em></div><div class="kpi"><span>Tổng công nợ</span><strong class="fig neg">1.532.000.000 VND</strong><em>12,8% tổng tài sản</em></div><div class="kpi"><span>Giá trị ròng</span><strong class="fig">10.470.000.000 VND</strong><em>87,2% tổng tài sản</em></div></div><div><div class="screen-head"><h3>Điều kiện cần xem</h3><button class="text-button" data-link="report">Xem tất cả</button></div><div class="insight-list" id="strip"></div></div></section>
+            <section class="view active" data-view="overview" aria-labelledby="overview-title"><div><p class="eyebrow">Wealth Snapshot · 19/09/2026</p><h2 id="overview-title" tabindex="-1">Tổng quan</h2></div><article class="hero-metric"><span class="label">Giá trị ròng</span><strong class="value fig">10.470.000.000 VND</strong><span class="status info">Dữ liệu nhập thủ công · cập nhật 12/09/2026</span></article><div class="kpis"><div class="kpi"><span>Tổng tài sản</span><strong class="fig">12.002.000.000 VND</strong></div><div class="kpi"><span>Tổng công nợ</span><strong class="fig">1.532.000.000 VND</strong></div><div class="kpi"><span>Công nợ / tài sản</span><strong class="fig">12,8%</strong></div></div><div><div class="screen-head"><h3>Điều kiện cần xem</h3><button class="text-button" data-link="report">Xem tất cả</button></div><div class="insight-list" id="strip"></div></div></section>
             <section class="view" data-view="report" aria-labelledby="report-title"><div class="screen-head"><div><p class="eyebrow">Báo cáo theo quy tắc</p><h2 id="report-title" tabindex="-1">Nhận định</h2></div><span class="status info">6 quy tắc đã xem</span></div><div id="report-groups"></div></section>
             <section class="view" data-view="detail" aria-labelledby="detail-title"><div class="screen-head"><button class="text-button" data-back>Quay lại</button><span class="status attn" id="detail-status">Cần chú ý</span></div><div><p class="eyebrow" id="detail-rule">Quy tắc</p><h2 id="detail-title" tabindex="-1">Chi tiết nhận định</h2></div><div class="detail-grid" id="detail-body"></div><div class="button-row"><button class="tonal" id="open-source">Mở dữ liệu nguồn</button><button class="primary" data-link="report">Về Nhận định</button></div></section>
             <section class="view" data-view="source" aria-labelledby="source-title"><div class="screen-head"><button class="text-button" data-back>Quay lại nhận định</button><span class="status info" id="source-kind">Nguồn</span></div><div><p class="eyebrow">Dấu vết bằng chứng</p><h2 id="source-title" tabindex="-1">Dữ liệu nguồn</h2></div><div id="source-body"></div><div class="button-row"><button class="primary" data-back>Quay lại an toàn</button><button id="unavailable-trigger">Mô phỏng nguồn không mở được</button></div></section>
@@ -318,63 +125,13 @@
         valuation:{title:'Định giá căn hộ cần được cập nhật',status:'Dữ liệu cũ',tone:'attn',metric:'48 ngày từ lần định giá',rule:'Định giá cũ',threshold:'Quá 30 ngày',observation:'Căn hộ Thảo Điền có định giá gần nhất ngày 02/08/2026, cách ngày fixture 48 ngày.',source:'Lịch sử định giá Căn hộ Thảo Điền',sourceKind:'Nguồn định giá',records:'Căn hộ Thảo Điền · 7.500.000.000 VND; Định giá gần nhất · 02/08/2026; Tuổi dữ liệu · 48 ngày',action:'Có thể thêm một định giá mới để giữ nguyên lịch sử và làm mới Wealth Snapshot.',note:'Giá trị cũ vẫn được hiển thị kèm ngày. Cập nhật tạo bản ghi mới, không ghi đè lịch sử.'},
         fx:{title:'Tỷ giá USD/VND cần được kiểm tra',status:'Dữ liệu cũ',tone:'attn',metric:'25.100 VND · 12/09/2026',rule:'Tỷ giá USD/VND cũ',threshold:'Quá 5 ngày',observation:'Tỷ giá 1 USD = 25.100 VND được cập nhật ngày 12/09/2026, cách ngày fixture 7 ngày và đang quy đổi tiền gửi 20.000 USD.',source:'Hồ sơ và cài đặt tỷ giá',sourceKind:'Nguồn tỷ giá',records:'Tỷ giá · 1 USD = 25.100 VND; Ngày cập nhật · 12/09/2026; Tiền gửi USD · 20.000 USD × 25.100 = 502.000.000 VND',action:'Có thể kiểm tra và cập nhật tỷ giá trước khi dùng giá trị quy đổi cho quyết định.',note:'Tỷ giá là dữ liệu người dùng nhập, không phải dữ liệu thị trường trực tiếp.'}
       };
-
-      // ---------- Gauge bán nguyệt + ô lịch (đồng bộ #36, #90) ----------
-      const G_TINT={ok:'#CFE9D8',attn:'#F5DDA9',bad:'#F1C3CA'},G_SOLID={ok:'#15803D',attn:'#C98A16',bad:'#B3263A'},G_TEXT={ok:'#14532D',attn:'#7A4E00',bad:'#7F1424'};
-      const B=(to,label,tone,range,toText,fromText,endText)=>({to,label,tone,range,toText,fromText,endText});
-      const bandOf=(v,bands)=>bands.find((b,i)=>v<b.to||i===bands.length-1);
-      function gaugeSvg(v,max,bands,valueText,size,aria){const cx=80,cy=78,R=58,sm=size==='sm';const pt=(p,r)=>{const a=Math.PI*(1-Math.max(0,Math.min(100,p))/100);return [cx+r*Math.cos(a),cy-r*Math.sin(a)]};const arc=(p1,p2)=>{const a=pt(p1,R),b=pt(p2,R);return `M${a[0].toFixed(2)} ${a[1].toFixed(2)} A${R} ${R} 0 ${(p2-p1)>50?1:0} 1 ${b[0].toFixed(2)} ${b[1].toFixed(2)}`};const pc=x=>x/max*100;let from=0,g='';
-        bands.forEach((b,i)=>{const a=pc(from)+(i?.6:0),e=pc(Math.min(b.to,max));if(e>a)g+=`<path d="${arc(a,e)}" fill="none" stroke="${G_TINT[b.tone]}" stroke-width="14"/>`;from=b.to});
-        const cur=bandOf(v,bands),pv=Math.max(.01,Math.min(100,pc(v)));g+=`<path d="${arc(0,pv)}" fill="none" stroke="${G_SOLID[cur.tone]}" stroke-width="14"/>`;const k=pt(pv,R);g+=`<circle cx="${k[0].toFixed(2)}" cy="${k[1].toFixed(2)}" r="8.5" fill="#FFFFFF" stroke="${G_SOLID[cur.tone]}" stroke-width="3.5"/>`;
-        if(!sm){bands.slice(0,-1).forEach(b=>{const t=pt(pc(b.to),R+15);g+=`<text x="${t[0].toFixed(1)}" y="${t[1].toFixed(1)}" text-anchor="middle" font-size="8.5" fill="#5A6472">${b.toText}</text>`});g+=`<text x="${cx-R}" y="${cy+15}" text-anchor="middle" font-size="8.5" fill="#5A6472">${bands[0].fromText}</text><text x="${cx+R}" y="${cy+15}" text-anchor="middle" font-size="8.5" fill="#5A6472">${bands[bands.length-1].endText}</text>`}
-        g+=`<text x="${cx}" y="${cy-10}" text-anchor="middle" font-size="${sm?26:24}" font-weight="300" fill="${G_SOLID[cur.tone]}" font-family="Source Serif 4,Georgia,serif">${valueText}</text><text x="${cx}" y="${cy+7}" text-anchor="middle" font-size="${sm?10:8.5}" font-weight="600" letter-spacing="1.1" fill="${G_TEXT[cur.tone]}">${cur.label.toUpperCase()}</text>`;
-        return `<svg class="gauge ${sm?'sm':'lg'}" viewBox="0 ${sm?10:0} 160 ${sm?80:100}" role="img" aria-label="${aria}. ${valueText}, vùng ${cur.label}. ${bands.map(b=>b.label+' '+b.range).join('; ')}" font-family="Inter,system-ui,sans-serif">${g}</svg>`}
-      const bandList=(v,bands)=>{const cur=bandOf(v,bands);return `<ul class="bands">${bands.map(b=>`<li class="${b===cur?'on '+b.tone:''}"><i style="background:${G_SOLID[b.tone]}"></i>${b.label}<span>${b.range}</span></li>`).join('')}</ul>`};
-      const kf=(fig,cap,ref,tone)=>`<span class="kf"><span class="kf-fig ${tone}">${fig}</span><span class="kf-cap">${cap}</span>${ref?`<span class="kf-ref">${ref}</span>`:''}</span>`;
-      const VIZ={
-        concentration:{v:62.5,max:100,fig:'62,5%',cap:'tài sản đang nằm ở bất động sản',ref:'Tham chiếu: tối đa 50%',bands:[B(50,'Cân bằng','ok','0–50%','50%','0%'),B(100,'Tập trung cao','attn','trên 50%','','','100%')],say:'Bất động sản 7,5 tỷ trên tổng tài sản 12 tỷ.'},
-        debt:{v:12.76,max:100,fig:'12,8%',cap:'tài sản đang được tài trợ bằng nợ',ref:'Tham chiếu: tối đa 40%',bands:[B(40,'An toàn','ok','0–40%','40%','0%'),B(60,'Cần theo dõi','attn','40–60%','60%'),B(100,'Rủi ro cao','bad','trên 60%','','','100%')],say:'Cứ 100 đồng tài sản có khoảng <b>13 đồng</b> là nợ.'},
-        liquidity:{v:15.4,max:100,fig:'15,4%',cap:'tài sản có thể dùng ngay',ref:'Tham chiếu: tối thiểu 20%',bands:[B(20,'Thấp','attn','dưới 20%','20%','0%'),B(100,'Đủ linh hoạt','ok','từ 20%','','','100%')],say:'Tiền, ngân hàng và tiền gửi 1,85 tỷ trên tổng tài sản 12 tỷ.'},
-        valuation:{v:48,max:60,fig:'48 ngày',cap:'kể từ lần định giá căn hộ gần nhất',ref:'Nên cập nhật mỗi 30 ngày',bands:[B(30,'Còn mới','ok','0–30 ngày','30','0'),B(60,'Cần cập nhật','attn','trên 30 ngày','','','60')],say:'Lần định giá gần nhất ngày 02/08/2026.'},
-        fx:{v:7,max:10,fig:'7 ngày',cap:'kể từ lần cập nhật tỷ giá USD/VND',ref:'Nên cập nhật mỗi 5 ngày',bands:[B(5,'Còn mới','ok','0–5 ngày','5','0'),B(10,'Cần cập nhật','attn','trên 5 ngày','','','10')],say:'Tỷ giá 25.100 đang quy đổi 20.000 USD thành 502.000.000 VND.'},
-        payment:{date:true}
-      };
-      // ---------- Waffle 100 ô (tỷ trọng) và trục thời gian (độ mới dữ liệu) ----------
-      function nvF1(v){return (Math.round(v*10)/10).toFixed(1).replace('.',',')}
-      function nvShort(v){var a=Math.abs(v);return a>=1e9?(a/1e9).toFixed(2).replace('.',',').replace(/,?0+$/,'')+' tỷ':Math.round(a/1e6)+' tr'}
-      // ---------- Kiểu ngân hàng: tiến độ mục tiêu (thanh khoản) và thẻ nhắc cập nhật (định giá, tỷ giá) ----------
-      function nvRing(prog,ok,size,center,sub,aria){var r=15.9155,p=Math.max(0,Math.min(100,prog)),col=ok?'#15803D':'#C98A16';
-        return '<svg class="ring" width="'+size+'" height="'+size+'" viewBox="0 0 42 42" role="img" aria-label="'+aria+'"><circle cx="21" cy="21" r="'+r+'" fill="none" stroke="#E4E8EE" stroke-width="4.2"/><circle cx="21" cy="21" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="4.2" stroke-linecap="round" stroke-dasharray="'+p+' '+(100-p)+'" transform="rotate(-90 21 21)"/><text x="21" y="'+(sub?21.6:23.4)+'" text-anchor="middle" font-size="8.6" font-weight="300" fill="'+col+'" font-family="Source Serif 4,Georgia,serif">'+center+'</text>'+(sub?'<text x="21" y="27.4" text-anchor="middle" font-size="3.5" font-weight="600" letter-spacing=".3" fill="#5A6472" font-family="Inter,system-ui,sans-serif">'+sub+'</text>':'')+'</svg>'}
-      function liqBlock(o,lg){var ok=o.pct>=o.target,prog=o.pct/o.target*100,need=o.total*o.target/100,gap=need-o.liquid;
-        var aria='Thanh khoản bằng '+nvF1(o.pct)+'% tổng tài sản, mức tối thiểu '+o.target+'%. Hiện có '+nvShort(o.liquid)+', mức tối thiểu '+nvShort(need)+(gap>0?', còn thiếu khoảng '+nvShort(gap):'');
-        var status=gap>0?'Còn thiếu ≈ '+nvShort(gap)+' để đạt mức tối thiểu':'Đã đạt mức tối thiểu '+o.target+'%';
-        var head='<span class="kf"><span class="kf-fig '+(ok?'ok':'attn')+'">'+nvF1(o.pct)+'%</span><span class="kf-cap">tài sản có thể dùng ngay</span><span class="kf-ref '+(ok?'is-ok':'is-gap')+'">'+status+'</span></span>';
-        if(!lg)return '<span class="ins side">'+head+nvRing(prog,ok,68,nvF1(o.pct)+'%','/ '+o.target+'%',aria)+'</span>';
-        return '<span class="ins"><span class="goal-title">Mức thanh khoản tối thiểu · '+o.target+'% tổng tài sản</span><span class="goal-row">'+nvRing(prog,ok,132,nvF1(o.pct)+'%','TỐI THIỂU '+o.target+'%',aria)+
-          '<span class="goal-facts"><span><em>Hiện có</em><b>'+nvShort(o.liquid)+'</b><small>'+nvF1(o.pct)+'% tổng tài sản</small></span><span><em>Mức tối thiểu</em><b>'+nvShort(need)+'</b><small>'+o.target+'% tổng tài sản</small></span>'+
-          (gap>0?'<span class="gap"><em>Còn thiếu</em><b>≈ '+nvShort(gap)+'</b><small>để đạt mức tối thiểu</small></span>':'<span class="done"><em>Trạng thái</em><b>Đã đạt</b><small>từ mức tối thiểu trở lên</small></span>')+'</span></span>'+
-          '<span class="goal-note">Vòng tròn đầy khi tỷ trọng thanh khoản đạt '+o.target+'% tổng tài sản.'+(o.parts?' '+o.parts:'')+'</span></span>'}
-      var RM_ICON={'Định giá':'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>','Tỷ giá':'<circle cx="9" cy="9" r="5"/><circle cx="15" cy="15" r="5"/><path d="M15 13v4M13.5 14.5h3"/>'};
-      function rmTile(d,label,cls){var p=String(d).split('/');return '<span class="cal '+(cls||'')+'"><span class="cal-m">THG '+Number(p[1])+'</span><b>'+p[0]+'</b><span class="cal-l">'+label+'</span></span>'}
-      function ageBlock(o,lg){var over=o.days-o.limit,due=over>0,icon='<span class="rmd-ico'+(due?' due':'')+'" aria-hidden="true"><svg viewBox="0 0 24 24">'+(RM_ICON[o.what]||RM_ICON['Định giá'])+'</svg></span>';
-        var line='<span class="rmd-txt"><b>Cập nhật lần cuối '+o.days+' ngày trước</b><span>'+o.what+' ngày '+o.start+' · nên cập nhật mỗi '+o.limit+' ngày</span></span>';
-        var chip=due?'<span class="rmd-chip due">Quá hạn '+over+' ngày</span>':'<span class="rmd-chip ok">Còn mới</span>';
-        if(!lg)return '<span class="rmd">'+icon+line+chip+'</span>';
-        return '<span class="ins"><span class="rmd big">'+icon+'<span class="rmd-txt"><b>'+(due?'Đã đến lúc cập nhật '+o.what.toLowerCase():o.what+' vẫn còn mới')+'</b><span>Cập nhật lần cuối '+o.days+' ngày trước · nên cập nhật mỗi '+o.limit+' ngày</span></span>'+chip+'</span>'+
-          '<span class="cals" role="img" aria-label="'+o.what+' ngày '+o.start+', hạn nên cập nhật '+o.deadline+', hôm nay '+o.today+'">'+rmTile(o.start,'Lần cập nhật','')+'<span class="cal-arrow" aria-hidden="true">›</span>'+rmTile(o.deadline,'Hạn nên cập nhật',due?'warn':'')+'<span class="cal-arrow" aria-hidden="true">›</span>'+rmTile(o.today,'Hôm nay',due?'due':'ok')+'</span>'+
-          (o.say?'<span class="goal-note">'+o.say+'</span>':'')+'</span>'}
-      const LIQ={pct:15.4,target:20,liquid:1850000000,total:12002000000,parts:'Gồm tiền và ngân hàng 650 tr, tiền gửi có kỳ hạn 1,2 tỷ.'};
-      const AGE={valuation:{days:48,limit:30,what:'Định giá',start:'02/08/2026',deadline:'01/09/2026',today:'19/09/2026',cap:'kể từ lần định giá căn hộ gần nhất',say:'Giá trị căn hộ 7,5 tỷ đang dựa trên định giá ngày 02/08/2026.'},fx:{days:7,limit:5,what:'Tỷ giá',start:'12/09/2026',deadline:'17/09/2026',today:'19/09/2026',cap:'kể từ lần cập nhật tỷ giá USD/VND',say:'Tỷ giá 25.100 đang quy đổi 20.000 USD thành 502.000.000 VND.'}};
-      const toneOf=o=>{const t=bandOf(o.v,o.bands).tone;return t==='bad'?'neg':t};
-      function vizSmall(id,r){if(id==='liquidity')return liqBlock(LIQ,false);if(AGE[id])return ageBlock(AGE[id],false);const o=VIZ[id];if(!o)return '';if(o.date)return `<span class="dt"><span class="dt-cal"><span>THG 9</span><b>20</b></span><span class="dt-info"><b>18.750.000 VND</b><span>Khoản vay mua căn hộ</span><span class="due">Còn 1 ngày</span></span></span>`;return `<span class="ins side">${kf(o.fig,o.cap,o.ref,toneOf(o))}${gaugeSvg(o.v,o.max,o.bands,o.fig,'sm',r.rule)}</span>`}
-      function vizLarge(id,r){if(id==='liquidity')return '<div class="viz-card">'+liqBlock(LIQ,true)+'</div>';if(AGE[id])return '<div class="viz-card">'+ageBlock(AGE[id],true)+'</div>';const o=VIZ[id];if(!o)return '';if(o.date)return `<div class="viz-card">${vizSmall(id,r)}<p class="g-say">Nằm trong cửa sổ 30 ngày tới tính từ ngày 19/09/2026.</p></div>`;return `<div class="viz-card"><div class="lg-row">${gaugeSvg(o.v,o.max,o.bands,o.fig,'lg',r.rule)}<div class="ins">${kf(o.fig,o.cap,o.ref,toneOf(o))}<p class="g-say">${o.say}</p>${bandList(o.v,o.bands)}</div></div></div>`}
-      function card(id){const r=rules[id];return `<button class="insight" data-detail="${id}"><span class="insight-top"><strong>${r.title}</strong><span class="status ${r.tone}">${r.status}</span></span>${vizSmall(id,r)}<span class="metric-line"><span class="rule">Quy tắc: ${r.rule}</span></span><span class="source-line"><span>Nguồn: ${r.source}</span><strong>Vì sao?</strong></span></button>`}
-      $('#ov-debt').innerHTML=`<span class="bs-l">Mức an toàn công nợ · Công nợ / Tổng tài sản</span>`+vizLarge('debt',rules.debt).replace(/^<div class="viz-card">|<\/div>$/g,'');$('#strip').innerHTML=['payment','valuation','liquidity'].map(card).join('');
+      function card(id){const r=rules[id];return `<button class="insight" data-detail="${id}"><span class="insight-top"><strong>${r.title}</strong><span class="status ${r.tone}">${r.status}</span></span><span class="metric-line"><span class="metric fig">${r.metric}</span><span class="rule">Quy tắc: ${r.rule}</span></span><span class="source-line"><span>Nguồn: ${r.source}</span><strong>Vì sao?</strong></span></button>`}
+      $('#strip').innerHTML=['payment','valuation','liquidity'].map(card).join('');
       $('#report-groups').innerHTML=`<section class="group"><h3 class="group-title">Đang ổn</h3>${card('debt')}</section><section class="group"><h3 class="group-title">Cần chú ý</h3><div class="insight-list">${['concentration','liquidity','payment','valuation','fx'].map(card).join('')}</div></section><section class="group"><h3 class="group-title">Hành động có thể cân nhắc</h3><div class="callout"><p><strong>Ưu tiên theo thời điểm:</strong> kiểm tra khoản trả ngày 20/09/2026, sau đó cập nhật định giá và tỷ giá đã cũ.</p><button class="tonal" data-detail="payment">Mở khoản cần xem trước</button></div></section>`;
       function focusHeading(name){requestAnimationFrame(()=>{const h=$(`[data-view="${name}"] h2`);h?.focus()})}
       function show(name,push=true){if(push&&name!==current){previous=current}current=name;$$('.view').forEach(v=>v.classList.toggle('active',v.dataset.view===name));$$('[data-go]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.go===name)));$$('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.nav===name));focusHeading(name)}
       function bindDetails(){$$('[data-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.detail)))}
-      function openDetail(id){activeId=id;const r=rules[id];$('#detail-title').textContent=r.title;$('#detail-rule').textContent=`Quy tắc · ${r.rule}`;$('#detail-status').className=`status ${r.tone}`;$('#detail-status').textContent=r.status;$('#detail-body').innerHTML=vizLarge(id,r)+`<dl class="evidence"><div><dt>Quan sát</dt><dd>${r.observation}</dd></div><div><dt>Ngưỡng tham chiếu của hệ thống</dt><dd>${r.threshold}</dd></div><div><dt>Dữ liệu liên quan</dt><dd>${r.records}</dd></div><div><dt>Nguồn</dt><dd>${r.source}</dd></div></dl><div class="trace"><h3>Hành động có thể cân nhắc</h3><p>${r.action}</p></div><div class="note"><strong>Lưu ý</strong><br>${r.note}</div>`;show('detail')}
+      function openDetail(id){activeId=id;const r=rules[id];$('#detail-title').textContent=r.title;$('#detail-rule').textContent=`Quy tắc · ${r.rule}`;$('#detail-status').className=`status ${r.tone}`;$('#detail-status').textContent=r.status;$('#detail-body').innerHTML=`<dl class="evidence"><div><dt>Quan sát</dt><dd>${r.observation}</dd></div><div><dt>Ngưỡng tham chiếu của hệ thống</dt><dd>${r.threshold}</dd></div><div><dt>Dữ liệu liên quan</dt><dd>${r.records}</dd></div><div><dt>Nguồn</dt><dd>${r.source}</dd></div></dl><div class="trace"><h3>Hành động có thể cân nhắc</h3><p>${r.action}</p></div><div class="note"><strong>Lưu ý</strong><br>${r.note}</div>`;show('detail')}
       function openSource(){const r=rules[activeId];$('#source-kind').textContent=r.sourceKind;$('#source-title').textContent=r.source;$('#source-body').innerHTML=r.records.split('; ').map(x=>{const [a,...rest]=x.split(' · ');return `<div class="source-record"><strong>${a}</strong><span class="fig">${rest.join(' · ')}</span></div>`}).join('')+`<div class="callout" style="margin-top:16px"><strong>Nguồn dùng cho:</strong> ${r.title}<br><strong>Quy tắc:</strong> ${r.rule}</div>`;show('source')}
       bindDetails();$$('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));$$('[data-link]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.link==='source'){$('#source-kind').textContent='Nguồn chỉ số';$('#source-title').textContent='Nguồn Wealth Snapshot';$('#source-body').innerHTML='<div class="source-record"><strong>Tổng tài sản</strong><span class="fig">12.002.000.000 VND</span></div><div class="source-record"><strong>Tổng công nợ</strong><span class="fig">1.532.000.000 VND</span></div>';show('source')}else show(b.dataset.link)}));$$('[data-nav]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.nav)));$$('[data-out]').forEach(b=>b.addEventListener('click',()=>notify('Điểm đến này nằm ngoài phạm vi review của issue #66.')));$$('[data-back]').forEach(b=>b.addEventListener('click',()=>show(previous,false)));$('#open-source').addEventListener('click',openSource);
       const widthNotes={360:'360px: điều hướng dưới, một cột, bằng chứng xếp dọc và không cuộn ngang.',375:'375px: điều hướng dưới, vùng an toàn và nhãn tiếng Việt xuống dòng rõ.',768:'768px: navigation rail 92px, nội dung một hoặc hai cột khi so sánh có ích.',1024:'1024px: sidebar 240px, nội dung giới hạn và bảng bằng chứng dễ đọc.',1440:'1440px: sidebar ổn định, nội dung không kéo giãn quá mức.'};$$('[data-width]').forEach(b=>b.addEventListener('click',()=>{stage.dataset.width=b.dataset.width;$$('[data-width]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));$('#viewport-note').textContent=widthNotes[b.dataset.width]}));

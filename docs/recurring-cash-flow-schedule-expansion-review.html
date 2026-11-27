@@ -3,262 +3,159 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0A2240">
+  <meta name="theme-color" content="#F7F5EF">
   <title>Rikkaus Wealth OS | Recurring schedule expansion review</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --canvas:#F6F4EF; --surface:#FFFFFF; --surface-subtle:#F1EEE7;
-      --ink:#121A26; --ink-secondary:#5A6472; --border:#DDD8CD; --rule:#121A26; --control:#8C909A;
-      --navy:#0A2240; --navy-2:#13305A; --primary:#0F2E57; --primary-pressed:#0A2240;
-      --primary-container:#E8EDF4; --gold:#8A6A3F; --gold-light:#C9A66B; --success:#15803D; --negative:#A6192E;
-      --warning:#8A5A00; --error:#A6192E; --info:#1F4E8C; --focus:#1F4E8C;
-      --scrim:rgba(10,34,64,.62); --font:"Inter","Segoe UI",system-ui,sans-serif;
-      --display:"Source Serif 4","Source Serif Pro",Georgia,serif;
+      --canvas:#F7F5EF; --surface:#FFFFFF; --surface-subtle:#EFEBE2;
+      --ink:#17212B; --ink-secondary:#52606D; --border:#D7D2C7; --control:#8B877E;
+      --navy:#182B45; --primary:#0F5C5A; --primary-pressed:#0B4746;
+      --primary-container:#D9EFEC; --gold:#A87428; --success:#1E6A45;
+      --warning:#8A5A00; --error:#B42318; --info:#2458A6; --focus:#147D79;
+      --scrim:rgba(23,33,43,.56); --font:"IBM Plex Sans","Segoe UI",sans-serif;
+      --display:"Noto Serif Display",Georgia,serif;
       --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s6:1.5rem;
-      --s8:2rem; --s12:3rem; --s16:4.5rem;
-      --r-input:2px; --r-card:2px; --r-sheet:4px;
+      --s8:2rem; --s12:3rem; --s16:4rem;
+      --r-input:.625rem; --r-card:.875rem; --r-sheet:1.25rem;
       --line:1px solid var(--border); --control-line:1px solid var(--control);
-      --raised:0 1px 2px rgba(10,34,64,.06),0 8px 24px rgba(10,34,64,.08); --modal:0 24px 48px rgba(10,34,64,.28);
-      --motion:180ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
+      --raised:0 2px 8px rgba(24,43,69,.12); --modal:0 12px 32px rgba(24,43,69,.22);
+      --motion:200ms; --ease:cubic-bezier(.25,1,.5,1); --page:80rem; --reading:45rem;
     }
     *{box-sizing:border-box} html{scroll-behavior:smooth}
-    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 .9375rem/1.6 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 0,"cv11" 1}
+    body{margin:0;overflow-x:hidden;background:var(--canvas);color:var(--ink);font:400 1rem/1.5 var(--font)}
     body:has(dialog[open]){overflow:hidden}
     button,input,select,textarea{font:inherit} button,a,label{touch-action:manipulation}
-    button{min-height:44px;border:1px solid var(--primary);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--primary);cursor:pointer;font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;transition:background-color var(--motion) var(--ease),color var(--motion) var(--ease),border-color var(--motion) var(--ease)}
-    button:hover{background:var(--primary-container)}
-    button:disabled{cursor:not-allowed;opacity:.5;background:var(--surface-subtle);border-color:var(--control);color:var(--ink-secondary)}
-    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+    button{min-height:44px;border:var(--control-line);border-radius:var(--r-input);padding:var(--s2) var(--s4);background:var(--surface);color:var(--ink);cursor:pointer;transition:transform var(--motion) var(--ease),background-color var(--motion) var(--ease),color var(--motion) var(--ease),box-shadow var(--motion) var(--ease)}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(1px)}
+    button:disabled{cursor:not-allowed;opacity:.58;background:var(--surface-subtle);transform:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
     h1,h2,h3,h4,p{margin:0}
-    h1{color:#FFFFFF;font:300 clamp(2.5rem,5.2vw,4.25rem)/1.06 var(--display);letter-spacing:-.015em;text-wrap:balance;max-width:17ch}
-    h2{font:400 1.75rem/1.25 var(--display);letter-spacing:-.01em;color:var(--navy);text-wrap:balance}
-    h3{font-size:1rem;font-weight:600;line-height:1.4;color:var(--ink);text-wrap:balance}
-    h4{font-size:.9375rem;line-height:1.5}
+    h1{color:var(--navy);font:600 clamp(2.5rem,5.5vw,4.5rem)/1.08 var(--display);letter-spacing:-.02em;text-wrap:balance;max-width:17ch}
+    h2{font-size:1.5rem;line-height:1.33;text-wrap:balance} h3{font-size:1.125rem;line-height:1.33;text-wrap:balance}
+    h4{font-size:1rem;line-height:1.5}
     p,td,th,label,button,li{overflow-wrap:anywhere}
-    ul,ol{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s2)}
-    code{font-size:.85em;background:var(--surface-subtle);padding:.05rem .3rem}
-    .page{width:min(100%,var(--page));margin:auto;padding:0 var(--s4) var(--s4)}
+    ul{margin:0;padding-left:1.1rem} li{margin-bottom:var(--s1)}
+    .page{width:min(100%,var(--page));margin:auto;padding:var(--s4)}
     .hidden{display:none !important}
     .skip{position:absolute;top:-6rem;left:var(--s4);z-index:90;background:var(--surface);padding:var(--s3)}.skip:focus{top:var(--s4)}
-
-    /* Masthead + hero: full-bleed navy band */
-    .masthead,.hero{position:relative;isolation:isolate}
-    .masthead::before,.hero::before{content:"";position:absolute;inset:0 -100vmax;background:var(--navy);z-index:-1}
-    .masthead{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap;min-height:4rem;border-bottom:1px solid rgba(255,255,255,.14);color:#FFFFFF}
-    .mast-brand{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
-    .mast-mark{font:500 1.25rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase}
-    .mast-sub{font-size:.6875rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.66)}
-    .mast-meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)}
-    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s12);color:#FFFFFF}
-    .hero::after{content:"";position:absolute;left:0;bottom:0;width:4rem;height:2px;background:var(--gold-light)}
-    .hero-copy{display:grid;gap:var(--s6)}
-    .hero .meta{color:rgba(255,255,255,.74);font-size:1rem;line-height:1.65;max-width:40rem}
-    .hero .kicker{color:var(--gold-light)}
-    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s6);border:1px solid rgba(255,255,255,.18);border-left:2px solid var(--gold-light);background:rgba(255,255,255,.04)}
-    .hero-note strong{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF}
-    .hero-note .meta{font-size:.875rem;color:rgba(255,255,255,.72)}
-
+    .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--s8);align-items:end;padding:var(--s16) 0 var(--s8);border-bottom:2px solid var(--gold)}
+    .hero-copy{display:grid;gap:var(--s4)}
+    .hero-note{display:grid;gap:var(--s3);max-width:32rem;padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container)}
     .meta,.helper{color:var(--ink-secondary);font-size:.875rem}
-    .helper{font-size:.8125rem}
-    .kicker{color:var(--gold);font-size:.6875rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
-    main > section{padding:var(--s16) 0;border-bottom:var(--line)}
-    main > section:last-child{border-bottom:0}
-    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s8);padding-bottom:var(--s4);border-bottom:1px solid var(--rule)}
-    .section-head > div{display:grid;gap:var(--s2)}
-    .section-mark{display:flex;align-items:center;gap:var(--s3);color:var(--gold);font-size:.6875rem;font-weight:600;letter-spacing:.18em}
-    .section-mark::after{content:"";width:2.5rem;height:1px;background:var(--gold)}
+    .kicker{color:var(--primary);font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+    section{padding:var(--s12) 0;border-bottom:var(--line)}
+    .section-head{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s8);align-items:end;margin-bottom:var(--s6)}
+    .section-mark{color:var(--gold);font-weight:600}
     .grid{display:grid;gap:var(--s4)}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.split{grid-template-columns:1.5fr 1fr}
-    .card{display:grid;gap:var(--s3);padding:var(--s6);border:var(--line);border-top:2px solid var(--navy);border-radius:var(--r-card);background:var(--surface);align-content:start}
-    .card h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
-    .callout{display:grid;gap:var(--s2);padding:var(--s6);border:var(--line);border-left:2px solid var(--gold);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
-    .callout h3{font:400 1.25rem/1.3 var(--display);color:var(--navy)}
-    .callout > strong{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}
-    .primary{border-color:var(--primary);background:var(--primary);color:#FFFFFF}.primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
-    .tonal{border-color:var(--primary);background:transparent;color:var(--primary)}.tonal:hover{background:var(--primary-container)}
-    .danger{border-color:var(--error);color:var(--error);background:var(--surface)}.danger:hover{background:#FBEDEF}
-    .text-btn{border-color:transparent;background:transparent;color:var(--primary);padding-left:0;padding-right:0;text-decoration:underline;text-underline-offset:.3em;text-decoration-thickness:1px}
-    .text-btn:hover{background:transparent;color:var(--navy)}
+    .card{display:grid;gap:var(--s3);padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface);align-content:start}
+    .callout{display:grid;gap:var(--s2);padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);align-content:start}
+    .primary{border-color:var(--primary);background:var(--primary);color:var(--surface);font-weight:600}.primary:hover{background:var(--primary-pressed)}
+    .tonal{border-color:var(--primary-container);background:var(--primary-container);color:var(--primary);font-weight:600}
+    .danger{border-color:var(--error);color:var(--error)}
+    .text-btn{border-color:transparent;background:transparent;color:var(--primary)}
     .fig{font-variant-numeric:tabular-nums}
     .toolbar,.switches,.actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
-    .switches{gap:0}
-    .switches button{margin:0 -1px -1px 0;border-color:var(--border);color:var(--ink-secondary);min-width:3.25rem}
-    .switches button:hover{color:var(--primary);background:var(--surface)}
-    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{position:relative;z-index:1;border-color:var(--primary);background:var(--primary);color:#FFFFFF}
-    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-    .status::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:currentColor;flex:none}
-    .status.ok{color:var(--success)}.status.warn{color:var(--warning)}.status.warn::before{border-radius:1px}
-    .status.bad{color:var(--error)}.status.bad::before{border-radius:1px;transform:rotate(45deg)}
+    .switches button[aria-pressed="true"],.segments button[aria-pressed="true"]{border-color:var(--primary);background:var(--primary);color:var(--surface)}
+    .status{display:inline-flex;align-items:center;gap:var(--s2);width:fit-content;font-size:.875rem;font-weight:600}
+    .status::before{content:"";width:.75rem;height:.75rem;border-radius:50%;background:currentColor;flex:none}
+    .status.ok{color:var(--success)}.status.warn{color:var(--warning)}.status.warn::before{border-radius:2px}
+    .status.bad{color:var(--error)}.status.bad::before{border-radius:2px;transform:rotate(45deg)}
     .status.info{color:var(--info)}
-    .flow{display:grid;grid-template-columns:repeat(6,minmax(8rem,1fr));gap:0;overflow-x:auto;padding-bottom:var(--s2);counter-reset:step;border:var(--line);background:var(--surface)}
-    .flow div{counter-increment:step;min-height:7rem;padding:var(--s4);border-right:var(--line);border-top:2px solid var(--navy);display:grid;gap:var(--s1);align-content:start}
-    .flow div:last-child{border-right:0}
-    .flow div::before{content:counter(step,decimal-leading-zero);font:400 1.5rem/1 var(--display);color:var(--gold)}
-    .flow strong{font-size:.875rem;color:var(--navy)}
-    .flow .meta{font-size:.8125rem}
-    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:0;border:var(--line);background:var(--surface)}
-    .token{min-height:6.5rem;padding:var(--s4);border-right:var(--line);border-bottom:var(--line)}
-    .token strong{font-size:.8125rem}
-    .token .meta{font-size:.75rem;font-variant-numeric:tabular-nums}
-    .swatch{display:block;height:2.5rem;border-radius:0;margin-bottom:var(--s3)}
+    .flow{display:grid;grid-template-columns:repeat(6,minmax(8rem,1fr));gap:var(--s2);overflow-x:auto;padding-bottom:var(--s2)}
+    .flow div{min-height:6rem;padding:var(--s3);border-top:2px solid var(--primary);background:var(--surface)}
+    .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:var(--s2)}
+    .token{min-height:6rem;padding:var(--s3);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    .swatch{display:block;height:2rem;border-radius:var(--r-input);margin-bottom:var(--s2)}
     .table-wrap{overflow-x:auto}
-    table{width:100%;border-collapse:collapse;font-size:.875rem}
-    caption{caption-side:top}
-    th,td{text-align:left;padding:var(--s3) var(--s3);border-bottom:var(--line);vertical-align:top}
-    thead th{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-secondary);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding-top:var(--s2);padding-bottom:var(--s2);white-space:nowrap}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{text-align:left;padding:var(--s2) var(--s3);border-bottom:var(--line);vertical-align:top}
+    th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-secondary)}
     td.fig,th.fig{text-align:right}
-    tbody tr:last-child td{border-bottom:1px solid var(--rule)}
-    tbody tr:hover td{background:rgba(232,237,244,.45)}
-    .callout table tbody tr:last-child td{border-bottom:double 3px var(--rule)}
+    tbody tr:last-child td{border-bottom:0}
     .stage{display:grid;gap:var(--s4)}
     .stage-bar{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:center}
-    .device-wrap{padding:var(--s8) var(--s4);border:var(--line);background:repeating-linear-gradient(0deg,transparent 0 23px,rgba(10,34,64,.035) 23px 24px),var(--surface-subtle);overflow:hidden}
-    .device{width:100%;max-width:24rem;min-height:48rem;margin:auto;border:1px solid #C9CDD4;border-radius:6px;background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
+    .device-wrap{padding:var(--s4);border-radius:var(--r-card);background:var(--surface-subtle);overflow:hidden}
+    .device{width:100%;max-width:24rem;min-height:48rem;margin:auto;border:1px solid var(--control);border-radius:var(--r-card);background:var(--canvas);box-shadow:var(--raised);overflow:hidden;transition:max-width 300ms var(--ease)}
     .device[data-mode="tablet"]{max-width:48rem}.device[data-mode="desktop"]{max-width:64rem}.device[data-mode="wide"]{max-width:100%}
     .app{min-height:48rem;display:grid;grid-template-rows:auto 1fr auto}
-    .topbar{height:3.75rem;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);background:var(--navy);color:#FFFFFF;border-bottom:2px solid var(--gold-light)}
-    .wordmark{font:500 1rem/1 var(--display);letter-spacing:.22em;text-transform:uppercase;color:#FFFFFF}
-    .avatar{width:40px;min-height:40px;padding:0;border-radius:50%;border-color:rgba(255,255,255,.5);background:transparent;color:#FFFFFF;letter-spacing:.06em}
-    .avatar:hover{background:rgba(255,255,255,.1)}
+    .topbar{height:4rem;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s4);border-bottom:var(--line);background:var(--surface)}
+    .wordmark{font:600 1.25rem/1 var(--display);color:var(--navy)}
+    .avatar{width:44px;padding:0;border-radius:50%;font-weight:600}
     .app-body{min-width:0}
     .app-nav{order:3;border-top:var(--line);background:var(--surface)}
     .nav-list{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none}
-    .nav-list li{margin:0}
-    .nav-btn{width:100%;min-height:64px;border:0;border-top:2px solid transparent;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.5625rem;letter-spacing:.08em;color:var(--ink-secondary);background:transparent}
-    .nav-btn:hover{background:var(--surface-subtle)}
-    .nav-btn.active{color:var(--navy);border-top-color:var(--navy)}
-    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-    .product-main{min-width:0;padding:var(--s6) var(--s4);padding-bottom:2rem}
+    .nav-btn{width:100%;min-height:64px;border:0;border-radius:0;padding:var(--s1);display:grid;place-items:center;gap:var(--s1);font-size:.68rem;color:var(--ink-secondary)}
+    .nav-btn.active{color:var(--primary);font-weight:600}
+    .ico{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .product-main{min-width:0;padding:var(--s4);padding-bottom:2rem}
     .view{display:none}.view.active{display:grid;gap:var(--s4)}
-    .view h2{font-size:1.625rem}
-    .view .card,.view .callout{padding:var(--s4)}
-    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;padding-bottom:var(--s3);border-bottom:var(--line)}
-    .screen-head .meta{font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
-    input,select,textarea{width:100%;min-height:48px;border:0;border-bottom:1px solid var(--control);border-radius:0;background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem;box-shadow:inset 0 0 0 1px var(--border)}
-    input:hover,select:hover{box-shadow:inset 0 0 0 1px var(--control)}
-    input:focus,select:focus{border-bottom-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+    .screen-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+    input,select,textarea{width:100%;min-height:48px;border:var(--control-line);border-radius:var(--r-input);background:var(--surface);color:var(--ink);padding:var(--s3);font-size:1rem}
     .field{display:grid;gap:var(--s1)}
-    .field > label{font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-secondary)}
     .field-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s3)}
-    .form-section{display:grid;gap:var(--s4);margin:0;padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
-    legend{padding:0 var(--s2);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}
+    .form-section{display:grid;gap:var(--s3);margin:0;padding:var(--s4);border:var(--line);border-radius:var(--r-card);background:var(--surface)}
+    legend{padding:0 var(--s2);font-size:.875rem}
     .required{color:var(--error)}
     .error-copy{color:var(--error);font-size:.8125rem;font-weight:500}
-    .error-summary{padding:var(--s4);border:1px solid var(--error);border-left:3px solid var(--error);border-radius:var(--r-card);background:#FDF5F6;display:grid;gap:var(--s1)}
-    .summary-box{padding:var(--s4) var(--s4) var(--s4) var(--s6);border-radius:var(--r-card);background:var(--primary-container);border-left:2px solid var(--navy);display:grid;gap:var(--s2)}
-    .summary-box strong{color:var(--navy);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase}
-    .summary-sentence{font:400 1.125rem/1.5 var(--display);color:var(--ink)}
+    .error-summary{padding:var(--s3);border:2px solid var(--error);border-radius:var(--r-card);background:var(--surface);display:grid;gap:var(--s1)}
+    .summary-box{padding:var(--s4);border-radius:var(--r-card);background:var(--primary-container);border-left:3px solid var(--primary);display:grid;gap:var(--s2)}
+    .summary-box strong{color:var(--primary)}
+    .summary-sentence{font-size:1.0625rem;line-height:1.45;font-weight:600;color:var(--ink)}
     .spine{position:relative;display:grid;gap:var(--s2);padding-left:1.75rem;margin:0}
-    .spine li{margin:0}
-    .spine::before{content:"";position:absolute;left:.375rem;top:1rem;bottom:1rem;width:1px;background:var(--control)}
-    .occ{position:relative;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;text-align:left;border:var(--line);border-radius:var(--r-card);background:var(--surface);padding:var(--s3) var(--s4);min-height:4.5rem;color:var(--ink);font-size:.9375rem;font-weight:400;letter-spacing:0;text-transform:none}
-    .occ:hover{border-color:var(--primary);background:var(--surface)}
-    .occ::before{content:"";position:absolute;left:-1.5rem;top:1.5rem;width:.6875rem;height:.6875rem;border-radius:50%;background:var(--surface);border:1.5px solid var(--navy)}
-    .occ.clamped::before{border-color:var(--warning);border-radius:1px;transform:rotate(45deg)}
-    .occ.is-first::before{background:var(--navy)}
+    .spine::before{content:"";position:absolute;left:.375rem;top:1rem;bottom:1rem;width:2px;background:var(--border)}
+    .occ{position:relative;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;text-align:left;border:var(--line);border-radius:var(--r-card);background:var(--surface);padding:var(--s3);min-height:4.5rem}
+    .occ:hover{border-color:var(--primary)}
+    .occ::before{content:"";position:absolute;left:-1.5rem;top:1.5rem;width:.8125rem;height:.8125rem;border-radius:50%;background:var(--surface);border:2px solid var(--primary)}
+    .occ.clamped::before{border-color:var(--warning);border-radius:2px;transform:rotate(45deg)}
+    .occ.is-first::before{background:var(--primary)}
     .occ.is-last::before{background:var(--gold);border-color:var(--gold)}
     .occ-main{display:grid;gap:var(--s1);min-width:0}
-    .occ-date{font-weight:600;font-variant-numeric:tabular-nums;color:var(--navy)}
-    .occ-main .meta{font-size:.8125rem}
-    .occ-amount{text-align:right;font:500 1rem/1.2 var(--font);font-variant-numeric:tabular-nums;white-space:nowrap}
-    .occ-amount.in{color:var(--success)}.occ-amount.out{color:var(--negative)}
-    .amount-out,.detail-amount.amount-out,.amount-out strong{color:var(--negative)}
-    .amount-in,.detail-amount.amount-in{color:var(--success)}
-    .mark{position:relative;padding:var(--s2) 0;font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-secondary)}
-    .mark::before{content:"";position:absolute;left:-1.5rem;top:calc(50% - .5px);width:.6875rem;height:1px;background:var(--gold)}
-    .mark.split{color:var(--primary)}.mark.split::before{background:var(--primary);height:2px}
-    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:1px;padding:.0625rem .4375rem;font-size:.625rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-secondary);white-space:nowrap;background:var(--surface)}
-    .tag.warn{color:var(--warning);border-color:#D9C49A;background:#FBF6EC}
-    .tag.brand{color:var(--navy);border-color:#B9C4D4;background:var(--primary-container)}
+    .occ-date{font-weight:600;font-variant-numeric:tabular-nums}
+    .occ-amount{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .occ-amount.in{color:var(--success)}.occ-amount.out{color:var(--ink)}
+    .mark{position:relative;padding:var(--s2) 0;font-size:.8125rem;font-weight:600;color:var(--ink-secondary)}
+    .mark::before{content:"";position:absolute;left:-1.5rem;top:calc(50% - 1px);width:.8125rem;height:2px;background:var(--gold)}
+    .mark.split{color:var(--primary)}.mark.split::before{background:var(--primary)}
+    .tag{display:inline-flex;align-items:center;gap:.375rem;border:var(--line);border-radius:999px;padding:.0625rem .5rem;font-size:.75rem;color:var(--ink-secondary);white-space:nowrap}
+    .tag.warn{color:var(--warning);border-color:var(--warning)}
+    .tag.brand{color:var(--primary);border-color:var(--primary)}
     .tag-row{display:flex;flex-wrap:wrap;gap:var(--s1)}
-    .facts{display:grid;gap:0;margin:0}
-    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.875rem;padding:var(--s2) 0;border-bottom:var(--line)}
-    .fact:last-child{border-bottom:0}
-    .fact dt{color:var(--ink-secondary);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;padding-top:.125rem}
-    .fact dd{margin:0;font-weight:500;font-variant-numeric:tabular-nums;text-align:right}
-    .loan-link{display:grid;gap:var(--s2);margin-top:var(--s2);padding:var(--s3) var(--s4);border:var(--line);border-left:2px solid var(--navy);background:var(--surface-subtle)}
-    .loan-link .kicker{color:var(--gold)}
-    .loan-link > strong{font:400 1.125rem/1.3 var(--display);color:var(--navy)}
-    .loan-link .facts .fact{font-size:.8125rem}
-    .loan-series{display:grid;gap:var(--s2);margin:var(--s3) 0}
-    .loan-series button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);text-align:left;text-transform:none;letter-spacing:0;font-size:.875rem;font-weight:500;color:var(--ink);border-color:var(--border)}
-    .loan-series button[aria-current="true"]{border-color:var(--navy);box-shadow:inset 3px 0 0 var(--navy)}
-    .loan-series .meta{display:block;font-size:.75rem}
-    a{color:var(--primary);text-underline-offset:.25em}
-    .grp-head{display:grid;gap:var(--s1);padding:var(--s4);border:var(--line);border-top:2px solid var(--navy);background:var(--surface)}
-    .grp-head .kicker{color:var(--gold)}
-    .grp-total-big{font:300 2rem/1.15 var(--display);font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.01em}
-    .grp-list{display:grid;border-top:1px solid var(--rule)}
-    .grp{border-bottom:var(--line);background:var(--surface)}
-    .grp > summary{list-style:none;display:grid;grid-template-columns:minmax(0,1fr) auto 1rem;gap:var(--s3);align-items:center;padding:var(--s3) var(--s4);min-height:4rem;cursor:pointer}
-    .grp > summary::-webkit-details-marker{display:none}
-    .grp > summary:hover{background:var(--surface-subtle)}
-    .grp-name{display:block;font-weight:600;color:var(--navy)}
-    .grp-sub{display:block;font-size:.75rem;color:var(--ink-secondary)}
-    .grp-amt{font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
-    .chev{width:.5rem;height:.5rem;border-right:1.5px solid var(--ink-secondary);border-bottom:1.5px solid var(--ink-secondary);transform:rotate(45deg);transition:transform var(--motion) var(--ease);justify-self:center}
-    .grp[open] > summary .chev{transform:rotate(-135deg)}
-    .grp[open] > summary{border-bottom:var(--line)}
-    .grp-body{display:grid;gap:var(--s3);padding:var(--s3) var(--s4) var(--s4);background:var(--surface-subtle)}
-    .share-bar{display:flex;height:4px;gap:2px;background:transparent}
-    .share-bar span{display:block;height:100%;background:var(--navy)}
-    .share-bar span:nth-child(2){background:#4E6A8F}.share-bar span:nth-child(3){background:#9AAAC0}.share-bar span:nth-child(n+4){background:#C9D2DE}
-    .src-list{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:var(--line)}
-    .src-list li{margin:0}
-    .src{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s1) var(--s3);padding:var(--s3) 0;border-bottom:var(--line)}
-    .src-name{font-weight:600;font-size:.875rem}
-    .src .meta{font-size:.75rem}
-    .src-amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.875rem;font-weight:500}
-    .src-amt .meta{display:block;font-weight:400}
-    .src-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);align-items:center}
-    .src-actions .text-btn{min-height:32px;font-size:.6875rem}
-    .src.muted .src-name,.src.muted .src-amt{color:var(--ink-secondary)}
-    .grp-foot{font-size:.75rem;color:var(--ink-secondary);font-variant-numeric:tabular-nums}
-    .grp-foot strong{color:var(--ink)}
-    @media (max-width:26rem){.src{grid-template-columns:1fr}.src-amt{text-align:left}}
+    .facts{display:grid;gap:var(--s2)}
+    .fact{display:grid;grid-template-columns:minmax(7rem,auto) 1fr;gap:var(--s3);font-size:.9rem;padding-bottom:var(--s2);border-bottom:var(--line)}
+    .fact:last-child{border-bottom:0;padding-bottom:0}
+    .fact dt{color:var(--ink-secondary)}.fact dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
     .choice-row{display:grid;gap:var(--s2)}
-    .choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s3) var(--s4);border:var(--line);border-radius:var(--r-input);background:var(--surface);cursor:pointer;min-height:44px}
-    .choice input{width:1.125rem;min-height:1.125rem;margin-top:.1875rem;box-shadow:none;accent-color:var(--navy)}
-    .choice:has(input:checked){border-color:var(--navy);box-shadow:inset 3px 0 0 var(--navy);background:var(--primary-container)}
+    .choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s3);border:var(--control-line);border-radius:var(--r-input);background:var(--surface);cursor:pointer;min-height:44px}
+    .choice input{width:1.25rem;min-height:1.25rem;margin-top:.125rem}
+    .choice:has(input:checked){border-color:var(--primary);background:var(--primary-container)}
     .choice:has(input:disabled){cursor:not-allowed;background:var(--surface-subtle);color:var(--ink-secondary)}
     .choice span{display:block}
-    .choice strong{color:var(--navy)}
-    .detail-amount{font:300 2.25rem/1.15 var(--display);font-variant-numeric:tabular-nums lining-nums;color:var(--navy);letter-spacing:-.01em}
-    .sticky-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;padding-top:var(--s3);border-top:var(--line)}
+    .detail-amount{font-size:1.75rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+    .sticky-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;padding-top:var(--s2)}
     .sticky-actions button{flex:1 1 9rem}
     .skeleton{display:grid;gap:var(--s2)}
-    .skeleton span{display:block;height:.875rem;border-radius:0;background:linear-gradient(90deg,var(--surface-subtle),#E4E0D7,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+    .skeleton span{display:block;height:1rem;border-radius:.25rem;background:linear-gradient(90deg,var(--surface-subtle),#E4DFD4,var(--surface-subtle));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
     @keyframes shimmer{to{background-position:-200% 0}}
     .state-panel{min-height:11rem}
     .check-row,.review-choice{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s2) 0;min-height:44px;align-content:center}
-    .check-row{border-bottom:var(--line);font-size:.875rem}
-    .check-row:last-child{border-bottom:0}
-    .check-row input{width:1.125rem;min-height:1.125rem;margin-top:.1875rem;box-shadow:none;accent-color:var(--navy)}
-    .review-list{display:grid;gap:0;border-top:var(--line)}
-    .review-row{display:grid;gap:var(--s2);padding:var(--s3) 0;border-bottom:var(--line);border-radius:0}
-    .review-row strong{font-size:.875rem;color:var(--navy)}
-    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0;font-size:.8125rem}
-    .review-options{display:flex;gap:var(--s6);flex-wrap:wrap}
-    .review-choice input{width:1.125rem;min-height:1.125rem;margin:0;box-shadow:none;accent-color:var(--navy)}
-    dialog{width:min(100%,34rem);border:0;border-top:3px solid var(--navy);border-radius:var(--r-sheet);padding:var(--s8) var(--s6) var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal)}
-    dialog h2{font-size:1.5rem;margin-bottom:var(--s3)}
-    dialog::backdrop{background:var(--scrim);backdrop-filter:blur(2px)}
+    .check-row input{width:1.25rem;min-height:1.25rem;margin-top:.1875rem}
+    .review-list{display:grid;gap:var(--s3)}
+    .review-row{display:grid;gap:var(--s2);padding:var(--s3);border:var(--line);border-radius:var(--r-card)}
+    .review-choice{display:inline-grid;grid-template-columns:auto auto;gap:var(--s2);align-items:center;padding:0}
+    .review-options{display:flex;gap:var(--s4);flex-wrap:wrap}
+    .review-choice input{width:1.25rem;min-height:1.25rem;margin:0}
+    dialog{width:min(100%,34rem);border:0;border-radius:var(--r-sheet);padding:var(--s6);background:var(--surface);color:var(--ink);box-shadow:var(--modal)}
+    dialog::backdrop{background:var(--scrim)}
     .sheet{margin:auto auto 0;width:min(100%,34rem);border-bottom-left-radius:0;border-bottom-right-radius:0}
-    #series-options button{justify-content:flex-start;text-align:left;text-transform:none;letter-spacing:0;font-size:.875rem;font-weight:500;color:var(--ink);border-color:var(--border)}
-    #series-options button:hover{border-color:var(--primary);background:var(--primary-container)}
-    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s4)}
-    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6);padding-top:var(--s4);border-top:var(--line)}
-    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);border-left:3px solid var(--gold-light);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.875rem}
-    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.8125rem;border-top:1px solid var(--rule)}
+    .dialog-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;margin-bottom:var(--s3)}
+    .dialog-actions{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:flex-end;margin-top:var(--s6)}
+    .toast{position:fixed;left:50%;bottom:var(--s6);transform:translateX(-50%);z-index:80;max-width:min(92vw,28rem);padding:var(--s3) var(--s4);border-radius:var(--r-card);background:var(--navy);color:#FFFFFF;box-shadow:var(--modal);font-size:.9rem}
+    footer{padding:var(--s8) 0;color:var(--ink-secondary);font-size:.875rem}
     @media (max-width:60rem){
       .hero,.section-head,.two,.three,.split{grid-template-columns:1fr}
-      .hero{padding-top:var(--s12);gap:var(--s6)}
-      main > section{padding:var(--s12) 0}
+      .hero{padding-top:var(--s8);gap:var(--s6)}
       .field-row{grid-template-columns:1fr}
-      .mast-sub{display:none}
     }
     @media (prefers-reduced-motion:reduce){
       *{animation-duration:1ms !important;animation-iteration-count:1 !important;transition-duration:1ms !important}
@@ -269,7 +166,6 @@
 <body>
 <a class="skip" href="#main">Bỏ qua tới nội dung chính</a>
 <div class="page">
-  <div class="masthead" role="banner"><div class="mast-brand"><span class="mast-mark">Rikkaus</span><span class="mast-sub">Wealth OS · Private Client Design Review</span></div><span class="mast-meta">Issue #72 · Feature #20</span></div>
   <header class="hero">
     <div class="hero-copy">
       <p class="kicker">MVP 1B · Issue #72 · Design review</p>
@@ -307,18 +203,18 @@
     <section aria-labelledby="system-title">
       <div class="section-head">
         <div><span class="section-mark">02</span><h2 id="system-title">Design system và thành phần</h2></div>
-        <p class="meta">Phong cách private banking: navy đậm cho hành động và điều hướng, serif cho tiêu đề và số liệu lớn, đường kẻ mảnh kiểu báo cáo tài chính. Màu đồng chỉ dùng để trang trí.</p>
+        <p class="meta">Quiet Ledger cho toàn bộ tác vụ; Modern Heritage chỉ xuất hiện ở wordmark, tiêu đề lớn và đường vàng.</p>
       </div>
       <div class="tokens" aria-label="Token màu được sử dụng">
-        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><strong>canvas</strong><p class="meta">#F6F4EF</p></div>
+        <div class="token"><span class="swatch" style="background:var(--canvas);border:var(--line)"></span><strong>canvas</strong><p class="meta">#F7F5EF</p></div>
         <div class="token"><span class="swatch" style="background:var(--surface);border:var(--line)"></span><strong>surface</strong><p class="meta">#FFFFFF</p></div>
-        <div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>primary</strong><p class="meta">#0F2E57</p></div>
-        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>primaryContainer</strong><p class="meta">#E8EDF4</p></div>
-        <div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>brandNavy</strong><p class="meta">#0A2240</p></div>
-        <div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>heritageBronze</strong><p class="meta">#8A6A3F · chỉ trang trí</p></div>
-        <div class="token"><span class="swatch" style="background:var(--success)"></span><strong>success</strong><p class="meta">#15803D</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary)"></span><strong>primary</strong><p class="meta">#0F5C5A</p></div>
+        <div class="token"><span class="swatch" style="background:var(--primary-container)"></span><strong>primaryContainer</strong><p class="meta">#D9EFEC</p></div>
+        <div class="token"><span class="swatch" style="background:var(--navy)"></span><strong>brandNavy</strong><p class="meta">#182B45</p></div>
+        <div class="token"><span class="swatch" style="background:var(--gold)"></span><strong>heritageGold</strong><p class="meta">#A87428 · chỉ trang trí</p></div>
+        <div class="token"><span class="swatch" style="background:var(--success)"></span><strong>success</strong><p class="meta">#1E6A45</p></div>
         <div class="token"><span class="swatch" style="background:var(--warning)"></span><strong>warning</strong><p class="meta">#8A5A00 · kỳ được dời</p></div>
-        <div class="token"><span class="swatch" style="background:var(--error)"></span><strong>error</strong><p class="meta">#A6192E</p></div>
+        <div class="token"><span class="swatch" style="background:var(--error)"></span><strong>error</strong><p class="meta">#B42318</p></div>
       </div>
       <div class="grid two" style="margin-top:var(--s4)">
         <div class="card">
@@ -358,7 +254,6 @@
             <button type="button" data-go="schedule" aria-pressed="false">Lịch kỳ</button>
             <button type="button" data-go="occurrence" aria-pressed="false">Chi tiết kỳ</button>
             <button type="button" data-go="edit" aria-pressed="false">Sửa chuỗi</button>
-            <button type="button" data-go="groups" aria-pressed="false">Theo danh mục</button>
             <button type="button" data-go="states" aria-pressed="false">Trạng thái</button>
           </div>
         </div>
@@ -380,7 +275,6 @@
                       <h3 id="series-name">Lương</h3>
                       <p class="detail-amount fig" id="series-amount">132.000.000 ₫</p>
                       <div class="tag-row" id="series-tags"></div>
-                      <div id="loan-link" class="hidden"></div>
                     </div>
                     <div class="summary-box" aria-live="polite">
                       <strong>Diễn giải quy tắc</strong>
@@ -446,7 +340,7 @@
                       <strong>Cách đọc lịch kỳ</strong>
                       <p class="meta">Mỗi kỳ thuộc đúng một kỳ báo cáo là tháng chứa ngày diễn ra. Kỳ được dời về cuối tháng vẫn nằm trong tháng gốc nên không lấn sang tháng kế tiếp.</p>
                     </div>
-                    <div class="actions"><button type="button" class="tonal" id="open-edit">Sửa chuỗi</button><button type="button" class="text-btn" data-go="groups">Xem theo danh mục</button></div>
+                    <div class="actions"><button type="button" class="tonal" id="open-edit">Sửa chuỗi</button></div>
                   </section>
 
                   <section class="view" data-view="occurrence" id="view-occurrence" tabindex="-1" aria-labelledby="occurrence-heading">
@@ -464,7 +358,6 @@
                     <div class="callout">
                       <strong>Nguồn của kỳ</strong>
                       <p class="meta" id="occ-source">—</p>
-                      <div id="occ-loan" class="hidden"></div>
                       <div class="actions"><button type="button" class="tonal" id="occ-trace">Mở bản ghi định kỳ gốc</button></div>
                     </div>
                     <p class="helper">Kỳ là kết quả hiển thị của bản ghi gốc. Kỳ không phải một bản ghi nhập tay riêng và không được đếm thêm lần nữa trong kỳ báo cáo.</p>
@@ -500,29 +393,6 @@
                       <button type="button" class="danger" id="delete-series">Xóa chuỗi</button>
                       <button type="button" class="primary" id="confirm-edit">Xác nhận thay đổi</button>
                     </div>
-                  </section>
-
-                  <section class="view" data-view="groups" id="view-groups" tabindex="-1" aria-labelledby="groups-heading">
-                    <div class="screen-head">
-                      <div><p class="meta">Dòng tiền · Định kỳ</p><h2 id="groups-heading">Theo danh mục</h2></div>
-                    </div>
-                    <div class="switches" role="group" aria-label="Chọn loại">
-                      <button type="button" data-gkind="income" aria-pressed="true">Thu nhập</button>
-                      <button type="button" data-gkind="expense" aria-pressed="false">Chi phí</button>
-                    </div>
-                    <div class="switches" role="group" aria-label="Chọn kỳ báo cáo">
-                      <button type="button" data-gmonth="2026-07" aria-pressed="false">07/2026</button>
-                      <button type="button" data-gmonth="2026-08" aria-pressed="false">08/2026</button>
-                      <button type="button" data-gmonth="2026-09" aria-pressed="true">09/2026</button>
-                      <button type="button" data-gmonth="2026-10" aria-pressed="false">10/2026</button>
-                    </div>
-                    <div class="grp-head" aria-live="polite">
-                      <p class="kicker" id="grp-head-label">—</p>
-                      <p class="grp-total-big" id="grp-head-total">—</p>
-                      <p class="helper" id="grp-head-sub">—</p>
-                    </div>
-                    <div class="grp-list" id="grp-list"></div>
-                    <p class="helper">Nguồn có nhãn <span class="tag">Minh họa</span> là ví dụ thiết kế cho trường hợp nhiều nguồn, không thuộc fixture #69. Bảng đối chiếu 09/2026 ở mục 04 không đổi.</p>
                   </section>
 
                   <section class="view" data-view="states" id="view-states" tabindex="-1" aria-labelledby="states-heading">
@@ -622,9 +492,9 @@
               <tr><td>Thu nhập định kỳ tháng 09/2026</td><td class="fig" id="rec-income">—</td></tr>
               <tr><td>Thu nhập một lần tháng 09/2026</td><td class="fig">26.435.000</td></tr>
               <tr><td><strong>Tổng thu nhập</strong></td><td class="fig"><strong>180.000.000</strong></td></tr>
-              <tr><td>Chi phí định kỳ tháng 09/2026</td><td class="fig amount-out" id="rec-expense">—</td></tr>
-              <tr><td>Chi phí một lần tháng 09/2026</td><td class="fig amount-out">19.950.000</td></tr>
-              <tr><td><strong>Tổng chi phí</strong></td><td class="fig amount-out"><strong>92.000.000</strong></td></tr>
+              <tr><td>Chi phí định kỳ tháng 09/2026</td><td class="fig" id="rec-expense">—</td></tr>
+              <tr><td>Chi phí một lần tháng 09/2026</td><td class="fig">19.950.000</td></tr>
+              <tr><td><strong>Tổng chi phí</strong></td><td class="fig"><strong>92.000.000</strong></td></tr>
               <tr><td><strong>Dòng tiền ròng</strong></td><td class="fig"><strong>88.000.000</strong></td></tr>
             </tbody></table></div>
           </div>
@@ -637,59 +507,6 @@
               <li>Kỳ là kết quả hiển thị, không phải bản ghi nhập tay mới.</li>
             </ul>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section aria-labelledby="loan-title">
-      <div class="section-head">
-        <div><span class="section-mark">04B</span><h2 id="loan-title">Liên kết dòng tiền với khoản vay</h2></div>
-        <p class="meta">Mỗi chuỗi thanh toán nợ truy được về khoản vay, bên cho vay và tài sản bảo đảm trong danh mục công nợ.</p>
-      </div>
-      <div class="table-wrap"><table id="loan-table"><thead><tr><th>Chuỗi dòng tiền</th><th>Vai trò</th><th>Khoản vay</th><th>Bên cho vay</th><th>Tài sản bảo đảm</th><th class="fig">Kỳ 09/2026</th></tr></thead><tbody></tbody></table></div>
-      <div class="grid two" style="margin-top:var(--s4)">
-        <div class="callout">
-          <strong>Nguồn dữ liệu khoản vay</strong>
-          <p class="meta">Thông tin khoản vay lấy từ <a href="liability-catalog-schedules-collateral-review.html">review danh mục công nợ</a>. Ngày bắt đầu và đáo hạn của chuỗi Phần gốc và Phần lãi đã được căn theo catalog công nợ: 20/06/2023 → 20/06/2038.</p>
-          <p class="meta">Catalog công nợ chưa có trường Bên cho vay, nên giao diện hiển thị “Chưa nhập” thay vì tự đặt tên ngân hàng.</p>
-        </div>
-        <div class="callout">
-          <strong>Điểm cần đối chiếu</strong>
-          <p class="meta" id="loan-recon">—</p>
-        </div>
-      </div>
-    </section>
-
-    <section aria-labelledby="group-title">
-      <div class="section-head">
-        <div><span class="section-mark">04C</span><h2 id="group-title">Một danh mục, nhiều nguồn</h2></div>
-        <p class="meta">Lương từ nhiều nơi làm việc, thu nhập cho thuê từ nhiều tài sản, gốc và lãi của nhiều khoản vay: hiển thị một con số tổng, mở ra để thấy từng nguồn.</p>
-      </div>
-      <div class="flow" aria-label="Ba cấp hiển thị" style="grid-template-columns:repeat(3,minmax(10rem,1fr))">
-        <div><strong>Tổng danh mục</strong><p class="meta">Một dòng mỗi danh mục: tên, số nguồn, số kỳ trong tháng và tổng. Mặc định thu gọn.</p></div>
-        <div><strong>Các nguồn</strong><p class="meta">Mở ra để thấy từng nguồn kèm ngày kỳ, số tiền, tỷ trọng và liên kết khoản vay hoặc tài sản.</p></div>
-        <div><strong>Lịch kỳ của nguồn</strong><p class="meta">Mỗi nguồn là một chuỗi định kỳ riêng, mở được về quy tắc và lịch kỳ của chính nó.</p></div>
-      </div>
-      <div class="grid two" style="margin-top:var(--s4)">
-        <div class="card">
-          <h3>Quy tắc cộng dồn</h3>
-          <ol>
-            <li><strong>Tổng danh mục bằng tổng các kỳ trong kỳ báo cáo</strong>, cộng từ mọi nguồn, không cộng theo số tiền khai báo của chuỗi.</li>
-            <li><strong>Mỗi kỳ thuộc đúng một nguồn và một danh mục</strong>, nên tổng không bao giờ cộng một kỳ hai lần.</li>
-            <li><strong>Nguồn không có kỳ trong tháng vẫn được liệt kê</strong> ở dạng mờ, kèm lý do (chu kỳ quý, đã kết thúc, chưa bắt đầu), số tiền “—” và không tính vào tổng.</li>
-            <li><strong>Nguồn USD được cộng theo giá trị quy đổi</strong>, có ghi nguyên tệ. Khi thiếu tỷ giá, tổng được gắn nhãn “chưa đầy đủ” thay vì bỏ qua nguồn đó.</li>
-            <li><strong>Gốc và lãi được gộp theo danh mục</strong>, nhưng từng dòng nguồn vẫn truy về khoản vay, bên cho vay và tài sản bảo đảm.</li>
-          </ol>
-        </div>
-        <div class="card">
-          <h3>Giữ giao diện gọn</h3>
-          <ul>
-            <li>Cấp 1 chỉ có tên, một dòng phụ và tổng. Không hiển thị biểu đồ hay tag ở cấp này.</li>
-            <li>Thanh tỷ trọng mảnh 4px chỉ xuất hiện khi mở. Tỷ lệ phần trăm luôn đi kèm chữ, không chỉ dựa vào màu.</li>
-            <li>Danh mục có một nguồn dùng cùng thành phần; dòng phụ ghi tên nguồn thay cho số nguồn.</li>
-            <li>Dòng cuối của mỗi danh mục ghi phép cộng, ví dụ “132.000.000 + 18.000.000 = 150.000.000”, để người dùng tự kiểm.</li>
-            <li>Ở 360px, số tiền và tỷ trọng xuống dòng dưới tên nguồn; vùng chạm của dòng danh mục từ 64px.</li>
-          </ul>
         </div>
       </div>
     </section>
@@ -765,8 +582,6 @@
           <li>Xóa chuỗi thì các kỳ đã qua biến mất khỏi báo cáo, hay chuỗi chỉ được kết thúc tại ngày hiện tại?</li>
           <li>Kỳ có định danh ổn định để báo cáo và nhận định tham chiếu lại sau khi chuỗi bị tách hay không?</li>
           <li>Ngày neo và ranh giới tháng dùng múi giờ nào làm chuẩn?</li>
-          <li>Catalog công nợ có bổ sung trường Bên cho vay (ngân hàng hoặc tổ chức tín dụng) để dòng tiền hiển thị lại hay không?</li>
-          <li>Chuỗi Nhà ở và cặp Phần gốc + Phần lãi có cùng mô tả khoản trả của Khoản vay mua căn hộ hay không? Nếu có, một trong hai cần bỏ để không đếm hai lần.</li>
         </ol>
       </div>
     </section>
@@ -781,15 +596,6 @@
 <dialog id="series-sheet" class="sheet" aria-labelledby="series-sheet-title">
   <div class="dialog-head"><div><p class="meta">Bản ghi định kỳ trong danh mục</p><h2 id="series-sheet-title">Chọn chuỗi để xem</h2></div><button type="button" data-close aria-label="Đóng">Đóng</button></div>
   <div id="series-options" class="grid" style="gap:var(--s2)"></div>
-</dialog>
-
-<dialog id="loan-dialog" aria-labelledby="loan-dialog-title">
-  <div class="dialog-head"><div><p class="meta" id="loan-dialog-kind">Công nợ</p><h2 id="loan-dialog-title">—</h2></div><button type="button" data-close aria-label="Đóng">Đóng</button></div>
-  <dl class="facts" id="loan-dialog-facts"></dl>
-  <h3 style="margin-top:var(--s4)">Dòng tiền liên kết</h3>
-  <div class="loan-series" id="loan-dialog-series"></div>
-  <p class="helper" id="loan-dialog-note">—</p>
-  <div class="dialog-actions"><a href="liability-catalog-schedules-collateral-review.html">Mở review danh mục công nợ</a></div>
 </dialog>
 
 <dialog id="split-dialog" aria-labelledby="split-title">
@@ -833,48 +639,12 @@
     {id:"s4", name:"Lãi tiền gửi", type:"income", category:"Lãi tiền gửi", amount:1500000, cadence:"monthly", start:"2025-10-20", end:"2026-10-20", link:"Tiền gửi kỳ hạn 12 tháng"},
     {id:"s5", name:"Thu nhập trái phiếu hoặc quỹ", type:"income", category:"Thu nhập trái phiếu hoặc quỹ", amount:1500000, cadence:"quarterly", start:"2026-03-22", end:null, link:"Quỹ trái phiếu An Tâm"},
     {id:"s6", name:"Chi phí sinh hoạt", type:"expense", category:"Chi phí sinh hoạt", amount:23400000, cadence:"monthly", start:"2026-01-01", end:null, link:"Không liên kết"},
-    {id:"s7", name:"Nhà ở", type:"expense", category:"Nhà ở", amount:18750000, cadence:"monthly", start:"2024-06-20", end:null, link:"Khoản vay mua căn hộ", loan:"loan-home", role:"Khoản trả hằng tháng"},
+    {id:"s7", name:"Nhà ở", type:"expense", category:"Nhà ở", amount:18750000, cadence:"monthly", start:"2024-06-20", end:null, link:"Khoản vay mua căn hộ"},
     {id:"s8", name:"Bảo hiểm", type:"expense", category:"Bảo hiểm", amount:5400000, cadence:"yearly", start:"2024-09-12", end:null, link:"Không liên kết"},
     {id:"s9", name:"Thuế và phí", type:"expense", category:"Thuế và phí", amount:8250000, cadence:"quarterly", start:"2026-03-15", end:null, link:"Không liên kết"},
-    {id:"s10", name:"Thanh toán gốc công nợ", type:"expense", category:"Thanh toán gốc công nợ", amount:10000000, cadence:"monthly", start:"2023-06-20", end:"2038-06-20", link:"Khoản vay mua căn hộ", loan:"loan-home", role:"Phần gốc"},
-    {id:"s11", name:"Thanh toán lãi", type:"expense", category:"Thanh toán lãi", amount:6250000, cadence:"monthly", start:"2023-06-20", end:"2038-06-20", link:"Khoản vay mua căn hộ", loan:"loan-home", role:"Phần lãi"}
+    {id:"s10", name:"Thanh toán gốc công nợ", type:"expense", category:"Thanh toán gốc công nợ", amount:10000000, cadence:"monthly", start:"2024-06-20", end:"2039-05-20", link:"Khoản vay mua căn hộ"},
+    {id:"s11", name:"Thanh toán lãi", type:"expense", category:"Thanh toán lãi", amount:6250000, cadence:"monthly", start:"2024-06-20", end:"2039-05-20", link:"Khoản vay mua căn hộ"}
   ];
-
-  var LOANS = {
-    "loan-home": {name:"Khoản vay mua căn hộ", category:"Vay ngân hàng", lender:null, original:920000000, interest:"8,2%/năm", start:"2023-06-20", maturity:"2038-06-20", payment:18750000, collateral:"Căn hộ Thảo Điền"},
-    "loan-repair": {name:"Khoản vay sửa nhà", category:"Vay cá nhân", lender:null, original:74000000, interest:"6,0%/năm", start:"2026-02-05", maturity:"2027-08-05", payment:7000000, collateral:"Không liên kết"}
-  };
-  function loanOf(rule){ return rule && rule.loan ? LOANS[rule.loan] : null; }
-  function lenderHtml(l){ return l.lender ? l.lender : '<span class="tag warn">Chưa nhập</span>'; }
-  function seriesOfLoan(id){ return series.filter(function(r){ return r.loan === id; }); }
-
-  /* Nguồn theo danh mục: nguồn có series lấy từ fixture #69, nguồn demo là ví dụ minh họa */
-  var GROUP_SRC = [
-    {cat:"Lương", label:"Công việc chính", series:"s1"},
-    {cat:"Lương", label:"Công việc bán thời gian", type:"income", amount:18000000, cadence:"monthly", start:"2026-02-25", end:null, link:"Không liên kết", demo:true},
-    {cat:"Thu nhập cho thuê", label:"Căn hộ cho thuê Quận 2", series:"s2"},
-    {cat:"Thu nhập cho thuê", label:"Mặt bằng kinh doanh", type:"income", amount:22000000, cadence:"monthly", start:"2026-01-05", end:null, link:"Mặt bằng kinh doanh", demo:true},
-    {cat:"Thu nhập cho thuê", label:"Kho bãi", type:"income", amount:30000000, cadence:"quarterly", start:"2026-03-10", end:null, link:"Kho bãi", demo:true},
-    {cat:"Thu nhập cho thuê", label:"Phòng cho thuê ngắn hạn", type:"income", amount:6500000, cadence:"monthly", start:"2026-01-15", end:"2026-07-31", link:"Phòng cho thuê ngắn hạn", demo:true},
-    {cat:"Cổ tức", label:"Danh mục cổ phiếu HOSE", series:"s3"},
-    {cat:"Lãi tiền gửi", label:"Tiền gửi kỳ hạn 12 tháng", series:"s4"},
-    {cat:"Thu nhập trái phiếu hoặc quỹ", label:"Quỹ trái phiếu An Tâm", series:"s5"},
-    {cat:"Thanh toán gốc công nợ", label:"Khoản vay mua căn hộ", series:"s10"},
-    {cat:"Thanh toán gốc công nợ", label:"Khoản vay sửa nhà", type:"expense", amount:6630000, cadence:"monthly", start:"2026-02-05", end:"2027-08-05", link:"Khoản vay sửa nhà", loan:"loan-repair", demo:true},
-    {cat:"Thanh toán lãi", label:"Khoản vay mua căn hộ", series:"s11"},
-    {cat:"Thanh toán lãi", label:"Khoản vay sửa nhà", type:"expense", amount:370000, cadence:"monthly", start:"2026-02-05", end:"2027-08-05", link:"Khoản vay sửa nhà", loan:"loan-repair", demo:true},
-    {cat:"Nhà ở", label:"Khoản vay mua căn hộ", series:"s7"},
-    {cat:"Chi phí sinh hoạt", label:"Chi phí sinh hoạt", series:"s6"},
-    {cat:"Bảo hiểm", label:"Bảo hiểm", series:"s8"},
-    {cat:"Thuế và phí", label:"Thuế và phí", series:"s9"}
-  ];
-  function resolveSrc(src){
-    if(!src.series){ return src; }
-    var base = null;
-    series.forEach(function(r){ if(r.id === src.series){ base = r; } });
-    var out = JSON.parse(JSON.stringify(base)); out.cat = src.cat; out.label = src.label; out.series = src.series;
-    return out;
-  }
 
   function pad(n){ return (n<10?"0":"")+n; }
   function parts(iso){ var p=iso.split("-"); return {y:+p[0], m:+p[1]-1, d:+p[2]}; }
@@ -992,8 +762,7 @@
   function renderRule(){
     $("#series-kind").textContent = (current.type === "income" ? "Thu nhập" : "Chi phí") + " · " + current.category;
     $("#series-name").textContent = current.name;
-    $("#series-amount").className = "detail-amount fig " + (current.type === "income" ? "amount-in" : "amount-out");
-    $("#series-amount").textContent = (current.type === "income" ? "" : "− ") + (current.usd ? (current.usd + " USD · " + money(current.amount)) : money(current.amount));
+    $("#series-amount").textContent = current.usd ? (current.usd + " USD · " + money(current.amount)) : money(current.amount);
     var tags = [
       '<span class="tag brand">' + CADENCE_LABEL[current.cadence] + '</span>',
       '<span class="tag">Ngày neo ' + anchorOf(current) + '</span>',
@@ -1002,21 +771,6 @@
     ];
     if(current.usd){ tags.push('<span class="tag warn">' + RATE_NOTE + '</span>'); }
     $("#series-tags").innerHTML = tags.join("");
-    var loan = loanOf(current), box = $("#loan-link");
-    if(loan){
-      box.className = "loan-link";
-      box.innerHTML = '<p class="kicker">Khoản vay liên kết · ' + (current.role || "Thanh toán nợ") + '</p>' +
-        '<strong>' + loan.name + '</strong>' +
-        '<dl class="facts">' +
-          '<div class="fact"><dt>Bên cho vay</dt><dd>' + lenderHtml(loan) + '</dd></div>' +
-          '<div class="fact"><dt>Loại</dt><dd>' + loan.category + '</dd></div>' +
-          '<div class="fact"><dt>Lãi suất</dt><dd>' + loan.interest + '</dd></div>' +
-          '<div class="fact"><dt>Kỳ hạn</dt><dd>' + viDate(loan.start) + ' → ' + viDate(loan.maturity) + '</dd></div>' +
-        '</dl>' +
-        '<div class="actions"><button type="button" class="tonal" data-open-loan="' + current.loan + '">Mở khoản vay</button></div>';
-    } else {
-      box.className = "hidden"; box.innerHTML = "";
-    }
     $("#cadence").value = current.cadence;
     $("#anchor").value = String(anchorOf(current));
     $("#start-date").value = current.start;
@@ -1130,7 +884,6 @@
     if(!found){ return; }
     selectedOcc = found;
     $("#occ-kind").textContent = found.ts >= ts(TODAY) ? "Kỳ dự kiến" : "Kỳ đã qua";
-    $("#occ-amount").className = "detail-amount fig " + (current.type === "income" ? "amount-in" : "amount-out");
     $("#occ-amount").textContent = (current.type === "income" ? "+" : "−") + " " + money(current.amount);
     $("#occurrence-heading").textContent = current.name + " · " + viDate(found.iso);
     $("#occ-why").textContent = occExplain(found);
@@ -1147,15 +900,6 @@
     }).join("");
     var label = current.category && current.category !== current.name ? current.name + " (" + current.category + ")" : current.name;
     $("#occ-source").textContent = "Kỳ này được sinh ra từ bản ghi định kỳ " + label + ", liên kết: " + current.link + ".";
-    var oLoan = loanOf(current), oBox = $("#occ-loan");
-    if(oLoan){
-      oBox.className = "loan-link";
-      oBox.innerHTML = '<p class="kicker">' + (current.role || "Thanh toán nợ") + ' của khoản vay</p><strong>' + oLoan.name + '</strong>' +
-        '<p class="meta">Bên cho vay: ' + lenderHtml(oLoan) + ' · ' + oLoan.category + ' · tài sản bảo đảm ' + oLoan.collateral + '</p>' +
-        '<div class="actions"><button type="button" class="tonal" data-open-loan="' + current.loan + '">Mở khoản vay liên kết</button></div>';
-    } else {
-      oBox.className = "hidden"; oBox.innerHTML = "";
-    }
     show("occurrence");
   }
 
@@ -1241,131 +985,13 @@
       var sep = occurrences(rule, 400).filter(function(o){ return o.y === 2026 && o.m === 8; });
       var cell = "—";
       if(sep.length){
-        cell = viDate(sep[0].iso) + " · " + (rule.type === "income" ? "" : "−") + new Intl.NumberFormat("vi-VN").format(rule.amount);
+        cell = viDate(sep[0].iso) + " · " + new Intl.NumberFormat("vi-VN").format(rule.amount);
         if(rule.type === "income"){ income += rule.amount; } else { expense += rule.amount; }
       }
-      return '<tr><td>' + rule.name + '</td><td>' + (rule.type === "income" ? "Thu nhập" : "Chi phí") + '</td><td>' + CADENCE_LABEL[rule.cadence] + '</td><td class="fig">' + anchorOf(rule) + '</td><td class="fig">' + viDate(rule.start) + '</td><td class="fig">' + (rule.end ? viDate(rule.end) : "—") + '</td><td class="fig' + (sep.length ? (rule.type === "income" ? " amount-in" : " amount-out") : "") + '">' + cell + '</td></tr>';
+      return '<tr><td>' + rule.name + '</td><td>' + (rule.type === "income" ? "Thu nhập" : "Chi phí") + '</td><td>' + CADENCE_LABEL[rule.cadence] + '</td><td class="fig">' + anchorOf(rule) + '</td><td class="fig">' + viDate(rule.start) + '</td><td class="fig">' + (rule.end ? viDate(rule.end) : "—") + '</td><td class="fig">' + cell + '</td></tr>';
     }).join("");
     $("#rec-income").textContent = new Intl.NumberFormat("vi-VN").format(income);
     $("#rec-expense").textContent = new Intl.NumberFormat("vi-VN").format(expense);
-  }
-
-  /* ---------- groups view ---------- */
-  var gKind = "income", gMonth = "2026-09";
-  function fmt(n){ return new Intl.NumberFormat("vi-VN").format(n); }
-  function noOccReason(r, y, m){
-    var mStart = Date.UTC(y, m, 1), mEnd = Date.UTC(y, m + 1, 0);
-    if(ts(r.start) > mEnd){ return "Chưa bắt đầu · từ " + viDate(r.start); }
-    if(r.end && ts(r.end) < mStart){ return "Đã kết thúc " + viDate(r.end); }
-    return CADENCE_LABEL[r.cadence] + " · không rơi vào tháng này";
-  }
-  function renderGroups(){
-    var p = gMonth.split("-"), y = +p[0], m = +p[1] - 1, sign = gKind === "income" ? "+ " : "− ", cls = gKind === "income" ? "amount-in" : "amount-out";
-    var srcs = GROUP_SRC.map(resolveSrc).filter(function(r){ return r.type === gKind; });
-    var cats = [], byCat = {};
-    srcs.forEach(function(r){
-      var occ = occurrences(r, 400).filter(function(o){ return o.y === y && o.m === m; });
-      r._occ = occ; r._sum = occ.length * r.amount;
-      if(!byCat[r.cat]){ byCat[r.cat] = {name:r.cat, items:[], total:0, count:0}; cats.push(byCat[r.cat]); }
-      byCat[r.cat].items.push(r); byCat[r.cat].total += r._sum; byCat[r.cat].count += occ.length;
-    });
-    cats.sort(function(a, b){ return b.total - a.total; });
-    var grand = cats.reduce(function(a, c){ return a + c.total; }, 0);
-    var occTotal = cats.reduce(function(a, c){ return a + c.count; }, 0);
-    $("#grp-head-label").textContent = (gKind === "income" ? "Tổng thu nhập định kỳ" : "Tổng chi phí định kỳ") + " · " + viMonth(y, m);
-    $("#grp-head-total").className = "grp-total-big " + cls;
-    $("#grp-head-total").textContent = sign + money(grand);
-    $("#grp-head-sub").textContent = cats.length + " danh mục · " + srcs.length + " nguồn · " + occTotal + " kỳ trong tháng";
-    $("#grp-list").innerHTML = cats.map(function(c){
-      var active = c.items.filter(function(r){ return r._sum > 0; });
-      var sub = c.items.length === 1 ? c.items[0].label + " · " + (c.count ? c.count + " kỳ" : "không có kỳ") : c.items.length + " nguồn · " + c.count + " kỳ trong tháng";
-      var items = c.items.slice().sort(function(a, b){ return b._sum - a._sum; });
-      var bar = c.total ? '<div class="share-bar" aria-hidden="true">' + items.filter(function(r){ return r._sum; }).map(function(r){ return '<span style="flex:' + r._sum + '"></span>'; }).join("") + '</div>' : "";
-      var rows = items.map(function(r){
-        var loan = loanOf(r), muted = !r._sum;
-        var detail = muted ? noOccReason(r, y, m) : "Kỳ " + r._occ.map(function(o){ return viDate(o.iso); }).join(", ") + " · " + CADENCE_LABEL[r.cadence];
-        var tags = [];
-        if(r.demo){ tags.push('<span class="tag">Minh họa</span>'); }
-        if(r.usd){ tags.push('<span class="tag warn">' + r.usd + ' USD · ' + RATE_NOTE + '</span>'); }
-        if(loan){ tags.push('<span class="tag">' + loan.category + '</span><span class="meta">Bên cho vay: ' + lenderHtml(loan) + '</span>'); }
-        else if(r.link && r.link !== "Không liên kết" && r.link !== r.label){ tags.push('<span class="meta">Liên kết: ' + r.link + '</span>'); }
-        var actions = (r.series ? '<button type="button" class="text-btn" data-open-series="' + r.series + '">Xem lịch kỳ</button>' : '') +
-                      (loan ? '<button type="button" class="text-btn" data-open-loan="' + r.loan + '">Mở khoản vay</button>' : '');
-        var pct = c.total && r._sum ? Math.round(r._sum * 100 / c.total) + "%" : "";
-        return '<li class="src' + (muted ? ' muted' : '') + '">' +
-          '<div><span class="src-name">' + r.label + '</span><span class="meta" style="display:block">' + detail + '</span></div>' +
-          '<div class="src-amt"><span class="' + (muted ? '' : cls) + '">' + (muted ? "—" : sign + money(r._sum)) + '</span>' + (pct ? '<span class="meta">' + pct + ' danh mục</span>' : '') + '</div>' +
-          ((tags.length || actions) ? '<div class="src-actions">' + tags.join("") + actions + '</div>' : '') +
-        '</li>';
-      }).join("");
-      var foot = active.length > 1 ? '<p class="grp-foot">' + active.map(function(r){ return fmt(r._sum); }).join(" + ") + ' = <strong>' + fmt(c.total) + '</strong> · mỗi kỳ tính một lần</p>'
-               : '<p class="grp-foot">' + (c.total ? "Một nguồn có kỳ trong tháng, tổng bằng kỳ của nguồn đó." : "Không có nguồn nào có kỳ trong tháng này.") + '</p>';
-      return '<details class="grp"><summary><span><span class="grp-name">' + c.name + '</span><span class="grp-sub">' + sub + '</span></span>' +
-        '<span class="grp-amt ' + (c.total ? cls : '') + '">' + (c.total ? sign + money(c.total) : "—") + '</span><span class="chev" aria-hidden="true"></span></summary>' +
-        '<div class="grp-body">' + bar + '<ul class="src-list">' + rows + '</ul>' + foot + '</div></details>';
-    }).join("");
-  }
-  document.addEventListener("click", function(e){
-    var b = e.target.closest ? e.target.closest("[data-open-series]") : null;
-    if(!b){ return; }
-    series.forEach(function(r){ if(r.id === b.dataset.openSeries){ current = JSON.parse(JSON.stringify(r)); } });
-    selectedOcc = null; $("#trace-banner").classList.add("hidden");
-    renderRule(); renderSchedule(); show("schedule");
-    toast("Đang xem lịch kỳ của " + current.name + ".");
-  });
-
-  /* ---------- loan linkage ---------- */
-  function openLoan(id, trigger){
-    var loan = LOANS[id]; if(!loan){ return; }
-    var linked = seriesOfLoan(id);
-    var demoLinked = GROUP_SRC.filter(function(g){ return g.demo && g.loan === id; });
-    $("#loan-dialog-kind").textContent = "Công nợ · " + loan.category;
-    $("#loan-dialog-title").textContent = loan.name;
-    var facts = [
-      ["Bên cho vay", lenderHtml(loan)],
-      ["Dư nợ gốc", money(loan.original)],
-      ["Lãi suất danh nghĩa", loan.interest],
-      ["Ngày bắt đầu", viDate(loan.start)],
-      ["Ngày đáo hạn", viDate(loan.maturity)],
-      ["Khoản trả theo catalog", money(loan.payment) + " · hàng tháng"],
-      ["Tài sản bảo đảm", loan.collateral]
-    ];
-    $("#loan-dialog-facts").innerHTML = facts.map(function(f){ return '<div class="fact"><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join("");
-    $("#loan-dialog-series").innerHTML = linked.map(function(r){
-      return '<button type="button" data-series-switch="' + r.id + '"' + (current.id === r.id ? ' aria-current="true"' : '') + '><span><strong>' + r.name + '</strong><span class="meta">' + r.role + ' · ' + CADENCE_LABEL[r.cadence] + ' · ' + viDate(r.start) + ' → ' + (r.end ? viDate(r.end) : "chưa có điểm dừng") + '</span></span><span class="amount-out fig">− ' + money(r.amount) + '</span></button>';
-    }).join("") + demoLinked.map(function(g){
-      return '<div class="src"><div><span class="src-name">' + g.cat + '</span><span class="meta" style="display:block">' + CADENCE_LABEL[g.cadence] + ' · ' + viDate(g.start) + ' → ' + (g.end ? viDate(g.end) : "chưa có điểm dừng") + ' · <span class="tag">Minh họa</span></span></div><div class="src-amt amount-out">− ' + money(g.amount) + '</div></div>';
-    }).join("");
-    $("#loan-dialog-note").textContent = "Chọn một chuỗi để xem lịch kỳ của nó. Bên cho vay chưa có trong catalog công nợ nên được hiển thị là Chưa nhập.";
-    $("#loan-dialog-series").querySelectorAll("[data-series-switch]").forEach(function(b){
-      b.addEventListener("click", function(){
-        series.forEach(function(r){ if(r.id === b.dataset.seriesSwitch){ current = JSON.parse(JSON.stringify(r)); } });
-        selectedOcc = null;
-        $("#loan-dialog").close();
-        $("#trace-banner").classList.add("hidden");
-        renderRule(); renderSchedule(); show("rule");
-        toast("Đang xem chuỗi " + current.name + " của " + loan.name + ".");
-      });
-    });
-    openDialog("loan-dialog", trigger);
-  }
-  document.addEventListener("click", function(e){
-    var b = e.target.closest ? e.target.closest("[data-open-loan]") : null;
-    if(b){ openLoan(b.dataset.openLoan, b); }
-  });
-
-  function renderLoanTable(){
-    var body = $("#loan-table").querySelector("tbody");
-    var rows = series.filter(function(r){ return r.loan; });
-    body.innerHTML = rows.map(function(r){
-      var l = LOANS[r.loan];
-      var sep = occurrences(r, 400).filter(function(o){ return o.y === 2026 && o.m === 8; });
-      var cell = sep.length ? viDate(sep[0].iso) + " · −" + new Intl.NumberFormat("vi-VN").format(r.amount) : "—";
-      return '<tr><td>' + r.name + '</td><td>' + r.role + '</td><td><button type="button" class="text-btn" data-open-loan="' + r.loan + '">' + l.name + '</button></td><td>' + lenderHtml(l) + '</td><td>' + l.collateral + '</td><td class="fig' + (sep.length ? ' amount-out' : '') + '">' + cell + '</td></tr>';
-    }).join("");
-    var l = LOANS["loan-home"];
-    var pi = series.filter(function(r){ return r.loan === "loan-home" && (r.role === "Phần gốc" || r.role === "Phần lãi"); }).reduce(function(a, r){ return a + r.amount; }, 0);
-    $("#loan-recon").textContent = "Catalog công nợ ghi khoản trả " + money(l.payment) + "/tháng. Phần gốc + Phần lãi trong danh mục dòng tiền cộng lại " + money(pi) + "/tháng, chênh " + money(l.payment - pi) + ". Chuỗi Nhà ở " + money(18750000) + " cũng liên kết cùng khoản vay, nên cần Product Owner xác nhận để khoản trả nợ không bị đếm hai lần trong kỳ báo cáo.";
   }
 
   /* ---------- state gallery ---------- */
@@ -1454,7 +1080,6 @@
       try{
         if(target === "schedule"){ renderSchedule(); }
         if(target === "edit"){ renderImpact(); }
-        if(target === "groups"){ renderGroups(); }
       } finally {
         show(target);
       }
@@ -1561,10 +1186,6 @@
   renderRule();
   renderSchedule();
   renderFixture();
-  renderLoanTable();
-  renderGroups();
-  $$("[data-gkind]").forEach(function(b){ b.addEventListener("click", function(){ gKind = b.dataset.gkind; $$("[data-gkind]").forEach(function(x){ x.setAttribute("aria-pressed", String(x === b)); }); renderGroups(); }); });
-  $$("[data-gmonth]").forEach(function(b){ b.addEventListener("click", function(){ gMonth = b.dataset.gmonth; $$("[data-gmonth]").forEach(function(x){ x.setAttribute("aria-pressed", String(x === b)); }); renderGroups(); }); });
   renderBoundary();
   renderState("loading");
 })();
