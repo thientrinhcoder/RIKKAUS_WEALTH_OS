@@ -109,6 +109,16 @@ Không tài sản, không công nợ. Lương 30.000.000 một lần `2026-11-05
 
 Đăng nhập lần đầu, không bản ghi nào.
 
+### U — Chi thiết yếu định kỳ bằng USD, không tỷ giá (`fh.usd-expense@example.com`)
+
+Bổ sung sau lần chạy đầu theo yêu cầu của coordinator. Tài sản: Tiền mặt CASH 100.000.000. Chi: Chi phí sinh
+hoạt 23.400.000 ₫ MONTHLY từ `2026-01-03` · Bảo hiểm **200 USD** MONTHLY từ `2026-01-16`. Không tỷ giá.
+
+### L — Kỳ trả nợ bằng USD trong cửa sổ nghĩa vụ, không tỷ giá (`fh.usd-loan@example.com`)
+
+Bổ sung cùng lúc với U. Tài sản: Tiền mặt CASH 80.000.000. Công nợ: Vay mua xe bằng USD BANK_LOAN 12.000 USD,
+500 USD MONTHLY, kỳ tới `2026-12-10`, đáo hạn `2028-12-10`. Không bản ghi dòng tiền, không tỷ giá.
+
 ## Kỳ vọng — chỉ số
 
 `C` = COMPLETE, `P` = PARTIAL, `U` = UNAVAILABLE.
@@ -165,4 +175,6 @@ Cơ sở kích hoạt đúng một rule (tập trung thu 73,3%), như design #81
 | H17 | Khởi động lại với `RIKKAUS_CASHFLOW_HEALTH_MINRESERVEMONTHS=5`, `…_MAXINCOMESOURCESHARE=0.8`, `…_ESSENTIALCATEGORIES=LIVING_COSTS,HOUSING,EDUCATION,HEALTHCARE,INSURANCE,TAX_AND_FEES,DEBT_PRINCIPAL_PAYMENT,INTEREST_PAYMENT` | `thresholds.minReserveMonths 5.0`, `maxIncomeSourceShare 0.800000`; W rule 3 `ATTENTION` (4.7 < 5), dải dự phòng W `ATTENTION`; B và W rule 6 `OK`; B thiết yếu `0.972826` (89.500.000 / 92.000.000), `assumptions.essentialCategories` có `EDUCATION` |
 | H18 | Khởi động lại không biến nào | B trở lại H01 byte-identical |
 | H19 | Khởi động với cấu hình vô lý: `ESSENTIALCATEGORIES=SALARY`; `MINRESERVEMONTHS=7` (> ok 6); `PASSIVEINCOMEMEDIUMMIN=0.6` (> high 0.5) | ứng dụng tự thoát, log nêu tên property |
+| H21 | U | dự phòng `PARTIAL` `4.3` (`100000000 / 23400000`: mẫu số chỉ gồm phần VND), `band null` `PARTIAL_INPUTS` `MISSING_EXCHANGE_RATE`; dòng Bảo hiểm `200 USD` có `amountVnd null`, `monthlyEquivalentVnd null`; `RESERVE_BELOW_REFERENCE` `NOT_EVALUATED` `INDICATOR_PARTIAL`; số dư thấp nhất `PARTIAL` `29800000` (`2027-02-03`); thiết yếu `PARTIAL` `1.000000`; chi vượt thu `NOT_EVALUATED` `MISSING_EXCHANGE_RATE`; không số 0 giả |
+| H22 | L | `LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS` `NOT_EVALUATED` `MISSING_EXCHANGE_RATE`, `observed null`, `threshold.value null`; evidence `[CASH_ACCOUNT 80000000 VND, PAYMENT_DUE 2026-12-10 500 USD amountVnd null]`; số dư thấp nhất `PARTIAL` `80000000` |
 | H20 | `OpenApiContractIT`, `ApplicationContextIT`, `ArchitectureRulesTest` | xanh trong `./mvnw clean verify` |

@@ -1,7 +1,7 @@
 # Manual verification — GH-83 Financial-health indicators and insights
 
-**Kết quả:** 20/20 kịch bản đạt, 59/59 phép kiểm PASS, 0 FAIL, chạy ngày 27/11/2026 (12:59–13:06 giờ Việt
-Nam) qua HTTP vào API thật trên PostgreSQL 18.6 trong Docker; `./mvnw clean verify` xanh. Không có unit test
+**Kết quả:** 22/22 kịch bản đạt, 65/65 phép kiểm PASS, 0 FAIL, chạy ngày 27/11/2026 (12:59–13:06 và
+13:13 giờ Việt Nam) qua HTTP vào API thật trên PostgreSQL 18.6 trong Docker; `./mvnw clean verify` xanh. Không có unit test
 (chỉ đạo PO).
 
 ## Môi trường
@@ -34,6 +34,10 @@ OUT=/path/to/scratch bash plans/261127-1241-GH-83-financial-health/scripts/setup
 
 ```bash
 OUT=/path/to/scratch bash plans/261127-1241-GH-83-financial-health/scripts/cases.sh main
+```
+
+```bash
+OUT=/path/to/scratch bash plans/261127-1241-GH-83-financial-health/scripts/cases.sh usd
 ```
 
 Dừng API, khởi động lại với `RIKKAUS_CASHFLOW_HEALTH_MINRESERVEMONTHS=5`,
@@ -69,6 +73,8 @@ Body đầy đủ của H01, H10 và H13 là ba ví dụ OpenAPI trong `Financia
 | H17 | ngưỡng qua biến môi trường | `thresholds.minReserveMonths 5.0`, `maxIncomeSourceShare 0.800000`, `essentialCategories` có `EDUCATION`; B thiết yếu `0.972826` (`89500000.00`), tập trung B OK `0.733333 ≤ 0.8`; W dự phòng `4.7` dải ATTENTION và rule dự phòng **ATTENTION** (`4.7 < 5.0`), tập trung W OK; đối soát B đúng | PASS (4) |
 | H18 | khởi động lại không biến | B byte-identical với H01 | PASS |
 | H19 | cấu hình vô lý | `ESSENTIALCATEGORIES=SALARY` → thoát, `rikkaus.cashflow.health.essential-categories must list expense categories only; SALARY is an income category.`; `MINRESERVEMONTHS=7` → `min-reserve-months must not be greater than … reserve-ok-min-months.`; `PASSIVEINCOMEMEDIUMMIN=0.6` → `passive-income-medium-min must not be greater than … passive-income-high-min.` | PASS (3) |
+| H21 | U (chi thiết yếu định kỳ bằng USD, không tỷ giá) | dự phòng `PARTIAL` `4.3` = `100000000.00 / 23400000.00`, mẫu số chỉ gồm Chi phí sinh hoạt VND; dòng Bảo hiểm `200.00 USD` có `amountVnd null`, `monthlyEquivalentVnd null`; `band null` `PARTIAL_INPUTS`, `partialReason MISSING_EXCHANGE_RATE`; `RESERVE_BELOW_REFERENCE` `NOT_EVALUATED` `INDICATOR_PARTIAL`, `observed null`; số dư thấp nhất `PARTIAL` `29800000.00` ngày `2027-02-03`, `referenceVnd null`; thiết yếu `PARTIAL` `1.000000`; chi vượt thu `NOT_EVALUATED` `MISSING_EXCHANGE_RATE`, evidence = dòng USD; không dòng USD nào có `amountVnd` khác `null`; đối soát đúng | PASS (3) |
+| H22 | L (kỳ trả nợ bằng USD trong cửa sổ, không tỷ giá) | `LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS` `NOT_EVALUATED` `MISSING_EXCHANGE_RATE`, `observed null`, `threshold {LESS_THAN, null, VND, due-window-days}`; evidence `[CASH_ACCOUNT 2026-11-26 80000000.00 VND, PAYMENT_DUE 2026-12-10 500.00 USD amountVnd null MONTHLY]`; số dư thấp nhất `PARTIAL` `80000000.00` (forecast loại kỳ trả USD); `FORECAST_CASH_NEGATIVE` `NOT_EVALUATED`; đối soát đúng | PASS (3) |
 | H20 | `./mvnw clean verify` | Spotless check sạch; Surefire 81/81 (`ArchitectureRulesTest` 4/4); Failsafe 50/50 (`OpenApiContractIT` 4/4 không lệch contract, `ApplicationContextIT` 3/3); `BUILD SUCCESS` | PASS |
 
 ## Ngoài ma trận
@@ -82,7 +88,6 @@ Body đầy đủ của H01, H10 và H13 là ba ví dụ OpenAPI trong `Financia
 ## Khoảng trống còn lại
 
 - Không có test tự động cho route (chỉ đạo PO); ma trận này là bằng chứng duy nhất.
-- Chưa chạy trên tháng có USD ở **chi** định kỳ thiết yếu không tỷ giá (đường `PARTIAL` của mẫu số dự phòng
-  và `band null PARTIAL_INPUTS` của số dư thấp nhất); đường mã giống nhánh tài sản USD đã chạy ở H10.
-- Chưa chạy liability có lịch trả bằng USD trong cửa sổ nghĩa vụ khi không có tỷ giá (rule thanh khoản
-  `threshold.value null`).
+- H21 và H22 được bổ sung lúc 13:13 trên container dựng lại (cơ sở dữ liệu mới, `setup.sh` nạp lại cả chín
+  user, phase main chạy lại 49/49 PASS) với jar của `clean verify` cuối. Cả hai đúng kỳ vọng ngay lần đầu, không
+  cần sửa mã.

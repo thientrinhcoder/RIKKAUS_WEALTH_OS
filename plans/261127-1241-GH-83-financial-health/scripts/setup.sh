@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Seeds the seven users of phase-01-test-scenarios.md through the API on $BASE (local profile, dev sign-in)
+# Seeds the nine users of phase-01-test-scenarios.md through the API on $BASE (local profile, dev sign-in)
 # and writes their ids to $OUT/env.sh. The dates are the ones of the run on 27/11/2026; the expected
 # values of phase 1 hold for month 2026-11 read on that day. Tokens are minted again by cases.sh, since an
 # access token lives 15 minutes; nothing secret is written here.
@@ -111,5 +111,16 @@ user I fh.income@example.com "Ích Đặng"
 save I_SALARY "$(once INCOME SALARY 30000000 2026-11-05 'Lương thử việc')"
 
 user E fh.empty@example.com "Em Võ"
+
+# U: a recurring essential expense in USD and no declared rate.
+user U fh.usd-expense@example.com "Uyên Ngô"
+save U_CASH "$(asset "Tiền mặt" CASH 100000000 VND 2026-11-26 HIGH)"
+save U_LIVING "$(every EXPENSE LIVING_COSTS 23400000 MONTHLY 2026-01-03 'Chi phí sinh hoạt')"
+save U_INSURANCE "$(api POST /cash-flow-entries '{"entryType":"EXPENSE","category":"INSURANCE","amount":"200","currency":"USD","timing":"RECURRING","recurrence":"MONTHLY","effectiveDate":"2026-01-16","notes":"Phí bảo hiểm sức khỏe quốc tế 200 USD"}' | jq -r .id)"
+
+# L: a liability paid in USD inside the obligation window and no declared rate.
+user L fh.usd-loan@example.com "Lâm Bùi"
+save L_CASH "$(asset "Tiền mặt" CASH 80000000 VND 2026-11-26 HIGH)"
+save L_LOAN "$(liab '{"name":"Vay mua xe bằng USD","category":"BANK_LOAN","outstandingBalance":"12000","currency":"USD","startDate":"2025-12-10","maturityDate":"2028-12-10","recurringPaymentAmount":"500","recurringPaymentFrequency":"MONTHLY","nextPaymentDate":"2026-12-10"}')"
 
 echo "seeded $(grep -c . "$OUT/env.sh") ids into $OUT/env.sh"

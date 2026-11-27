@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the cases of phase-01-test-scenarios.md against $BASE and prints one PASS/FAIL line per check.
-# Usage: cases.sh main | custom | restored   (see the run order in phase-03-manual-verification.md)
+# Usage: cases.sh main | usd | custom | restored   (see the run order in phase-03-manual-verification.md)
 # Bodies are kept in $OUT/bodies for the evidence report.
 set -uo pipefail
 S="$(cd "$(dirname "$0")" && pwd)"
@@ -14,7 +14,7 @@ PHASE=${1:-main}
 
 token() { local e="EMAIL_$1"; curl -sf -X POST "$BASE/auth/dev-sign-in" -H 'Content-Type: application/json' \
   -d "{\"email\":\"${!e}\"}" | jq -r .accessToken; }
-for u in B W S P Z I E; do printf -v "T_$u" '%s' "$(token $u)"; done
+for u in B W S P Z I E U L; do printf -v "T_$u" '%s' "$(token $u)"; done
 # fh ID TOKEN [QUERY] -> body in $B/ID.json, status in $B/ID.status
 fh() { curl -s -o "$B/$1.json" -w '%{http_code}' "$BASE/financial-health${3:-}" -H "Authorization: Bearer $2" > "$B/$1.status"; }
 ck() {
@@ -145,6 +145,29 @@ main)
   ck H15-no-token-body "$B/H15a.json" '.type == "urn:rikkaus:problem:unauthorized"'
   curl -s -o "$B/H15b.json" -w '%{http_code}' "$BASE/financial-health" -H 'Authorization: Bearer not-a-token' > "$B/H15b.status"; st H15-bad-token H15b 401
   curl -s -o "$B/H16.json" -w '%{http_code}' -X POST "$BASE/financial-health" -H "Authorization: Bearer $T_B" > "$B/H16.status"; st H16-post H16 405
+  ;;
+usd)
+  fh H21 "$T_U"; st H21-status H21 200
+  ck H21-usd-essential "$B/H21.json" "($(ind EMERGENCY_RESERVE_MONTHS) | [.availability, .value, .band, .bandNotDeterminedReason, .partialReason, .calculation.numeratorVnd, .calculation.denominatorVnd]
+        == [\"PARTIAL\", 4.3, null, \"PARTIAL_INPUTS\", \"MISSING_EXCHANGE_RATE\", 100000000, 23400000]
+      and ([.calculation.sources[] | select(.role == \"DENOMINATOR\") | [.sourceId, .amount, .currency, .amountVnd, .monthlyEquivalentVnd]] | sort)
+        == ([[\"$U_LIVING\", 23400000, \"VND\", 23400000, 23400000], [\"$U_INSURANCE\", 200, \"USD\", null, null]] | sort))
+      and ($(rul RESERVE_BELOW_REFERENCE) | [.status, .observed, .notEvaluatedReason, .dependsOn] == [\"NOT_EVALUATED\", null, \"INDICATOR_PARTIAL\", \"EMERGENCY_RESERVE_MONTHS\"])
+      and ($(ind FORECAST_MINIMUM_CASH_BALANCE) | [.availability, .value, .band, .partialReason, .calculation.referenceVnd] == [\"PARTIAL\", 29800000, null, \"MISSING_EXCHANGE_RATE\", null])
+      and ($(ind ESSENTIAL_EXPENSE_SHARE) | [.availability, .value, .band] == [\"PARTIAL\", 1.0, null])
+      and ($(rul FORECAST_CASH_NEGATIVE) | .notEvaluatedReason == \"INDICATOR_PARTIAL\")
+      and ($(rul SPENDING_EXCEEDS_INCOME) | [.status, .notEvaluatedReason, [.evidence[].sourceId]] == [\"NOT_EVALUATED\", \"MISSING_EXCHANGE_RATE\", [\"$U_INSURANCE\"]])
+      and all(.indicators[].calculation.sources[], .rules[].evidence[]; .currency != \"USD\" or .amountVnd == null)" "$IND, $RUL, ($(ind EMERGENCY_RESERVE_MONTHS) | $SRC)"
+  recon H21 "$T_U" 2026-11
+
+  fh H22 "$T_L"; st H22-status H22 200
+  ck H22-usd-obligation "$B/H22.json" "($(rul LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS) | [.status, .observed, .notEvaluatedReason, .threshold.value, .threshold.property]
+        == [\"NOT_EVALUATED\", null, \"MISSING_EXCHANGE_RATE\", null, \"due-window-days\"]
+      and [.evidence[] | [.sourceId, .role, .date, .amount, .currency, .amountVnd, .cadence]]
+        == [[\"$L_CASH\", \"CASH_ACCOUNT\", \"2026-11-26\", 80000000, \"VND\", 80000000, null], [\"$L_LOAN\", \"PAYMENT_DUE\", \"2026-12-10\", 500, \"USD\", null, \"MONTHLY\"]])
+      and ($(ind FORECAST_MINIMUM_CASH_BALANCE) | [.availability, .value, .partialReason] == [\"PARTIAL\", 80000000, \"MISSING_EXCHANGE_RATE\"])
+      and ($(rul FORECAST_CASH_NEGATIVE) | .status == \"NOT_EVALUATED\")" "$IND, $RUL, ($(rul LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS) | .evidence)"
+  recon H22 "$T_L" 2026-11
   ;;
 custom)
   fh C01 "$T_B"; fh C02 "$T_W"
