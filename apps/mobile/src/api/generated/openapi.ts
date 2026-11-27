@@ -551,6 +551,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/financial-health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compute the signed-in user's five financial-health indicators and judge the six insight rules
+         * @description Always five indicators and six rules, in a fixed order. EMERGENCY_RESERVE_MONTHS is the CASH, BANK_ACCOUNT and TERM_DEPOSIT assets over the month's recurring essential expenses at their monthly equivalent (monthly x1, quarterly /3, yearly /12; one-time expenses never count), in months at one decimal. DEBT_PAYMENT_BURDEN is the month's DEBT_PRINCIPAL_PAYMENT and INTEREST_PAYMENT expense over its income. PASSIVE_INCOME_SHARE is passiveIncome.total over income and ESSENTIAL_EXPENSE_SHARE the essential-category expense over expense, each a six-decimal fraction rounded HALF_UP from the same VND totals GET /api/v1/cash-flow-reports/monthly returns for the month. FORECAST_MINIMUM_CASH_BALANCE is minimumBalance.amount of GET /api/v1/cash-flow-forecast (the three months after the current one, whatever month is asked for). Bands and rule statuses compare the rounded value with thresholds; a value equal to a limit is not beyond it. Thresholds are system reference values configured centrally and returned in thresholds, and assumptions returns the day, windows, category groups and rate, so a result can be reproduced. A USD record with no declared rate is left out with amountVnd null and makes the indicator PARTIAL, or UNAVAILABLE when nothing else is left; a missing denominator makes it UNAVAILABLE with value null, never 0. A rule over a PARTIAL or UNAVAILABLE input is NOT_EVALUATED, never OK. A user with no record gets five UNAVAILABLE indicators and six NOT_EVALUATED rules. Computed on every read; nothing is stored. No Vietnamese text is published: the client maps every constant to its copy.
+         */
+        get: operations["readFinancialHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cash-flow-reports/monthly": {
         parameters: {
             query?: never;
@@ -2632,6 +2652,347 @@ export interface components {
             requiredMonthlyContribution?: string;
             status?: string;
             rounding?: string;
+        };
+        /** @description Two days, both included. */
+        DateRange: {
+            /**
+             * Format: date
+             * @example 2026-12-01
+             */
+            from?: string;
+            /**
+             * Format: date
+             * @example 2027-02-28
+             */
+            to?: string;
+        };
+        /** @description Every input a figure depends on that is not a record, so the result can be reproduced: the day, the month, the forecast horizon, the obligation window, the category groups and the declared rate. */
+        FinancialHealthAssumptions: {
+            /**
+             * Format: date
+             * @description Today in timeZone; the default month and both windows count from it.
+             * @example 2026-11-27
+             */
+            asOfDate?: string;
+            /** @example Asia/Ho_Chi_Minh */
+            timeZone?: string;
+            /**
+             * @description The month the cash-flow indicators read, YYYY-MM: the query's month or the current one.
+             * @example 2026-11
+             */
+            month?: string;
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            monthFrom?: string;
+            /**
+             * Format: date
+             * @example 2026-11-30
+             */
+            monthTo?: string;
+            /** @description The forecast FORECAST_MINIMUM_CASH_BALANCE reads: always the three months after the current one, as GET /api/v1/cash-flow-forecast without from, whatever month is asked for. */
+            forecastHorizon?: components["schemas"]["DateRange"];
+            /** @description asOfDate to asOfDate plus thresholds.dueWindowDays, both included: where LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS looks for obligations. */
+            obligationWindow?: components["schemas"]["DateRange"];
+            /**
+             * @description The asset categories of the liquid group, the reserve's numerator.
+             * @example [
+             *       "CASH",
+             *       "BANK_ACCOUNT",
+             *       "TERM_DEPOSIT"
+             *     ]
+             */
+            liquidAssetCategories?: string[];
+            /**
+             * @description The asset categories the forecast starts from and the liquidity rule compares with what falls due.
+             * @example [
+             *       "CASH",
+             *       "BANK_ACCOUNT"
+             *     ]
+             */
+            cashAccountCategories?: string[];
+            /** @description The expense categories counted as essential, configured under rikkaus.cashflow.health.essential-categories. */
+            essentialCategories?: ("SALARY" | "BUSINESS_INCOME" | "RENTAL_INCOME" | "DIVIDEND" | "DEPOSIT_INTEREST" | "BOND_OR_FUND_INCOME" | "OTHER_INCOME" | "LIVING_COSTS" | "HOUSING" | "EDUCATION" | "HEALTHCARE" | "INSURANCE" | "TAX_AND_FEES" | "DEBT_PRINCIPAL_PAYMENT" | "INTEREST_PAYMENT" | "OTHER_EXPENSE")[];
+            /** @description The only categories counted as debt payments; a HOUSING entry linked to the same loan is not added. */
+            debtPaymentCategories?: ("SALARY" | "BUSINESS_INCOME" | "RENTAL_INCOME" | "DIVIDEND" | "DEPOSIT_INTEREST" | "BOND_OR_FUND_INCOME" | "OTHER_INCOME" | "LIVING_COSTS" | "HOUSING" | "EDUCATION" | "HEALTHCARE" | "INSURANCE" | "TAX_AND_FEES" | "DEBT_PRINCIPAL_PAYMENT" | "INTEREST_PAYMENT" | "OTHER_EXPENSE")[];
+            /** @description The declared USD/VND rate every USD record was converted with; null when none is declared. */
+            exchangeRate?: components["schemas"]["FinancialHealthExchangeRate"];
+        };
+        /** @description How the value was obtained and the records behind it. */
+        FinancialHealthCalculation: {
+            /**
+             * @example LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE
+             * @enum {string}
+             */
+            formula?: "LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE" | "DEBT_PAYMENTS_OVER_INCOME" | "LOWEST_PROJECTED_CASH_BALANCE" | "ASSET_LINKED_INCOME_OVER_INCOME" | "ESSENTIAL_EXPENSE_OVER_EXPENSE";
+            /**
+             * @description The VND amount divided: the sum of the NUMERATOR or SHARE_PART sources with an amountVnd. null for the minimum balance and when UNAVAILABLE.
+             * @example 1850000000
+             */
+            numeratorVnd?: number;
+            /**
+             * @description The VND amount divided by: the sum of the DENOMINATOR sources' monthly equivalents for the reserve, the month's total income or expense for a share or the burden. null for the minimum balance and when UNAVAILABLE.
+             * @example 61600000
+             */
+            denominatorVnd?: number;
+            /** @description For FORECAST_MINIMUM_CASH_BALANCE: the month of recurring essential expense the value is banded against (OK at and above it, WATCH from zero, ATTENTION below zero); null otherwise or when it cannot be known. */
+            referenceVnd?: number;
+            /**
+             * Format: date
+             * @description For FORECAST_MINIMUM_CASH_BALANCE: the earliest date the lowest balance is reached.
+             */
+            observedOn?: string;
+            /** @description The records behind the figure, a USD one without a declared rate with amountVnd null. Reserve: liquid assets (NUMERATOR) and recurring essential expenses (DENOMINATOR). Burden: debt payments (NUMERATOR) and income occurrences (DENOMINATOR). Shares: the month's income or expense occurrences, SHARE_PART or SHARE_REST. Minimum balance: OPENING_BALANCE accounts, then every PROJECTED_INCOME and PROJECTED_EXPENSE amount up to observedOn, so the opening balance plus them is value. */
+            sources?: components["schemas"]["FinancialHealthSource"][];
+        };
+        /** @description The declared rate: VND for one USD, and the day the user says it was true. */
+        FinancialHealthExchangeRate: {
+            /** @example 25100 */
+            usdToVndRate?: number;
+            /**
+             * Format: date
+             * @example 2026-09-12
+             */
+            effectiveDate?: string;
+        };
+        /** @description One indicator. */
+        FinancialHealthIndicator: {
+            /**
+             * @description A stable constant the client maps to its copy.
+             * @example EMERGENCY_RESERVE_MONTHS
+             * @enum {string}
+             */
+            indicatorId?: "EMERGENCY_RESERVE_MONTHS" | "DEBT_PAYMENT_BURDEN" | "FORECAST_MINIMUM_CASH_BALANCE" | "PASSIVE_INCOME_SHARE" | "ESSENTIAL_EXPENSE_SHARE";
+            /**
+             * @description COMPLETE: every input read and converted. PARTIAL: computed from what could be converted, a USD record left out for want of a rate (or, for the minimum balance, a forecast record the user can fix). UNAVAILABLE: nothing could be computed.
+             * @example COMPLETE
+             * @enum {string}
+             */
+            availability?: "COMPLETE" | "PARTIAL" | "UNAVAILABLE";
+            /**
+             * @description MONTHS at one decimal, a FRACTION at six (HALF_UP), or VND at two; null exactly when UNAVAILABLE. Never 0 in place of a missing denominator.
+             * @example 30
+             */
+            value?: number;
+            /**
+             * @example MONTHS
+             * @enum {string}
+             */
+            unit?: "MONTHS" | "FRACTION" | "VND";
+            /**
+             * @description OK, WATCH or ATTENTION against thresholds (the minimum balance against calculation.referenceVnd and zero); HIGH, MEDIUM or LOW for PASSIVE_INCOME_SHARE, informational only. null when not determined.
+             * @example OK
+             * @enum {string}
+             */
+            band?: "OK" | "WATCH" | "ATTENTION" | "HIGH" | "MEDIUM" | "LOW";
+            /**
+             * @description Why band is null; null when band is set.
+             * @enum {string}
+             */
+            bandNotDeterminedReason?: "INDICATOR_UNAVAILABLE" | "PARTIAL_INPUTS" | "NO_RECURRING_ESSENTIAL_EXPENSES";
+            /**
+             * @description Why nothing could be computed; set exactly when UNAVAILABLE.
+             * @enum {string}
+             */
+            unavailableReason?: "NO_LIQUID_ASSETS" | "NO_RECURRING_ESSENTIAL_EXPENSES" | "NO_INCOME" | "NO_EXPENSES" | "NO_CASH_ACCOUNTS" | "NO_LIABILITIES" | "NO_CASH_FLOW_IN_MONTH" | "MISSING_EXCHANGE_RATE" | "FORECAST_INCOMPLETE";
+            /**
+             * @description What the value leaves out; set exactly when PARTIAL.
+             * @enum {string}
+             */
+            partialReason?: "NO_LIQUID_ASSETS" | "NO_RECURRING_ESSENTIAL_EXPENSES" | "NO_INCOME" | "NO_EXPENSES" | "NO_CASH_ACCOUNTS" | "NO_LIABILITIES" | "NO_CASH_FLOW_IN_MONTH" | "MISSING_EXCHANGE_RATE" | "FORECAST_INCOMPLETE";
+            calculation?: components["schemas"]["FinancialHealthCalculation"];
+        };
+        /** @description The measured value. */
+        FinancialHealthObserved: {
+            /**
+             * @description Spending: income minus expense, VND. Forecast: the lowest projected balance, VND. Reserve, burden: the indicator's value. Liquidity: cash and bank accounts, VND. Concentration: the largest category's share, FRACTION.
+             * @example 0.733333
+             */
+            value?: number;
+            /**
+             * @example FRACTION
+             * @enum {string}
+             */
+            unit?: "MONTHS" | "FRACTION" | "VND";
+            /**
+             * @description The largest income category for INCOME_CONCENTRATION; null otherwise.
+             * @example SALARY
+             */
+            subject?: string;
+            /**
+             * Format: date
+             * @description The date of the lowest balance for FORECAST_CASH_NEGATIVE; null otherwise.
+             */
+            date?: string;
+        };
+        /** @description The signed-in user's five financial-health indicators and six insight rules for one month. */
+        FinancialHealthResponse: {
+            assumptions?: components["schemas"]["FinancialHealthAssumptions"];
+            thresholds?: components["schemas"]["FinancialHealthThresholds"];
+            /** @description Always five, in the order EMERGENCY_RESERVE_MONTHS, DEBT_PAYMENT_BURDEN, FORECAST_MINIMUM_CASH_BALANCE, PASSIVE_INCOME_SHARE, ESSENTIAL_EXPENSE_SHARE. */
+            indicators?: components["schemas"]["FinancialHealthIndicator"][];
+            /** @description Always six, in the order SPENDING_EXCEEDS_INCOME, FORECAST_CASH_NEGATIVE, RESERVE_BELOW_REFERENCE, HIGH_DEBT_PAYMENT_BURDEN, LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS, INCOME_CONCENTRATION. */
+            rules?: components["schemas"]["FinancialHealthRule"][];
+        };
+        /** @description One rule's result. */
+        FinancialHealthRule: {
+            /**
+             * @example INCOME_CONCENTRATION
+             * @enum {string}
+             */
+            ruleId?: "SPENDING_EXCEEDS_INCOME" | "FORECAST_CASH_NEGATIVE" | "RESERVE_BELOW_REFERENCE" | "HIGH_DEBT_PAYMENT_BURDEN" | "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS" | "INCOME_CONCENTRATION";
+            /**
+             * @description ATTENTION when observed.value compares with threshold.value as threshold.comparison says; OK when it does not; NOT_EVALUATED when it could not be judged. Never OK over a partial or unavailable input.
+             * @example ATTENTION
+             * @enum {string}
+             */
+            status?: "ATTENTION" | "OK" | "NOT_EVALUATED";
+            /**
+             * @description The indicator whose value the rule judges; null when it reads the records itself.
+             * @enum {string}
+             */
+            dependsOn?: "EMERGENCY_RESERVE_MONTHS" | "DEBT_PAYMENT_BURDEN" | "FORECAST_MINIMUM_CASH_BALANCE" | "PASSIVE_INCOME_SHARE" | "ESSENTIAL_EXPENSE_SHARE";
+            /** @description What the rule measured; null exactly when NOT_EVALUATED. */
+            observed?: components["schemas"]["FinancialHealthObserved"];
+            threshold?: components["schemas"]["FinancialHealthThreshold"];
+            /** @description The records behind the judgement. A rule on an indicator: that indicator's sources. Spending: the month's occurrences. Liquidity: the CASH_ACCOUNT assets, then every PAYMENT_DUE and MATURITY_DUE in the window by date. Concentration: the occurrences of the largest category. */
+            evidence?: components["schemas"]["FinancialHealthSource"][];
+            /**
+             * @description Why the rule was not judged; set exactly when NOT_EVALUATED.
+             * @enum {string}
+             */
+            notEvaluatedReason?: "INDICATOR_PARTIAL" | "INDICATOR_UNAVAILABLE" | "NO_CASH_FLOW_IN_MONTH" | "NO_INCOME" | "NO_CASH_ACCOUNTS" | "NO_LIABILITIES" | "MISSING_EXCHANGE_RATE";
+        };
+        /** @description One source record and the figures read from it. */
+        FinancialHealthSource: {
+            /**
+             * @example CASH_FLOW_ENTRY
+             * @enum {string}
+             */
+            sourceType?: "CASH_FLOW_ENTRY" | "ASSET" | "LIABILITY";
+            /**
+             * Format: uuid
+             * @description GET /api/v1/cash-flow-entries/{id}, /api/v1/assets/{id} or /api/v1/liabilities/{id} reads it.
+             * @example 6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531
+             */
+            sourceId?: string;
+            /**
+             * @description The record's category code.
+             * @example SALARY
+             */
+            category?: string;
+            /**
+             * @example SHARE_REST
+             * @enum {string}
+             */
+            role?: "NUMERATOR" | "DENOMINATOR" | "SHARE_PART" | "SHARE_REST" | "OPENING_BALANCE" | "PROJECTED_INCOME" | "PROJECTED_EXPENSE" | "INCOME" | "EXPENSE" | "CASH_ACCOUNT" | "PAYMENT_DUE" | "MATURITY_DUE";
+            /**
+             * Format: date
+             * @description The occurrence date of a month's line, the effective date of a recurring essential expense, an asset's valuation date, a projected date, or a due date.
+             * @example 2026-11-05
+             */
+            date?: string;
+            /**
+             * @description In the record's own currency.
+             * @example 132000000
+             */
+            amount?: number;
+            /**
+             * @example VND
+             * @enum {string}
+             */
+            currency?: "VND" | "USD";
+            /**
+             * @description amount in VND; null when it is USD and no rate is declared.
+             * @example 132000000
+             */
+            amountVnd?: number;
+            /**
+             * @description MONTHLY, QUARTERLY or YEARLY for a recurring entry, a liability's payment frequency; null for a one-time entry or an asset.
+             * @example MONTHLY
+             */
+            cadence?: string;
+            /** @description For a reserve DENOMINATOR row: amountVnd divided by the months its cadence spans (1, 3 or 12), HALF_UP to two decimals; null otherwise. */
+            monthlyEquivalentVnd?: number;
+        };
+        /** @description What the rule was judged against. */
+        FinancialHealthThreshold: {
+            /**
+             * @description LESS_THAN: ATTENTION when observed.value < value. GREATER_THAN: when >.
+             * @example GREATER_THAN
+             * @enum {string}
+             */
+            comparison?: "LESS_THAN" | "GREATER_THAN";
+            /**
+             * @description Zero for spending and forecast, a configured value, or for liquidity the VND sum of the obligations in assumptions.obligationWindow; null only when that sum holds a USD amount with no declared rate.
+             * @example 0.6
+             */
+            value?: number;
+            /**
+             * @example FRACTION
+             * @enum {string}
+             */
+            unit?: "MONTHS" | "FRACTION" | "VND";
+            /**
+             * @description The rikkaus.cashflow.health property the value comes from (for liquidity, the window it is summed over); null for a threshold fixed by the rule.
+             * @example max-income-source-share
+             */
+            property?: string;
+        };
+        /** @description Every system reference value in force, configured centrally under rikkaus.cashflow.health. The review fixture of design #81, not an approved business configuration. A value equal to a limit is not beyond it. */
+        FinancialHealthThresholds: {
+            /**
+             * @description EMERGENCY_RESERVE_MONTHS is OK at and above this.
+             * @example 6
+             */
+            reserveOkMinMonths?: number;
+            /**
+             * @description EMERGENCY_RESERVE_MONTHS is ATTENTION below this and WATCH from here to reserveOkMinMonths; RESERVE_BELOW_REFERENCE fires below it.
+             * @example 3
+             */
+            minReserveMonths?: number;
+            /**
+             * @description DEBT_PAYMENT_BURDEN is OK at and below this.
+             * @example 0.25
+             */
+            debtBurdenOkMax?: number;
+            /**
+             * @description DEBT_PAYMENT_BURDEN is WATCH up to this and ATTENTION above it; HIGH_DEBT_PAYMENT_BURDEN fires above it.
+             * @example 0.35
+             */
+            maxDebtPaymentBurden?: number;
+            /**
+             * @description PASSIVE_INCOME_SHARE is HIGH at and above this.
+             * @example 0.5
+             */
+            passiveIncomeHighMin?: number;
+            /**
+             * @description PASSIVE_INCOME_SHARE is MEDIUM at and above this, LOW below.
+             * @example 0.2
+             */
+            passiveIncomeMediumMin?: number;
+            /**
+             * @description ESSENTIAL_EXPENSE_SHARE is OK at and below this.
+             * @example 0.7
+             */
+            essentialShareOkMax?: number;
+            /**
+             * @description ESSENTIAL_EXPENSE_SHARE is WATCH up to this and ATTENTION above it.
+             * @example 0.8
+             */
+            essentialShareWatchMax?: number;
+            /**
+             * Format: int32
+             * @description The days after asOfDate an obligation still counts as upcoming.
+             * @example 30
+             */
+            dueWindowDays?: number;
+            /**
+             * @description INCOME_CONCENTRATION fires above this share.
+             * @example 0.6
+             */
+            maxIncomeSourceShare?: number;
         };
         /** @description Income, expense, net, composition and passive income of one calendar month, in VND. */
         MonthlyCashFlowReport: {
@@ -5918,6 +6279,65 @@ export interface operations {
             };
             /** @description No goal with this identifier is visible to the viewer: it does not exist, or it belongs to someone else. The two are deliberately indistinguishable. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    readFinancialHealth: {
+        parameters: {
+            query?: {
+                /** @description The calendar month the cash-flow indicators read, YYYY-MM. Absent means the current month in Asia/Ho_Chi_Minh. Past and future months are accepted. */
+                month?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The five indicators and six rules, possibly all unavailable for a user with no record yet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialHealthResponse"];
+                };
+            };
+            /** @description month is present but blank or not a calendar month in the form YYYY-MM. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

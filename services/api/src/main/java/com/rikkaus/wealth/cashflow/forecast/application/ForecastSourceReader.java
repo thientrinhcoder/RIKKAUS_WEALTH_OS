@@ -4,6 +4,7 @@ import com.rikkaus.wealth.shared.money.Currency;
 import com.rikkaus.wealth.shared.money.ExchangeRate;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Component;
  * CurrentUser}. Another user's rows are never loaded, so there is nothing to filter out afterwards.
  */
 @Component
-class ForecastSourceReader {
+public class ForecastSourceReader {
 
     private final JdbcClient jdbc;
 
@@ -36,7 +37,7 @@ class ForecastSourceReader {
     }
 
     /** The USD/VND rate the owner has declared, or empty when they have not declared one. */
-    Optional<ExchangeRate> exchangeRateOf(UUID ownerId) {
+    public Optional<ExchangeRate> exchangeRateOf(UUID ownerId) {
         return jdbc.sql(
                         """
                         SELECT usd_to_vnd_rate, rate_effective_date
@@ -59,15 +60,25 @@ class ForecastSourceReader {
      * could be sold, while the opening balance is the money payments are actually made from. A term
      * deposit the user marks HIGH is still not spendable on the first of next month.
      */
-    List<CashAccount> cashAccountsOf(UUID ownerId) {
+    List<ValuedAsset> cashAccountsOf(UUID ownerId) {
+        return assetsIn(ownerId, CashFlowForecastService.OPENING_BALANCE_CATEGORIES);
+    }
+
+    /**
+     * The owner's assets in the given categories, as stored, ordered by category and then identifier so
+     * every caller lists them the same way. Financial-health reads its liquid group through it.
+     */
+    public List<ValuedAsset> assetsIn(UUID ownerId, Collection<String> categories) {
         return jdbc.sql(
                         """
                         SELECT id, category, current_value, currency, valuation_date
                           FROM wealth.assets
-                         WHERE user_id = :ownerId AND category IN ('CASH', 'BANK_ACCOUNT')
+                         WHERE user_id = :ownerId AND category IN (:categories)
+                         ORDER BY category, id::text
                         """)
                 .param("ownerId", ownerId)
-                .query((rs, row) -> new CashAccount(
+                .param("categories", List.copyOf(categories))
+                .query((rs, row) -> new ValuedAsset(
                         rs.getObject("id", UUID.class),
                         rs.getString("category"),
                         rs.getBigDecimal("current_value"),
@@ -77,19 +88,21 @@ class ForecastSourceReader {
     }
 
     /** Every liability the owner has, with the schedule fields as the user stated them. */
-    List<ScheduledLiability> liabilitiesOf(UUID ownerId) {
+    public List<ScheduledLiability> liabilitiesOf(UUID ownerId) {
         return jdbc.sql(
                         """
-                        SELECT id, category, currency, recurring_payment_amount, recurring_payment_frequency,
-                               next_payment_date, maturity_date
+                        SELECT id, category, currency, outstanding_balance, recurring_payment_amount,
+                               recurring_payment_frequency, next_payment_date, maturity_date
                           FROM wealth.liabilities
                          WHERE user_id = :ownerId
+                         ORDER BY id::text
                         """)
                 .param("ownerId", ownerId)
                 .query((rs, row) -> new ScheduledLiability(
                         rs.getObject("id", UUID.class),
                         rs.getString("category"),
                         Currency.valueOf(rs.getString("currency")),
+                        rs.getBigDecimal("outstanding_balance"),
                         rs.getBigDecimal("recurring_payment_amount"),
                         rs.getString("recurring_payment_frequency"),
                         rs.getObject("next_payment_date", LocalDate.class),
@@ -97,16 +110,18 @@ class ForecastSourceReader {
                 .list();
     }
 
-    record CashAccount(UUID id, String category, BigDecimal value, Currency currency, LocalDate valuationDate) {}
+    /** An asset's stored value and the date the user states it was true. */
+    public record ValuedAsset(UUID id, String category, BigDecimal value, Currency currency, LocalDate valuationDate) {}
 
     /**
      * A liability's schedule as stored. {@code paymentAmount} and {@code frequency} are null together,
      * which {@code liabilities_recurring_payment_is_complete} guarantees.
      */
-    record ScheduledLiability(
+    public record ScheduledLiability(
             UUID id,
             String category,
             Currency currency,
+            BigDecimal outstandingBalance,
             BigDecimal paymentAmount,
             String frequency,
             LocalDate nextPaymentDate,

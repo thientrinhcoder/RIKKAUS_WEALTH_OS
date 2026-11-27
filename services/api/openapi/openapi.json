@@ -5383,6 +5383,2311 @@
         } ]
       }
     },
+    "/api/v1/financial-health" : {
+      "get" : {
+        "tags" : [ "financial-health-controller" ],
+        "summary" : "Compute the signed-in user's five financial-health indicators and judge the six insight rules",
+        "description" : "Always five indicators and six rules, in a fixed order. EMERGENCY_RESERVE_MONTHS is the CASH, BANK_ACCOUNT and TERM_DEPOSIT assets over the month's recurring essential expenses at their monthly equivalent (monthly x1, quarterly /3, yearly /12; one-time expenses never count), in months at one decimal. DEBT_PAYMENT_BURDEN is the month's DEBT_PRINCIPAL_PAYMENT and INTEREST_PAYMENT expense over its income. PASSIVE_INCOME_SHARE is passiveIncome.total over income and ESSENTIAL_EXPENSE_SHARE the essential-category expense over expense, each a six-decimal fraction rounded HALF_UP from the same VND totals GET /api/v1/cash-flow-reports/monthly returns for the month. FORECAST_MINIMUM_CASH_BALANCE is minimumBalance.amount of GET /api/v1/cash-flow-forecast (the three months after the current one, whatever month is asked for). Bands and rule statuses compare the rounded value with thresholds; a value equal to a limit is not beyond it. Thresholds are system reference values configured centrally and returned in thresholds, and assumptions returns the day, windows, category groups and rate, so a result can be reproduced. A USD record with no declared rate is left out with amountVnd null and makes the indicator PARTIAL, or UNAVAILABLE when nothing else is left; a missing denominator makes it UNAVAILABLE with value null, never 0. A rule over a PARTIAL or UNAVAILABLE input is NOT_EVALUATED, never OK. A user with no record gets five UNAVAILABLE indicators and six NOT_EVALUATED rules. Computed on every read; nothing is stored. No Vietnamese text is published: the client maps every constant to its copy.",
+        "operationId" : "readFinancialHealth",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "description" : "The calendar month the cash-flow indicators read, YYYY-MM. Absent means the current month in Asia/Ho_Chi_Minh. Past and future months are accepted.",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "example" : "2026-11",
+            "pattern" : "^\\d{4}-\\d{2}$"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The five indicators and six rules, possibly all unavailable for a user with no record yet",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FinancialHealthResponse"
+                },
+                "examples" : {
+                  "the design #81 baseline: one rule fires, income concentration" : {
+                    "description" : "the design #81 baseline: one rule fires, income concentration",
+                    "value" : {
+                      "assumptions" : {
+                        "asOfDate" : "2026-11-27",
+                        "timeZone" : "Asia/Ho_Chi_Minh",
+                        "month" : "2026-11",
+                        "monthFrom" : "2026-11-01",
+                        "monthTo" : "2026-11-30",
+                        "forecastHorizon" : {
+                          "from" : "2026-12-01",
+                          "to" : "2027-02-28"
+                        },
+                        "obligationWindow" : {
+                          "from" : "2026-11-27",
+                          "to" : "2026-12-27"
+                        },
+                        "liquidAssetCategories" : [ "CASH", "BANK_ACCOUNT", "TERM_DEPOSIT" ],
+                        "cashAccountCategories" : [ "CASH", "BANK_ACCOUNT" ],
+                        "essentialCategories" : [ "LIVING_COSTS", "HOUSING", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT" ],
+                        "debtPaymentCategories" : [ "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT" ],
+                        "exchangeRate" : {
+                          "usdToVndRate" : 25100.0,
+                          "effectiveDate" : "2026-09-12"
+                        }
+                      },
+                      "thresholds" : {
+                        "reserveOkMinMonths" : 6.0,
+                        "minReserveMonths" : 3.0,
+                        "debtBurdenOkMax" : 0.25,
+                        "maxDebtPaymentBurden" : 0.35,
+                        "passiveIncomeHighMin" : 0.5,
+                        "passiveIncomeMediumMin" : 0.2,
+                        "essentialShareOkMax" : 0.7,
+                        "essentialShareWatchMax" : 0.8,
+                        "dueWindowDays" : 30,
+                        "maxIncomeSourceShare" : 0.6
+                      },
+                      "indicators" : [ {
+                        "indicatorId" : "EMERGENCY_RESERVE_MONTHS",
+                        "availability" : "COMPLETE",
+                        "value" : 30.0,
+                        "unit" : "MONTHS",
+                        "band" : "OK",
+                        "bandNotDeterminedReason" : null,
+                        "unavailableReason" : null,
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE",
+                          "numeratorVnd" : 1.85E9,
+                          "denominatorVnd" : 6.16E7,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "cd3957a8-4df9-424f-815a-93d781e85d54",
+                            "category" : "BANK_ACCOUNT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-24",
+                            "amount" : 20000.0,
+                            "currency" : "USD",
+                            "amountVnd" : 5.02E8,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "8debc358-2f2f-425f-a48f-bf92eca0e1bd",
+                            "category" : "CASH",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-25",
+                            "amount" : 1.48E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E8,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "1c9fa9d3-efc3-47fc-a52d-f88aaae8dd90",
+                            "category" : "TERM_DEPOSIT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-21",
+                            "amount" : 1.2E9,
+                            "currency" : "VND",
+                            "amountVnd" : 1.2E9,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "66567388-95b4-404a-98e7-e2d64b55cdd2",
+                            "category" : "HOUSING",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-20",
+                            "amount" : 1.875E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.875E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 1.875E7
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "8e6f74c9-33c4-47d4-862c-a2f4fb4ecf0e",
+                            "category" : "INSURANCE",
+                            "role" : "DENOMINATOR",
+                            "date" : "2025-11-16",
+                            "amount" : 5400000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 5400000.0,
+                            "cadence" : "YEARLY",
+                            "monthlyEquivalentVnd" : 450000.0
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "9a45d13b-bc47-499c-aad5-b673f7f4c3dc",
+                            "category" : "INTEREST_PAYMENT",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-20",
+                            "amount" : 6250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 6250000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 6250000.0
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "9d2153bc-16e5-4aa0-9b8a-92d36aaf4b2c",
+                            "category" : "DEBT_PRINCIPAL_PAYMENT",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-20",
+                            "amount" : 1.0E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.0E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 1.0E7
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "c23ede47-04d1-46a2-a648-ebffb41d7b77",
+                            "category" : "LIVING_COSTS",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-03",
+                            "amount" : 2.34E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.34E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 2.34E7
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "f28b8730-a455-46a7-8a29-0a85c59e74aa",
+                            "category" : "TAX_AND_FEES",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-22",
+                            "amount" : 8250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 8250000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : 2750000.0
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "DEBT_PAYMENT_BURDEN",
+                        "availability" : "COMPLETE",
+                        "value" : 0.090278,
+                        "unit" : "FRACTION",
+                        "band" : "OK",
+                        "bandNotDeterminedReason" : null,
+                        "unavailableReason" : null,
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "DEBT_PAYMENTS_OVER_INCOME",
+                          "numeratorVnd" : 1.625E7,
+                          "denominatorVnd" : 1.8E8,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "9a45d13b-bc47-499c-aad5-b673f7f4c3dc",
+                            "category" : "INTEREST_PAYMENT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-20",
+                            "amount" : 6250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 6250000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "9d2153bc-16e5-4aa0-9b8a-92d36aaf4b2c",
+                            "category" : "DEBT_PRINCIPAL_PAYMENT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-20",
+                            "amount" : 1.0E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.0E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "75d689de-b37c-4638-89ce-6117341d366b",
+                            "category" : "SALARY",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-05",
+                            "amount" : 1.32E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.32E8,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "0b9c97d9-2d94-4ff2-ab59-71e305e28b20",
+                            "category" : "RENTAL_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-10",
+                            "amount" : 1.48E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "ede5fdb9-646c-4200-9c7f-32ef9b952198",
+                            "category" : "BUSINESS_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-12",
+                            "amount" : 2.62E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.62E7,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "6374e3a7-1caa-421b-a51c-9849540b0aa6",
+                            "category" : "DIVIDEND",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-15",
+                            "amount" : 150.0,
+                            "currency" : "USD",
+                            "amountVnd" : 3765000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "cc5a0a53-59f4-4ac2-bd3f-ce62da9f038a",
+                            "category" : "OTHER_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-18",
+                            "amount" : 235000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 235000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "36ebaf64-5e12-44ff-859f-40a06af95974",
+                            "category" : "BOND_OR_FUND_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-20",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "be494051-c2f7-4803-a9d1-932a14940145",
+                            "category" : "DEPOSIT_INTEREST",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-25",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "FORECAST_MINIMUM_CASH_BALANCE",
+                        "availability" : "COMPLETE",
+                        "value" : 6.266E8,
+                        "unit" : "VND",
+                        "band" : "OK",
+                        "bandNotDeterminedReason" : null,
+                        "unavailableReason" : null,
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "LOWEST_PROJECTED_CASH_BALANCE",
+                          "numeratorVnd" : null,
+                          "denominatorVnd" : null,
+                          "referenceVnd" : 6.16E7,
+                          "observedOn" : "2026-12-03",
+                          "sources" : [ {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "8debc358-2f2f-425f-a48f-bf92eca0e1bd",
+                            "category" : "CASH",
+                            "role" : "OPENING_BALANCE",
+                            "date" : "2026-11-25",
+                            "amount" : 1.48E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E8,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "cd3957a8-4df9-424f-815a-93d781e85d54",
+                            "category" : "BANK_ACCOUNT",
+                            "role" : "OPENING_BALANCE",
+                            "date" : "2026-11-24",
+                            "amount" : 20000.0,
+                            "currency" : "USD",
+                            "amountVnd" : 5.02E8,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "c23ede47-04d1-46a2-a648-ebffb41d7b77",
+                            "category" : "LIVING_COSTS",
+                            "role" : "PROJECTED_EXPENSE",
+                            "date" : "2026-12-03",
+                            "amount" : 2.34E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.34E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "PASSIVE_INCOME_SHARE",
+                        "availability" : "COMPLETE",
+                        "value" : 0.119806,
+                        "unit" : "FRACTION",
+                        "band" : "LOW",
+                        "bandNotDeterminedReason" : null,
+                        "unavailableReason" : null,
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "ASSET_LINKED_INCOME_OVER_INCOME",
+                          "numeratorVnd" : 2.1565E7,
+                          "denominatorVnd" : 1.8E8,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "75d689de-b37c-4638-89ce-6117341d366b",
+                            "category" : "SALARY",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-05",
+                            "amount" : 1.32E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.32E8,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "0b9c97d9-2d94-4ff2-ab59-71e305e28b20",
+                            "category" : "RENTAL_INCOME",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-10",
+                            "amount" : 1.48E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "ede5fdb9-646c-4200-9c7f-32ef9b952198",
+                            "category" : "BUSINESS_INCOME",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-12",
+                            "amount" : 2.62E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.62E7,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "6374e3a7-1caa-421b-a51c-9849540b0aa6",
+                            "category" : "DIVIDEND",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-15",
+                            "amount" : 150.0,
+                            "currency" : "USD",
+                            "amountVnd" : 3765000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "cc5a0a53-59f4-4ac2-bd3f-ce62da9f038a",
+                            "category" : "OTHER_INCOME",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-18",
+                            "amount" : 235000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 235000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "36ebaf64-5e12-44ff-859f-40a06af95974",
+                            "category" : "BOND_OR_FUND_INCOME",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "be494051-c2f7-4803-a9d1-932a14940145",
+                            "category" : "DEPOSIT_INTEREST",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-25",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "ESSENTIAL_EXPENSE_SHARE",
+                        "availability" : "COMPLETE",
+                        "value" : 0.833696,
+                        "unit" : "FRACTION",
+                        "band" : "ATTENTION",
+                        "bandNotDeterminedReason" : null,
+                        "unavailableReason" : null,
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "ESSENTIAL_EXPENSE_OVER_EXPENSE",
+                          "numeratorVnd" : 7.67E7,
+                          "denominatorVnd" : 9.2E7,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "c23ede47-04d1-46a2-a648-ebffb41d7b77",
+                            "category" : "LIVING_COSTS",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-03",
+                            "amount" : 2.34E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.34E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "e96d4d74-aa20-445a-8159-c9a79b7ff349",
+                            "category" : "EDUCATION",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-08",
+                            "amount" : 1.28E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.28E7,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "0e6907b4-0ac1-4000-873f-0e0eb4de448f",
+                            "category" : "HEALTHCARE",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-14",
+                            "amount" : 4650000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 4650000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "8e6f74c9-33c4-47d4-862c-a2f4fb4ecf0e",
+                            "category" : "INSURANCE",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-16",
+                            "amount" : 5400000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 5400000.0,
+                            "cadence" : "YEARLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "66567388-95b4-404a-98e7-e2d64b55cdd2",
+                            "category" : "HOUSING",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 1.875E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.875E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "9a45d13b-bc47-499c-aad5-b673f7f4c3dc",
+                            "category" : "INTEREST_PAYMENT",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 6250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 6250000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "9d2153bc-16e5-4aa0-9b8a-92d36aaf4b2c",
+                            "category" : "DEBT_PRINCIPAL_PAYMENT",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 1.0E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.0E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "f28b8730-a455-46a7-8a29-0a85c59e74aa",
+                            "category" : "TAX_AND_FEES",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-22",
+                            "amount" : 8250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 8250000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "76a0afa6-62e5-4887-85d3-d591e2abc42f",
+                            "category" : "OTHER_EXPENSE",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-24",
+                            "amount" : 2500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 2500000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      } ],
+                      "rules" : [ {
+                        "ruleId" : "SPENDING_EXCEEDS_INCOME",
+                        "status" : "OK",
+                        "dependsOn" : null,
+                        "observed" : {
+                          "value" : 8.8E7,
+                          "unit" : "VND",
+                          "subject" : null,
+                          "date" : null
+                        },
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 0.0,
+                          "unit" : "VND",
+                          "property" : null
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "c23ede47-04d1-46a2-a648-ebffb41d7b77",
+                          "category" : "LIVING_COSTS",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-03",
+                          "amount" : 2.34E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.34E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "75d689de-b37c-4638-89ce-6117341d366b",
+                          "category" : "SALARY",
+                          "role" : "INCOME",
+                          "date" : "2026-11-05",
+                          "amount" : 1.32E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.32E8,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "e96d4d74-aa20-445a-8159-c9a79b7ff349",
+                          "category" : "EDUCATION",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-08",
+                          "amount" : 1.28E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.28E7,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "0b9c97d9-2d94-4ff2-ab59-71e305e28b20",
+                          "category" : "RENTAL_INCOME",
+                          "role" : "INCOME",
+                          "date" : "2026-11-10",
+                          "amount" : 1.48E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "ede5fdb9-646c-4200-9c7f-32ef9b952198",
+                          "category" : "BUSINESS_INCOME",
+                          "role" : "INCOME",
+                          "date" : "2026-11-12",
+                          "amount" : 2.62E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.62E7,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "0e6907b4-0ac1-4000-873f-0e0eb4de448f",
+                          "category" : "HEALTHCARE",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-14",
+                          "amount" : 4650000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 4650000.0,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "6374e3a7-1caa-421b-a51c-9849540b0aa6",
+                          "category" : "DIVIDEND",
+                          "role" : "INCOME",
+                          "date" : "2026-11-15",
+                          "amount" : 150.0,
+                          "currency" : "USD",
+                          "amountVnd" : 3765000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "8e6f74c9-33c4-47d4-862c-a2f4fb4ecf0e",
+                          "category" : "INSURANCE",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-16",
+                          "amount" : 5400000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 5400000.0,
+                          "cadence" : "YEARLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "cc5a0a53-59f4-4ac2-bd3f-ce62da9f038a",
+                          "category" : "OTHER_INCOME",
+                          "role" : "INCOME",
+                          "date" : "2026-11-18",
+                          "amount" : 235000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 235000.0,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "36ebaf64-5e12-44ff-859f-40a06af95974",
+                          "category" : "BOND_OR_FUND_INCOME",
+                          "role" : "INCOME",
+                          "date" : "2026-11-20",
+                          "amount" : 1500000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 1500000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "66567388-95b4-404a-98e7-e2d64b55cdd2",
+                          "category" : "HOUSING",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-20",
+                          "amount" : 1.875E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.875E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9a45d13b-bc47-499c-aad5-b673f7f4c3dc",
+                          "category" : "INTEREST_PAYMENT",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-20",
+                          "amount" : 6250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 6250000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9d2153bc-16e5-4aa0-9b8a-92d36aaf4b2c",
+                          "category" : "DEBT_PRINCIPAL_PAYMENT",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-20",
+                          "amount" : 1.0E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.0E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "f28b8730-a455-46a7-8a29-0a85c59e74aa",
+                          "category" : "TAX_AND_FEES",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-22",
+                          "amount" : 8250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 8250000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "76a0afa6-62e5-4887-85d3-d591e2abc42f",
+                          "category" : "OTHER_EXPENSE",
+                          "role" : "EXPENSE",
+                          "date" : "2026-11-24",
+                          "amount" : 2500000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 2500000.0,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "be494051-c2f7-4803-a9d1-932a14940145",
+                          "category" : "DEPOSIT_INTEREST",
+                          "role" : "INCOME",
+                          "date" : "2026-11-25",
+                          "amount" : 1500000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 1500000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : null
+                      }, {
+                        "ruleId" : "FORECAST_CASH_NEGATIVE",
+                        "status" : "OK",
+                        "dependsOn" : "FORECAST_MINIMUM_CASH_BALANCE",
+                        "observed" : {
+                          "value" : 6.266E8,
+                          "unit" : "VND",
+                          "subject" : null,
+                          "date" : "2026-12-03"
+                        },
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 0.0,
+                          "unit" : "VND",
+                          "property" : null
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "8debc358-2f2f-425f-a48f-bf92eca0e1bd",
+                          "category" : "CASH",
+                          "role" : "OPENING_BALANCE",
+                          "date" : "2026-11-25",
+                          "amount" : 1.48E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "cd3957a8-4df9-424f-815a-93d781e85d54",
+                          "category" : "BANK_ACCOUNT",
+                          "role" : "OPENING_BALANCE",
+                          "date" : "2026-11-24",
+                          "amount" : 20000.0,
+                          "currency" : "USD",
+                          "amountVnd" : 5.02E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "c23ede47-04d1-46a2-a648-ebffb41d7b77",
+                          "category" : "LIVING_COSTS",
+                          "role" : "PROJECTED_EXPENSE",
+                          "date" : "2026-12-03",
+                          "amount" : 2.34E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.34E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : null
+                      }, {
+                        "ruleId" : "RESERVE_BELOW_REFERENCE",
+                        "status" : "OK",
+                        "dependsOn" : "EMERGENCY_RESERVE_MONTHS",
+                        "observed" : {
+                          "value" : 30.0,
+                          "unit" : "MONTHS",
+                          "subject" : null,
+                          "date" : null
+                        },
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 3.0,
+                          "unit" : "MONTHS",
+                          "property" : "min-reserve-months"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "cd3957a8-4df9-424f-815a-93d781e85d54",
+                          "category" : "BANK_ACCOUNT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-24",
+                          "amount" : 20000.0,
+                          "currency" : "USD",
+                          "amountVnd" : 5.02E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "8debc358-2f2f-425f-a48f-bf92eca0e1bd",
+                          "category" : "CASH",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-25",
+                          "amount" : 1.48E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "1c9fa9d3-efc3-47fc-a52d-f88aaae8dd90",
+                          "category" : "TERM_DEPOSIT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-21",
+                          "amount" : 1.2E9,
+                          "currency" : "VND",
+                          "amountVnd" : 1.2E9,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "66567388-95b4-404a-98e7-e2d64b55cdd2",
+                          "category" : "HOUSING",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-20",
+                          "amount" : 1.875E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.875E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 1.875E7
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "8e6f74c9-33c4-47d4-862c-a2f4fb4ecf0e",
+                          "category" : "INSURANCE",
+                          "role" : "DENOMINATOR",
+                          "date" : "2025-11-16",
+                          "amount" : 5400000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 5400000.0,
+                          "cadence" : "YEARLY",
+                          "monthlyEquivalentVnd" : 450000.0
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9a45d13b-bc47-499c-aad5-b673f7f4c3dc",
+                          "category" : "INTEREST_PAYMENT",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-20",
+                          "amount" : 6250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 6250000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 6250000.0
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9d2153bc-16e5-4aa0-9b8a-92d36aaf4b2c",
+                          "category" : "DEBT_PRINCIPAL_PAYMENT",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-20",
+                          "amount" : 1.0E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.0E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 1.0E7
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "c23ede47-04d1-46a2-a648-ebffb41d7b77",
+                          "category" : "LIVING_COSTS",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-03",
+                          "amount" : 2.34E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.34E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 2.34E7
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "f28b8730-a455-46a7-8a29-0a85c59e74aa",
+                          "category" : "TAX_AND_FEES",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-22",
+                          "amount" : 8250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 8250000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : 2750000.0
+                        } ],
+                        "notEvaluatedReason" : null
+                      }, {
+                        "ruleId" : "HIGH_DEBT_PAYMENT_BURDEN",
+                        "status" : "OK",
+                        "dependsOn" : "DEBT_PAYMENT_BURDEN",
+                        "observed" : {
+                          "value" : 0.090278,
+                          "unit" : "FRACTION",
+                          "subject" : null,
+                          "date" : null
+                        },
+                        "threshold" : {
+                          "comparison" : "GREATER_THAN",
+                          "value" : 0.35,
+                          "unit" : "FRACTION",
+                          "property" : "max-debt-payment-burden"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9a45d13b-bc47-499c-aad5-b673f7f4c3dc",
+                          "category" : "INTEREST_PAYMENT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-20",
+                          "amount" : 6250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 6250000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "9d2153bc-16e5-4aa0-9b8a-92d36aaf4b2c",
+                          "category" : "DEBT_PRINCIPAL_PAYMENT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-20",
+                          "amount" : 1.0E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.0E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "75d689de-b37c-4638-89ce-6117341d366b",
+                          "category" : "SALARY",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-05",
+                          "amount" : 1.32E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.32E8,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "0b9c97d9-2d94-4ff2-ab59-71e305e28b20",
+                          "category" : "RENTAL_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-10",
+                          "amount" : 1.48E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "ede5fdb9-646c-4200-9c7f-32ef9b952198",
+                          "category" : "BUSINESS_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-12",
+                          "amount" : 2.62E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.62E7,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "6374e3a7-1caa-421b-a51c-9849540b0aa6",
+                          "category" : "DIVIDEND",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-15",
+                          "amount" : 150.0,
+                          "currency" : "USD",
+                          "amountVnd" : 3765000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "cc5a0a53-59f4-4ac2-bd3f-ce62da9f038a",
+                          "category" : "OTHER_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-18",
+                          "amount" : 235000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 235000.0,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "36ebaf64-5e12-44ff-859f-40a06af95974",
+                          "category" : "BOND_OR_FUND_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-20",
+                          "amount" : 1500000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 1500000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "be494051-c2f7-4803-a9d1-932a14940145",
+                          "category" : "DEPOSIT_INTEREST",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-25",
+                          "amount" : 1500000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 1500000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : null
+                      }, {
+                        "ruleId" : "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+                        "status" : "OK",
+                        "dependsOn" : null,
+                        "observed" : {
+                          "value" : 6.5E8,
+                          "unit" : "VND",
+                          "subject" : null,
+                          "date" : null
+                        },
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 5.075E7,
+                          "unit" : "VND",
+                          "property" : "due-window-days"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "cd3957a8-4df9-424f-815a-93d781e85d54",
+                          "category" : "BANK_ACCOUNT",
+                          "role" : "CASH_ACCOUNT",
+                          "date" : "2026-11-24",
+                          "amount" : 20000.0,
+                          "currency" : "USD",
+                          "amountVnd" : 5.02E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "8debc358-2f2f-425f-a48f-bf92eca0e1bd",
+                          "category" : "CASH",
+                          "role" : "CASH_ACCOUNT",
+                          "date" : "2026-11-25",
+                          "amount" : 1.48E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "LIABILITY",
+                          "sourceId" : "2e75bdc4-0e13-4b82-853f-496f74177e7a",
+                          "category" : "CREDIT_CARD_BALANCE",
+                          "role" : "MATURITY_DUE",
+                          "date" : "2026-11-30",
+                          "amount" : 3.2E7,
+                          "currency" : "VND",
+                          "amountVnd" : 3.2E7,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "LIABILITY",
+                          "sourceId" : "96ae5201-288c-48f2-ac23-802349c89891",
+                          "category" : "BANK_LOAN",
+                          "role" : "PAYMENT_DUE",
+                          "date" : "2026-12-20",
+                          "amount" : 1.875E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.875E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : null
+                      }, {
+                        "ruleId" : "INCOME_CONCENTRATION",
+                        "status" : "ATTENTION",
+                        "dependsOn" : null,
+                        "observed" : {
+                          "value" : 0.733333,
+                          "unit" : "FRACTION",
+                          "subject" : "SALARY",
+                          "date" : null
+                        },
+                        "threshold" : {
+                          "comparison" : "GREATER_THAN",
+                          "value" : 0.6,
+                          "unit" : "FRACTION",
+                          "property" : "max-income-source-share"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "75d689de-b37c-4638-89ce-6117341d366b",
+                          "category" : "SALARY",
+                          "role" : "INCOME",
+                          "date" : "2026-11-05",
+                          "amount" : 1.32E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.32E8,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : null
+                      } ]
+                    }
+                  },
+                  "the same records before any rate is declared: partial, no rule judged" : {
+                    "description" : "the same records before any rate is declared: partial, no rule judged",
+                    "value" : {
+                      "assumptions" : {
+                        "asOfDate" : "2026-11-27",
+                        "timeZone" : "Asia/Ho_Chi_Minh",
+                        "month" : "2026-11",
+                        "monthFrom" : "2026-11-01",
+                        "monthTo" : "2026-11-30",
+                        "forecastHorizon" : {
+                          "from" : "2026-12-01",
+                          "to" : "2027-02-28"
+                        },
+                        "obligationWindow" : {
+                          "from" : "2026-11-27",
+                          "to" : "2026-12-27"
+                        },
+                        "liquidAssetCategories" : [ "CASH", "BANK_ACCOUNT", "TERM_DEPOSIT" ],
+                        "cashAccountCategories" : [ "CASH", "BANK_ACCOUNT" ],
+                        "essentialCategories" : [ "LIVING_COSTS", "HOUSING", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT" ],
+                        "debtPaymentCategories" : [ "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT" ],
+                        "exchangeRate" : null
+                      },
+                      "thresholds" : {
+                        "reserveOkMinMonths" : 6.0,
+                        "minReserveMonths" : 3.0,
+                        "debtBurdenOkMax" : 0.25,
+                        "maxDebtPaymentBurden" : 0.35,
+                        "passiveIncomeHighMin" : 0.5,
+                        "passiveIncomeMediumMin" : 0.2,
+                        "essentialShareOkMax" : 0.7,
+                        "essentialShareWatchMax" : 0.8,
+                        "dueWindowDays" : 30,
+                        "maxIncomeSourceShare" : 0.6
+                      },
+                      "indicators" : [ {
+                        "indicatorId" : "EMERGENCY_RESERVE_MONTHS",
+                        "availability" : "PARTIAL",
+                        "value" : 21.9,
+                        "unit" : "MONTHS",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "PARTIAL_INPUTS",
+                        "unavailableReason" : null,
+                        "partialReason" : "MISSING_EXCHANGE_RATE",
+                        "calculation" : {
+                          "formula" : "LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE",
+                          "numeratorVnd" : 1.348E9,
+                          "denominatorVnd" : 6.16E7,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "b740b482-947d-4c3b-9f69-3bcfeb60e142",
+                            "category" : "BANK_ACCOUNT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-24",
+                            "amount" : 20000.0,
+                            "currency" : "USD",
+                            "amountVnd" : null,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "333980ae-ef8f-4545-b0dc-a3001110c92d",
+                            "category" : "CASH",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-25",
+                            "amount" : 1.48E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E8,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "74641b8a-9ed8-4d69-bae8-af112c315f6b",
+                            "category" : "TERM_DEPOSIT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-21",
+                            "amount" : 1.2E9,
+                            "currency" : "VND",
+                            "amountVnd" : 1.2E9,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "2ce3ce49-b26a-481f-bf23-e29713e4eca1",
+                            "category" : "DEBT_PRINCIPAL_PAYMENT",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-20",
+                            "amount" : 1.0E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.0E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 1.0E7
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "948f1453-fa5a-44f6-aa0f-a9c27b52a19f",
+                            "category" : "INTEREST_PAYMENT",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-20",
+                            "amount" : 6250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 6250000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 6250000.0
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "a3b942ed-823e-4c7a-9eed-6acfaba4be66",
+                            "category" : "HOUSING",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-20",
+                            "amount" : 1.875E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.875E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 1.875E7
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "b30f9d43-7735-4328-a5f8-860482b533c2",
+                            "category" : "LIVING_COSTS",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-01-03",
+                            "amount" : 2.34E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.34E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : 2.34E7
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "d10c48fd-2409-4fc5-8891-5de8fdfacacd",
+                            "category" : "INSURANCE",
+                            "role" : "DENOMINATOR",
+                            "date" : "2025-11-16",
+                            "amount" : 5400000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 5400000.0,
+                            "cadence" : "YEARLY",
+                            "monthlyEquivalentVnd" : 450000.0
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "e1d72ca1-1524-4a6c-b7d8-bc94ae214b00",
+                            "category" : "TAX_AND_FEES",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-22",
+                            "amount" : 8250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 8250000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : 2750000.0
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "DEBT_PAYMENT_BURDEN",
+                        "availability" : "PARTIAL",
+                        "value" : 0.092206,
+                        "unit" : "FRACTION",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "PARTIAL_INPUTS",
+                        "unavailableReason" : null,
+                        "partialReason" : "MISSING_EXCHANGE_RATE",
+                        "calculation" : {
+                          "formula" : "DEBT_PAYMENTS_OVER_INCOME",
+                          "numeratorVnd" : 1.625E7,
+                          "denominatorVnd" : 1.76235E8,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "2ce3ce49-b26a-481f-bf23-e29713e4eca1",
+                            "category" : "DEBT_PRINCIPAL_PAYMENT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-20",
+                            "amount" : 1.0E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.0E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "948f1453-fa5a-44f6-aa0f-a9c27b52a19f",
+                            "category" : "INTEREST_PAYMENT",
+                            "role" : "NUMERATOR",
+                            "date" : "2026-11-20",
+                            "amount" : 6250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 6250000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "bcb34916-f567-4e16-a905-4f27f9343066",
+                            "category" : "SALARY",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-05",
+                            "amount" : 1.32E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.32E8,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "b04b58b6-0a83-4f1d-826e-1adeaef71859",
+                            "category" : "RENTAL_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-10",
+                            "amount" : 1.48E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "b6c15bf5-a5af-4119-8f47-3ea9e4807ab2",
+                            "category" : "BUSINESS_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-12",
+                            "amount" : 2.62E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.62E7,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "be0a294d-8114-46b2-908a-230450f09508",
+                            "category" : "DIVIDEND",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-15",
+                            "amount" : 150.0,
+                            "currency" : "USD",
+                            "amountVnd" : null,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "639c4bc7-c1a2-4e89-9c92-90b9ae0e1b22",
+                            "category" : "OTHER_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-18",
+                            "amount" : 235000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 235000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "0b07abb6-b9a6-4102-95ba-6967710c42d1",
+                            "category" : "BOND_OR_FUND_INCOME",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-20",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "79eeed71-9864-45d3-9a7d-2fcaf44c7d31",
+                            "category" : "DEPOSIT_INTEREST",
+                            "role" : "DENOMINATOR",
+                            "date" : "2026-11-25",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "FORECAST_MINIMUM_CASH_BALANCE",
+                        "availability" : "PARTIAL",
+                        "value" : 1.246E8,
+                        "unit" : "VND",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "PARTIAL_INPUTS",
+                        "unavailableReason" : null,
+                        "partialReason" : "MISSING_EXCHANGE_RATE",
+                        "calculation" : {
+                          "formula" : "LOWEST_PROJECTED_CASH_BALANCE",
+                          "numeratorVnd" : null,
+                          "denominatorVnd" : null,
+                          "referenceVnd" : 6.16E7,
+                          "observedOn" : "2026-12-03",
+                          "sources" : [ {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "333980ae-ef8f-4545-b0dc-a3001110c92d",
+                            "category" : "CASH",
+                            "role" : "OPENING_BALANCE",
+                            "date" : "2026-11-25",
+                            "amount" : 1.48E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E8,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "ASSET",
+                            "sourceId" : "b740b482-947d-4c3b-9f69-3bcfeb60e142",
+                            "category" : "BANK_ACCOUNT",
+                            "role" : "OPENING_BALANCE",
+                            "date" : "2026-11-24",
+                            "amount" : 20000.0,
+                            "currency" : "USD",
+                            "amountVnd" : null,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "b30f9d43-7735-4328-a5f8-860482b533c2",
+                            "category" : "LIVING_COSTS",
+                            "role" : "PROJECTED_EXPENSE",
+                            "date" : "2026-12-03",
+                            "amount" : 2.34E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.34E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "PASSIVE_INCOME_SHARE",
+                        "availability" : "PARTIAL",
+                        "value" : 0.101002,
+                        "unit" : "FRACTION",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "PARTIAL_INPUTS",
+                        "unavailableReason" : null,
+                        "partialReason" : "MISSING_EXCHANGE_RATE",
+                        "calculation" : {
+                          "formula" : "ASSET_LINKED_INCOME_OVER_INCOME",
+                          "numeratorVnd" : 1.78E7,
+                          "denominatorVnd" : 1.76235E8,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "bcb34916-f567-4e16-a905-4f27f9343066",
+                            "category" : "SALARY",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-05",
+                            "amount" : 1.32E8,
+                            "currency" : "VND",
+                            "amountVnd" : 1.32E8,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "b04b58b6-0a83-4f1d-826e-1adeaef71859",
+                            "category" : "RENTAL_INCOME",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-10",
+                            "amount" : 1.48E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.48E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "b6c15bf5-a5af-4119-8f47-3ea9e4807ab2",
+                            "category" : "BUSINESS_INCOME",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-12",
+                            "amount" : 2.62E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.62E7,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "be0a294d-8114-46b2-908a-230450f09508",
+                            "category" : "DIVIDEND",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-15",
+                            "amount" : 150.0,
+                            "currency" : "USD",
+                            "amountVnd" : null,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "639c4bc7-c1a2-4e89-9c92-90b9ae0e1b22",
+                            "category" : "OTHER_INCOME",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-18",
+                            "amount" : 235000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 235000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "0b07abb6-b9a6-4102-95ba-6967710c42d1",
+                            "category" : "BOND_OR_FUND_INCOME",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "79eeed71-9864-45d3-9a7d-2fcaf44c7d31",
+                            "category" : "DEPOSIT_INTEREST",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-25",
+                            "amount" : 1500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 1500000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      }, {
+                        "indicatorId" : "ESSENTIAL_EXPENSE_SHARE",
+                        "availability" : "COMPLETE",
+                        "value" : 0.833696,
+                        "unit" : "FRACTION",
+                        "band" : "ATTENTION",
+                        "bandNotDeterminedReason" : null,
+                        "unavailableReason" : null,
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "ESSENTIAL_EXPENSE_OVER_EXPENSE",
+                          "numeratorVnd" : 7.67E7,
+                          "denominatorVnd" : 9.2E7,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "b30f9d43-7735-4328-a5f8-860482b533c2",
+                            "category" : "LIVING_COSTS",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-03",
+                            "amount" : 2.34E7,
+                            "currency" : "VND",
+                            "amountVnd" : 2.34E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "0cde1661-f3d5-4acd-8a6f-021ac5e4e347",
+                            "category" : "EDUCATION",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-08",
+                            "amount" : 1.28E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.28E7,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "16a8477b-572c-48c6-9ea4-678e29e60585",
+                            "category" : "HEALTHCARE",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-14",
+                            "amount" : 4650000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 4650000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "d10c48fd-2409-4fc5-8891-5de8fdfacacd",
+                            "category" : "INSURANCE",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-16",
+                            "amount" : 5400000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 5400000.0,
+                            "cadence" : "YEARLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "2ce3ce49-b26a-481f-bf23-e29713e4eca1",
+                            "category" : "DEBT_PRINCIPAL_PAYMENT",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 1.0E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.0E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "948f1453-fa5a-44f6-aa0f-a9c27b52a19f",
+                            "category" : "INTEREST_PAYMENT",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 6250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 6250000.0,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "a3b942ed-823e-4c7a-9eed-6acfaba4be66",
+                            "category" : "HOUSING",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-20",
+                            "amount" : 1.875E7,
+                            "currency" : "VND",
+                            "amountVnd" : 1.875E7,
+                            "cadence" : "MONTHLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "e1d72ca1-1524-4a6c-b7d8-bc94ae214b00",
+                            "category" : "TAX_AND_FEES",
+                            "role" : "SHARE_PART",
+                            "date" : "2026-11-22",
+                            "amount" : 8250000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 8250000.0,
+                            "cadence" : "QUARTERLY",
+                            "monthlyEquivalentVnd" : null
+                          }, {
+                            "sourceType" : "CASH_FLOW_ENTRY",
+                            "sourceId" : "c08e3db8-bfe0-42c7-8937-276edebaf4ae",
+                            "category" : "OTHER_EXPENSE",
+                            "role" : "SHARE_REST",
+                            "date" : "2026-11-24",
+                            "amount" : 2500000.0,
+                            "currency" : "VND",
+                            "amountVnd" : 2500000.0,
+                            "cadence" : null,
+                            "monthlyEquivalentVnd" : null
+                          } ]
+                        }
+                      } ],
+                      "rules" : [ {
+                        "ruleId" : "SPENDING_EXCEEDS_INCOME",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : null,
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 0.0,
+                          "unit" : "VND",
+                          "property" : null
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "be0a294d-8114-46b2-908a-230450f09508",
+                          "category" : "DIVIDEND",
+                          "role" : "INCOME",
+                          "date" : "2026-11-15",
+                          "amount" : 150.0,
+                          "currency" : "USD",
+                          "amountVnd" : null,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : "MISSING_EXCHANGE_RATE"
+                      }, {
+                        "ruleId" : "FORECAST_CASH_NEGATIVE",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : "FORECAST_MINIMUM_CASH_BALANCE",
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 0.0,
+                          "unit" : "VND",
+                          "property" : null
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "333980ae-ef8f-4545-b0dc-a3001110c92d",
+                          "category" : "CASH",
+                          "role" : "OPENING_BALANCE",
+                          "date" : "2026-11-25",
+                          "amount" : 1.48E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "b740b482-947d-4c3b-9f69-3bcfeb60e142",
+                          "category" : "BANK_ACCOUNT",
+                          "role" : "OPENING_BALANCE",
+                          "date" : "2026-11-24",
+                          "amount" : 20000.0,
+                          "currency" : "USD",
+                          "amountVnd" : null,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "b30f9d43-7735-4328-a5f8-860482b533c2",
+                          "category" : "LIVING_COSTS",
+                          "role" : "PROJECTED_EXPENSE",
+                          "date" : "2026-12-03",
+                          "amount" : 2.34E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.34E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : "INDICATOR_PARTIAL"
+                      }, {
+                        "ruleId" : "RESERVE_BELOW_REFERENCE",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : "EMERGENCY_RESERVE_MONTHS",
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 3.0,
+                          "unit" : "MONTHS",
+                          "property" : "min-reserve-months"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "b740b482-947d-4c3b-9f69-3bcfeb60e142",
+                          "category" : "BANK_ACCOUNT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-24",
+                          "amount" : 20000.0,
+                          "currency" : "USD",
+                          "amountVnd" : null,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "333980ae-ef8f-4545-b0dc-a3001110c92d",
+                          "category" : "CASH",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-25",
+                          "amount" : 1.48E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "74641b8a-9ed8-4d69-bae8-af112c315f6b",
+                          "category" : "TERM_DEPOSIT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-21",
+                          "amount" : 1.2E9,
+                          "currency" : "VND",
+                          "amountVnd" : 1.2E9,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "2ce3ce49-b26a-481f-bf23-e29713e4eca1",
+                          "category" : "DEBT_PRINCIPAL_PAYMENT",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-20",
+                          "amount" : 1.0E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.0E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 1.0E7
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "948f1453-fa5a-44f6-aa0f-a9c27b52a19f",
+                          "category" : "INTEREST_PAYMENT",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-20",
+                          "amount" : 6250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 6250000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 6250000.0
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "a3b942ed-823e-4c7a-9eed-6acfaba4be66",
+                          "category" : "HOUSING",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-20",
+                          "amount" : 1.875E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.875E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 1.875E7
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "b30f9d43-7735-4328-a5f8-860482b533c2",
+                          "category" : "LIVING_COSTS",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-01-03",
+                          "amount" : 2.34E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.34E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : 2.34E7
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "d10c48fd-2409-4fc5-8891-5de8fdfacacd",
+                          "category" : "INSURANCE",
+                          "role" : "DENOMINATOR",
+                          "date" : "2025-11-16",
+                          "amount" : 5400000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 5400000.0,
+                          "cadence" : "YEARLY",
+                          "monthlyEquivalentVnd" : 450000.0
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "e1d72ca1-1524-4a6c-b7d8-bc94ae214b00",
+                          "category" : "TAX_AND_FEES",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-22",
+                          "amount" : 8250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 8250000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : 2750000.0
+                        } ],
+                        "notEvaluatedReason" : "INDICATOR_PARTIAL"
+                      }, {
+                        "ruleId" : "HIGH_DEBT_PAYMENT_BURDEN",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : "DEBT_PAYMENT_BURDEN",
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "GREATER_THAN",
+                          "value" : 0.35,
+                          "unit" : "FRACTION",
+                          "property" : "max-debt-payment-burden"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "2ce3ce49-b26a-481f-bf23-e29713e4eca1",
+                          "category" : "DEBT_PRINCIPAL_PAYMENT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-20",
+                          "amount" : 1.0E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.0E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "948f1453-fa5a-44f6-aa0f-a9c27b52a19f",
+                          "category" : "INTEREST_PAYMENT",
+                          "role" : "NUMERATOR",
+                          "date" : "2026-11-20",
+                          "amount" : 6250000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 6250000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "bcb34916-f567-4e16-a905-4f27f9343066",
+                          "category" : "SALARY",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-05",
+                          "amount" : 1.32E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.32E8,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "b04b58b6-0a83-4f1d-826e-1adeaef71859",
+                          "category" : "RENTAL_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-10",
+                          "amount" : 1.48E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "b6c15bf5-a5af-4119-8f47-3ea9e4807ab2",
+                          "category" : "BUSINESS_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-12",
+                          "amount" : 2.62E7,
+                          "currency" : "VND",
+                          "amountVnd" : 2.62E7,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "be0a294d-8114-46b2-908a-230450f09508",
+                          "category" : "DIVIDEND",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-15",
+                          "amount" : 150.0,
+                          "currency" : "USD",
+                          "amountVnd" : null,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "639c4bc7-c1a2-4e89-9c92-90b9ae0e1b22",
+                          "category" : "OTHER_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-18",
+                          "amount" : 235000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 235000.0,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "0b07abb6-b9a6-4102-95ba-6967710c42d1",
+                          "category" : "BOND_OR_FUND_INCOME",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-20",
+                          "amount" : 1500000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 1500000.0,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "79eeed71-9864-45d3-9a7d-2fcaf44c7d31",
+                          "category" : "DEPOSIT_INTEREST",
+                          "role" : "DENOMINATOR",
+                          "date" : "2026-11-25",
+                          "amount" : 1500000.0,
+                          "currency" : "VND",
+                          "amountVnd" : 1500000.0,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : "INDICATOR_PARTIAL"
+                      }, {
+                        "ruleId" : "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : null,
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 5.075E7,
+                          "unit" : "VND",
+                          "property" : "due-window-days"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "b740b482-947d-4c3b-9f69-3bcfeb60e142",
+                          "category" : "BANK_ACCOUNT",
+                          "role" : "CASH_ACCOUNT",
+                          "date" : "2026-11-24",
+                          "amount" : 20000.0,
+                          "currency" : "USD",
+                          "amountVnd" : null,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "ASSET",
+                          "sourceId" : "333980ae-ef8f-4545-b0dc-a3001110c92d",
+                          "category" : "CASH",
+                          "role" : "CASH_ACCOUNT",
+                          "date" : "2026-11-25",
+                          "amount" : 1.48E8,
+                          "currency" : "VND",
+                          "amountVnd" : 1.48E8,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "LIABILITY",
+                          "sourceId" : "06de4a20-b5e5-46f5-88ad-e6bef1666a6f",
+                          "category" : "CREDIT_CARD_BALANCE",
+                          "role" : "MATURITY_DUE",
+                          "date" : "2026-11-30",
+                          "amount" : 3.2E7,
+                          "currency" : "VND",
+                          "amountVnd" : 3.2E7,
+                          "cadence" : null,
+                          "monthlyEquivalentVnd" : null
+                        }, {
+                          "sourceType" : "LIABILITY",
+                          "sourceId" : "d6818358-a3e9-4bae-83e7-4b73b3dd2676",
+                          "category" : "BANK_LOAN",
+                          "role" : "PAYMENT_DUE",
+                          "date" : "2026-12-20",
+                          "amount" : 1.875E7,
+                          "currency" : "VND",
+                          "amountVnd" : 1.875E7,
+                          "cadence" : "MONTHLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : "MISSING_EXCHANGE_RATE"
+                      }, {
+                        "ruleId" : "INCOME_CONCENTRATION",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : null,
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "GREATER_THAN",
+                          "value" : 0.6,
+                          "unit" : "FRACTION",
+                          "property" : "max-income-source-share"
+                        },
+                        "evidence" : [ {
+                          "sourceType" : "CASH_FLOW_ENTRY",
+                          "sourceId" : "be0a294d-8114-46b2-908a-230450f09508",
+                          "category" : "DIVIDEND",
+                          "role" : "INCOME",
+                          "date" : "2026-11-15",
+                          "amount" : 150.0,
+                          "currency" : "USD",
+                          "amountVnd" : null,
+                          "cadence" : "QUARTERLY",
+                          "monthlyEquivalentVnd" : null
+                        } ],
+                        "notEvaluatedReason" : "MISSING_EXCHANGE_RATE"
+                      } ]
+                    }
+                  },
+                  "a user with no record yet" : {
+                    "description" : "a user with no record yet",
+                    "value" : {
+                      "assumptions" : {
+                        "asOfDate" : "2026-11-27",
+                        "timeZone" : "Asia/Ho_Chi_Minh",
+                        "month" : "2026-11",
+                        "monthFrom" : "2026-11-01",
+                        "monthTo" : "2026-11-30",
+                        "forecastHorizon" : {
+                          "from" : "2026-12-01",
+                          "to" : "2027-02-28"
+                        },
+                        "obligationWindow" : {
+                          "from" : "2026-11-27",
+                          "to" : "2026-12-27"
+                        },
+                        "liquidAssetCategories" : [ "CASH", "BANK_ACCOUNT", "TERM_DEPOSIT" ],
+                        "cashAccountCategories" : [ "CASH", "BANK_ACCOUNT" ],
+                        "essentialCategories" : [ "LIVING_COSTS", "HOUSING", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT" ],
+                        "debtPaymentCategories" : [ "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT" ],
+                        "exchangeRate" : null
+                      },
+                      "thresholds" : {
+                        "reserveOkMinMonths" : 6.0,
+                        "minReserveMonths" : 3.0,
+                        "debtBurdenOkMax" : 0.25,
+                        "maxDebtPaymentBurden" : 0.35,
+                        "passiveIncomeHighMin" : 0.5,
+                        "passiveIncomeMediumMin" : 0.2,
+                        "essentialShareOkMax" : 0.7,
+                        "essentialShareWatchMax" : 0.8,
+                        "dueWindowDays" : 30,
+                        "maxIncomeSourceShare" : 0.6
+                      },
+                      "indicators" : [ {
+                        "indicatorId" : "EMERGENCY_RESERVE_MONTHS",
+                        "availability" : "UNAVAILABLE",
+                        "value" : null,
+                        "unit" : "MONTHS",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "INDICATOR_UNAVAILABLE",
+                        "unavailableReason" : "NO_LIQUID_ASSETS",
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE",
+                          "numeratorVnd" : null,
+                          "denominatorVnd" : null,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ ]
+                        }
+                      }, {
+                        "indicatorId" : "DEBT_PAYMENT_BURDEN",
+                        "availability" : "UNAVAILABLE",
+                        "value" : null,
+                        "unit" : "FRACTION",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "INDICATOR_UNAVAILABLE",
+                        "unavailableReason" : "NO_INCOME",
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "DEBT_PAYMENTS_OVER_INCOME",
+                          "numeratorVnd" : null,
+                          "denominatorVnd" : null,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ ]
+                        }
+                      }, {
+                        "indicatorId" : "FORECAST_MINIMUM_CASH_BALANCE",
+                        "availability" : "UNAVAILABLE",
+                        "value" : null,
+                        "unit" : "VND",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "INDICATOR_UNAVAILABLE",
+                        "unavailableReason" : "NO_CASH_ACCOUNTS",
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "LOWEST_PROJECTED_CASH_BALANCE",
+                          "numeratorVnd" : null,
+                          "denominatorVnd" : null,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ ]
+                        }
+                      }, {
+                        "indicatorId" : "PASSIVE_INCOME_SHARE",
+                        "availability" : "UNAVAILABLE",
+                        "value" : null,
+                        "unit" : "FRACTION",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "INDICATOR_UNAVAILABLE",
+                        "unavailableReason" : "NO_INCOME",
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "ASSET_LINKED_INCOME_OVER_INCOME",
+                          "numeratorVnd" : null,
+                          "denominatorVnd" : null,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ ]
+                        }
+                      }, {
+                        "indicatorId" : "ESSENTIAL_EXPENSE_SHARE",
+                        "availability" : "UNAVAILABLE",
+                        "value" : null,
+                        "unit" : "FRACTION",
+                        "band" : null,
+                        "bandNotDeterminedReason" : "INDICATOR_UNAVAILABLE",
+                        "unavailableReason" : "NO_EXPENSES",
+                        "partialReason" : null,
+                        "calculation" : {
+                          "formula" : "ESSENTIAL_EXPENSE_OVER_EXPENSE",
+                          "numeratorVnd" : null,
+                          "denominatorVnd" : null,
+                          "referenceVnd" : null,
+                          "observedOn" : null,
+                          "sources" : [ ]
+                        }
+                      } ],
+                      "rules" : [ {
+                        "ruleId" : "SPENDING_EXCEEDS_INCOME",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : null,
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 0.0,
+                          "unit" : "VND",
+                          "property" : null
+                        },
+                        "evidence" : [ ],
+                        "notEvaluatedReason" : "NO_CASH_FLOW_IN_MONTH"
+                      }, {
+                        "ruleId" : "FORECAST_CASH_NEGATIVE",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : "FORECAST_MINIMUM_CASH_BALANCE",
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 0.0,
+                          "unit" : "VND",
+                          "property" : null
+                        },
+                        "evidence" : [ ],
+                        "notEvaluatedReason" : "INDICATOR_UNAVAILABLE"
+                      }, {
+                        "ruleId" : "RESERVE_BELOW_REFERENCE",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : "EMERGENCY_RESERVE_MONTHS",
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 3.0,
+                          "unit" : "MONTHS",
+                          "property" : "min-reserve-months"
+                        },
+                        "evidence" : [ ],
+                        "notEvaluatedReason" : "INDICATOR_UNAVAILABLE"
+                      }, {
+                        "ruleId" : "HIGH_DEBT_PAYMENT_BURDEN",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : "DEBT_PAYMENT_BURDEN",
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "GREATER_THAN",
+                          "value" : 0.35,
+                          "unit" : "FRACTION",
+                          "property" : "max-debt-payment-burden"
+                        },
+                        "evidence" : [ ],
+                        "notEvaluatedReason" : "INDICATOR_UNAVAILABLE"
+                      }, {
+                        "ruleId" : "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : null,
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "LESS_THAN",
+                          "value" : 0.0,
+                          "unit" : "VND",
+                          "property" : "due-window-days"
+                        },
+                        "evidence" : [ ],
+                        "notEvaluatedReason" : "NO_CASH_ACCOUNTS"
+                      }, {
+                        "ruleId" : "INCOME_CONCENTRATION",
+                        "status" : "NOT_EVALUATED",
+                        "dependsOn" : null,
+                        "observed" : null,
+                        "threshold" : {
+                          "comparison" : "GREATER_THAN",
+                          "value" : 0.6,
+                          "unit" : "FRACTION",
+                          "property" : "max-income-source-share"
+                        },
+                        "evidence" : [ ],
+                        "notEvaluatedReason" : "NO_INCOME"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "month is present but blank or not a calendar month in the form YYYY-MM.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                },
+                "examples" : {
+                  "month not in the form YYYY-MM" : {
+                    "description" : "month not in the form YYYY-MM",
+                    "value" : {
+                      "type" : "urn:rikkaus:problem:validation-failed",
+                      "title" : "Request validation failed",
+                      "status" : 400,
+                      "detail" : "Request validation failed.",
+                      "instance" : "/api/v1/financial-health",
+                      "correlationId" : "3c8e1f52-7a04-4b9d-9e61-d2a75b0c4f18",
+                      "errors" : [ {
+                        "field" : "month",
+                        "message" : "must be a calendar month in the form YYYY-MM"
+                      } ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No access token, or it has expired or been revoked",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "405" : {
+            "description" : "Wrong HTTP method",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "406" : {
+            "description" : "The requested media type cannot be produced",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/cash-flow-reports/monthly" : {
       "get" : {
         "tags" : [ "monthly-cash-flow-report-controller" ],
@@ -8861,6 +11166,439 @@
           },
           "rounding" : {
             "type" : "string"
+          }
+        }
+      },
+      "DateRange" : {
+        "type" : "object",
+        "description" : "Two days, both included.",
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-12-01"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2027-02-28"
+          }
+        }
+      },
+      "FinancialHealthAssumptions" : {
+        "type" : "object",
+        "description" : "Every input a figure depends on that is not a record, so the result can be reproduced: the day, the month, the forecast horizon, the obligation window, the category groups and the declared rate.",
+        "properties" : {
+          "asOfDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Today in timeZone; the default month and both windows count from it.",
+            "example" : "2026-11-27"
+          },
+          "timeZone" : {
+            "type" : "string",
+            "example" : "Asia/Ho_Chi_Minh"
+          },
+          "month" : {
+            "type" : "string",
+            "description" : "The month the cash-flow indicators read, YYYY-MM: the query's month or the current one.",
+            "example" : "2026-11"
+          },
+          "monthFrom" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-11-01"
+          },
+          "monthTo" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-11-30"
+          },
+          "forecastHorizon" : {
+            "$ref" : "#/components/schemas/DateRange",
+            "description" : "The forecast FORECAST_MINIMUM_CASH_BALANCE reads: always the three months after the current one, as GET /api/v1/cash-flow-forecast without from, whatever month is asked for."
+          },
+          "obligationWindow" : {
+            "$ref" : "#/components/schemas/DateRange",
+            "description" : "asOfDate to asOfDate plus thresholds.dueWindowDays, both included: where LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS looks for obligations."
+          },
+          "liquidAssetCategories" : {
+            "type" : "array",
+            "description" : "The asset categories of the liquid group, the reserve's numerator.",
+            "example" : [ "CASH", "BANK_ACCOUNT", "TERM_DEPOSIT" ],
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "cashAccountCategories" : {
+            "type" : "array",
+            "description" : "The asset categories the forecast starts from and the liquidity rule compares with what falls due.",
+            "example" : [ "CASH", "BANK_ACCOUNT" ],
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "essentialCategories" : {
+            "type" : "array",
+            "description" : "The expense categories counted as essential, configured under rikkaus.cashflow.health.essential-categories.",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ]
+            }
+          },
+          "debtPaymentCategories" : {
+            "type" : "array",
+            "description" : "The only categories counted as debt payments; a HOUSING entry linked to the same loan is not added.",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "SALARY", "BUSINESS_INCOME", "RENTAL_INCOME", "DIVIDEND", "DEPOSIT_INTEREST", "BOND_OR_FUND_INCOME", "OTHER_INCOME", "LIVING_COSTS", "HOUSING", "EDUCATION", "HEALTHCARE", "INSURANCE", "TAX_AND_FEES", "DEBT_PRINCIPAL_PAYMENT", "INTEREST_PAYMENT", "OTHER_EXPENSE" ]
+            }
+          },
+          "exchangeRate" : {
+            "$ref" : "#/components/schemas/FinancialHealthExchangeRate",
+            "description" : "The declared USD/VND rate every USD record was converted with; null when none is declared."
+          }
+        }
+      },
+      "FinancialHealthCalculation" : {
+        "type" : "object",
+        "description" : "How the value was obtained and the records behind it.",
+        "properties" : {
+          "formula" : {
+            "type" : "string",
+            "enum" : [ "LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE", "DEBT_PAYMENTS_OVER_INCOME", "LOWEST_PROJECTED_CASH_BALANCE", "ASSET_LINKED_INCOME_OVER_INCOME", "ESSENTIAL_EXPENSE_OVER_EXPENSE" ],
+            "example" : "LIQUID_ASSETS_OVER_MONTHLY_RECURRING_ESSENTIAL_EXPENSE"
+          },
+          "numeratorVnd" : {
+            "type" : "number",
+            "description" : "The VND amount divided: the sum of the NUMERATOR or SHARE_PART sources with an amountVnd. null for the minimum balance and when UNAVAILABLE.",
+            "example" : 1.85E9
+          },
+          "denominatorVnd" : {
+            "type" : "number",
+            "description" : "The VND amount divided by: the sum of the DENOMINATOR sources' monthly equivalents for the reserve, the month's total income or expense for a share or the burden. null for the minimum balance and when UNAVAILABLE.",
+            "example" : 6.16E7
+          },
+          "referenceVnd" : {
+            "type" : "number",
+            "description" : "For FORECAST_MINIMUM_CASH_BALANCE: the month of recurring essential expense the value is banded against (OK at and above it, WATCH from zero, ATTENTION below zero); null otherwise or when it cannot be known."
+          },
+          "observedOn" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "For FORECAST_MINIMUM_CASH_BALANCE: the earliest date the lowest balance is reached."
+          },
+          "sources" : {
+            "type" : "array",
+            "description" : "The records behind the figure, a USD one without a declared rate with amountVnd null. Reserve: liquid assets (NUMERATOR) and recurring essential expenses (DENOMINATOR). Burden: debt payments (NUMERATOR) and income occurrences (DENOMINATOR). Shares: the month's income or expense occurrences, SHARE_PART or SHARE_REST. Minimum balance: OPENING_BALANCE accounts, then every PROJECTED_INCOME and PROJECTED_EXPENSE amount up to observedOn, so the opening balance plus them is value.",
+            "items" : {
+              "$ref" : "#/components/schemas/FinancialHealthSource"
+            }
+          }
+        }
+      },
+      "FinancialHealthExchangeRate" : {
+        "type" : "object",
+        "description" : "The declared rate: VND for one USD, and the day the user says it was true.",
+        "properties" : {
+          "usdToVndRate" : {
+            "type" : "number",
+            "example" : 25100.0
+          },
+          "effectiveDate" : {
+            "type" : "string",
+            "format" : "date",
+            "example" : "2026-09-12"
+          }
+        }
+      },
+      "FinancialHealthIndicator" : {
+        "type" : "object",
+        "description" : "One indicator.",
+        "properties" : {
+          "indicatorId" : {
+            "type" : "string",
+            "description" : "A stable constant the client maps to its copy.",
+            "enum" : [ "EMERGENCY_RESERVE_MONTHS", "DEBT_PAYMENT_BURDEN", "FORECAST_MINIMUM_CASH_BALANCE", "PASSIVE_INCOME_SHARE", "ESSENTIAL_EXPENSE_SHARE" ],
+            "example" : "EMERGENCY_RESERVE_MONTHS"
+          },
+          "availability" : {
+            "type" : "string",
+            "description" : "COMPLETE: every input read and converted. PARTIAL: computed from what could be converted, a USD record left out for want of a rate (or, for the minimum balance, a forecast record the user can fix). UNAVAILABLE: nothing could be computed.",
+            "enum" : [ "COMPLETE", "PARTIAL", "UNAVAILABLE" ],
+            "example" : "COMPLETE"
+          },
+          "value" : {
+            "type" : "number",
+            "description" : "MONTHS at one decimal, a FRACTION at six (HALF_UP), or VND at two; null exactly when UNAVAILABLE. Never 0 in place of a missing denominator.",
+            "example" : 30.0
+          },
+          "unit" : {
+            "type" : "string",
+            "enum" : [ "MONTHS", "FRACTION", "VND" ],
+            "example" : "MONTHS"
+          },
+          "band" : {
+            "type" : "string",
+            "description" : "OK, WATCH or ATTENTION against thresholds (the minimum balance against calculation.referenceVnd and zero); HIGH, MEDIUM or LOW for PASSIVE_INCOME_SHARE, informational only. null when not determined.",
+            "enum" : [ "OK", "WATCH", "ATTENTION", "HIGH", "MEDIUM", "LOW" ],
+            "example" : "OK"
+          },
+          "bandNotDeterminedReason" : {
+            "type" : "string",
+            "description" : "Why band is null; null when band is set.",
+            "enum" : [ "INDICATOR_UNAVAILABLE", "PARTIAL_INPUTS", "NO_RECURRING_ESSENTIAL_EXPENSES" ]
+          },
+          "unavailableReason" : {
+            "type" : "string",
+            "description" : "Why nothing could be computed; set exactly when UNAVAILABLE.",
+            "enum" : [ "NO_LIQUID_ASSETS", "NO_RECURRING_ESSENTIAL_EXPENSES", "NO_INCOME", "NO_EXPENSES", "NO_CASH_ACCOUNTS", "NO_LIABILITIES", "NO_CASH_FLOW_IN_MONTH", "MISSING_EXCHANGE_RATE", "FORECAST_INCOMPLETE" ]
+          },
+          "partialReason" : {
+            "type" : "string",
+            "description" : "What the value leaves out; set exactly when PARTIAL.",
+            "enum" : [ "NO_LIQUID_ASSETS", "NO_RECURRING_ESSENTIAL_EXPENSES", "NO_INCOME", "NO_EXPENSES", "NO_CASH_ACCOUNTS", "NO_LIABILITIES", "NO_CASH_FLOW_IN_MONTH", "MISSING_EXCHANGE_RATE", "FORECAST_INCOMPLETE" ]
+          },
+          "calculation" : {
+            "$ref" : "#/components/schemas/FinancialHealthCalculation"
+          }
+        }
+      },
+      "FinancialHealthObserved" : {
+        "type" : "object",
+        "description" : "The measured value.",
+        "properties" : {
+          "value" : {
+            "type" : "number",
+            "description" : "Spending: income minus expense, VND. Forecast: the lowest projected balance, VND. Reserve, burden: the indicator's value. Liquidity: cash and bank accounts, VND. Concentration: the largest category's share, FRACTION.",
+            "example" : 0.733333
+          },
+          "unit" : {
+            "type" : "string",
+            "enum" : [ "MONTHS", "FRACTION", "VND" ],
+            "example" : "FRACTION"
+          },
+          "subject" : {
+            "type" : "string",
+            "description" : "The largest income category for INCOME_CONCENTRATION; null otherwise.",
+            "example" : "SALARY"
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The date of the lowest balance for FORECAST_CASH_NEGATIVE; null otherwise."
+          }
+        }
+      },
+      "FinancialHealthResponse" : {
+        "type" : "object",
+        "description" : "The signed-in user's five financial-health indicators and six insight rules for one month.",
+        "properties" : {
+          "assumptions" : {
+            "$ref" : "#/components/schemas/FinancialHealthAssumptions"
+          },
+          "thresholds" : {
+            "$ref" : "#/components/schemas/FinancialHealthThresholds"
+          },
+          "indicators" : {
+            "type" : "array",
+            "description" : "Always five, in the order EMERGENCY_RESERVE_MONTHS, DEBT_PAYMENT_BURDEN, FORECAST_MINIMUM_CASH_BALANCE, PASSIVE_INCOME_SHARE, ESSENTIAL_EXPENSE_SHARE.",
+            "items" : {
+              "$ref" : "#/components/schemas/FinancialHealthIndicator"
+            },
+            "maxItems" : 5,
+            "minItems" : 5
+          },
+          "rules" : {
+            "type" : "array",
+            "description" : "Always six, in the order SPENDING_EXCEEDS_INCOME, FORECAST_CASH_NEGATIVE, RESERVE_BELOW_REFERENCE, HIGH_DEBT_PAYMENT_BURDEN, LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS, INCOME_CONCENTRATION.",
+            "items" : {
+              "$ref" : "#/components/schemas/FinancialHealthRule"
+            },
+            "maxItems" : 6,
+            "minItems" : 6
+          }
+        }
+      },
+      "FinancialHealthRule" : {
+        "type" : "object",
+        "description" : "One rule's result.",
+        "properties" : {
+          "ruleId" : {
+            "type" : "string",
+            "enum" : [ "SPENDING_EXCEEDS_INCOME", "FORECAST_CASH_NEGATIVE", "RESERVE_BELOW_REFERENCE", "HIGH_DEBT_PAYMENT_BURDEN", "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS", "INCOME_CONCENTRATION" ],
+            "example" : "INCOME_CONCENTRATION"
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "ATTENTION when observed.value compares with threshold.value as threshold.comparison says; OK when it does not; NOT_EVALUATED when it could not be judged. Never OK over a partial or unavailable input.",
+            "enum" : [ "ATTENTION", "OK", "NOT_EVALUATED" ],
+            "example" : "ATTENTION"
+          },
+          "dependsOn" : {
+            "type" : "string",
+            "description" : "The indicator whose value the rule judges; null when it reads the records itself.",
+            "enum" : [ "EMERGENCY_RESERVE_MONTHS", "DEBT_PAYMENT_BURDEN", "FORECAST_MINIMUM_CASH_BALANCE", "PASSIVE_INCOME_SHARE", "ESSENTIAL_EXPENSE_SHARE" ]
+          },
+          "observed" : {
+            "$ref" : "#/components/schemas/FinancialHealthObserved",
+            "description" : "What the rule measured; null exactly when NOT_EVALUATED."
+          },
+          "threshold" : {
+            "$ref" : "#/components/schemas/FinancialHealthThreshold"
+          },
+          "evidence" : {
+            "type" : "array",
+            "description" : "The records behind the judgement. A rule on an indicator: that indicator's sources. Spending: the month's occurrences. Liquidity: the CASH_ACCOUNT assets, then every PAYMENT_DUE and MATURITY_DUE in the window by date. Concentration: the occurrences of the largest category.",
+            "items" : {
+              "$ref" : "#/components/schemas/FinancialHealthSource"
+            }
+          },
+          "notEvaluatedReason" : {
+            "type" : "string",
+            "description" : "Why the rule was not judged; set exactly when NOT_EVALUATED.",
+            "enum" : [ "INDICATOR_PARTIAL", "INDICATOR_UNAVAILABLE", "NO_CASH_FLOW_IN_MONTH", "NO_INCOME", "NO_CASH_ACCOUNTS", "NO_LIABILITIES", "MISSING_EXCHANGE_RATE" ]
+          }
+        }
+      },
+      "FinancialHealthSource" : {
+        "type" : "object",
+        "description" : "One source record and the figures read from it.",
+        "properties" : {
+          "sourceType" : {
+            "type" : "string",
+            "enum" : [ "CASH_FLOW_ENTRY", "ASSET", "LIABILITY" ],
+            "example" : "CASH_FLOW_ENTRY"
+          },
+          "sourceId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "GET /api/v1/cash-flow-entries/{id}, /api/v1/assets/{id} or /api/v1/liabilities/{id} reads it.",
+            "example" : "6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "The record's category code.",
+            "example" : "SALARY"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "NUMERATOR", "DENOMINATOR", "SHARE_PART", "SHARE_REST", "OPENING_BALANCE", "PROJECTED_INCOME", "PROJECTED_EXPENSE", "INCOME", "EXPENSE", "CASH_ACCOUNT", "PAYMENT_DUE", "MATURITY_DUE" ],
+            "example" : "SHARE_REST"
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "The occurrence date of a month's line, the effective date of a recurring essential expense, an asset's valuation date, a projected date, or a due date.",
+            "example" : "2026-11-05"
+          },
+          "amount" : {
+            "type" : "number",
+            "description" : "In the record's own currency.",
+            "example" : 1.32E8
+          },
+          "currency" : {
+            "type" : "string",
+            "enum" : [ "VND", "USD" ],
+            "example" : "VND"
+          },
+          "amountVnd" : {
+            "type" : "number",
+            "description" : "amount in VND; null when it is USD and no rate is declared.",
+            "example" : 1.32E8
+          },
+          "cadence" : {
+            "type" : "string",
+            "description" : "MONTHLY, QUARTERLY or YEARLY for a recurring entry, a liability's payment frequency; null for a one-time entry or an asset.",
+            "example" : "MONTHLY"
+          },
+          "monthlyEquivalentVnd" : {
+            "type" : "number",
+            "description" : "For a reserve DENOMINATOR row: amountVnd divided by the months its cadence spans (1, 3 or 12), HALF_UP to two decimals; null otherwise."
+          }
+        }
+      },
+      "FinancialHealthThreshold" : {
+        "type" : "object",
+        "description" : "What the rule was judged against.",
+        "properties" : {
+          "comparison" : {
+            "type" : "string",
+            "description" : "LESS_THAN: ATTENTION when observed.value < value. GREATER_THAN: when >.",
+            "enum" : [ "LESS_THAN", "GREATER_THAN" ],
+            "example" : "GREATER_THAN"
+          },
+          "value" : {
+            "type" : "number",
+            "description" : "Zero for spending and forecast, a configured value, or for liquidity the VND sum of the obligations in assumptions.obligationWindow; null only when that sum holds a USD amount with no declared rate.",
+            "example" : 0.6
+          },
+          "unit" : {
+            "type" : "string",
+            "enum" : [ "MONTHS", "FRACTION", "VND" ],
+            "example" : "FRACTION"
+          },
+          "property" : {
+            "type" : "string",
+            "description" : "The rikkaus.cashflow.health property the value comes from (for liquidity, the window it is summed over); null for a threshold fixed by the rule.",
+            "example" : "max-income-source-share"
+          }
+        }
+      },
+      "FinancialHealthThresholds" : {
+        "type" : "object",
+        "description" : "Every system reference value in force, configured centrally under rikkaus.cashflow.health. The review fixture of design #81, not an approved business configuration. A value equal to a limit is not beyond it.",
+        "properties" : {
+          "reserveOkMinMonths" : {
+            "type" : "number",
+            "description" : "EMERGENCY_RESERVE_MONTHS is OK at and above this.",
+            "example" : 6.0
+          },
+          "minReserveMonths" : {
+            "type" : "number",
+            "description" : "EMERGENCY_RESERVE_MONTHS is ATTENTION below this and WATCH from here to reserveOkMinMonths; RESERVE_BELOW_REFERENCE fires below it.",
+            "example" : 3.0
+          },
+          "debtBurdenOkMax" : {
+            "type" : "number",
+            "description" : "DEBT_PAYMENT_BURDEN is OK at and below this.",
+            "example" : 0.25
+          },
+          "maxDebtPaymentBurden" : {
+            "type" : "number",
+            "description" : "DEBT_PAYMENT_BURDEN is WATCH up to this and ATTENTION above it; HIGH_DEBT_PAYMENT_BURDEN fires above it.",
+            "example" : 0.35
+          },
+          "passiveIncomeHighMin" : {
+            "type" : "number",
+            "description" : "PASSIVE_INCOME_SHARE is HIGH at and above this.",
+            "example" : 0.5
+          },
+          "passiveIncomeMediumMin" : {
+            "type" : "number",
+            "description" : "PASSIVE_INCOME_SHARE is MEDIUM at and above this, LOW below.",
+            "example" : 0.2
+          },
+          "essentialShareOkMax" : {
+            "type" : "number",
+            "description" : "ESSENTIAL_EXPENSE_SHARE is OK at and below this.",
+            "example" : 0.7
+          },
+          "essentialShareWatchMax" : {
+            "type" : "number",
+            "description" : "ESSENTIAL_EXPENSE_SHARE is WATCH up to this and ATTENTION above it.",
+            "example" : 0.8
+          },
+          "dueWindowDays" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "The days after asOfDate an obligation still counts as upcoming.",
+            "example" : 30
+          },
+          "maxIncomeSourceShare" : {
+            "type" : "number",
+            "description" : "INCOME_CONCENTRATION fires above this share.",
+            "example" : 0.6
           }
         }
       },

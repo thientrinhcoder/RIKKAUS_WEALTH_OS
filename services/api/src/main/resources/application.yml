@@ -152,6 +152,38 @@ rikkaus:
       due-window-days: 30
       max-valuation-age-days: 30
       max-exchange-rate-age-days: 5
+  cashflow:
+    health:
+      # The system reference values the five financial-health indicators are banded by and the six insight
+      # rules judged against, and the expense categories counted as essential. These are the review fixture
+      # values of the accepted design for issue #81, not an approved business configuration. A value equal
+      # to a limit is not beyond it. Every financial-health response states them, and
+      # FinancialHealthProperties refuses to start without all of them, with a month count that is not
+      # positive or has more than one decimal, a fraction that is not positive or has more than six
+      # decimals, a share above 1, two limits of one band rail crossed, a day count outside 0..3650, or an
+      # essential category that is an income category, unknown, empty or listed twice.
+      reserve-ok-min-months: 6
+      # The reserve is ATTENTION below this and WATCH from here to reserve-ok-min-months; the reserve rule
+      # fires below it.
+      min-reserve-months: 3
+      debt-burden-ok-max: 0.25
+      max-debt-payment-burden: 0.35
+      passive-income-high-min: 0.5
+      passive-income-medium-min: 0.2
+      essential-share-ok-max: 0.7
+      essential-share-watch-max: 0.8
+      due-window-days: 30
+      max-income-source-share: 0.6
+      # EDUCATION and OTHER_EXPENSE are the adjustable group of design #81 and are not listed;
+      # EDUCATION is an open Product Owner question.
+      essential-categories:
+        - LIVING_COSTS
+        - HOUSING
+        - HEALTHCARE
+        - INSURANCE
+        - TAX_AND_FEES
+        - DEBT_PRINCIPAL_PAYMENT
+        - INTEREST_PAYMENT
   api:
     # Fails closed. An unset or empty value registers no CORS mapping at all rather than guessing
     # an origin, as an explicit environment-specific allowlist requires. Comma-separated.
