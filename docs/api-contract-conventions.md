@@ -1987,7 +1987,8 @@ Named explicitly, so nothing above is read as a guarantee it does not make.
   A pilot user edits from one device, and no accepted design asks for a conflict screen.
 - **Goal projection beyond the backbone's method.** No inflation, tax, fee, return-range or Monte Carlo
   model, no link between a goal's contribution and recorded cash flow, no user-set status threshold,
-  no stored or historical projection, and no Basic Advisor (#92) reading of it.
+  and no stored or historical projection. The Basic Advisor (#92) reads the projection's status as it
+  is; see [Basic Advisor report](#basic-advisor-report--implemented).
 - **Full-text search, saved filters and filters across domains.** The search above is a substring
   match per resource; there is no ranking, no stemming, no search that spans assets and liabilities
   in one request, and no stored filter. Goal status is not a filter because no status is stored.
@@ -2447,7 +2448,7 @@ another method, `406` for a non-JSON `Accept`. A `userId` query parameter is ign
 ### Not here
 
 Stored or historical indicators, per-user thresholds or essential mapping, notifications, a priority
-order among rules, Vietnamese copy, an `asOf` parameter, a forecast horizon chosen by the request, passive
+order among rules (the [Basic Advisor report](#basic-advisor-report--implemented) ranks them), Vietnamese copy, an `asOf` parameter, a forecast horizon chosen by the request, passive
 income by category, and any reading of the wealth snapshot.
 
 ### Verified by hand, not by the suite
@@ -2456,3 +2457,144 @@ Shipped on Product Owner direction with no automated test. The scenarios, writte
 in `plans/261127-1241-GH-83-financial-health/phase-01-test-scenarios.md`; the run is recorded in
 `plans/reports/manual-verification-261127-1241-GH-83-financial-health.md` and is reproduced by the
 scripts in `plans/261127-1241-GH-83-financial-health/scripts/`.
+
+## Basic Advisor report — implemented
+
+A read-only, composed resource (issue #92) behind the Insights destination of design #90
+(`docs/basic-advisor-rule-based-report-review.html`): the backbone's rule-based report of positive
+conditions, conditions requiring attention and suggested next actions
+(`RIKKAUS_WEALTH_OS_MVP_BACKBONE.md:331-359`). One route, under `bearerAuth`, owner-scoped by the token.
+It is not a chat interface and uses no AI or LLM.
+
+| Route | Query | Success |
+|---|---|---|
+| `GET /api/v1/advisor-report` | `month` (optional, `YYYY-MM`, default the current month in `Asia/Ho_Chi_Minh`) | 200, always the three sources, the `unevaluated` block, three groups and the suggestions; a user with no record gets twelve unevaluated findings and empty groups, never 404 |
+
+Slice `advisor` (`api`, `application`). It **composes and never recalculates**: it calls
+`SnapshotInsightService.insightsFor`, `FinancialHealthService.healthFor` (with `month` unchanged) and
+`GoalProjectionService.projectionsFor` in one read-only transaction, and every observation and threshold
+of a finding is the upstream one. It defines no threshold, has no configuration, stores nothing and has
+no migration. This is the first slice that calls another slice's application services; the ArchUnit rule
+`featureSlicesDoNotDependOnEachOther` allows a dependency whose target is in another slice's
+`..application..` package, as `ARCHITECTURE_TECHNOLOGY_DECISIONS.md` requires features to communicate
+through explicit application interfaces, and still forbids `domain`, `persistence`, `infrastructure` and
+`api`.
+
+### Response
+
+`{asOfDate, timeZone, month, disclaimer, priorityMarkerCount, sources[], unevaluated {count, findings[]},
+positive[], attention[], suggestions[]}`.
+
+- `asOfDate` and `timeZone` are the financial-health report's; `month` is the month it read.
+- `disclaimer` is the report-level note, always shown and never dismissible: one English sentence
+  (informational, based on the data the user entered and the system's reference thresholds, not financial
+  advice, no outcome guaranteed). The client shows the approved Vietnamese copy.
+- `sources` is always `WEALTH_SNAPSHOT` (`/api/v1/wealth-snapshot/insights`, 6), `FINANCIAL_HEALTH`
+  (`/api/v1/financial-health?month=<month>`, 6), `GOAL_PROJECTION` (`/api/v1/goal-projections`, one per
+  goal), with `findingCount`.
+- Grouping by upstream status: snapshot `UNAVAILABLE`, health `NOT_EVALUATED`, a goal whose `status` is
+  `null` → `unevaluated` (the design's "Chưa đủ dữ liệu" block, above the groups); `OK`, `ON_TRACK` →
+  `positive`; `ATTENTION`, `AT_RISK`, `BEHIND` → `attention`. Every upstream result is exactly one
+  finding. Groups keep source order (snapshot rules, health rules, goals in the goal list's order).
+
+A finding is `{findingId, source, ruleId, status, tier, actionFamily, observed, threshold,
+affectedRecords[], dueDate, relativeDeviation, noteId, reason}`:
+
+| Field | Snapshot insight | Health rule | Goal |
+|---|---|---|---|
+| `findingId` | `WEALTH_SNAPSHOT:<ruleId>` | `FINANCIAL_HEALTH:<ruleId>` | `GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:<goalId>` |
+| `status` | `OK`, `ATTENTION`, `UNAVAILABLE` → `NOT_EVALUATED` | as published | `ON_TRACK` → `OK`; `AT_RISK`, `BEHIND` → `ATTENTION`; `null` → `NOT_EVALUATED` |
+| `observed {value, unit, subject, date, numeratorVnd, denominatorVnd}` | the insight's `observed` | the rule's `observed`; numerator and denominator of the indicator in `dependsOn` (reserve, burden), else `null` | `contributionCoveragePercent`, `PERCENT`; the planned and the required monthly contribution |
+| `threshold {comparison, value, unit, property}` | the insight's, `property` `rikkaus.snapshot.insights.<name>` | the rule's, `property` `rikkaus.cashflow.health.<name>` | `LESS_THAN` the on-track percent of the assumption ledger, `rikkaus.goals.projection.on-track-min-coverage-percent` |
+| `affectedRecords` | the evidence rows with their `name` | the evidence rows, `name: null` (health evidence carries none) | the goal and its name |
+| `dueDate` | `UPCOMING_LIABILITY_DUE`: `observed.date` | `LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS`: the earliest `PAYMENT_DUE`/`MATURITY_DUE` | the target date |
+| `reason` (unevaluated only) | `unavailableReason` | `notEvaluatedReason` | the first `unavailableReasons` entry, or `TIMELINE_<timeline>` |
+
+- `observed` is `null` exactly when `NOT_EVALUATED`; `tier` and `actionFamily` are set exactly when
+  `ATTENTION`.
+- `affectedRecords[]` is `{sourceType, sourceId, name, route}`, each record once by `(sourceType,
+  sourceId)` in upstream order. `sourceType` is `ASSET`, `LIABILITY`, `CASH_FLOW_ENTRY`, `EXCHANGE_RATE`
+  or `GOAL`; `route` is `/api/v1/assets/{id}`, `/liabilities/{id}`, `/cash-flow-entries/{id}`,
+  `/goals/{id}` or `/settings/exchange-rate` (the rate has no id).
+- `relativeDeviation` is `|observed.value − threshold.value| / threshold.value`, six decimals HALF_UP;
+  for a goal `(100 − coverage) / 100`, negative when the plan covers more than required. `null` when the
+  threshold is zero (spending, forecast) or a value is missing.
+- `noteId`, the item-level "Lưu ý", is one of four constants, the most specific first:
+  `USER_ASSUMED_RETURN` (a goal), `FORECAST_FROM_ENTERED_SCHEDULES` (`FORECAST_CASH_NEGATIVE`),
+  `USER_DECLARED_EXCHANGE_RATE` (a record is the rate or in USD), `MANUAL_ENTRY_NOT_RECONCILED`.
+
+### Rule-code registry
+
+This answers design #90's open question 1. The design's `S-`, `H-`, `G-` prefixes were review labels
+only; the official identifier is `findingId`, owned by this route. Its parts are the upstream constants,
+so a finding traces to the slice that computes it without a mapping table: the rule list of
+[Wealth snapshot insights](#wealth-snapshot-insights--implemented), the rule list of
+[Financial-health indicators and insights](#financial-health-indicators-and-insights--implemented), and
+one `GOAL_CONTRIBUTION_COVERAGE` finding per goal of [Goal projection](#goal-projection--implemented). A
+new upstream rule becomes a new `findingId` with no change to the registry's form; it needs a tier and an
+action family below before it can appear in `attention`.
+
+| `ruleId` | tier | `actionFamily` | `actionId` |
+|---|---|---|---|
+| `UPCOMING_LIABILITY_DUE`, `LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS`, `FORECAST_CASH_NEGATIVE` | 1 | `RECONCILE_CASH_WITH_OBLIGATIONS` | `COMPARE_CASH_WITH_UPCOMING_OBLIGATIONS` |
+| `SPENDING_EXCEEDS_INCOME` | 2 | `REVIEW_PERIOD_SPENDING` | `REVIEW_LARGEST_PERIOD_EXPENSES` |
+| `HIGH_DEBT_PAYMENT_BURDEN` | 2 | `REVIEW_DEBT_PAYMENTS` | `CHECK_DEBT_PAYMENTS_AGAINST_INCOME` |
+| `RESERVE_BELOW_REFERENCE`, `LOW_LIQUIDITY_SHARE` | 3 | `RECONCILE_CASH_WITH_RESERVE` | `COMPARE_LIQUID_ASSETS_WITH_RESERVE` |
+| `INCOME_CONCENTRATION` | 3 | `REVIEW_INCOME_SOURCES` | `REVIEW_INCOME_SOURCE_MIX` |
+| `CATEGORY_CONCENTRATION` | 3 | `REVIEW_ASSET_CONCENTRATION` | `REVIEW_ASSET_CATEGORY_SHARE` |
+| `DEBT_TO_ASSET_RATIO` | 3 | `REVIEW_DEBT_LEVEL` | `REVIEW_LIABILITIES_AGAINST_ASSETS` |
+| `GOAL_CONTRIBUTION_COVERAGE` | 4 | `REVIEW_GOAL_PLAN` | `CONSIDER_GOAL_PLAN_OPTIONS` |
+| `STALE_VALUATION`, `STALE_EXCHANGE_RATE` | 5 | `REFRESH_RECORD` | `UPDATE_STALE_RECORD` |
+
+### Suggestions
+
+A suggestion is `{suggestionId, rank, priority, tier, actionFamily, actionId, action, findingIds[],
+affectedRecords[], dueDate, relativeDeviation, noteIds[]}`, derived from `attention` only.
+
+- **Merge** (design §04): two findings join one suggestion only when they share the same `actionFamily`
+  **and** at least one record (same `sourceType` and `sourceId`). Applied transitively, so the result does
+  not depend on visiting order: in a stressed month the card maturity (`UPCOMING_LIABILITY_DUE`) and the
+  liquidity shortfall share the loan and the card, the liquidity shortfall and the negative forecast share
+  the cash accounts, and all three become one suggestion. Same record but a different family stays
+  separate (`CATEGORY_CONCENTRATION` and `STALE_VALUATION` on one apartment). Merging never removes a
+  finding from `attention`.
+- A suggestion lists its findings in rank order; `suggestionId` is their `findingId`s joined by `+`,
+  `tier` the smallest, `dueDate` the nearest, `relativeDeviation` the largest, `affectedRecords` and
+  `noteIds` the union.
+- **Rank**: tier ascending; then `dueDate` nearest first, `null` last; then `relativeDeviation`
+  descending, `null` last; then `suggestionId` ascending. The first `priorityMarkerCount` (a code
+  constant, `3`, the overview's top-three contract) carry `priority: true`. Every suggestion is returned;
+  there is no cap.
+- `actionId` is the constant the client maps to the approved Vietnamese copy. `action` is the reference
+  English wording, one fixed sentence per `actionId`, naming the first affected record when it has a
+  name (the declared rate reads "the declared USD/VND exchange rate"). Every sentence uses the design's
+  allowed frames, "You may review / compare / check / update / consider … then review the result.", and
+  none contains *guarantee*, *will*, *ensure*, *must*, *should*, *urgent*, *immediately*, an exclamation
+  mark, or a product or institution name. The record name is the user's own text.
+
+### Time, determinism and errors
+
+Today is the financial-health report's `asOfDate`. The snapshot and goal findings are always as of today;
+only the health findings follow `month`. Two reads on the same day over the same records return the same
+bytes; `month` equal to the current month returns what no `month` does.
+
+`month` is handed to the financial-health service unchanged, so a blank or malformed value (`2026-13`,
+`11/2026`, `2026-9`, a second `month`) answers exactly what `/financial-health` answers: `400
+validation-failed`, `errors: [{field: "month", message: "must be a calendar month in the form YYYY-MM"}]`,
+the value never echoed. `401` without a valid token, `405` for another method, `406` for a non-JSON
+`Accept`. A `userId` query parameter is ignored.
+
+### Not here
+
+Stored, dismissed or resolved findings and their history (design #90 open question 4), a cap on the
+number of suggestions (open question 5), user-set thresholds (open question 3), notifications, Vietnamese
+copy, chat, an `asOf` parameter, and any figure the three upstream routes do not already publish.
+
+### Verified by hand, not by the suite
+
+Shipped on Product Owner direction with no automated test of its own; the refined
+`ArchitectureRulesTest` and `OpenApiContractIT` cover the slice boundary and the contract. The scenarios,
+written before the code, are in `plans/261128-1036-GH-92-basic-advisor/phase-01-test-scenarios.md`; the
+run is recorded in `plans/reports/manual-verification-261128-1036-GH-92-basic-advisor.md` and is
+reproduced by the scripts in `plans/261128-1036-GH-92-basic-advisor/scripts/`, whose `recon.jq`
+reconciles every finding with the three upstream routes read in the same run.
