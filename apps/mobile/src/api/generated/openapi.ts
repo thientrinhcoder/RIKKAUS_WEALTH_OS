@@ -711,6 +711,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/advisor-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compose the signed-in user's rule-based advisor report from the insights, health rules and goals
+         * @description Composes, never recalculates: every finding repeats the observed value and threshold that GET /api/v1/wealth-snapshot/insights, GET /api/v1/financial-health?month= and GET /api/v1/goal-projections return for the same user and month, and names the records behind it with the route that reads each. Findings are grouped by status: unevaluated (UNAVAILABLE, NOT_EVALUATED, a goal without a status, with the upstream reason), positive (OK, ON_TRACK) and attention (ATTENTION, AT_RISK, BEHIND). Suggestions are derived from attention only: each ATTENTION finding has a tier (1 upcoming obligations and liquidity, 2 the period's cash flow, 3 reserve and structure, 4 goals, 5 data freshness) and an action family; findings of one family that share a record (sourceType and sourceId) merge into one suggestion, which keeps the smallest tier and lists every finding. Suggestions are ranked by tier, then the nearest due date, then the largest relative deviation from the threshold, then the identifier, and the first priorityMarkerCount (3) carry priority. The advisor defines no threshold and stores nothing; the same records on the same day give the same bytes. A user with no record gets twelve unevaluated findings and empty groups, never 404. No Vietnamese text is published: the client maps every constant to its copy; action and disclaimer are reference English wording.
+         */
+        get: operations["readAdvisorReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3595,6 +3615,261 @@ export interface components {
              * @enum {string}
              */
             status?: "ADEQUATE" | "THIN" | "NEGATIVE" | "INSUFFICIENT_DATA";
+        };
+        /** @description A record behind a finding, openable from the report. */
+        AdvisorAffectedRecord: {
+            /**
+             * @example ASSET
+             * @enum {string}
+             */
+            sourceType?: "ASSET" | "LIABILITY" | "CASH_FLOW_ENTRY" | "EXCHANGE_RATE" | "GOAL";
+            /**
+             * Format: uuid
+             * @description null for EXCHANGE_RATE, which has no identifier.
+             */
+            sourceId?: string;
+            /**
+             * @description The record's name as the user entered it; null when the upstream evidence carries none (financial-health rows, the exchange rate).
+             * @example Căn hộ Thảo Điền
+             */
+            name?: string;
+            /**
+             * @description The route that reads the record.
+             * @example /api/v1/assets/6a1f3c9e-2b47-4d85-9e10-c7b4a2d8f531
+             */
+            route?: string;
+        };
+        /** @description One upstream result, with what it observed, the threshold it was judged against and its records. */
+        AdvisorFinding: {
+            /**
+             * @description The rule-code registry: WEALTH_SNAPSHOT:<ruleId>, FINANCIAL_HEALTH:<ruleId>, or GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:<goalId>.
+             * @example WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION
+             */
+            findingId?: string;
+            /**
+             * @example WEALTH_SNAPSHOT
+             * @enum {string}
+             */
+            source?: "WEALTH_SNAPSHOT" | "FINANCIAL_HEALTH" | "GOAL_PROJECTION";
+            /**
+             * @description The upstream rule constant of GET /api/v1/wealth-snapshot/insights or GET /api/v1/financial-health; GOAL_CONTRIBUTION_COVERAGE for a goal.
+             * @example CATEGORY_CONCENTRATION
+             */
+            ruleId?: string;
+            /**
+             * @description OK, ATTENTION or NOT_EVALUATED: snapshot UNAVAILABLE and a goal without a status read as NOT_EVALUATED, ON_TRACK as OK, AT_RISK and BEHIND as ATTENTION.
+             * @example ATTENTION
+             * @enum {string}
+             */
+            status?: "OK" | "ATTENTION" | "NOT_EVALUATED";
+            /**
+             * Format: int32
+             * @description Priority tier 1 to 5 when ATTENTION, null otherwise: 1 upcoming obligations and liquidity, 2 the period's cash flow, 3 reserve and structure, 4 goals, 5 data freshness.
+             * @example 3
+             */
+            tier?: number;
+            /**
+             * @description Set exactly when ATTENTION.
+             * @example REVIEW_ASSET_CONCENTRATION
+             * @enum {string}
+             */
+            actionFamily?: "RECONCILE_CASH_WITH_OBLIGATIONS" | "REVIEW_PERIOD_SPENDING" | "REVIEW_DEBT_PAYMENTS" | "RECONCILE_CASH_WITH_RESERVE" | "REVIEW_INCOME_SOURCES" | "REVIEW_ASSET_CONCENTRATION" | "REVIEW_DEBT_LEVEL" | "REVIEW_GOAL_PLAN" | "REFRESH_RECORD";
+            /** @description The upstream observation, unchanged; null exactly when NOT_EVALUATED. */
+            observed?: components["schemas"]["AdvisorObserved"];
+            threshold?: components["schemas"]["AdvisorThreshold"];
+            /** @description The upstream evidence rows, each record once by (sourceType, sourceId), in upstream order. */
+            affectedRecords?: components["schemas"]["AdvisorAffectedRecord"][];
+            /**
+             * Format: date
+             * @description UPCOMING_LIABILITY_DUE: the nearest due date. LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS: the earliest payment or maturity in the window. A goal: its target date. null otherwise.
+             * @example 2026-11-30
+             */
+            dueDate?: string;
+            /**
+             * @description |observed.value - threshold.value| / threshold.value, six decimals HALF_UP; for a goal (100 - coverage) / 100, negative when the plan covers more than required. null when the threshold is zero or a value is missing.
+             * @example 0.249792
+             */
+            relativeDeviation?: number;
+            /**
+             * @description The item-level note, the data limit of this finding: USER_ASSUMED_RETURN for a goal, FORECAST_FROM_ENTERED_SCHEDULES for FORECAST_CASH_NEGATIVE, USER_DECLARED_EXCHANGE_RATE when a record is the rate or in USD, else MANUAL_ENTRY_NOT_RECONCILED.
+             * @example MANUAL_ENTRY_NOT_RECONCILED
+             * @enum {string}
+             */
+            noteId?: "MANUAL_ENTRY_NOT_RECONCILED" | "USER_DECLARED_EXCHANGE_RATE" | "USER_ASSUMED_RETURN" | "FORECAST_FROM_ENTERED_SCHEDULES";
+            /**
+             * @description Set exactly when NOT_EVALUATED: the upstream unavailableReason or notEvaluatedReason, or a goal's first unavailableReasons entry (TIMELINE_<timeline> when it has none).
+             * @example NO_LIABILITIES
+             */
+            reason?: string;
+        };
+        /** @description What the upstream rule measured. */
+        AdvisorObserved: {
+            /**
+             * @description The upstream observed.value; for a goal contributionCoveragePercent.
+             * @example 0.624896
+             */
+            value?: number;
+            /**
+             * @example FRACTION
+             * @enum {string}
+             */
+            unit?: "FRACTION" | "DAYS" | "MONTHS" | "VND" | "PERCENT";
+            /**
+             * @description The upstream subject, such as the largest category; null otherwise.
+             * @example REAL_ESTATE
+             */
+            subject?: string;
+            /**
+             * Format: date
+             * @description The upstream observed date; null otherwise.
+             */
+            date?: string;
+            /**
+             * @description Snapshot: the upstream numerator. Health: the numerator of the indicator in dependsOn. Goal: the planned monthly contribution. null otherwise.
+             * @example 7500000000
+             */
+            numeratorVnd?: number;
+            /**
+             * @description Snapshot: the upstream denominator. Health: the denominator of the indicator in dependsOn. Goal: the required monthly contribution. null otherwise.
+             * @example 12002000000
+             */
+            denominatorVnd?: number;
+        };
+        /** @description The signed-in user's rule-based advisor report: every finding of the wealth-snapshot insights, the financial-health rules and the goal projections, grouped, and the suggestions derived from the findings needing attention. */
+        AdvisorReportResponse: {
+            /**
+             * Format: date
+             * @description Today in timeZone, as GET /api/v1/financial-health states it.
+             * @example 2026-11-28
+             */
+            asOfDate?: string;
+            /** @example Asia/Ho_Chi_Minh */
+            timeZone?: string;
+            /**
+             * @description The month the FINANCIAL_HEALTH findings read, YYYY-MM.
+             * @example 2026-11
+             */
+            month?: string;
+            /** @description The report-level note, always shown and never dismissible: informational, based on user-entered data and system reference thresholds, not financial advice, no outcome guaranteed. */
+            disclaimer?: string;
+            /**
+             * Format: int32
+             * @description How many of the first suggestions carry priority: true.
+             * @example 3
+             */
+            priorityMarkerCount?: number;
+            /** @description Always three, in the order WEALTH_SNAPSHOT, FINANCIAL_HEALTH, GOAL_PROJECTION. */
+            sources?: components["schemas"]["AdvisorSource"][];
+            unevaluated?: components["schemas"]["AdvisorUnevaluated"];
+            /** @description Findings judged and within their threshold: a snapshot or health rule OK, a goal ON_TRACK. Source order. */
+            positive?: components["schemas"]["AdvisorFinding"][];
+            /** @description Findings judged and beyond their threshold: a snapshot or health rule ATTENTION, a goal AT_RISK or BEHIND. Source order. Merging suggestions never removes a finding from here. */
+            attention?: components["schemas"]["AdvisorFinding"][];
+            /** @description Derived from attention only, in rank order: tier ascending, then dueDate nearest first (null last), then relativeDeviation descending (null last), then suggestionId ascending. */
+            suggestions?: components["schemas"]["AdvisorSuggestion"][];
+        };
+        /** @description One upstream report the advisor read. */
+        AdvisorSource: {
+            /**
+             * @example FINANCIAL_HEALTH
+             * @enum {string}
+             */
+            source?: "WEALTH_SNAPSHOT" | "FINANCIAL_HEALTH" | "GOAL_PROJECTION";
+            /**
+             * @description The route that publishes the same findings for the same user and month.
+             * @example /api/v1/financial-health?month=2026-11
+             */
+            route?: string;
+            /**
+             * Format: int32
+             * @description Findings taken from it: 6 for each rule report, one per goal for goals.
+             * @example 6
+             */
+            findingCount?: number;
+        };
+        /** @description One action to consider, from one or more findings of one family that share a record. */
+        AdvisorSuggestion: {
+            /**
+             * @description The findingIds joined by +.
+             * @example WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE+FINANCIAL_HEALTH:LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS
+             */
+            suggestionId?: string;
+            /**
+             * Format: int32
+             * @description 1-based.
+             * @example 1
+             */
+            rank?: number;
+            /**
+             * @description true for the first priorityMarkerCount suggestions.
+             * @example true
+             */
+            priority?: boolean;
+            /**
+             * Format: int32
+             * @description The smallest tier of its findings.
+             * @example 1
+             */
+            tier?: number;
+            /**
+             * @example RECONCILE_CASH_WITH_OBLIGATIONS
+             * @enum {string}
+             */
+            actionFamily?: "RECONCILE_CASH_WITH_OBLIGATIONS" | "REVIEW_PERIOD_SPENDING" | "REVIEW_DEBT_PAYMENTS" | "RECONCILE_CASH_WITH_RESERVE" | "REVIEW_INCOME_SOURCES" | "REVIEW_ASSET_CONCENTRATION" | "REVIEW_DEBT_LEVEL" | "REVIEW_GOAL_PLAN" | "REFRESH_RECORD";
+            /**
+             * @description One per actionFamily; the constant the client maps to the approved action copy.
+             * @example COMPARE_CASH_WITH_UPCOMING_OBLIGATIONS
+             * @enum {string}
+             */
+            actionId?: "COMPARE_CASH_WITH_UPCOMING_OBLIGATIONS" | "REVIEW_LARGEST_PERIOD_EXPENSES" | "CHECK_DEBT_PAYMENTS_AGAINST_INCOME" | "COMPARE_LIQUID_ASSETS_WITH_RESERVE" | "REVIEW_INCOME_SOURCE_MIX" | "REVIEW_ASSET_CATEGORY_SHARE" | "REVIEW_LIABILITIES_AGAINST_ASSETS" | "CONSIDER_GOAL_PLAN_OPTIONS" | "UPDATE_STALE_RECORD";
+            /** @description Reference English wording: one step, in the frames "You may review / compare / check / update / consider ... then review the result.", naming the first affected record when it has a name. Never a promise, a prediction, an order, urgency, or a product or institution. */
+            action?: string;
+            /** @description One, or several when findings of the same actionFamily share a record (transitively); each also stays in attention. */
+            findingIds?: string[];
+            /** @description The union of the findings' records, each once. */
+            affectedRecords?: components["schemas"]["AdvisorAffectedRecord"][];
+            /**
+             * Format: date
+             * @description The nearest of the findings' due dates.
+             */
+            dueDate?: string;
+            /** @description The largest of the findings' relative deviations. */
+            relativeDeviation?: number;
+            /** @description The findings' notes, each once, in finding order. */
+            noteIds?: ("MANUAL_ENTRY_NOT_RECONCILED" | "USER_DECLARED_EXCHANGE_RATE" | "USER_ASSUMED_RETURN" | "FORECAST_FROM_ENTERED_SCHEDULES")[];
+        };
+        /** @description The upstream threshold, unchanged; the advisor defines none. */
+        AdvisorThreshold: {
+            /**
+             * @description GREATER_THAN: ATTENTION when observed > value. LESS_THAN: when <. AT_MOST: when <=.
+             * @example GREATER_THAN
+             * @enum {string}
+             */
+            comparison?: "GREATER_THAN" | "LESS_THAN" | "AT_MOST";
+            /**
+             * @description null only when the upstream threshold is itself an unconvertible sum.
+             * @example 0.5
+             */
+            value?: number;
+            /**
+             * @example FRACTION
+             * @enum {string}
+             */
+            unit?: "FRACTION" | "DAYS" | "MONTHS" | "VND" | "PERCENT";
+            /**
+             * @description The fully qualified configuration property the value comes from, when there is one.
+             * @example rikkaus.snapshot.insights.max-category-share
+             */
+            property?: string;
+        };
+        /** @description The "not enough data" block shown above the three groups: every snapshot insight UNAVAILABLE, every health rule NOT_EVALUATED and every goal without a status. None gives rise to a suggestion. */
+        AdvisorUnevaluated: {
+            /**
+             * Format: int32
+             * @example 3
+             */
+            count?: number;
+            findings?: components["schemas"]["AdvisorFinding"][];
         };
     };
     responses: never;
@@ -6766,6 +7041,65 @@ export interface operations {
             };
             /** @description No such asset, or it belongs to another user */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Wrong HTTP method */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description The requested media type cannot be produced */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    readAdvisorReport: {
+        parameters: {
+            query?: {
+                /** @description The calendar month the FINANCIAL_HEALTH findings read, YYYY-MM. Absent means the current month in Asia/Ho_Chi_Minh. The snapshot and goal findings are always as of today. */
+                month?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report, possibly with every finding unevaluated for a user with no record yet */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorReportResponse"];
+                };
+            };
+            /** @description month is present but blank or not a calendar month in the form YYYY-MM; the same answer GET /api/v1/financial-health gives. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description No access token, or it has expired or been revoked */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

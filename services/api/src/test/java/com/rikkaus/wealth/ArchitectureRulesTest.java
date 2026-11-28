@@ -40,6 +40,15 @@ class ArchitectureRulesTest {
     private static final String MONETARY_FIELD_NAME =
             "(?i).*(amount|balance|price|value|rate|total|cost).*";
 
+    /**
+     * Slices meet only through {@code shared} and through another slice's application interface.
+     *
+     * <p>{@code ARCHITECTURE_TECHNOLOGY_DECISIONS.md} states that features communicate through explicit
+     * application interfaces and that direct access to another feature's repository is prohibited. A
+     * dependency whose target resides in an {@code ..application..} package is therefore allowed, which is
+     * how the advisor composes the insights, health and goal services. Reaching into another slice's
+     * {@code domain}, {@code persistence}, {@code infrastructure} or {@code api} package still fails.
+     */
     @ArchTest
     static final ArchRule featureSlicesDoNotDependOnEachOther =
             slices()
@@ -49,9 +58,12 @@ class ArchitectureRulesTest {
                     .notDependOnEachOther()
                     // shared/ is the sanctioned cross-cutting package every slice may use.
                     .ignoreDependency(alwaysTrue(), resideInAPackage("com.rikkaus.wealth.shared.."))
+                    // Another slice's application services and the records they return are its interface.
+                    .ignoreDependency(alwaysTrue(), resideInAPackage("com.rikkaus.wealth..application.."))
                     .because(
                             "a feature must collaborate through another feature's application "
-                                    + "interface, never reach into its internals")
+                                    + "interface (its ..application.. package), never reach into its domain, "
+                                    + "persistence or api")
                     .allowEmptyShould(true);
 
     @ArchTest

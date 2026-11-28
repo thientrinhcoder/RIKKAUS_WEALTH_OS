@@ -3,7 +3,7 @@
  * Do not edit: run `npm run api:generate` after the contract changes.
  */
 
-/** 68 examples, copied verbatim from the contract. */
+/** 72 examples, copied verbatim from the contract. */
 export const contractExamples = {
   "GET /api/v1/settings/exchange-rate": {
     "200": {
@@ -5317,6 +5317,2352 @@ export const contractExamples = {
             }
           ],
           "derivedEffects": []
+        }
+      }
+    }
+  },
+  "GET /api/v1/advisor-report": {
+    "200": {
+      "contentType": "application/json",
+      "examples": {
+        "the design #90 baseline: eight findings need attention, eight suggestions": {
+          "asOfDate": "2026-11-28",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "month": "2026-11",
+          "disclaimer": "This report is informational, based on the data you entered and the system's reference thresholds; it is not financial advice and does not guarantee any outcome.",
+          "priorityMarkerCount": 3,
+          "sources": [
+            {
+              "source": "WEALTH_SNAPSHOT",
+              "route": "/api/v1/wealth-snapshot/insights",
+              "findingCount": 6
+            },
+            {
+              "source": "FINANCIAL_HEALTH",
+              "route": "/api/v1/financial-health?month=2026-11",
+              "findingCount": 6
+            },
+            {
+              "source": "GOAL_PROJECTION",
+              "route": "/api/v1/goal-projections",
+              "findingCount": 6
+            }
+          ],
+          "unevaluated": {
+            "count": 3,
+            "findings": [
+              {
+                "findingId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:a9e3da71-f958-4f70-b940-5eb18e841324",
+                "source": "GOAL_PROJECTION",
+                "ruleId": "GOAL_CONTRIBUTION_COVERAGE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "LESS_THAN",
+                  "value": 100,
+                  "unit": "PERCENT",
+                  "property": "rikkaus.goals.projection.on-track-min-coverage-percent"
+                },
+                "affectedRecords": [
+                  {
+                    "sourceType": "GOAL",
+                    "sourceId": "a9e3da71-f958-4f70-b940-5eb18e841324",
+                    "name": "Quỹ cưới",
+                    "route": "/api/v1/goals/a9e3da71-f958-4f70-b940-5eb18e841324"
+                  }
+                ],
+                "dueDate": "2026-10-31",
+                "relativeDeviation": null,
+                "noteId": "USER_ASSUMED_RETURN",
+                "reason": "TARGET_DATE_PASSED"
+              },
+              {
+                "findingId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:83678758-dd5b-4ab7-bdc6-6659cfc0d948",
+                "source": "GOAL_PROJECTION",
+                "ruleId": "GOAL_CONTRIBUTION_COVERAGE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "LESS_THAN",
+                  "value": 100,
+                  "unit": "PERCENT",
+                  "property": "rikkaus.goals.projection.on-track-min-coverage-percent"
+                },
+                "affectedRecords": [
+                  {
+                    "sourceType": "GOAL",
+                    "sourceId": "83678758-dd5b-4ab7-bdc6-6659cfc0d948",
+                    "name": "Du lịch Nhật Bản cuối năm",
+                    "route": "/api/v1/goals/83678758-dd5b-4ab7-bdc6-6659cfc0d948"
+                  }
+                ],
+                "dueDate": "2026-11-30",
+                "relativeDeviation": null,
+                "noteId": "USER_ASSUMED_RETURN",
+                "reason": "NO_CONTRIBUTION_MONTH"
+              },
+              {
+                "findingId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:72ca672c-28f0-44ca-9824-457f0d4f00d2",
+                "source": "GOAL_PROJECTION",
+                "ruleId": "GOAL_CONTRIBUTION_COVERAGE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "LESS_THAN",
+                  "value": 100,
+                  "unit": "PERCENT",
+                  "property": "rikkaus.goals.projection.on-track-min-coverage-percent"
+                },
+                "affectedRecords": [
+                  {
+                    "sourceType": "GOAL",
+                    "sourceId": "72ca672c-28f0-44ca-9824-457f0d4f00d2",
+                    "name": "Quỹ hưu trí",
+                    "route": "/api/v1/goals/72ca672c-28f0-44ca-9824-457f0d4f00d2"
+                  }
+                ],
+                "dueDate": "2046-12-31",
+                "relativeDeviation": null,
+                "noteId": "USER_ASSUMED_RETURN",
+                "reason": "PLANNED_MONTHLY_CONTRIBUTION_MISSING"
+              }
+            ]
+          },
+          "positive": [
+            {
+              "findingId": "WEALTH_SNAPSHOT:DEBT_TO_ASSET_RATIO",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "DEBT_TO_ASSET_RATIO",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 0.127645,
+                "unit": "FRACTION",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 1532000000,
+                "denominatorVnd": 12002000000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.4,
+                "unit": "FRACTION",
+                "property": "rikkaus.snapshot.insights.max-debt-to-asset-ratio"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e",
+                  "name": "Khoản vay mua căn hộ",
+                  "route": "/api/v1/liabilities/9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06",
+                  "name": "Thẻ tín dụng",
+                  "route": "/api/v1/liabilities/75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.680888,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:SPENDING_EXCEEDS_INCOME",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "SPENDING_EXCEEDS_INCOME",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 88000000,
+                "unit": "VND",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 0,
+                "unit": "VND",
+                "property": null
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "6c27c60d-9801-4290-a144-85319edc14f1",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/6c27c60d-9801-4290-a144-85319edc14f1"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "f0192124-fa35-4e08-b2e0-87af13e238d2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/f0192124-fa35-4e08-b2e0-87af13e238d2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "426df132-cc32-4966-a3a9-5d661d96bdac",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/426df132-cc32-4966-a3a9-5d661d96bdac"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "25f32cea-7188-4acd-9326-8fb2b097ffa4",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/25f32cea-7188-4acd-9326-8fb2b097ffa4"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "c1865754-44b6-4e26-9638-138d1543ab32",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/c1865754-44b6-4e26-9638-138d1543ab32"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "a981b028-d978-4f5b-b9d7-f50672559f4e",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/a981b028-d978-4f5b-b9d7-f50672559f4e"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "91a1e354-d202-485d-893f-0fc16ca250e1",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/91a1e354-d202-485d-893f-0fc16ca250e1"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "27d8f509-8d46-4ace-a428-152674535b2b",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/27d8f509-8d46-4ace-a428-152674535b2b"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "d31f9ae4-3ac6-4b3f-ae31-e3fa77654b66",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/d31f9ae4-3ac6-4b3f-ae31-e3fa77654b66"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "366708a7-f76d-47a1-8a17-d1423dd48597",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/366708a7-f76d-47a1-8a17-d1423dd48597"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "3dd78bcb-8a86-4dab-b334-07e46b25b2ad",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/3dd78bcb-8a86-4dab-b334-07e46b25b2ad"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "66183fdd-fd7c-4226-a15c-48984178168b",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/66183fdd-fd7c-4226-a15c-48984178168b"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "d4923c14-5493-4223-9ad1-bce47b811374",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/d4923c14-5493-4223-9ad1-bce47b811374"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "8d095cfd-ed83-4a54-a656-e2d0c854540b",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/8d095cfd-ed83-4a54-a656-e2d0c854540b"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "69a8bded-7ad4-42cb-93f0-1c6ec267c87a",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/69a8bded-7ad4-42cb-93f0-1c6ec267c87a"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "3403ab97-f0f2-460f-835e-613040c1e767",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/3403ab97-f0f2-460f-835e-613040c1e767"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": null,
+              "noteId": "USER_DECLARED_EXCHANGE_RATE",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:FORECAST_CASH_NEGATIVE",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "FORECAST_CASH_NEGATIVE",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 626600000,
+                "unit": "VND",
+                "subject": null,
+                "date": "2026-12-03",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 0,
+                "unit": "VND",
+                "property": null
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "670965f3-f35a-44af-91c9-b5995dd22e89",
+                  "name": null,
+                  "route": "/api/v1/assets/670965f3-f35a-44af-91c9-b5995dd22e89"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "ead32aa8-ca0a-4613-a954-12d1028536ef",
+                  "name": null,
+                  "route": "/api/v1/assets/ead32aa8-ca0a-4613-a954-12d1028536ef"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "6c27c60d-9801-4290-a144-85319edc14f1",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/6c27c60d-9801-4290-a144-85319edc14f1"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": null,
+              "noteId": "FORECAST_FROM_ENTERED_SCHEDULES",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:RESERVE_BELOW_REFERENCE",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "RESERVE_BELOW_REFERENCE",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 30,
+                "unit": "MONTHS",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 1850000000,
+                "denominatorVnd": 61600000
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 3,
+                "unit": "MONTHS",
+                "property": "rikkaus.cashflow.health.min-reserve-months"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "670965f3-f35a-44af-91c9-b5995dd22e89",
+                  "name": null,
+                  "route": "/api/v1/assets/670965f3-f35a-44af-91c9-b5995dd22e89"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "ead32aa8-ca0a-4613-a954-12d1028536ef",
+                  "name": null,
+                  "route": "/api/v1/assets/ead32aa8-ca0a-4613-a954-12d1028536ef"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "7c741a7f-0cae-4982-b94d-b7e92b76f39f",
+                  "name": null,
+                  "route": "/api/v1/assets/7c741a7f-0cae-4982-b94d-b7e92b76f39f"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "27d8f509-8d46-4ace-a428-152674535b2b",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/27d8f509-8d46-4ace-a428-152674535b2b"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "366708a7-f76d-47a1-8a17-d1423dd48597",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/366708a7-f76d-47a1-8a17-d1423dd48597"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "66183fdd-fd7c-4226-a15c-48984178168b",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/66183fdd-fd7c-4226-a15c-48984178168b"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "6c27c60d-9801-4290-a144-85319edc14f1",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/6c27c60d-9801-4290-a144-85319edc14f1"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "8d095cfd-ed83-4a54-a656-e2d0c854540b",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/8d095cfd-ed83-4a54-a656-e2d0c854540b"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "d4923c14-5493-4223-9ad1-bce47b811374",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/d4923c14-5493-4223-9ad1-bce47b811374"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 9,
+              "noteId": "USER_DECLARED_EXCHANGE_RATE",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:HIGH_DEBT_PAYMENT_BURDEN",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "HIGH_DEBT_PAYMENT_BURDEN",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 0.090278,
+                "unit": "FRACTION",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 16250000,
+                "denominatorVnd": 180000000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.35,
+                "unit": "FRACTION",
+                "property": "rikkaus.cashflow.health.max-debt-payment-burden"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "366708a7-f76d-47a1-8a17-d1423dd48597",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/366708a7-f76d-47a1-8a17-d1423dd48597"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "d4923c14-5493-4223-9ad1-bce47b811374",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/d4923c14-5493-4223-9ad1-bce47b811374"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "f0192124-fa35-4e08-b2e0-87af13e238d2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/f0192124-fa35-4e08-b2e0-87af13e238d2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "25f32cea-7188-4acd-9326-8fb2b097ffa4",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/25f32cea-7188-4acd-9326-8fb2b097ffa4"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "c1865754-44b6-4e26-9638-138d1543ab32",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/c1865754-44b6-4e26-9638-138d1543ab32"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "91a1e354-d202-485d-893f-0fc16ca250e1",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/91a1e354-d202-485d-893f-0fc16ca250e1"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "d31f9ae4-3ac6-4b3f-ae31-e3fa77654b66",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/d31f9ae4-3ac6-4b3f-ae31-e3fa77654b66"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "3dd78bcb-8a86-4dab-b334-07e46b25b2ad",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/3dd78bcb-8a86-4dab-b334-07e46b25b2ad"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "3403ab97-f0f2-460f-835e-613040c1e767",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/3403ab97-f0f2-460f-835e-613040c1e767"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.742063,
+              "noteId": "USER_DECLARED_EXCHANGE_RATE",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 650000000,
+                "unit": "VND",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 50750000,
+                "unit": "VND",
+                "property": "rikkaus.cashflow.health.due-window-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "670965f3-f35a-44af-91c9-b5995dd22e89",
+                  "name": null,
+                  "route": "/api/v1/assets/670965f3-f35a-44af-91c9-b5995dd22e89"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "ead32aa8-ca0a-4613-a954-12d1028536ef",
+                  "name": null,
+                  "route": "/api/v1/assets/ead32aa8-ca0a-4613-a954-12d1028536ef"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06",
+                  "name": null,
+                  "route": "/api/v1/liabilities/75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e",
+                  "name": null,
+                  "route": "/api/v1/liabilities/9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e"
+                }
+              ],
+              "dueDate": "2026-11-30",
+              "relativeDeviation": 11.807882,
+              "noteId": "USER_DECLARED_EXCHANGE_RATE",
+              "reason": null
+            },
+            {
+              "findingId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:2084813d-f020-4be0-81bb-5eec7a40c58c",
+              "source": "GOAL_PROJECTION",
+              "ruleId": "GOAL_CONTRIBUTION_COVERAGE",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 110.4,
+                "unit": "PERCENT",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 10200000,
+                "denominatorVnd": 9239000
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 100,
+                "unit": "PERCENT",
+                "property": "rikkaus.goals.projection.on-track-min-coverage-percent"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "GOAL",
+                  "sourceId": "2084813d-f020-4be0-81bb-5eec7a40c58c",
+                  "name": "Quỹ dự phòng 6 tháng",
+                  "route": "/api/v1/goals/2084813d-f020-4be0-81bb-5eec7a40c58c"
+                }
+              ],
+              "dueDate": "2027-11-30",
+              "relativeDeviation": -0.104,
+              "noteId": "USER_ASSUMED_RETURN",
+              "reason": null
+            }
+          ],
+          "attention": [
+            {
+              "findingId": "WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "CATEGORY_CONCENTRATION",
+              "status": "ATTENTION",
+              "tier": 3,
+              "actionFamily": "REVIEW_ASSET_CONCENTRATION",
+              "observed": {
+                "value": 0.624896,
+                "unit": "FRACTION",
+                "subject": "REAL_ESTATE",
+                "date": null,
+                "numeratorVnd": 7500000000,
+                "denominatorVnd": 12002000000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.5,
+                "unit": "FRACTION",
+                "property": "rikkaus.snapshot.insights.max-category-share"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "bdd85448-d313-4b1e-91b3-a4a8cf0ef42b",
+                  "name": "Căn hộ Thảo Điền",
+                  "route": "/api/v1/assets/bdd85448-d313-4b1e-91b3-a4a8cf0ef42b"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.249792,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:LOW_LIQUIDITY_SHARE",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "LOW_LIQUIDITY_SHARE",
+              "status": "ATTENTION",
+              "tier": 3,
+              "actionFamily": "RECONCILE_CASH_WITH_RESERVE",
+              "observed": {
+                "value": 0.624896,
+                "unit": "FRACTION",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 7500000000,
+                "denominatorVnd": 12002000000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.6,
+                "unit": "FRACTION",
+                "property": "rikkaus.snapshot.insights.max-low-liquidity-share"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "bdd85448-d313-4b1e-91b3-a4a8cf0ef42b",
+                  "name": "Căn hộ Thảo Điền",
+                  "route": "/api/v1/assets/bdd85448-d313-4b1e-91b3-a4a8cf0ef42b"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.041493,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "UPCOMING_LIABILITY_DUE",
+              "status": "ATTENTION",
+              "tier": 1,
+              "actionFamily": "RECONCILE_CASH_WITH_OBLIGATIONS",
+              "observed": {
+                "value": 2,
+                "unit": "DAYS",
+                "subject": null,
+                "date": "2026-11-30",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "AT_MOST",
+                "value": 30,
+                "unit": "DAYS",
+                "property": "rikkaus.snapshot.insights.due-window-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06",
+                  "name": "Thẻ tín dụng",
+                  "route": "/api/v1/liabilities/75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e",
+                  "name": "Khoản vay mua căn hộ",
+                  "route": "/api/v1/liabilities/9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e"
+                }
+              ],
+              "dueDate": "2026-11-30",
+              "relativeDeviation": 0.933333,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:STALE_VALUATION",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "STALE_VALUATION",
+              "status": "ATTENTION",
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "observed": {
+                "value": 48,
+                "unit": "DAYS",
+                "subject": null,
+                "date": "2026-10-11",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 30,
+                "unit": "DAYS",
+                "property": "rikkaus.snapshot.insights.max-valuation-age-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "bdd85448-d313-4b1e-91b3-a4a8cf0ef42b",
+                  "name": "Căn hộ Thảo Điền",
+                  "route": "/api/v1/assets/bdd85448-d313-4b1e-91b3-a4a8cf0ef42b"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.6,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:STALE_EXCHANGE_RATE",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "STALE_EXCHANGE_RATE",
+              "status": "ATTENTION",
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "observed": {
+                "value": 77,
+                "unit": "DAYS",
+                "subject": null,
+                "date": "2026-09-12",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 5,
+                "unit": "DAYS",
+                "property": "rikkaus.snapshot.insights.max-exchange-rate-age-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "EXCHANGE_RATE",
+                  "sourceId": null,
+                  "name": null,
+                  "route": "/api/v1/settings/exchange-rate"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "670965f3-f35a-44af-91c9-b5995dd22e89",
+                  "name": "Tài khoản USD",
+                  "route": "/api/v1/assets/670965f3-f35a-44af-91c9-b5995dd22e89"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 14.4,
+              "noteId": "USER_DECLARED_EXCHANGE_RATE",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:INCOME_CONCENTRATION",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "INCOME_CONCENTRATION",
+              "status": "ATTENTION",
+              "tier": 3,
+              "actionFamily": "REVIEW_INCOME_SOURCES",
+              "observed": {
+                "value": 0.733333,
+                "unit": "FRACTION",
+                "subject": "SALARY",
+                "date": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.6,
+                "unit": "FRACTION",
+                "property": "rikkaus.cashflow.health.max-income-source-share"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "f0192124-fa35-4e08-b2e0-87af13e238d2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/f0192124-fa35-4e08-b2e0-87af13e238d2"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.222222,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:78660fea-fd3f-4d2f-9758-f3840c40b3a4",
+              "source": "GOAL_PROJECTION",
+              "ruleId": "GOAL_CONTRIBUTION_COVERAGE",
+              "status": "ATTENTION",
+              "tier": 4,
+              "actionFamily": "REVIEW_GOAL_PLAN",
+              "observed": {
+                "value": 89.49,
+                "unit": "PERCENT",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 21000000,
+                "denominatorVnd": 23466000
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 100,
+                "unit": "PERCENT",
+                "property": "rikkaus.goals.projection.on-track-min-coverage-percent"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "GOAL",
+                  "sourceId": "78660fea-fd3f-4d2f-9758-f3840c40b3a4",
+                  "name": "Mua nhà phố Thủ Đức",
+                  "route": "/api/v1/goals/78660fea-fd3f-4d2f-9758-f3840c40b3a4"
+                }
+              ],
+              "dueDate": "2029-11-30",
+              "relativeDeviation": 0.1051,
+              "noteId": "USER_ASSUMED_RETURN",
+              "reason": null
+            },
+            {
+              "findingId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:9252f931-370d-4381-b9d1-1f940e27c541",
+              "source": "GOAL_PROJECTION",
+              "ruleId": "GOAL_CONTRIBUTION_COVERAGE",
+              "status": "ATTENTION",
+              "tier": 4,
+              "actionFamily": "REVIEW_GOAL_PLAN",
+              "observed": {
+                "value": 66.9,
+                "unit": "PERCENT",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 5000000,
+                "denominatorVnd": 7473000
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 100,
+                "unit": "PERCENT",
+                "property": "rikkaus.goals.projection.on-track-min-coverage-percent"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "GOAL",
+                  "sourceId": "9252f931-370d-4381-b9d1-1f940e27c541",
+                  "name": "Học phí đại học cho con",
+                  "route": "/api/v1/goals/9252f931-370d-4381-b9d1-1f940e27c541"
+                }
+              ],
+              "dueDate": "2034-08-31",
+              "relativeDeviation": 0.331,
+              "noteId": "USER_ASSUMED_RETURN",
+              "reason": null
+            }
+          ],
+          "suggestions": [
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE",
+              "rank": 1,
+              "priority": true,
+              "tier": 1,
+              "actionFamily": "RECONCILE_CASH_WITH_OBLIGATIONS",
+              "actionId": "COMPARE_CASH_WITH_UPCOMING_OBLIGATIONS",
+              "action": "You may compare your cash and bank balances with the upcoming payments entered for Thẻ tín dụng, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06",
+                  "name": "Thẻ tín dụng",
+                  "route": "/api/v1/liabilities/75eeeb0b-c5b9-47b3-84dc-dd8e710d8b06"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e",
+                  "name": "Khoản vay mua căn hộ",
+                  "route": "/api/v1/liabilities/9ccc5d21-77ce-4351-bd1b-ce7ba7351d1e"
+                }
+              ],
+              "dueDate": "2026-11-30",
+              "relativeDeviation": 0.933333,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION",
+              "rank": 2,
+              "priority": true,
+              "tier": 3,
+              "actionFamily": "REVIEW_ASSET_CONCENTRATION",
+              "actionId": "REVIEW_ASSET_CATEGORY_SHARE",
+              "action": "You may review the share of the largest asset category, including Căn hộ Thảo Điền, alongside your expected liquidity needs, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "bdd85448-d313-4b1e-91b3-a4a8cf0ef42b",
+                  "name": "Căn hộ Thảo Điền",
+                  "route": "/api/v1/assets/bdd85448-d313-4b1e-91b3-a4a8cf0ef42b"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.249792,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "FINANCIAL_HEALTH:INCOME_CONCENTRATION",
+              "rank": 3,
+              "priority": true,
+              "tier": 3,
+              "actionFamily": "REVIEW_INCOME_SOURCES",
+              "actionId": "REVIEW_INCOME_SOURCE_MIX",
+              "action": "You may review how the income of the period is spread across its sources, then review the result.",
+              "findingIds": [
+                "FINANCIAL_HEALTH:INCOME_CONCENTRATION"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "f0192124-fa35-4e08-b2e0-87af13e238d2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/f0192124-fa35-4e08-b2e0-87af13e238d2"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.222222,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:LOW_LIQUIDITY_SHARE",
+              "rank": 4,
+              "priority": false,
+              "tier": 3,
+              "actionFamily": "RECONCILE_CASH_WITH_RESERVE",
+              "actionId": "COMPARE_LIQUID_ASSETS_WITH_RESERVE",
+              "action": "You may compare your cash reserve with the assets that are slower to turn into cash, such as Căn hộ Thảo Điền, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:LOW_LIQUIDITY_SHARE"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "bdd85448-d313-4b1e-91b3-a4a8cf0ef42b",
+                  "name": "Căn hộ Thảo Điền",
+                  "route": "/api/v1/assets/bdd85448-d313-4b1e-91b3-a4a8cf0ef42b"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.041493,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:78660fea-fd3f-4d2f-9758-f3840c40b3a4",
+              "rank": 5,
+              "priority": false,
+              "tier": 4,
+              "actionFamily": "REVIEW_GOAL_PLAN",
+              "actionId": "CONSIDER_GOAL_PLAN_OPTIONS",
+              "action": "You may consider raising the monthly contribution, moving the target date, or adjusting the target amount of Mua nhà phố Thủ Đức, then review the result.",
+              "findingIds": [
+                "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:78660fea-fd3f-4d2f-9758-f3840c40b3a4"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "GOAL",
+                  "sourceId": "78660fea-fd3f-4d2f-9758-f3840c40b3a4",
+                  "name": "Mua nhà phố Thủ Đức",
+                  "route": "/api/v1/goals/78660fea-fd3f-4d2f-9758-f3840c40b3a4"
+                }
+              ],
+              "dueDate": "2029-11-30",
+              "relativeDeviation": 0.1051,
+              "noteIds": [
+                "USER_ASSUMED_RETURN"
+              ]
+            },
+            {
+              "suggestionId": "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:9252f931-370d-4381-b9d1-1f940e27c541",
+              "rank": 6,
+              "priority": false,
+              "tier": 4,
+              "actionFamily": "REVIEW_GOAL_PLAN",
+              "actionId": "CONSIDER_GOAL_PLAN_OPTIONS",
+              "action": "You may consider raising the monthly contribution, moving the target date, or adjusting the target amount of Học phí đại học cho con, then review the result.",
+              "findingIds": [
+                "GOAL_PROJECTION:GOAL_CONTRIBUTION_COVERAGE:9252f931-370d-4381-b9d1-1f940e27c541"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "GOAL",
+                  "sourceId": "9252f931-370d-4381-b9d1-1f940e27c541",
+                  "name": "Học phí đại học cho con",
+                  "route": "/api/v1/goals/9252f931-370d-4381-b9d1-1f940e27c541"
+                }
+              ],
+              "dueDate": "2034-08-31",
+              "relativeDeviation": 0.331,
+              "noteIds": [
+                "USER_ASSUMED_RETURN"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:STALE_EXCHANGE_RATE",
+              "rank": 7,
+              "priority": false,
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "actionId": "UPDATE_STALE_RECORD",
+              "action": "You may update the declared USD/VND exchange rate so the report reads a current value, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:STALE_EXCHANGE_RATE"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "EXCHANGE_RATE",
+                  "sourceId": null,
+                  "name": null,
+                  "route": "/api/v1/settings/exchange-rate"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "670965f3-f35a-44af-91c9-b5995dd22e89",
+                  "name": "Tài khoản USD",
+                  "route": "/api/v1/assets/670965f3-f35a-44af-91c9-b5995dd22e89"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 14.4,
+              "noteIds": [
+                "USER_DECLARED_EXCHANGE_RATE"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:STALE_VALUATION",
+              "rank": 8,
+              "priority": false,
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "actionId": "UPDATE_STALE_RECORD",
+              "action": "You may update Căn hộ Thảo Điền so the report reads a current value, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:STALE_VALUATION"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "bdd85448-d313-4b1e-91b3-a4a8cf0ef42b",
+                  "name": "Căn hộ Thảo Điền",
+                  "route": "/api/v1/assets/bdd85448-d313-4b1e-91b3-a4a8cf0ef42b"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.6,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            }
+          ]
+        },
+        "a stressed month: three tier-1 findings merge into one suggestion": {
+          "asOfDate": "2026-11-28",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "month": "2026-11",
+          "disclaimer": "This report is informational, based on the data you entered and the system's reference thresholds; it is not financial advice and does not guarantee any outcome.",
+          "priorityMarkerCount": 3,
+          "sources": [
+            {
+              "source": "WEALTH_SNAPSHOT",
+              "route": "/api/v1/wealth-snapshot/insights",
+              "findingCount": 6
+            },
+            {
+              "source": "FINANCIAL_HEALTH",
+              "route": "/api/v1/financial-health?month=2026-11",
+              "findingCount": 6
+            },
+            {
+              "source": "GOAL_PROJECTION",
+              "route": "/api/v1/goal-projections",
+              "findingCount": 0
+            }
+          ],
+          "unevaluated": {
+            "count": 0,
+            "findings": []
+          },
+          "positive": [
+            {
+              "findingId": "WEALTH_SNAPSHOT:DEBT_TO_ASSET_RATIO",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "DEBT_TO_ASSET_RATIO",
+              "status": "OK",
+              "tier": null,
+              "actionFamily": null,
+              "observed": {
+                "value": 0.352833,
+                "unit": "FRACTION",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 1532000000,
+                "denominatorVnd": 4342000000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.4,
+                "unit": "FRACTION",
+                "property": "rikkaus.snapshot.insights.max-debt-to-asset-ratio"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "f3cc0a78-520d-4675-8d28-2479de58c8ca",
+                  "name": "Khoản vay mua căn hộ",
+                  "route": "/api/v1/liabilities/f3cc0a78-520d-4675-8d28-2479de58c8ca"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "c7a494d3-634f-4a08-a0da-177f3864da36",
+                  "name": "Thẻ tín dụng",
+                  "route": "/api/v1/liabilities/c7a494d3-634f-4a08-a0da-177f3864da36"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.117918,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            }
+          ],
+          "attention": [
+            {
+              "findingId": "WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "CATEGORY_CONCENTRATION",
+              "status": "ATTENTION",
+              "tier": 3,
+              "actionFamily": "REVIEW_ASSET_CONCENTRATION",
+              "observed": {
+                "value": 0.990327,
+                "unit": "FRACTION",
+                "subject": "REAL_ESTATE",
+                "date": null,
+                "numeratorVnd": 4300000000,
+                "denominatorVnd": 4342000000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.5,
+                "unit": "FRACTION",
+                "property": "rikkaus.snapshot.insights.max-category-share"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "c976832a-28a8-4c2d-958f-2ac3c2f30c22",
+                  "name": "Căn hộ cho thuê Quận 2",
+                  "route": "/api/v1/assets/c976832a-28a8-4c2d-958f-2ac3c2f30c22"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.980654,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:LOW_LIQUIDITY_SHARE",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "LOW_LIQUIDITY_SHARE",
+              "status": "ATTENTION",
+              "tier": 3,
+              "actionFamily": "RECONCILE_CASH_WITH_RESERVE",
+              "observed": {
+                "value": 0.990327,
+                "unit": "FRACTION",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 4300000000,
+                "denominatorVnd": 4342000000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.6,
+                "unit": "FRACTION",
+                "property": "rikkaus.snapshot.insights.max-low-liquidity-share"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "c976832a-28a8-4c2d-958f-2ac3c2f30c22",
+                  "name": "Căn hộ cho thuê Quận 2",
+                  "route": "/api/v1/assets/c976832a-28a8-4c2d-958f-2ac3c2f30c22"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.650545,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "UPCOMING_LIABILITY_DUE",
+              "status": "ATTENTION",
+              "tier": 1,
+              "actionFamily": "RECONCILE_CASH_WITH_OBLIGATIONS",
+              "observed": {
+                "value": 2,
+                "unit": "DAYS",
+                "subject": null,
+                "date": "2026-11-30",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "AT_MOST",
+                "value": 30,
+                "unit": "DAYS",
+                "property": "rikkaus.snapshot.insights.due-window-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "c7a494d3-634f-4a08-a0da-177f3864da36",
+                  "name": "Thẻ tín dụng",
+                  "route": "/api/v1/liabilities/c7a494d3-634f-4a08-a0da-177f3864da36"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "f3cc0a78-520d-4675-8d28-2479de58c8ca",
+                  "name": "Khoản vay mua căn hộ",
+                  "route": "/api/v1/liabilities/f3cc0a78-520d-4675-8d28-2479de58c8ca"
+                }
+              ],
+              "dueDate": "2026-11-30",
+              "relativeDeviation": 0.933333,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:STALE_VALUATION",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "STALE_VALUATION",
+              "status": "ATTENTION",
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "observed": {
+                "value": 52,
+                "unit": "DAYS",
+                "subject": null,
+                "date": "2026-10-07",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 30,
+                "unit": "DAYS",
+                "property": "rikkaus.snapshot.insights.max-valuation-age-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "c976832a-28a8-4c2d-958f-2ac3c2f30c22",
+                  "name": "Căn hộ cho thuê Quận 2",
+                  "route": "/api/v1/assets/c976832a-28a8-4c2d-958f-2ac3c2f30c22"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.733333,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "WEALTH_SNAPSHOT:STALE_EXCHANGE_RATE",
+              "source": "WEALTH_SNAPSHOT",
+              "ruleId": "STALE_EXCHANGE_RATE",
+              "status": "ATTENTION",
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "observed": {
+                "value": 77,
+                "unit": "DAYS",
+                "subject": null,
+                "date": "2026-09-12",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 5,
+                "unit": "DAYS",
+                "property": "rikkaus.snapshot.insights.max-exchange-rate-age-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "EXCHANGE_RATE",
+                  "sourceId": null,
+                  "name": null,
+                  "route": "/api/v1/settings/exchange-rate"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 14.4,
+              "noteId": "USER_DECLARED_EXCHANGE_RATE",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:SPENDING_EXCEEDS_INCOME",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "SPENDING_EXCEEDS_INCOME",
+              "status": "ATTENTION",
+              "tier": 2,
+              "actionFamily": "REVIEW_PERIOD_SPENDING",
+              "observed": {
+                "value": -57250000,
+                "unit": "VND",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 0,
+                "unit": "VND",
+                "property": null
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e3129117-6064-4873-8918-de46290be58c",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e3129117-6064-4873-8918-de46290be58c"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "02f6a9bc-c0f6-49c4-aea6-e419769ee445",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/02f6a9bc-c0f6-49c4-aea6-e419769ee445"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "b347cba5-8f4d-434f-95da-4a4413ca3532",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/b347cba5-8f4d-434f-95da-4a4413ca3532"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bfba55bb-63f1-4d6c-a6a4-a1362e6e681e",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bfba55bb-63f1-4d6c-a6a4-a1362e6e681e"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": null,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:FORECAST_CASH_NEGATIVE",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "FORECAST_CASH_NEGATIVE",
+              "status": "ATTENTION",
+              "tier": 1,
+              "actionFamily": "RECONCILE_CASH_WITH_OBLIGATIONS",
+              "observed": {
+                "value": -97050000,
+                "unit": "VND",
+                "subject": null,
+                "date": "2027-02-22",
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 0,
+                "unit": "VND",
+                "property": null
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "0ee7f292-42fa-4285-8fb9-8429bc61f820",
+                  "name": null,
+                  "route": "/api/v1/assets/0ee7f292-42fa-4285-8fb9-8429bc61f820"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "6038c40e-eb37-491f-b732-b565d0a83a4f",
+                  "name": null,
+                  "route": "/api/v1/assets/6038c40e-eb37-491f-b732-b565d0a83a4f"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e3129117-6064-4873-8918-de46290be58c",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e3129117-6064-4873-8918-de46290be58c"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "b347cba5-8f4d-434f-95da-4a4413ca3532",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/b347cba5-8f4d-434f-95da-4a4413ca3532"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bfba55bb-63f1-4d6c-a6a4-a1362e6e681e",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bfba55bb-63f1-4d6c-a6a4-a1362e6e681e"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": null,
+              "noteId": "FORECAST_FROM_ENTERED_SCHEDULES",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:RESERVE_BELOW_REFERENCE",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "RESERVE_BELOW_REFERENCE",
+              "status": "ATTENTION",
+              "tier": 3,
+              "actionFamily": "RECONCILE_CASH_WITH_RESERVE",
+              "observed": {
+                "value": 0.7,
+                "unit": "MONTHS",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 42000000,
+                "denominatorVnd": 61600000
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 3,
+                "unit": "MONTHS",
+                "property": "rikkaus.cashflow.health.min-reserve-months"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "0ee7f292-42fa-4285-8fb9-8429bc61f820",
+                  "name": null,
+                  "route": "/api/v1/assets/0ee7f292-42fa-4285-8fb9-8429bc61f820"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "6038c40e-eb37-491f-b732-b565d0a83a4f",
+                  "name": null,
+                  "route": "/api/v1/assets/6038c40e-eb37-491f-b732-b565d0a83a4f"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "02f6a9bc-c0f6-49c4-aea6-e419769ee445",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/02f6a9bc-c0f6-49c4-aea6-e419769ee445"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "b347cba5-8f4d-434f-95da-4a4413ca3532",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/b347cba5-8f4d-434f-95da-4a4413ca3532"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bfba55bb-63f1-4d6c-a6a4-a1362e6e681e",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bfba55bb-63f1-4d6c-a6a4-a1362e6e681e"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e3129117-6064-4873-8918-de46290be58c",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e3129117-6064-4873-8918-de46290be58c"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.766667,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:HIGH_DEBT_PAYMENT_BURDEN",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "HIGH_DEBT_PAYMENT_BURDEN",
+              "status": "ATTENTION",
+              "tier": 2,
+              "actionFamily": "REVIEW_DEBT_PAYMENTS",
+              "observed": {
+                "value": 1.097973,
+                "unit": "FRACTION",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": 16250000,
+                "denominatorVnd": 14800000
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.35,
+                "unit": "FRACTION",
+                "property": "rikkaus.cashflow.health.max-debt-payment-burden"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 2.137066,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+              "status": "ATTENTION",
+              "tier": 1,
+              "actionFamily": "RECONCILE_CASH_WITH_OBLIGATIONS",
+              "observed": {
+                "value": 42000000,
+                "unit": "VND",
+                "subject": null,
+                "date": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "LESS_THAN",
+                "value": 50750000,
+                "unit": "VND",
+                "property": "rikkaus.cashflow.health.due-window-days"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "0ee7f292-42fa-4285-8fb9-8429bc61f820",
+                  "name": null,
+                  "route": "/api/v1/assets/0ee7f292-42fa-4285-8fb9-8429bc61f820"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "6038c40e-eb37-491f-b732-b565d0a83a4f",
+                  "name": null,
+                  "route": "/api/v1/assets/6038c40e-eb37-491f-b732-b565d0a83a4f"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "c7a494d3-634f-4a08-a0da-177f3864da36",
+                  "name": null,
+                  "route": "/api/v1/liabilities/c7a494d3-634f-4a08-a0da-177f3864da36"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "f3cc0a78-520d-4675-8d28-2479de58c8ca",
+                  "name": null,
+                  "route": "/api/v1/liabilities/f3cc0a78-520d-4675-8d28-2479de58c8ca"
+                }
+              ],
+              "dueDate": "2026-11-30",
+              "relativeDeviation": 0.172414,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            },
+            {
+              "findingId": "FINANCIAL_HEALTH:INCOME_CONCENTRATION",
+              "source": "FINANCIAL_HEALTH",
+              "ruleId": "INCOME_CONCENTRATION",
+              "status": "ATTENTION",
+              "tier": 3,
+              "actionFamily": "REVIEW_INCOME_SOURCES",
+              "observed": {
+                "value": 1,
+                "unit": "FRACTION",
+                "subject": "RENTAL_INCOME",
+                "date": null,
+                "numeratorVnd": null,
+                "denominatorVnd": null
+              },
+              "threshold": {
+                "comparison": "GREATER_THAN",
+                "value": 0.6,
+                "unit": "FRACTION",
+                "property": "rikkaus.cashflow.health.max-income-source-share"
+              },
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.666667,
+              "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+              "reason": null
+            }
+          ],
+          "suggestions": [
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE+FINANCIAL_HEALTH:LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS+FINANCIAL_HEALTH:FORECAST_CASH_NEGATIVE",
+              "rank": 1,
+              "priority": true,
+              "tier": 1,
+              "actionFamily": "RECONCILE_CASH_WITH_OBLIGATIONS",
+              "actionId": "COMPARE_CASH_WITH_UPCOMING_OBLIGATIONS",
+              "action": "You may compare your cash and bank balances with the upcoming payments entered for Thẻ tín dụng, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE",
+                "FINANCIAL_HEALTH:LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+                "FINANCIAL_HEALTH:FORECAST_CASH_NEGATIVE"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "c7a494d3-634f-4a08-a0da-177f3864da36",
+                  "name": "Thẻ tín dụng",
+                  "route": "/api/v1/liabilities/c7a494d3-634f-4a08-a0da-177f3864da36"
+                },
+                {
+                  "sourceType": "LIABILITY",
+                  "sourceId": "f3cc0a78-520d-4675-8d28-2479de58c8ca",
+                  "name": "Khoản vay mua căn hộ",
+                  "route": "/api/v1/liabilities/f3cc0a78-520d-4675-8d28-2479de58c8ca"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "0ee7f292-42fa-4285-8fb9-8429bc61f820",
+                  "name": null,
+                  "route": "/api/v1/assets/0ee7f292-42fa-4285-8fb9-8429bc61f820"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "6038c40e-eb37-491f-b732-b565d0a83a4f",
+                  "name": null,
+                  "route": "/api/v1/assets/6038c40e-eb37-491f-b732-b565d0a83a4f"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e3129117-6064-4873-8918-de46290be58c",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e3129117-6064-4873-8918-de46290be58c"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "b347cba5-8f4d-434f-95da-4a4413ca3532",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/b347cba5-8f4d-434f-95da-4a4413ca3532"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bfba55bb-63f1-4d6c-a6a4-a1362e6e681e",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bfba55bb-63f1-4d6c-a6a4-a1362e6e681e"
+                }
+              ],
+              "dueDate": "2026-11-30",
+              "relativeDeviation": 0.933333,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED",
+                "FORECAST_FROM_ENTERED_SCHEDULES"
+              ]
+            },
+            {
+              "suggestionId": "FINANCIAL_HEALTH:HIGH_DEBT_PAYMENT_BURDEN",
+              "rank": 2,
+              "priority": true,
+              "tier": 2,
+              "actionFamily": "REVIEW_DEBT_PAYMENTS",
+              "actionId": "CHECK_DEBT_PAYMENTS_AGAINST_INCOME",
+              "action": "You may check the debt payments you entered against the income of the period, then review the result.",
+              "findingIds": [
+                "FINANCIAL_HEALTH:HIGH_DEBT_PAYMENT_BURDEN"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 2.137066,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "FINANCIAL_HEALTH:SPENDING_EXCEEDS_INCOME",
+              "rank": 3,
+              "priority": true,
+              "tier": 2,
+              "actionFamily": "REVIEW_PERIOD_SPENDING",
+              "actionId": "REVIEW_LARGEST_PERIOD_EXPENSES",
+              "action": "You may review the largest expenses of the period and check that the recurring entries still match reality, then review the result.",
+              "findingIds": [
+                "FINANCIAL_HEALTH:SPENDING_EXCEEDS_INCOME"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e3129117-6064-4873-8918-de46290be58c",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e3129117-6064-4873-8918-de46290be58c"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "02f6a9bc-c0f6-49c4-aea6-e419769ee445",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/02f6a9bc-c0f6-49c4-aea6-e419769ee445"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "b347cba5-8f4d-434f-95da-4a4413ca3532",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/b347cba5-8f4d-434f-95da-4a4413ca3532"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bfba55bb-63f1-4d6c-a6a4-a1362e6e681e",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bfba55bb-63f1-4d6c-a6a4-a1362e6e681e"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": null,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION",
+              "rank": 4,
+              "priority": false,
+              "tier": 3,
+              "actionFamily": "REVIEW_ASSET_CONCENTRATION",
+              "actionId": "REVIEW_ASSET_CATEGORY_SHARE",
+              "action": "You may review the share of the largest asset category, including Căn hộ cho thuê Quận 2, alongside your expected liquidity needs, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "c976832a-28a8-4c2d-958f-2ac3c2f30c22",
+                  "name": "Căn hộ cho thuê Quận 2",
+                  "route": "/api/v1/assets/c976832a-28a8-4c2d-958f-2ac3c2f30c22"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.980654,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "FINANCIAL_HEALTH:RESERVE_BELOW_REFERENCE",
+              "rank": 5,
+              "priority": false,
+              "tier": 3,
+              "actionFamily": "RECONCILE_CASH_WITH_RESERVE",
+              "actionId": "COMPARE_LIQUID_ASSETS_WITH_RESERVE",
+              "action": "You may compare your cash reserve with the reference number of months of essential expenses, then review the result.",
+              "findingIds": [
+                "FINANCIAL_HEALTH:RESERVE_BELOW_REFERENCE"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "0ee7f292-42fa-4285-8fb9-8429bc61f820",
+                  "name": null,
+                  "route": "/api/v1/assets/0ee7f292-42fa-4285-8fb9-8429bc61f820"
+                },
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "6038c40e-eb37-491f-b732-b565d0a83a4f",
+                  "name": null,
+                  "route": "/api/v1/assets/6038c40e-eb37-491f-b732-b565d0a83a4f"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "02f6a9bc-c0f6-49c4-aea6-e419769ee445",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/02f6a9bc-c0f6-49c4-aea6-e419769ee445"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "b347cba5-8f4d-434f-95da-4a4413ca3532",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/b347cba5-8f4d-434f-95da-4a4413ca3532"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bfba55bb-63f1-4d6c-a6a4-a1362e6e681e",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bfba55bb-63f1-4d6c-a6a4-a1362e6e681e"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "dc9d9be0-1a52-49c7-9e88-9b9521a17bd2",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/dc9d9be0-1a52-49c7-9e88-9b9521a17bd2"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e1178763-ffff-458a-ba94-4e077a8f0935",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e1178763-ffff-458a-ba94-4e077a8f0935"
+                },
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "e3129117-6064-4873-8918-de46290be58c",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/e3129117-6064-4873-8918-de46290be58c"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.766667,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "FINANCIAL_HEALTH:INCOME_CONCENTRATION",
+              "rank": 6,
+              "priority": false,
+              "tier": 3,
+              "actionFamily": "REVIEW_INCOME_SOURCES",
+              "actionId": "REVIEW_INCOME_SOURCE_MIX",
+              "action": "You may review how the income of the period is spread across its sources, then review the result.",
+              "findingIds": [
+                "FINANCIAL_HEALTH:INCOME_CONCENTRATION"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "CASH_FLOW_ENTRY",
+                  "sourceId": "bed5fa6d-3852-46d1-a85c-2bdf65ab698d",
+                  "name": null,
+                  "route": "/api/v1/cash-flow-entries/bed5fa6d-3852-46d1-a85c-2bdf65ab698d"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.666667,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:LOW_LIQUIDITY_SHARE",
+              "rank": 7,
+              "priority": false,
+              "tier": 3,
+              "actionFamily": "RECONCILE_CASH_WITH_RESERVE",
+              "actionId": "COMPARE_LIQUID_ASSETS_WITH_RESERVE",
+              "action": "You may compare your cash reserve with the assets that are slower to turn into cash, such as Căn hộ cho thuê Quận 2, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:LOW_LIQUIDITY_SHARE"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "c976832a-28a8-4c2d-958f-2ac3c2f30c22",
+                  "name": "Căn hộ cho thuê Quận 2",
+                  "route": "/api/v1/assets/c976832a-28a8-4c2d-958f-2ac3c2f30c22"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.650545,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:STALE_EXCHANGE_RATE",
+              "rank": 8,
+              "priority": false,
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "actionId": "UPDATE_STALE_RECORD",
+              "action": "You may update the declared USD/VND exchange rate so the report reads a current value, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:STALE_EXCHANGE_RATE"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "EXCHANGE_RATE",
+                  "sourceId": null,
+                  "name": null,
+                  "route": "/api/v1/settings/exchange-rate"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 14.4,
+              "noteIds": [
+                "USER_DECLARED_EXCHANGE_RATE"
+              ]
+            },
+            {
+              "suggestionId": "WEALTH_SNAPSHOT:STALE_VALUATION",
+              "rank": 9,
+              "priority": false,
+              "tier": 5,
+              "actionFamily": "REFRESH_RECORD",
+              "actionId": "UPDATE_STALE_RECORD",
+              "action": "You may update Căn hộ cho thuê Quận 2 so the report reads a current value, then review the result.",
+              "findingIds": [
+                "WEALTH_SNAPSHOT:STALE_VALUATION"
+              ],
+              "affectedRecords": [
+                {
+                  "sourceType": "ASSET",
+                  "sourceId": "c976832a-28a8-4c2d-958f-2ac3c2f30c22",
+                  "name": "Căn hộ cho thuê Quận 2",
+                  "route": "/api/v1/assets/c976832a-28a8-4c2d-958f-2ac3c2f30c22"
+                }
+              ],
+              "dueDate": null,
+              "relativeDeviation": 0.733333,
+              "noteIds": [
+                "MANUAL_ENTRY_NOT_RECONCILED"
+              ]
+            }
+          ]
+        },
+        "a user with no record yet": {
+          "asOfDate": "2026-11-28",
+          "timeZone": "Asia/Ho_Chi_Minh",
+          "month": "2026-11",
+          "disclaimer": "This report is informational, based on the data you entered and the system's reference thresholds; it is not financial advice and does not guarantee any outcome.",
+          "priorityMarkerCount": 3,
+          "sources": [
+            {
+              "source": "WEALTH_SNAPSHOT",
+              "route": "/api/v1/wealth-snapshot/insights",
+              "findingCount": 6
+            },
+            {
+              "source": "FINANCIAL_HEALTH",
+              "route": "/api/v1/financial-health?month=2026-11",
+              "findingCount": 6
+            },
+            {
+              "source": "GOAL_PROJECTION",
+              "route": "/api/v1/goal-projections",
+              "findingCount": 0
+            }
+          ],
+          "unevaluated": {
+            "count": 12,
+            "findings": [
+              {
+                "findingId": "WEALTH_SNAPSHOT:CATEGORY_CONCENTRATION",
+                "source": "WEALTH_SNAPSHOT",
+                "ruleId": "CATEGORY_CONCENTRATION",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "GREATER_THAN",
+                  "value": 0.5,
+                  "unit": "FRACTION",
+                  "property": "rikkaus.snapshot.insights.max-category-share"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_ASSETS"
+              },
+              {
+                "findingId": "WEALTH_SNAPSHOT:DEBT_TO_ASSET_RATIO",
+                "source": "WEALTH_SNAPSHOT",
+                "ruleId": "DEBT_TO_ASSET_RATIO",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "GREATER_THAN",
+                  "value": 0.4,
+                  "unit": "FRACTION",
+                  "property": "rikkaus.snapshot.insights.max-debt-to-asset-ratio"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_ASSETS"
+              },
+              {
+                "findingId": "WEALTH_SNAPSHOT:LOW_LIQUIDITY_SHARE",
+                "source": "WEALTH_SNAPSHOT",
+                "ruleId": "LOW_LIQUIDITY_SHARE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "GREATER_THAN",
+                  "value": 0.6,
+                  "unit": "FRACTION",
+                  "property": "rikkaus.snapshot.insights.max-low-liquidity-share"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_ASSETS"
+              },
+              {
+                "findingId": "WEALTH_SNAPSHOT:UPCOMING_LIABILITY_DUE",
+                "source": "WEALTH_SNAPSHOT",
+                "ruleId": "UPCOMING_LIABILITY_DUE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "AT_MOST",
+                  "value": 30,
+                  "unit": "DAYS",
+                  "property": "rikkaus.snapshot.insights.due-window-days"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_LIABILITIES"
+              },
+              {
+                "findingId": "WEALTH_SNAPSHOT:STALE_VALUATION",
+                "source": "WEALTH_SNAPSHOT",
+                "ruleId": "STALE_VALUATION",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "GREATER_THAN",
+                  "value": 30,
+                  "unit": "DAYS",
+                  "property": "rikkaus.snapshot.insights.max-valuation-age-days"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_ASSETS"
+              },
+              {
+                "findingId": "WEALTH_SNAPSHOT:STALE_EXCHANGE_RATE",
+                "source": "WEALTH_SNAPSHOT",
+                "ruleId": "STALE_EXCHANGE_RATE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "GREATER_THAN",
+                  "value": 5,
+                  "unit": "DAYS",
+                  "property": "rikkaus.snapshot.insights.max-exchange-rate-age-days"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "MISSING_EXCHANGE_RATE"
+              },
+              {
+                "findingId": "FINANCIAL_HEALTH:SPENDING_EXCEEDS_INCOME",
+                "source": "FINANCIAL_HEALTH",
+                "ruleId": "SPENDING_EXCEEDS_INCOME",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "LESS_THAN",
+                  "value": 0,
+                  "unit": "VND",
+                  "property": null
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_CASH_FLOW_IN_MONTH"
+              },
+              {
+                "findingId": "FINANCIAL_HEALTH:FORECAST_CASH_NEGATIVE",
+                "source": "FINANCIAL_HEALTH",
+                "ruleId": "FORECAST_CASH_NEGATIVE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "LESS_THAN",
+                  "value": 0,
+                  "unit": "VND",
+                  "property": null
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "FORECAST_FROM_ENTERED_SCHEDULES",
+                "reason": "INDICATOR_UNAVAILABLE"
+              },
+              {
+                "findingId": "FINANCIAL_HEALTH:RESERVE_BELOW_REFERENCE",
+                "source": "FINANCIAL_HEALTH",
+                "ruleId": "RESERVE_BELOW_REFERENCE",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "LESS_THAN",
+                  "value": 3,
+                  "unit": "MONTHS",
+                  "property": "rikkaus.cashflow.health.min-reserve-months"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "INDICATOR_UNAVAILABLE"
+              },
+              {
+                "findingId": "FINANCIAL_HEALTH:HIGH_DEBT_PAYMENT_BURDEN",
+                "source": "FINANCIAL_HEALTH",
+                "ruleId": "HIGH_DEBT_PAYMENT_BURDEN",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "GREATER_THAN",
+                  "value": 0.35,
+                  "unit": "FRACTION",
+                  "property": "rikkaus.cashflow.health.max-debt-payment-burden"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "INDICATOR_UNAVAILABLE"
+              },
+              {
+                "findingId": "FINANCIAL_HEALTH:LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+                "source": "FINANCIAL_HEALTH",
+                "ruleId": "LIQUIDITY_SHORT_FOR_UPCOMING_OBLIGATIONS",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "LESS_THAN",
+                  "value": 0,
+                  "unit": "VND",
+                  "property": "rikkaus.cashflow.health.due-window-days"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_CASH_ACCOUNTS"
+              },
+              {
+                "findingId": "FINANCIAL_HEALTH:INCOME_CONCENTRATION",
+                "source": "FINANCIAL_HEALTH",
+                "ruleId": "INCOME_CONCENTRATION",
+                "status": "NOT_EVALUATED",
+                "tier": null,
+                "actionFamily": null,
+                "observed": null,
+                "threshold": {
+                  "comparison": "GREATER_THAN",
+                  "value": 0.6,
+                  "unit": "FRACTION",
+                  "property": "rikkaus.cashflow.health.max-income-source-share"
+                },
+                "affectedRecords": [],
+                "dueDate": null,
+                "relativeDeviation": null,
+                "noteId": "MANUAL_ENTRY_NOT_RECONCILED",
+                "reason": "NO_INCOME"
+              }
+            ]
+          },
+          "positive": [],
+          "attention": [],
+          "suggestions": []
+        }
+      }
+    },
+    "400": {
+      "contentType": "application/problem+json",
+      "examples": {
+        "month not in the form YYYY-MM": {
+          "type": "urn:rikkaus:problem:validation-failed",
+          "title": "Request validation failed",
+          "status": 400,
+          "detail": "Request validation failed.",
+          "instance": "/api/v1/advisor-report",
+          "correlationId": "8d2b6e14-5c3a-4f97-b1e0-73a9c4d2f605",
+          "errors": [
+            {
+              "field": "month",
+              "message": "must be a calendar month in the form YYYY-MM"
+            }
+          ]
         }
       }
     }
